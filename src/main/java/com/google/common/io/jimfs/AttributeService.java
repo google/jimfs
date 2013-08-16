@@ -32,7 +32,6 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -42,7 +41,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class AttributeManager {
+final class AttributeService {
 
   private static final String ALL_ATTRIBUTES = "*";
 
@@ -50,11 +49,7 @@ final class AttributeManager {
   private final ImmutableMap<Class<?>, AttributeViewProvider<?>> viewProviders;
   private final ImmutableMap<Class<?>, AttributeReader<?>> readers;
 
-  public AttributeManager(AttributeProvider... providers) {
-    this(Arrays.asList(providers));
-  }
-
-  public AttributeManager(Iterable<? extends AttributeProvider> providers) {
+  public AttributeService(Iterable<? extends AttributeProvider> providers) {
     ImmutableMap.Builder<String, AttributeProvider> providersBuilder = ImmutableMap.builder();
     ImmutableMap.Builder<Class<?>, AttributeViewProvider<?>> viewProvidersBuilder
         = ImmutableMap.builder();

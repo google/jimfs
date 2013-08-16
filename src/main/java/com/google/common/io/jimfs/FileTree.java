@@ -1,7 +1,6 @@
 package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.io.jimfs.ExceptionHelpers.requireExistsParentDir;
 import static com.google.common.io.jimfs.ExceptionHelpers.requireNonNull;
 import static com.google.common.io.jimfs.LinkHandling.FOLLOW_LINKS;
 import static com.google.common.io.jimfs.LinkHandling.NOFOLLOW_LINKS;
@@ -13,6 +12,7 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.nio.file.CopyOption;
@@ -28,6 +28,8 @@ import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
@@ -36,10 +38,8 @@ import javax.annotation.Nullable;
 
 /**
  * Structure used for lookups and modification of the file hierarchy. A file tree has a base
- * directory identified by a file key. All operations on the tree that are given a <i>relative</i>
- * path resolve that path relative to that actual directory, even if the directory has been moved.
- * Note that iff the directory is deleted, however, all operations will throw an exception when
- * given a relative path.
+ * directory. All operations on the tree that are given a <i>relative</i> path resolve that path
+ * relative to that actual directory, even if the directory has been moved.
  *
  * <p>By default, a file system has two such file trees:
  *
@@ -65,20 +65,17 @@ final class FileTree {
 
   private final JimfsFileSystem fs;
   private final LookupService lookupService;
-  private final FileStorage storage;
 
-  private final FileKey baseKey;
+  private final File base;
   private final JimfsPath basePath;
 
   /**
-   * Creates a new file storage with the given root directories. The given supplier is used to
-   * generate new file keys for the directories.
+   * Creates a new file tree with the given base.
    */
-  public FileTree(JimfsFileSystem fs, FileKey baseKey, JimfsPath basePath) {
-    this.fs = checkNotNull(fs);
-    this.storage = fs.getFileStorage();
+  public FileTree(JimfsFileSystem fs, File base, JimfsPath basePath) {
+    this.fs = fs;
     this.lookupService = new LookupService(this);
-    this.baseKey = checkNotNull(baseKey);
+    this.base = checkNotNull(base);
     this.basePath = checkNotNull(basePath);
   }
 
@@ -86,14 +83,14 @@ final class FileTree {
    * Returns the read lock.
    */
   public Lock readLock() {
-    return storage().readLock();
+    return fs.readLock();
   }
 
   /**
    * Returns the write lock.
    */
   public Lock writeLock() {
-    return storage().writeLock();
+    return fs.writeLock();
   }
 
   /**
@@ -133,13 +130,6 @@ final class FileTree {
   }
 
   /**
-   * Returns the file storage for the file system.
-   */
-  public FileStorage storage() {
-    return storage;
-  }
-
-  /**
    * Returns the lookup service for this tree.
    */
   public LookupService getLookupService() {
@@ -147,18 +137,10 @@ final class FileTree {
   }
 
   /**
-   * Returns the key of the directory that is the root of this tree.
+   * Returns the directory that is the base of this tree.
    */
-  public FileKey getBaseKey() {
-    return baseKey;
-  }
-
-  /**
-   * Returns the directory that is the base of this file tree, throwing {@link NoSuchFileException}
-   * if it does not exist. Should only be called when holding a lock.
-   */
-  public DirectoryTable getBaseDir(Path pathForException) throws NoSuchFileException {
-    return requireExistsParentDir(storage.getFile(baseKey), pathForException);
+  public File base() {
+    return base;
   }
 
   /**
@@ -166,13 +148,7 @@ final class FileTree {
    */
   @Nullable
   public File lookupFile(JimfsPath path, LinkHandling linkHandling) throws IOException {
-    readLock().lock();
-    try {
-      LookupResult result = lookupService.lookup(path, linkHandling);
-      return result.isFileFound() ? result.getFile(storage) : null;
-    } finally {
-      readLock().unlock();
-    }
+    return lookupService.lookup(path, linkHandling).orNull();
   }
 
   /**
@@ -200,7 +176,7 @@ final class FileTree {
     }
 
     JimfsPath newBasePath = dir.isAbsolute() ? dir : basePath.resolve(dir);
-    return new JimfsSecureDirectoryStream(new FileTree(fs, file.key(), newBasePath), filter);
+    return new JimfsSecureDirectoryStream(new FileTree(fs, file, newBasePath), filter);
   }
 
   /**
@@ -239,9 +215,48 @@ final class FileTree {
 
     readLock().lock();
     try {
-      FileKey key = lookupService.lookup(path, FOLLOW_LINKS).orNull();
-      FileKey key2 = tree2.lookupService.lookup(path2, FOLLOW_LINKS).orNull();
-      return key != null && Objects.equal(key, key2);
+      File file = lookupService.lookup(path, FOLLOW_LINKS).orNull();
+      File file2 = tree2.lookupService.lookup(path2, FOLLOW_LINKS).orNull();
+      return file != null && Objects.equal(file, file2);
+    } finally {
+      readLock().unlock();
+    }
+  }
+
+  /**
+   * Gets the real path to the file located by the given path.
+   */
+  public JimfsPath toRealPath(JimfsPath path, LinkHandling linkHandling) throws IOException {
+    checkNotNull(path);
+    checkNotNull(linkHandling);
+
+    readLock().lock();
+    try {
+      LookupResult lookupResult = lookupService.lookup(path, linkHandling)
+          .requireFound(path);
+
+      List<String> names = new ArrayList<>();
+      names.add(lookupResult.name());
+
+      // if the result was a root directory, the name for the result is the only name
+      if (!lookupResult.file().isRootDirectory()) {
+        File file = lookupResult.parent();
+        DirectoryTable fileTable = file.content();
+        while (!file.isRootDirectory()) {
+          File parent = fileTable.parent();
+          DirectoryTable parentTable = parent.content();
+          names.add(parentTable.getName(file));
+          file = parent;
+          fileTable = parentTable;
+        }
+
+        // handle root directory
+        File superRootBase = getSuperRoot().base();
+        DirectoryTable superRootBaseTable = superRootBase.content();
+        names.add(superRootBaseTable.getName(file));
+      }
+
+      return fs.configuration().parsePath(fs, Lists.reverse(names));
     } finally {
       readLock().unlock();
     }
@@ -253,59 +268,57 @@ final class FileTree {
    * a file already exists at the given path, returns the key of that file. Otherwise, throws
    * {@link FileAlreadyExistsException}.
    */
-  public FileKey createFile(
-      JimfsPath path, FileFactory fileFactory, boolean allowExisting) throws IOException {
+  public File createFile(
+      JimfsPath path, FileService.Callback callback, boolean allowExisting) throws IOException {
     checkNotNull(path);
-    checkNotNull(fileFactory);
+    checkNotNull(callback);
 
-    String name = getName(path);
+    String name = name(path);
 
     writeLock().lock();
     try {
       LookupResult result = lookupService.lookup(path, NOFOLLOW_LINKS)
           .requireParentFound(path);
 
-      if (result.isFileFound()) {
+      if (result.found()) {
         if (allowExisting) {
           // currently can only happen if getOrCreateFile doesn't find the file with the read lock
           // and then the file is created between when it releases the read lock and when it
           // acquires the write lock; so, very unlikely
-          return result.getFileKey();
+          return result.file();
         } else {
           throw new FileAlreadyExistsException(path.toString());
         }
       }
 
-      FileKey parentKey = result.getParentKey();
-      DirectoryTable parentTable = storage.getFile(parentKey).content();
+      File parent = result.parent();
+      DirectoryTable parentTable = parent.content();
 
-      FileKey key = fileFactory.createAndStoreFile();
-      parentTable.link(name, key);
+      File newFile = callback.createFile();
+      parentTable.link(name, newFile);
 
-      File file = storage.getFile(key);
-      linkParent(parentKey, file);
-      return key;
+      if (newFile.isDirectory()) {
+        linkSelfAndParent(newFile, parent);
+      }
+      return newFile;
     } finally {
       writeLock().unlock();
     }
   }
 
-  private void linkParent(FileKey parentKey, File file) {
-    if (file.isDirectory()) {
-      DirectoryTable table = file.content();
-      table.linkParent(parentKey);
-    }
+  private void linkSelfAndParent(File self, File parent) {
+    DirectoryTable table = self.content();
+    table.linkSelf(self);
+    table.linkParent(parent);
   }
 
-  private void unlinkParent(FileKey key) {
-    if (key.type() == FileType.DIRECTORY) {
-      File file = storage.getFile(key);
-      DirectoryTable table = file.content();
-      table.unlinkParent();
-    }
+  private void unlinkSelfAndParent(File dir) {
+    DirectoryTable table = dir.content();
+    table.unlinkSelf();
+    table.unlinkParent();
   }
 
-  private static String getName(Path path) {
+  private static String name(Path path) {
     return path.getFileName() == null
         ? path.getRoot().toString()
         : path.getFileName().toString();
@@ -331,8 +344,8 @@ final class FileTree {
       readLock().lock();
       try {
         LookupResult result = lookupService.lookup(path, linkHandling);
-        if (result.isFileFound()) {
-          File file = result.getFile(storage);
+        if (result.found()) {
+          File file = result.file();
           if (!file.isRegularFile()) {
             throw new FileSystemException(path.toString(), null, "not a regular file");
           }
@@ -352,12 +365,12 @@ final class FileTree {
     // existing key if the file already exists when it tries to create it
     writeLock().lock();
     try {
-      FileKey key = createFile(path, storage.regularFileFactory(), !createNew);
+      File file = createFile(path, fs.getFileService().regularFileCallback(), !createNew);
       // the file already existed but was not a regular file
-      if (!key.isRegularFile()) {
+      if (!file.isRegularFile()) {
         throw new FileSystemException(path.toString(), null, "not a regular file");
       }
-      return truncateIfNeeded(storage.getFile(key), options);
+      return truncateIfNeeded(file, options);
     } finally {
       writeLock().unlock();
     }
@@ -388,28 +401,27 @@ final class FileTree {
           "can't link: source and target are in different file system instances");
     }
 
-    String linkName = getName(link);
+    String linkName = name(link);
 
     // targetTree is in the same file system, so the lock applies for both trees
     writeLock().lock();
     try {
       // we do want to follow links when finding the existing file
-      FileKey existingKey = existingTree.lookupService.lookup(existing, FOLLOW_LINKS)
-          .requireFileFound(existing)
-          .getFileKey();
-      File existingFile = storage.getFile(existingKey);
+      File existingFile = existingTree.lookupService.lookup(existing, FOLLOW_LINKS)
+          .requireFound(existing)
+          .file();
       if (!existingFile.isRegularFile()) {
         throw new FileSystemException(link.toString(), existing.toString(),
             "can't link: not a regular file");
       }
 
-      FileKey linkParentKey = lookupService.lookup(link, NOFOLLOW_LINKS)
+      File linkParent = lookupService.lookup(link, NOFOLLOW_LINKS)
           .requireParentFound(link)
           .requireNotFound(link)
-          .getParentKey();
+          .parent();
 
-      DirectoryTable linkParentTable = storage().getFile(linkParentKey).content();
-      linkParentTable.link(linkName, existingKey);
+      DirectoryTable linkParentTable = linkParent.content();
+      linkParentTable.link(linkName, existingFile);
     } finally {
       writeLock().unlock();
     }
@@ -426,15 +438,15 @@ final class FileTree {
    * Deletes the file at the given absolute path.
    */
   public void deleteFile(JimfsPath path, DeleteMode deleteMode) throws IOException {
-    String name = getName(path);
+    String name = name(path);
 
     writeLock().lock();
     try {
-      FileKey parentKey = lookupService.lookup(path, NOFOLLOW_LINKS)
-          .requireFileFound(path)
-          .getParentKey();
+      File parent = lookupService.lookup(path, NOFOLLOW_LINKS)
+          .requireFound(path)
+          .parent();
 
-      DirectoryTable parentTable = storage.getFile(parentKey).content();
+      DirectoryTable parentTable = parent.content();
       delete(parentTable, name, deleteMode, path);
     } finally {
       writeLock().unlock();
@@ -446,11 +458,12 @@ final class FileTree {
    */
   private void delete(DirectoryTable parentTable, String name,
       DeleteMode deleteMode, JimfsPath pathForException) throws IOException {
-    FileKey key = parentTable.get(name);
-    checkDeletable(key, deleteMode, pathForException);
+    File file = parentTable.get(name);
+    checkDeletable(file, deleteMode, pathForException);
     parentTable.unlink(name);
-    unlinkParent(key);
-    storage().unlinked(key);
+    if (file.isDirectory()) {
+      unlinkSelfAndParent(file);
+    }
   }
 
   /**
@@ -469,19 +482,17 @@ final class FileTree {
    * Checks that the given file can be deleted, throwing an exception if it can't.
    */
   private void checkDeletable(
-      FileKey key, DeleteMode mode, Path pathForException) throws IOException {
-    if (key.type() == FileType.DIRECTORY) {
+      File file, DeleteMode mode, Path pathForException) throws IOException {
+    if (file.isRootDirectory()) {
+      throw new FileSystemException(
+          pathForException.toString(), null, "can't delete root directory");
+    } if (file.isDirectory()) {
       if (mode == DeleteMode.NON_DIRECTORY_ONLY) {
         throw new FileSystemException(
             pathForException.toString(), null, "can't delete: is a directory");
       }
 
-      if (fs.getRootKeys().contains(key)) {
-        throw new FileSystemException(
-            pathForException.toString(), null, "can't delete root directory");
-      }
-
-      checkEmpty(key, pathForException);
+      checkEmpty(file, pathForException);
     } else if (mode == DeleteMode.DIRECTORY_ONLY) {
       throw new FileSystemException(
           pathForException.toString(), null, "can't delete: is not a directory");
@@ -492,10 +503,9 @@ final class FileTree {
    * Checks that the directory identified by the given key is empty, throwing
    * {@link DirectoryNotEmptyException} if it isn't.
    */
-  private void checkEmpty(FileKey key, Path pathForException) throws FileSystemException {
-    // an empty directory has 2 links to it; one from its parent, one from itself (".")
-    // any further links are from
-    if (key.links() > 2) {
+  private void checkEmpty(File file, Path pathForException) throws FileSystemException {
+    DirectoryTable table = file.content();
+    if (!table.isEmpty()) {
       throw new DirectoryNotEmptyException(pathForException.toString());
     }
   }
@@ -539,35 +549,34 @@ final class FileTree {
     lockBoth(writeLock(), destTree.writeLock());
     try {
       LookupResult sourceLookup = lookupService.lookup(source, linkHandling)
-          .requireFileFound(source);
+          .requireFound(source);
       LookupResult destLookup = destTree.lookupService.lookup(dest, NOFOLLOW_LINKS)
           .requireParentFound(dest);
 
-      DirectoryTable sourceParent = storage.getFile(sourceLookup.getParentKey()).content();
-      FileKey sourceKey = sourceLookup.getFileKey();
-      File sourceFile = storage.getFile(sourceKey);
+      DirectoryTable sourceParent = sourceLookup.parent().content();
+      File sourceFile = sourceLookup.file();
 
-      FileKey destParentKey = destLookup.getParentKey();
-      DirectoryTable destParent = destTree.storage.getFile(destParentKey).content();
+      File destParent = destLookup.parent();
+      DirectoryTable destParentTable = destParent.content();
 
       if (move && sourceFile.isDirectory()) {
         if (sameFileSystem) {
-          checkMovable(sourceKey, source);
-          checkNotAncestor(sourceKey, destParent, destTree);
+          checkMovable(sourceFile, source);
+          checkNotAncestor(sourceFile, destParent, destTree);
         } else {
           // move to another file system is accomplished by copy-then-delete, so the source file
           // must be deletable to be moved
-          checkDeletable(sourceKey, DeleteMode.ANY, source);
+          checkDeletable(sourceFile, DeleteMode.ANY, source);
         }
       }
 
-      if (destLookup.isFileFound()) {
-        // identity because keys from 2 file system instances could have the same value equality
-        // TODO(cgdecker): consider changing this to make the keys unique per VM
-        if (destLookup.getFileKey() == sourceKey) {
+      if (destLookup.found()) {
+        // identity because files from 2 file system instances could have the same ID
+        // TODO(cgdecker): consider changing this to make the IDs unique per VM
+        if (destLookup.file() == sourceFile) {
           return;
         } else if (options.contains(REPLACE_EXISTING)) {
-          destTree.delete(destParent, destName.toString(), DeleteMode.ANY, dest);
+          destTree.delete(destParentTable, destName.toString(), DeleteMode.ANY, dest);
         } else {
           throw new FileAlreadyExistsException(dest.toString());
         }
@@ -577,17 +586,20 @@ final class FileTree {
       // otherwise we have to copy and delete
       if (move && sameFileSystem) {
         sourceParent.unlink(sourceName.toString());
-        destParent.link(destName.toString(), sourceKey);
+        destParentTable.link(destName.toString(), sourceFile);
 
-        unlinkParent(sourceKey);
-        linkParent(destParent.key(), sourceFile);
+        if (sourceFile.isDirectory()) {
+          unlinkSelfAndParent(sourceFile);
+          linkSelfAndParent(sourceFile, destParent);
+        }
       } else {
         // copy
-        FileKey copyKey = destTree.storage().copy(sourceFile);
-        destParent.link(destName.toString(), copyKey);
+        File copy = destTree.getFileSystem().getFileService().copy(sourceFile);
+        destParentTable.link(destName.toString(), copy);
 
-        File copy = destTree.storage().getFile(copyKey);
-        linkParent(destParentKey, copy);
+        if (copy.isDirectory()) {
+          linkSelfAndParent(copy, destParent);
+        }
 
         if (move) {
           copyBasicAttributes(sourceFile, destTree, copy);
@@ -600,19 +612,19 @@ final class FileTree {
     }
   }
 
-  private void checkMovable(FileKey fileKey, JimfsPath path) throws FileSystemException {
-    if (fs.getRootKeys().contains(fileKey)) {
+  private void checkMovable(File file, JimfsPath path) throws FileSystemException {
+    if (file.isRootDirectory()) {
       throw new FileSystemException(path.toString(), null, "can't move root directory");
     }
   }
 
   private void copyBasicAttributes(File source, FileTree destTree, File dest) throws IOException {
-    AttributeManager sourceAttributeManager = fs.getAttributeManager();
-    AttributeManager destAttributeManager = destTree.fs.getAttributeManager();
+    AttributeService sourceAttributeService = fs.getAttributeService();
+    AttributeService destAttributeService = destTree.fs.getAttributeService();
 
-    BasicFileAttributes sourceAttributes = sourceAttributeManager
+    BasicFileAttributes sourceAttributes = sourceAttributeService
         .readAttributes(source, BasicFileAttributes.class);
-    BasicFileAttributeView destAttributeView = destAttributeManager
+    BasicFileAttributeView destAttributeView = destAttributeService
         .getFileAttributeView(FileProvider.ofFile(dest), BasicFileAttributeView.class);
 
     assert destAttributeView != null;
@@ -642,27 +654,25 @@ final class FileTree {
    * Checks that source is not an ancestor of dest, throwing an exception if it is.
    */
   private void checkNotAncestor(
-      FileKey sourceKey, DirectoryTable dest, FileTree destTree) throws IOException {
+      File source, File destParent, FileTree destTree) throws IOException {
     // if dest is not in the same file system, it couldn't be in source's subdirectories
     if (!isSameFileSystem(destTree)) {
       return;
     }
 
-    DirectoryTable current = dest;
+    File current = destParent;
     while (true) {
-      FileKey currentKey = current.key();
-      if (currentKey.equals(sourceKey)) {
+      if (current.equals(source)) {
         throw new IOException(
             "invalid argument: can't move directory into a subdirectory of itself");
       }
 
-      FileKey parentKey = current.parent();
-      if (currentKey.equals(parentKey)) {
+
+      if (current.isRootDirectory()) {
         return;
       } else {
-        File parentFile = destTree.storage().getFile(parentKey);
-        assert parentFile != null;
-        current = parentFile.content();
+        DirectoryTable table = current.content();
+        current = table.parent();
       }
     }
   }
@@ -673,7 +683,7 @@ final class FileTree {
   public <V extends FileAttributeView> V getFileAttributeView(
       JimfsPath path, Class<V> type, LinkHandling linkHandling) {
     FileProvider fileProvider = FileProvider.lookup(this, path, linkHandling);
-    return fs.getAttributeManager()
+    return fs.getAttributeService()
         .getFileAttributeView(fileProvider, type);
   }
 
@@ -683,7 +693,7 @@ final class FileTree {
   public <A extends BasicFileAttributes> A readAttributes(
       JimfsPath path, Class<A> type, LinkHandling linkHandling) throws IOException {
     File file = requireNonNull(lookupFile(path, linkHandling), path);
-    return fs.getAttributeManager().readAttributes(file, type);
+    return fs.getAttributeService().readAttributes(file, type);
   }
 
   /**
@@ -692,7 +702,7 @@ final class FileTree {
   public Map<String, Object> readAttributes(
       JimfsPath path, String attributes, LinkHandling linkHandling) throws IOException {
     File file = requireNonNull(lookupFile(path, linkHandling), path);
-    return fs.getAttributeManager().readAttributes(file, attributes);
+    return fs.getAttributeService().readAttributes(file, attributes);
   }
 
   /**
@@ -701,7 +711,7 @@ final class FileTree {
   public void setAttribute(JimfsPath path, String attribute, Object value,
       LinkHandling linkHandling) throws IOException {
     File file = requireNonNull(lookupFile(path, linkHandling), path);
-    fs.getAttributeManager()
-        .setAttribute(file, attribute, value, AttributeManager.SetMode.NORMAL);
+    fs.getAttributeService()
+        .setAttribute(file, attribute, value, AttributeService.SetMode.NORMAL);
   }
 }

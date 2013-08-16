@@ -86,7 +86,7 @@ class BasicAttributeProvider extends AbstractAttributeProvider implements
       case SIZE:
         return (long) file.content().size();
       case FILE_KEY:
-        return file.key();
+        return file.id();
       case IS_DIRECTORY:
         return file.isDirectory();
       case IS_REGULAR_FILE:

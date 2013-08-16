@@ -47,7 +47,7 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public ByteStore copy(FileKey newKey) {
+  public ByteStore copy() {
     return new StubByteStore(this);
   }
 

@@ -191,7 +191,10 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
     FileTree tree = tree(checkedPath);
-    tree.createFile(checkedPath, tree.storage().directoryFactory(), false);
+    FileService.Callback createDirectory = checkedPath.getFileSystem()
+        .getFileService()
+        .directoryCallback();
+    tree.createFile(checkedPath, createDirectory, false);
   }
 
   @Override
@@ -212,7 +215,10 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     checkArgument(linkPath.getFileSystem().equals(targetPath.getFileSystem()),
         "link and target paths must belong to the same file system instance");
     FileTree tree = tree(linkPath);
-    tree.createFile(linkPath, tree.storage().symbolicLinkFactory(targetPath), false);
+    FileService.Callback createSymbolicLink = linkPath.getFileSystem()
+        .getFileService()
+        .symbolicLinkCallback(targetPath);
+    tree.createFile(linkPath, createSymbolicLink, false);
   }
 
   @Override

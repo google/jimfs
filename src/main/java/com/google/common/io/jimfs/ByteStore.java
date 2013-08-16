@@ -66,7 +66,8 @@ abstract class ByteStore implements FileContent {
   /**
    * Creates a copy of this byte store.
    */
-  public abstract ByteStore copy(FileKey newKey);
+  @Override
+  public abstract ByteStore copy();
 
   /**
    * Truncates this store to the given {@code size}. If the given size is less than the current

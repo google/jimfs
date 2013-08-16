@@ -174,6 +174,16 @@ public class JimfsIntegrationTest {
   }
 
   @Test
+  public void testPaths_toRealPath() throws IOException {
+    Files.createDirectories(path("/foo/bar"));
+    Files.createSymbolicLink(path("/link"), path("/"));
+
+    ASSERT.that(path("/link/foo/bar").toRealPath()).isEqualTo(path("/foo/bar"));
+
+    ASSERT.that(path("/FOO/BAR").toRealPath()).isEqualTo(path("/foo/bar"));
+  }
+
+  @Test
   public void testNewFileSystem_hasRootAndWorkingDirectory() throws IOException {
     assertThat("/").hasChildren("work");
     assertThat("/work").hasNoChildren();

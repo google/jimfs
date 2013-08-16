@@ -3,65 +3,64 @@ package com.google.common.io.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
+import com.google.common.primitives.Longs;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * A single file object. Similar in concept to an <i>inode</i>, in that it mostly stores file
+ * A single file object. Similar in concept to an <i>inode</i> in that it mostly stores file
  * metadata, but also keeps a reference to the file's content.
  *
  * @author Colin Decker
  */
 final class File {
 
-  /** The unique key for identifying this file and locating its content. */
-  private final FileKey key;
-
-  /** Maps attribute keys to values. */
+  private final long id;
   private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
-
-  /** The content of the file. */
   private final FileContent content;
+  private final AtomicInteger links = new AtomicInteger();
 
-  File(FileKey key, FileContent content) {
-    this.key = checkNotNull(key);
+  File(long id, FileContent content) {
+    this.id = id;
     this.content = checkNotNull(content);
   }
 
   /**
-   * Returns the unique key for the file.
+   * Returns the ID of this file.
    */
-  public FileKey key() {
-    return key;
-  }
-
-  /**
-   * Returns the type of the file.
-   */
-  public FileType type() {
-    return key.type();
+  public long id() {
+    return id;
   }
 
   /**
    * Returns whether or not this file is a directory.
    */
   public boolean isDirectory() {
-    return type() == FileType.DIRECTORY;
+    return content instanceof DirectoryTable;
   }
 
   /**
    * Returns whether or not this file is a regular file.
    */
   public boolean isRegularFile() {
-    return type() == FileType.REGULAR_FILE;
+    return content instanceof ByteStore;
   }
 
   /**
    * Returns whether or not this file is a symbolic link.
    */
   public boolean isSymbolicLink() {
-    return type() == FileType.SYMBOLIC_LINK;
+    return content instanceof JimfsPath;
+  }
+
+  /**
+   * Returns whether or not this file is a root directory of the file system.
+   */
+  public boolean isRootDirectory() {
+    // only root directories have their parent link pointing to themselves
+    return isDirectory() && equals(((DirectoryTable) content()).parent());
   }
 
   /**
@@ -76,7 +75,21 @@ final class File {
    * Returns the current count of links to this file.
    */
   public int links() {
-    return key().links();
+    return links.get();
+  }
+
+  /**
+   * Increments the link count.
+   */
+  public void linked() {
+    links.incrementAndGet();
+  }
+
+  /**
+   * Decrements and returns the link count.
+   */
+  public int unlinked() {
+    return links.decrementAndGet();
   }
 
   /**
@@ -108,10 +121,23 @@ final class File {
   }
 
   @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof File) {
+      File other = (File) obj;
+      return id == other.id;
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return Longs.hashCode(id);
+  }
+
+  @Override
   public String toString() {
     return Objects.toStringHelper(this)
-        .add("key", key)
-        .add("type", type())
+        .add("id", id)
         .toString();
   }
 }

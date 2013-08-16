@@ -8,9 +8,9 @@ package com.google.common.io.jimfs;
 interface FileContent {
 
   /**
-   * Creates a copy of this content. The copy will have the given key, if it needs that.
+   * Creates a copy of this content.
    */
-  FileContent copy(FileKey newKey);
+  FileContent copy();
 
   /**
    * Returns the size, in bytes, of this content.

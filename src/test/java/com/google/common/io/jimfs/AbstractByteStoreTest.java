@@ -16,7 +16,6 @@
 
 package com.google.common.io.jimfs;
 
-import static com.google.common.io.jimfs.FileType.REGULAR_FILE;
 import static com.google.common.io.jimfs.testing.TestUtils.buffer;
 import static com.google.common.io.jimfs.testing.TestUtils.buffers;
 import static com.google.common.io.jimfs.testing.TestUtils.bytes;
@@ -203,7 +202,7 @@ public abstract class AbstractByteStoreTest {
 
   @Test
   public void testEmpty_copy() {
-    ByteStore copy = store.copy(new FileKey(1234, REGULAR_FILE));
+    ByteStore copy = store.copy();
     assertContentEquals("", copy);
   }
 
@@ -672,7 +671,7 @@ public abstract class AbstractByteStoreTest {
   @Test
   public void testNonEmpty_copy() {
     fillContent("123456");
-    ByteStore copy = store.copy(new FileKey(1234, REGULAR_FILE));
+    ByteStore copy = store.copy();
     assertContentEquals("123456", copy);
   }
 
@@ -686,8 +685,7 @@ public abstract class AbstractByteStoreTest {
     be copied.
      */
     fillContent("123456");
-    ByteStore copy = store.copy(new FileKey(1234, REGULAR_FILE))
-        .copy(new FileKey(1235, REGULAR_FILE));
+    ByteStore copy = store.copy().copy();
     assertContentEquals("123456", copy);
   }
 

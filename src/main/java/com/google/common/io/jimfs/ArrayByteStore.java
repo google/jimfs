@@ -16,7 +16,6 @@
 
 package com.google.common.io.jimfs;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 import com.google.common.primitives.UnsignedBytes;
@@ -59,8 +58,7 @@ final class ArrayByteStore extends ByteStore {
   }
 
   @Override
-  public ByteStore copy(FileKey newKey) {
-    checkNotNull(newKey);
+  public ByteStore copy() {
     readLock().lock();
     try {
       return new ArrayByteStore(copyArray(size), size);

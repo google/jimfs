@@ -2,6 +2,7 @@ package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.jimfs.JimfsConfiguration.Feature;
+import static com.google.common.io.jimfs.LinkHandling.NOFOLLOW_LINKS;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -10,6 +11,7 @@ import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
@@ -17,36 +19,35 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Colin Decker
  */
 final class JimfsFileSystem extends FileSystem {
 
-  private final FileStorage storage;
-
+  private final FileService fileService;
   private final JimfsFileSystemProvider provider;
   private final JimfsConfiguration configuration;
-
-  private final ImmutableSet<Path> rootPaths;
-  private final ImmutableSet<FileKey> rootKeys;
-
+  private final ImmutableSet<Path> roots;
   private final FileTree superRoot;
   private final FileTree workingDirectory;
-
   private final UserLookupService userLookup;
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   public JimfsFileSystem(
       JimfsFileSystemProvider provider, JimfsConfiguration configuration) {
     this.provider = checkNotNull(provider);
     this.configuration = checkNotNull(configuration);
-    this.storage = new FileStorage(
-        configuration.getAttributeManager(), configuration.isLookupCaseSensitive());
+    this.fileService = new FileService(
+        configuration.getAttributeService(), configuration.areNamesCaseSensitive());
 
-    this.rootPaths = createRootPaths(configuration.getRoots());
+    this.roots = createRootPaths(configuration.getRoots());
 
-    this.superRoot = new FileTree(this, storage.createDirectory(), JimfsPath.empty(this));
-    this.rootKeys = createRootDirectories();
+    this.superRoot = new FileTree(this, fileService.createDirectory(), JimfsPath.empty(this));
+    createRootDirectories();
 
     this.userLookup = new UserLookupService(configuration.supportsFeature(Feature.GROUPS));
 
@@ -64,47 +65,43 @@ final class JimfsFileSystem extends FileSystem {
     return rootPathsBuilder.build();
   }
 
-  private ImmutableSet<FileKey> createRootDirectories() {
+  private void createRootDirectories() {
     try {
-      ImmutableSet.Builder<FileKey> builder = ImmutableSet.builder();
-      for (Path root : rootPaths) {
-        FileKey rootKey = superRoot.createFile(
-            (JimfsPath) root, storage.directoryFactory(), false);
-        builder.add(rootKey);
+      for (Path root : roots) {
+        File rootDir = superRoot.createFile(
+            (JimfsPath) root, fileService.directoryCallback(), false);
 
         // change root directory's ".." to point to itself
-        File rootDir = storage.getFile(rootKey);
         DirectoryTable rootDirTable = rootDir.content();
         rootDirTable.unlinkParent();
-        rootDirTable.linkParent(rootKey);
+        rootDirTable.linkParent(rootDir);
       }
-      return builder.build();
     } catch (IOException e) {
       throw new RuntimeException("failed to create root directories", e);
     }
   }
 
-  private FileKey createWorkingDirectory(JimfsPath workingDir) {
+  private File createWorkingDirectory(JimfsPath workingDir) {
     try {
-      JimfsPath currentPath = workingDir.getRoot();
-      FileKey newDirKey = null;
-      for (Path name : workingDir) {
-        currentPath = currentPath.resolve(name);
-        newDirKey = superRoot.createFile(currentPath, storage.directoryFactory(), false);
-      }
-
-      if (newDirKey == null) {
-        // no directories created; working directory is a root directory
-        File file = superRoot.lookupFile(currentPath, LinkHandling.NOFOLLOW_LINKS);
-        assert file != null;
-        return file.key();
-      }
-
-      // at least one new directory was created
-      return newDirKey;
+      Files.createDirectories(workingDir);
+      return superRoot.lookupFile(workingDir, NOFOLLOW_LINKS);
     } catch (IOException e) {
-      throw new RuntimeException("failed to create working directory", e);
+      throw new RuntimeException("failed to create working dir", e);
     }
+  }
+
+  /**
+   * Returns the file system's read lock.
+   */
+  public Lock readLock() {
+    return lock.readLock();
+  }
+
+  /**
+   * Returns the file system's write lock.
+   */
+  public Lock writeLock() {
+    return lock.writeLock();
   }
 
   @Override
@@ -120,10 +117,10 @@ final class JimfsFileSystem extends FileSystem {
   }
 
   /**
-   * Returns the file storage for this file system.
+   * Returns the file fileService for this file system.
    */
-  public FileStorage getFileStorage() {
-    return storage;
+  public FileService getFileService() {
+    return fileService;
   }
 
   /**
@@ -149,18 +146,11 @@ final class JimfsFileSystem extends FileSystem {
   }
 
   /**
-   * Returns the attribute manager for the file system, which provides methods for reading and
+   * Returns the attribute service for the file system, which provides methods for reading and
    * setting file attributes and getting attribute views.
    */
-  public AttributeManager getAttributeManager() {
-    return configuration.getAttributeManager();
-  }
-
-  /**
-   * Returns the set of file keys for the root directories of this file system.
-   */
-  public ImmutableSet<FileKey> getRootKeys() {
-    return rootKeys;
+  public AttributeService getAttributeService() {
+    return configuration.getAttributeService();
   }
 
   @Override
@@ -170,7 +160,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public Iterable<Path> getRootDirectories() {
-    return rootPaths;
+    return roots;
   }
 
   @Override
@@ -180,7 +170,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public Set<String> supportedFileAttributeViews() {
-    return getAttributeManager().supportedFileAttributeViews();
+    return getAttributeService().supportedFileAttributeViews();
   }
 
   @Override

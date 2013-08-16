@@ -2,9 +2,9 @@ package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.io.jimfs.ExceptionHelpers.throwProviderMismatch;
 import static com.google.common.io.jimfs.DirectoryTable.PARENT;
-import static com.google.common.io.jimfs.DirectoryTable.THIS;
+import static com.google.common.io.jimfs.DirectoryTable.SELF;
+import static com.google.common.io.jimfs.ExceptionHelpers.throwProviderMismatch;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -87,8 +87,7 @@ final class JimfsPath implements Path, FileContent {
   }
 
   @Override
-  public JimfsPath copy(FileKey newKey) {
-    checkNotNull(newKey);
+  public JimfsPath copy() {
     // immutable
     return this;
   }
@@ -208,7 +207,7 @@ final class JimfsPath implements Path, FileContent {
           // if there's a root and we have an extra ".." that would go up above the root, ignore it
           newNames.add(name);
         }
-      } else if (!THIS.equals(name)) {
+      } else if (!SELF.equals(name)) {
         newNames.add(name);
       }
     }
@@ -316,8 +315,7 @@ final class JimfsPath implements Path, FileContent {
 
   @Override
   public JimfsPath toRealPath(LinkOption... options) throws IOException {
-    // TODO(cgdecker): implement
-    throw new UnsupportedOperationException();
+    return fs.getFileTree(this).toRealPath(this, LinkHandling.fromOptions(options));
   }
 
   @Override

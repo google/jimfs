@@ -20,11 +20,9 @@ final class LookupService {
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
 
   private final FileTree tree;
-  private final FileStorage storage;
 
   LookupService(FileTree tree) {
     this.tree = tree;
-    this.storage = tree.storage();
   }
 
   /**
@@ -34,13 +32,13 @@ final class LookupService {
     checkNotNull(path);
     checkNotNull(linkHandling);
 
-    FileKey baseKey = path.isAbsolute()
-        ? tree.getSuperRoot().getBaseKey()
-        : tree.getBaseKey();
+    File base = path.isAbsolute()
+        ? tree.getSuperRoot().base()
+        : tree.base();
 
     tree.readLock().lock();
     try {
-      return lookup(baseKey, toNames(path), linkHandling, 0);
+      return lookup(base, toNames(path), linkHandling, 0);
     } finally {
       tree.readLock().unlock();
     }
@@ -50,73 +48,70 @@ final class LookupService {
    * Looks up the file key for the given path.
    */
   private LookupResult lookup(
-      FileKey dirKey, JimfsPath path, LinkHandling linkHandling, int linkDepth)
+      File base, JimfsPath path, LinkHandling linkHandling, int linkDepth)
       throws IOException {
     if (path.isAbsolute()) {
-      dirKey = tree.getSuperRoot().getBaseKey();
+      base = tree.getSuperRoot().base();
     }
 
     checkNotNull(linkHandling);
-    return lookup(dirKey, toNames(path), linkHandling, linkDepth);
+    return lookup(base, toNames(path), linkHandling, linkDepth);
   }
 
   /**
-   * Looks up the given names against the given key. If the key does not resolve to a directory,
-   * the lookup fails.
+   * Looks up the given names against the given base file. If the file is not a directory, the
+   * lookup fails.
    */
-  private LookupResult lookup(FileKey dirKey,
+  private LookupResult lookup(File base,
       Deque<String> names, LinkHandling linkHandling, int linkDepth) throws IOException {
     String name = names.removeFirst();
     if (names.isEmpty()) {
-      return lookupLast(dirKey, name, linkHandling, linkDepth);
+      return lookupLast(base, name, linkHandling, linkDepth);
     }
 
-    DirectoryTable table = getDirectoryTable(dirKey);
+    DirectoryTable table = getDirectoryTable(base);
     if (table == null || !table.containsEntry(name)) {
       return LookupResult.notFound();
     }
 
-    FileKey key = table.get(name);
-    if (key.isSymbolicLink()) {
-      LookupResult linkResult = followSymbolicLink(table, storage.getFile(key), linkDepth);
+    File file = table.get(name);
+    if (file.isSymbolicLink()) {
+      LookupResult linkResult = followSymbolicLink(table, file, linkDepth);
 
-      if (!linkResult.isFileFound()) {
+      if (!linkResult.found()) {
         return LookupResult.notFound();
       }
 
-      key = linkResult.getFileKey();
+      file = linkResult.file();
     }
 
-    return lookup(key, names, linkHandling, linkDepth);
+    return lookup(file, names, linkHandling, linkDepth);
   }
 
   /**
    * Looks up the last element of a path.
    */
-  private LookupResult lookupLast(FileKey dirKey,
+  private LookupResult lookupLast(File base,
       String name, LinkHandling linkHandling, int linkDepth) throws IOException {
-    DirectoryTable table = getDirectoryTable(dirKey);
+    DirectoryTable table = getDirectoryTable(base);
     if (table == null) {
       return LookupResult.notFound();
     }
 
     if (!table.containsEntry(name)) {
       // found the parent, didn't find the last name
-      return LookupResult.parentFound(table.key());
+      return LookupResult.parentFound(base);
     }
 
-    FileKey key = table.get(name);
+    File file = table.get(name);
 
-    if (linkHandling == FOLLOW_LINKS) {
-      File file = storage.getFile(key);
-      if (file.isSymbolicLink()) {
-        // TODO(cgdecker): can add info on the symbolic link and its parent here if needed
-        // for now it doesn't seem like it's needed though
-        return followSymbolicLink(table, file, linkDepth);
-      }
+    if (linkHandling == FOLLOW_LINKS && file.isSymbolicLink()) {
+      // TODO(cgdecker): can add info on the symbolic link and its parent here if needed
+      // for now it doesn't seem like it's needed though
+      return followSymbolicLink(table, file, linkDepth);
     }
 
-    return LookupResult.found(dirKey, key);
+    return LookupResult.found(base, file, table.canonicalize(name));
   }
 
   private LookupResult followSymbolicLink(
@@ -126,13 +121,13 @@ final class LookupService {
     }
 
     JimfsPath targetPath = link.content();
-    return lookup(table.key(), targetPath, FOLLOW_LINKS, linkDepth + 1);
+    return lookup(table.get(DirectoryTable.SELF), targetPath, FOLLOW_LINKS, linkDepth + 1);
   }
 
   @Nullable
-  private DirectoryTable getDirectoryTable(FileKey key) {
-    if (key.isDirectory() && storage.exists(key)) {
-      return storage.getFile(key).content();
+  private DirectoryTable getDirectoryTable(File file) {
+    if (file.isDirectory()) {
+      return file.content();
     }
 
     return null;

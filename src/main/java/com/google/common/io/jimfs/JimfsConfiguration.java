@@ -1,11 +1,15 @@
 package com.google.common.io.jimfs;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
+import java.text.Collator;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Provider of configuration options for an instance of {@link JimfsFileSystem}.
@@ -14,7 +18,14 @@ import java.util.List;
  */
 abstract class JimfsConfiguration {
 
-  private volatile AttributeManager attributeManager;
+  /**
+   * Dead simple pool of Collators. Collators synchronize their getCollationKey() method, and since
+   * we need to create many names in the process of path creation, we'd rather not have a single
+   * collator become a bottleneck.
+   */
+  private volatile BlockingQueue<Collator> collatorPool;
+
+  private volatile AttributeService attributeService;
   private volatile String recognizedSeparators;
   private volatile ImmutableSet<Feature> supportedFeatures;
 
@@ -53,8 +64,39 @@ abstract class JimfsConfiguration {
   /**
    * Returns whether or not file lookup is case sensitive. Default is {@code false}.
    */
-  public boolean isLookupCaseSensitive() {
+  public boolean areNamesCaseSensitive() {
     return false;
+  }
+
+  /**
+   * Creates a {@link Name} from the given string.
+   */
+  public final Name createName(String name) {
+    if (areNamesCaseSensitive()) {
+      return Name.caseSensitive(name);
+    } else {
+      return createCaseInsensitiveName(name);
+    }
+  }
+
+  private Name createCaseInsensitiveName(String name) {
+    if (collatorPool == null) {
+      collatorPool = new ArrayBlockingQueue<>(4);
+      for (int i = 0; i < 4; i++) {
+        collatorPool.offer(createCollator());
+      }
+    }
+
+    Collator collator = Uninterruptibles.takeUninterruptibly(collatorPool);
+    Name result = Name.caseInsensitive(name, collator);
+    collatorPool.offer(collator);
+    return result;
+  }
+
+  private Collator createCollator() {
+    Collator c = Collator.getInstance();
+    c.setStrength(Collator.SECONDARY);
+    return c;
   }
 
   /**
@@ -80,16 +122,16 @@ abstract class JimfsConfiguration {
   protected abstract Iterable<AttributeProvider> getAttributeProviders();
 
   /**
-   * Gets the attribute manager for this configuration.
+   * Gets the attribute service for this configuration.
    */
-  public final AttributeManager getAttributeManager() {
-    if (attributeManager == null) {
-      AttributeManager manager = new AttributeManager(getAttributeProviders());
-      attributeManager = manager;
+  public final AttributeService getAttributeService() {
+    if (attributeService == null) {
+      AttributeService manager = new AttributeService(getAttributeProviders());
+      attributeService = manager;
       return manager;
     }
 
-    return attributeManager;
+    return attributeService;
   }
 
   /**
