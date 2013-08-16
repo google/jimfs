@@ -1,0 +1,14 @@
+.idea/
+*.ims
+*.iml
+
+.classpath
+.project/
+
+target/
+
+bin/
+out/
+
+# temp
+src/main/java/com/google/common/io/jimfs/test/
