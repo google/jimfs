@@ -13,11 +13,9 @@ final class FileService {
 
   private final AtomicLong keyGenerator = new AtomicLong();
   private final AttributeService attributeService;
-  private final boolean caseSensitive;
 
-  FileService(AttributeService attributeService, boolean caseSensitive) {
+  FileService(AttributeService attributeService) {
     this.attributeService = checkNotNull(attributeService);
-    this.caseSensitive = caseSensitive;
   }
 
   private long nextFileId() {
@@ -34,7 +32,7 @@ final class FileService {
    * Creates a new directory and stores it. Returns the key of the new file.
    */
   public File createDirectory() {
-    return createFile(nextFileId(), new DirectoryTable(caseSensitive));
+    return createFile(nextFileId(), new DirectoryTable());
   }
 
   /**

@@ -41,8 +41,7 @@ final class JimfsFileSystem extends FileSystem {
       JimfsFileSystemProvider provider, JimfsConfiguration configuration) {
     this.provider = checkNotNull(provider);
     this.configuration = checkNotNull(configuration);
-    this.fileService = new FileService(
-        configuration.getAttributeService(), configuration.areNamesCaseSensitive());
+    this.fileService = new FileService(configuration.getAttributeService());
 
     this.roots = createRootPaths(configuration.getRoots());
 
@@ -114,6 +113,13 @@ final class JimfsFileSystem extends FileSystem {
    */
   public JimfsConfiguration configuration() {
     return configuration;
+  }
+
+  /**
+   * Returns the {@link Name} representation of the given string for this file system.
+   */
+  public Name name(String name) {
+    return configuration().createName(name, false);
   }
 
   /**

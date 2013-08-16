@@ -3,8 +3,9 @@ package com.google.common.io.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.jimfs.LinkHandling.FOLLOW_LINKS;
 
+import com.google.common.collect.Iterables;
+
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -62,20 +63,17 @@ final class LookupService {
    * Looks up the given names against the given base file. If the file is not a directory, the
    * lookup fails.
    */
-  private LookupResult lookup(File base,
-      Deque<String> names, LinkHandling linkHandling, int linkDepth) throws IOException {
-    String name = names.removeFirst();
+  private LookupResult lookup(@Nullable File base,
+      Deque<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
+    Name name = names.removeFirst();
     if (names.isEmpty()) {
       return lookupLast(base, name, linkHandling, linkDepth);
     }
 
     DirectoryTable table = getDirectoryTable(base);
-    if (table == null || !table.containsEntry(name)) {
-      return LookupResult.notFound();
-    }
+    File file = table == null ? null : table.get(name);
 
-    File file = table.get(name);
-    if (file.isSymbolicLink()) {
+    if (file != null && file.isSymbolicLink()) {
       LookupResult linkResult = followSymbolicLink(table, file, linkDepth);
 
       if (!linkResult.found()) {
@@ -92,18 +90,16 @@ final class LookupService {
    * Looks up the last element of a path.
    */
   private LookupResult lookupLast(File base,
-      String name, LinkHandling linkHandling, int linkDepth) throws IOException {
+      Name name, LinkHandling linkHandling, int linkDepth) throws IOException {
     DirectoryTable table = getDirectoryTable(base);
     if (table == null) {
       return LookupResult.notFound();
     }
 
-    if (!table.containsEntry(name)) {
-      // found the parent, didn't find the last name
+    File file = table.get(name);
+    if (file == null) {
       return LookupResult.parentFound(base);
     }
-
-    File file = table.get(name);
 
     if (linkHandling == FOLLOW_LINKS && file.isSymbolicLink()) {
       // TODO(cgdecker): can add info on the symbolic link and its parent here if needed
@@ -121,26 +117,21 @@ final class LookupService {
     }
 
     JimfsPath targetPath = link.content();
-    return lookup(table.get(DirectoryTable.SELF), targetPath, FOLLOW_LINKS, linkDepth + 1);
+    return lookup(table.get(Name.SELF), targetPath, FOLLOW_LINKS, linkDepth + 1);
   }
 
   @Nullable
-  private DirectoryTable getDirectoryTable(File file) {
-    if (file.isDirectory()) {
+  private DirectoryTable getDirectoryTable(@Nullable File file) {
+    if (file != null && file.isDirectory()) {
       return file.content();
     }
 
     return null;
   }
 
-  private static Deque<String> toNames(JimfsPath path) {
-    Deque<String> names = new ArrayDeque<>();
-    if (path.isAbsolute()) {
-      names.add(path.getRoot().toString());
-    }
-    for (Path name : path) {
-      names.add(name.toString());
-    }
+  private static Deque<Name> toNames(JimfsPath path) {
+    Deque<Name> names = new ArrayDeque<>();
+    Iterables.addAll(names, path.allNames());
     return names;
   }
 }

@@ -45,7 +45,7 @@ final class LookupResult {
   /**
    * Returns a successful lookup result with a parent, file and file name.
    */
-  public static LookupResult found(File parent, File file, String name) {
+  public static LookupResult found(File parent, File file, Name name) {
     return new LookupResult(checkNotNull(parent), checkNotNull(file), checkNotNull(name));
   }
 
@@ -56,10 +56,10 @@ final class LookupResult {
   private final File file;
 
   @Nullable
-  private final String name;
+  private final Name name;
 
   private LookupResult(
-      @Nullable File parent, @Nullable File file, @Nullable String name) {
+      @Nullable File parent, @Nullable File file, @Nullable Name name) {
     this.parent = parent;
     this.file = file;
     this.name = name;
@@ -135,7 +135,7 @@ final class LookupResult {
    *
    * @throws IllegalStateException if the result was not {@linkplain #found() not found}
    */
-  public String name() {
+  public Name name() {
     checkState(found(), "file was not found");
     return name;
   }

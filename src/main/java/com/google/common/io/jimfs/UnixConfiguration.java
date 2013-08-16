@@ -1,5 +1,6 @@
 package com.google.common.io.jimfs;
 
+import static com.google.common.io.jimfs.JimfsConfiguration.Feature.CASE_INSENSITIVE_NAMES;
 import static com.google.common.io.jimfs.JimfsConfiguration.Feature.GROUPS;
 import static com.google.common.io.jimfs.JimfsConfiguration.Feature.LINKS;
 import static com.google.common.io.jimfs.JimfsConfiguration.Feature.SECURE_DIRECTORY_STREAMS;
@@ -71,9 +72,9 @@ final class UnixConfiguration extends JimfsConfiguration {
     }
 
     String first = parts.get(0);
-    String root = null;
+    Name root = null;
     if (first.startsWith("/")) {
-      root = "/";
+      root = createName("/", true);
       if (first.length() == 1) {
         parts.remove(0);
       } else {
@@ -82,8 +83,9 @@ final class UnixConfiguration extends JimfsConfiguration {
     }
 
     String joined = JOINER.join(parts);
-    Iterable<String> names = SPLITTER.split(joined);
-    return JimfsPath.create(fileSystem, root, names);
+    Iterable<String> split = SPLITTER.split(joined);
+
+    return JimfsPath.create(fileSystem, root, toNames(split));
   }
 
   @Override

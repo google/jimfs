@@ -165,12 +165,12 @@ public class JimfsIntegrationTest {
     assertThat(path("/foo/bar").toAbsolutePath()).isAbsolute()
         .and().hasRootComponent("/")
         .and().hasNameComponents("foo", "bar")
-        .and().is(path("/foo/bar"));
+        .and().isEqualTo(path("/foo/bar"));
 
     assertThat(path("foo/bar").toAbsolutePath()).isAbsolute()
         .and().hasRootComponent("/")
         .and().hasNameComponents("work", "foo", "bar")
-        .and().is(path("/work/foo/bar"));
+        .and().isEqualTo(path("/work/foo/bar"));
   }
 
   @Test
@@ -180,7 +180,9 @@ public class JimfsIntegrationTest {
 
     ASSERT.that(path("/link/foo/bar").toRealPath()).isEqualTo(path("/foo/bar"));
 
-    ASSERT.that(path("/FOO/BAR").toRealPath()).isEqualTo(path("/foo/bar"));
+    // case insensitivity tests: move to another test
+    //ASSERT.that(path("/FOO/BAR").toRealPath()).isEqualTo(path("/foo/bar"));
+    //ASSERT.that(path("/Link/FOO/bAR").toRealPath()).isEqualTo(path("/foo/bar"));
   }
 
   @Test

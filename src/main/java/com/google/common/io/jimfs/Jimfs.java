@@ -17,7 +17,7 @@ public final class Jimfs {
    * Returns a new in-memory file system with semantics similar to UNIX.
    *
    * <p>The returned file system has a single root, "/", and uses "/" as a separator. It supports
-   * symbolic and hard links. File lookup is not case-sensitive. The supported file attribute views
+   * symbolic and hard links. File lookup is case-sensitive. The supported file attribute views
    * are "basic", "owner", "posix" and "unix".
    *
    * <p>The working directory for the file system, which exists when it is created, is "/work".

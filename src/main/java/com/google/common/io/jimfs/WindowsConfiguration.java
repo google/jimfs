@@ -2,6 +2,7 @@ package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.base.Ascii;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -78,18 +79,28 @@ final class WindowsConfiguration extends JimfsConfiguration {
   }
 
   @Override
+  public Name createName(String name, boolean root) {
+    if (root) {
+      Name canonical = defaultCreateName(Ascii.toUpperCase(name) + "\\");
+      return Name.create(name, canonical);
+    }
+    return defaultCreateName(name);
+  }
+
+  @Override
   public JimfsPath parsePath(JimfsFileSystem fileSystem, List<String> path) {
     String joined = JOINER.join(path);
-    String root = null;
+    Name root = null;
     if (joined.length() >= 2
         && CharMatcher.JAVA_LETTER.matches(joined.charAt(0))
         && joined.charAt(1) == ':') {
-      root = joined.substring(0, 2).toUpperCase();
+      root = createName(joined.substring(0, 2), true);
       joined = joined.substring(2);
     }
 
     Iterable<String> split = SPLITTER.split(joined);
-    return JimfsPath.create(fileSystem, root, split);
+
+    return JimfsPath.create(fileSystem, root, toNames(split));
   }
 
   public static void main(String[] args) throws IOException {

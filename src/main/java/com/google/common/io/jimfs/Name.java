@@ -2,96 +2,130 @@ package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.base.Ascii;
+
+import com.ibm.icu.text.Normalizer2;
+
 import java.text.CollationKey;
 import java.text.Collator;
 
 /**
- * A file name; may be case-sensitive or insensitive.
+ * Immutable representation of a file name. Used both for the name components of paths and as the
+ * keys for directory entries.
+ *
+ * <p>A name's string representation (returned by {@code toString()} is always the original string
+ * it was created from. All names also have a canonical form which is used for determining the
+ * equality of two names but never displayed or used for anything else. A {@linkplain #simple}
+ * name has the original name itself as the canonical form. Other implementations do some form of
+ * normalization to produce the canonical form.
+ *
+ * <p>Different types of names (with different canonical forms) may not equal one another even if
+ * they effectively have the same canonical form, as the canonical form is not required to be a
+ * string.
+ *
+ * <p>Note: all factory methods return a constant simple name instance when given the original
+ * string "." or "..", ensuring that those names can be accessed statically elsewhere in the code
+ * while still being equal to any names created for those values, regardless of case sensitivity
+ * settings.
  *
  * @author Colin Decker
  */
-public abstract class Name {
+final class Name {
 
   /**
-   * Creates a new case-sensitive name.
+   * Returns the name to use for a link to the same directory.
    */
-  public static Name caseSensitive(String name) {
-    return new CaseSensitiveName(name);
+  public static final Name SELF = new Name(".", ".");
+
+  /**
+   * Returns the name to use for a link to a parent directory.
+   */
+  public static final Name PARENT = new Name("..", "..");
+
+  /**
+   * Creates a new name with the name itself as the canonical form.
+   */
+  public static Name simple(String name) {
+    switch (name) {
+      case ".": return SELF;
+      case "..": return PARENT;
+      default: return new Name(checkNotNull(name), name);
+    }
   }
 
   /**
-   * Creates a new case-insensitive name.
+   * Creates a new name with a {@link CollationKey} created from it by the given collator as the
+   * canonical form.
    */
-  public static Name caseInsensitive(String name, Collator collator) {
-    return new CaseInsensitiveName(name, collator);
+  public static Name collating(String name, Collator collator) {
+    switch (name) {
+      case ".": return SELF;
+      case "..": return PARENT;
+      default: return new Name(name, collator.getCollationKey(name));
+    }
   }
 
   /**
-   * Returns the string form of this name.
+   * Creates a new name with a canonical form created by normalizing it with the given normalizer.
+   */
+  public static Name normalizing(String name, Normalizer2 normalizer) {
+    switch (name) {
+      case ".": return SELF;
+      case "..": return PARENT;
+      default: return new Name(name, normalizer.normalize(name));
+    }
+  }
+
+  /**
+   * Creates a new name with itself with all upper-case ASCII characters normalized to lower-case
+   * as the canonical form.
+   */
+  public static Name caseInsensitiveAscii(String name) {
+    switch (name) {
+      case ".": return SELF;
+      case "..": return PARENT;
+      default: return new Name(name, Ascii.toLowerCase(name));
+    }
+  }
+
+  /**
+   * Creates a new name with the given original string value and the given canonical value.
+   */
+  public static Name create(String original, Object canonical) {
+    switch (original) {
+      case ".": return SELF;
+      case "..": return PARENT;
+      default: return new Name(original, canonical);
+    }
+  }
+
+  private final String string;
+  private final Object canonical;
+
+  private Name(String string, Object canonical) {
+    this.string = string;
+    this.canonical = canonical;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof Name) {
+      Name other = (Name) obj;
+      return canonical.equals(other.canonical);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return canonical.hashCode();
+  }
+
+  /**
+   * Returns the original string form of this name.
    */
   @Override
-  public abstract String toString();
-
-  /**
-   * A case-sensitive name that uses normal string comparison.
-   */
-  private static class CaseSensitiveName extends Name {
-
-    private final String string;
-
-    private CaseSensitiveName(String string) {
-      this.string = checkNotNull(string);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof CaseSensitiveName) {
-        CaseSensitiveName other = (CaseSensitiveName) obj;
-        return string.equals(other.string);
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      return string.hashCode();
-    }
-
-    @Override
-    public String toString() {
-      return string;
-    }
-  }
-
-  /**
-   * A case-insensitive name that uses a {@link CollationKey} from a {@link Collator} with a
-   * strength of {@link Collator#SECONDARY}.
-   */
-  private static class CaseInsensitiveName extends Name {
-
-    private final CollationKey key;
-
-    private CaseInsensitiveName(String string, Collator collator) {
-      this.key = collator.getCollationKey(string);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof CaseInsensitiveName) {
-        CaseInsensitiveName other = (CaseInsensitiveName) obj;
-        return key.equals(other.key);
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      return key.hashCode();
-    }
-
-    @Override
-    public String toString() {
-      return key.getSourceString();
-    }
+  public String toString() {
+    return string;
   }
 }

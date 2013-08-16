@@ -1,15 +1,15 @@
 package com.google.common.io.jimfs;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Uninterruptibles;
+
+import com.ibm.icu.text.Normalizer2;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 import java.text.Collator;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 /**
  * Provider of configuration options for an instance of {@link JimfsFileSystem}.
@@ -17,13 +17,6 @@ import java.util.concurrent.BlockingQueue;
  * @author Colin Decker
  */
 abstract class JimfsConfiguration {
-
-  /**
-   * Dead simple pool of Collators. Collators synchronize their getCollationKey() method, and since
-   * we need to create many names in the process of path creation, we'd rather not have a single
-   * collator become a bottleneck.
-   */
-  private volatile BlockingQueue<Collator> collatorPool;
 
   private volatile AttributeService attributeService;
   private volatile String recognizedSeparators;
@@ -62,35 +55,39 @@ abstract class JimfsConfiguration {
   }
 
   /**
-   * Returns whether or not file lookup is case sensitive. Default is {@code false}.
+   * Creates a {@link Name} from the given string.
    */
-  public boolean areNamesCaseSensitive() {
-    return false;
+  public Name createName(String name, boolean root) {
+    return defaultCreateName(name);
   }
 
   /**
-   * Creates a {@link Name} from the given string.
+   * Creates a default name. The name's case sensitivity is determined by the presence or absence
+   * of the {@link Feature#CASE_INSENSITIVE_NAMES CASE_INSENSITIVE_NAMES} feature.
    */
-  public final Name createName(String name) {
-    if (areNamesCaseSensitive()) {
-      return Name.caseSensitive(name);
-    } else {
+  protected final Name defaultCreateName(String name) {
+    if (supportsFeature(Feature.CASE_INSENSITIVE_NAMES)) {
       return createCaseInsensitiveName(name);
+    } else if (supportsFeature(Feature.CASE_INSENSITIVE_ASCII_NAMES)) {
+      return Name.caseInsensitiveAscii(name);
+    } else {
+      return Name.simple(name);
     }
   }
 
-  private Name createCaseInsensitiveName(String name) {
-    if (collatorPool == null) {
-      collatorPool = new ArrayBlockingQueue<>(4);
-      for (int i = 0; i < 4; i++) {
-        collatorPool.offer(createCollator());
-      }
+  /**
+   * Creates an immutable list of name objects from the given strings.
+   */
+  public final ImmutableList<Name> toNames(Iterable<String> names) {
+    ImmutableList.Builder<Name> builder = ImmutableList.builder();
+    for (String name : names) {
+      builder.add(createName(name, false));
     }
+    return builder.build();
+  }
 
-    Collator collator = Uninterruptibles.takeUninterruptibly(collatorPool);
-    Name result = Name.caseInsensitive(name, collator);
-    collatorPool.offer(collator);
-    return result;
+  private Name createCaseInsensitiveName(String name) {
+    return Name.normalizing(name, Normalizer2.getNFKCCasefoldInstance());
   }
 
   private Collator createCollator() {
@@ -172,7 +169,11 @@ abstract class JimfsConfiguration {
     /** Supports the lookup of group principals. */
     GROUPS,
     /** {@link SecureDirectoryStream} is supported. */
-    SECURE_DIRECTORY_STREAMS
+    SECURE_DIRECTORY_STREAMS,
+    /** File names are not case sensitive. */
+    CASE_INSENSITIVE_NAMES,
+    /** File names are not case sensitive for ASCII letters they contain. */
+    CASE_INSENSITIVE_ASCII_NAMES
   }
 
 }

@@ -2,15 +2,15 @@ package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.io.jimfs.DirectoryTable.PARENT;
-import static com.google.common.io.jimfs.DirectoryTable.SELF;
 import static com.google.common.io.jimfs.ExceptionHelpers.throwProviderMismatch;
+import static com.google.common.io.jimfs.Name.PARENT;
+import static com.google.common.io.jimfs.Name.SELF;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +22,10 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.AbstractList;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,27 +44,27 @@ final class JimfsPath implements Path, FileContent {
    */
   public static JimfsPath empty(JimfsFileSystem fs) {
     // this is what an empty path seems to be in the UnixFileSystem anyway...
-    return new JimfsPath(fs, null, ImmutableList.of(""));
+    return new JimfsPath(fs, null, ImmutableList.of(fs.name("")));
   }
 
   /**
    * Returns a root path for the given file system.
    */
-  public static JimfsPath root(JimfsFileSystem fs, String name) {
-    return new JimfsPath(fs, name, ImmutableList.<String>of());
+  public static JimfsPath root(JimfsFileSystem fs, Name name) {
+    return new JimfsPath(fs, name, ImmutableList.<Name>of());
   }
 
   /**
    * Returns a single name path for the given file system.
    */
-  public static JimfsPath name(JimfsFileSystem fs, String name) {
+  public static JimfsPath name(JimfsFileSystem fs, Name name) {
     return new JimfsPath(fs, null, ImmutableList.of(name));
   }
 
   /**
    * Returns a path consisting of the given names and no root for the given file system.
    */
-  public static JimfsPath names(JimfsFileSystem fs, Iterable<String> names) {
+  public static JimfsPath names(JimfsFileSystem fs, Iterable<Name> names) {
     return new JimfsPath(fs, null, names);
   }
 
@@ -70,17 +72,17 @@ final class JimfsPath implements Path, FileContent {
    * Creates a new path with the given (optional) root and names for the given file system.
    */
   public static JimfsPath create(
-      JimfsFileSystem fs, @Nullable String root, Iterable<String> names) {
+      JimfsFileSystem fs, @Nullable Name root, Iterable<Name> names) {
     return new JimfsPath(fs, root, names);
   }
 
   private final JimfsFileSystem fs;
 
   @Nullable
-  private final String root;
-  private final ImmutableList<String> names;
+  private final Name root;
+  private final ImmutableList<Name> names;
 
-  private JimfsPath(JimfsFileSystem fs, @Nullable String root, Iterable<String> names) {
+  private JimfsPath(JimfsFileSystem fs, @Nullable Name root, Iterable<Name> names) {
     this.fs = checkNotNull(fs);
     this.root = root;
     this.names = ImmutableList.copyOf(names);
@@ -109,23 +111,32 @@ final class JimfsPath implements Path, FileContent {
 
   @Override
   public JimfsPath getRoot() {
-    return root == null ? null : root(fs, root);
+    if (root == null) {
+      return null;
+    }
+    return names.isEmpty() ? this : root(fs, root);
   }
 
   @Override
   public JimfsPath getFileName() {
-    return names.isEmpty() ? null : name(fs, Iterables.getLast(names));
+    switch (names.size()) {
+      case 0: return null;
+      case 1:
+        if (root == null) {
+          return this;
+        }
+        // else fall through to default
+      default:
+        return name(fs, Iterables.getLast(names));
+    }
   }
 
   @Override
   public JimfsPath getParent() {
-    int nameCount = names.size();
-    if (nameCount > 1) {
-      return new JimfsPath(fs, root, names.subList(0, names.size() - 1));
-    } else if (nameCount == 1) {
-      return root == null ? null : root(fs, root);
-    } else {
-      return null;
+    switch (names.size()) {
+      case 0: return null;
+      case 1: return root == null ? null : root(fs, root);
+      default: return create(fs, root, names.subList(0, names.size() - 1));
     }
   }
 
@@ -197,12 +208,12 @@ final class JimfsPath implements Path, FileContent {
       return this;
     }
 
-    List<String> newNames = Lists.newArrayList();
-    for (String name : names) {
-      if (PARENT.equals(name)) {
-        if (!newNames.isEmpty() &&
-            !PARENT.equals(newNames.get(newNames.size() - 1))) {
-          newNames.remove(newNames.size() - 1);
+    Deque<Name> newNames = new ArrayDeque<>();
+    for (Name name : names) {
+      if (name.equals(PARENT)) {
+        Name lastName = Iterables.getLast(newNames, null);
+        if (lastName != null && !lastName.equals(PARENT)) {
+          newNames.removeLast();
         } else if (root == null) {
           // if there's a root and we have an extra ".." that would go up above the root, ignore it
           newNames.add(name);
@@ -211,9 +222,7 @@ final class JimfsPath implements Path, FileContent {
         newNames.add(name);
       }
     }
-    return newNames.equals(names)
-        ? this
-        : new JimfsPath(fs, root, newNames);
+    return newNames.equals(names) ? this : new JimfsPath(fs, root, newNames);
   }
 
   @Override
@@ -274,7 +283,7 @@ final class JimfsPath implements Path, FileContent {
       return empty(fs);
     }
 
-    ImmutableList<String> otherNames = otherPath.names;
+    ImmutableList<Name> otherNames = otherPath.names;
     int sharedSubsequenceLength = 0;
     for (int i = 0; i < Math.min(getNameCount(), otherNames.size()); i++) {
       if (names.get(i).equals(otherNames.get(i))) {
@@ -286,14 +295,14 @@ final class JimfsPath implements Path, FileContent {
 
     int extraNamesInThis = Math.max(0, getNameCount() - sharedSubsequenceLength);
 
-    Iterable<String> extraNamesInOther = (otherNames.size() <= sharedSubsequenceLength)
-        ? ImmutableList.<String>of()
+    Iterable<Name> extraNamesInOther = (otherNames.size() <= sharedSubsequenceLength)
+        ? ImmutableList.<Name>of()
         : otherNames.subList(sharedSubsequenceLength, otherNames.size());
 
-    List<String> parts = new ArrayList<>();
+    List<Name> parts = new ArrayList<>();
 
     // add .. for each extra name in this path
-    Iterables.addAll(parts, Collections.nCopies(extraNamesInThis, ".."));
+    Iterables.addAll(parts, Collections.nCopies(extraNamesInThis, PARENT));
     // add each extra name in the other path
     Iterables.addAll(parts, extraNamesInOther);
 
@@ -354,6 +363,29 @@ final class JimfsPath implements Path, FileContent {
     };
   }
 
+  /**
+   * Returns the root name, or {@code null} if this path does not have a root.
+   */
+  @Nullable
+  public Name getRootName() {
+    return root;
+  }
+
+  /**
+   * Returns the list of {@link Name} objects that this path consists of, not including the root
+   * name.
+   */
+  public ImmutableList<Name> asNameList() {
+    return names;
+  }
+
+  /**
+   * Returns an iterable of all names in the path, including the root if present.
+   */
+  public Iterable<Name> allNames() {
+    return Iterables.concat(Optional.fromNullable(root).asSet(), names);
+  }
+
   @Override
   public int compareTo(Path other) {
     return toString().compareTo(other.toString());
@@ -384,7 +416,7 @@ final class JimfsPath implements Path, FileContent {
     StringBuilder builder = new StringBuilder();
     if (root != null) {
       builder.append(root);
-      if (getNameCount() > 0 && !root.endsWith(fs.getSeparator())) {
+      if (getNameCount() > 0 && !root.toString().endsWith(fs.getSeparator())) {
         builder.append(fs.getSeparator());
       }
     }

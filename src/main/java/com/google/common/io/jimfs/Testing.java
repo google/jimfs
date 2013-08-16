@@ -6,6 +6,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.FluentIterable;
 
+import com.ibm.icu.text.Normalizer2;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
@@ -13,6 +15,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.Normalizer;
 
 import javax.annotation.Nullable;
 
@@ -22,14 +25,18 @@ import javax.annotation.Nullable;
 public class Testing {
 
   public static void main(String[] args) throws IOException {
+    Normalizer2 normalizer = Normalizer2.getNFKCCasefoldInstance();
+    System.out.println(normalizer.normalize("aBcdEfG"));
+    //System.out.println(Normalizer.normalize("aBcdEfG", Normalizer.Form.NFD));
+
     // testUsingTree();
     // testUsingApi();
 
-    Path workingAbsolute = Paths.get("/Users/cgdecker/temp/working");
+    /*Path workingAbsolute = Paths.get("/Users/cgdecker/temp/working");
     Path workingRelative = Paths.get("");
     System.out.println(toStructuralString(workingRelative));
 
-    System.out.println(Files.isSameFile(workingAbsolute, workingRelative));
+    System.out.println(Files.isSameFile(workingAbsolute, workingRelative));*/
 
     /*Files.createFile(Paths.get("bar/foo"));
     Files.delete(Paths.get("../working/bar/foo"));*/

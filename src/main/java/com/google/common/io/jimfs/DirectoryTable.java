@@ -2,17 +2,16 @@ package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.io.jimfs.Name.PARENT;
+import static com.google.common.io.jimfs.Name.SELF;
 
+import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Ordering;
 
-import java.text.Collator;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import javax.annotation.Nullable;
 
@@ -23,30 +22,18 @@ import javax.annotation.Nullable;
  */
 final class DirectoryTable implements FileContent {
 
-  static final String SELF = ".";
-  static final String PARENT = "..";
+  /**
+   * Ordering for ordering {@code Name} objects by their actual string values rather than their
+   * collation keys (if applicable). Even if names are case insensitive, we want to order them in
+   * a case sensitive way.
+   */
+  private static final Ordering<Object> STRING_ORDERING = Ordering.natural()
+      .onResultOf(Functions.toStringFunction());
 
-  private static final ImmutableSet<String> RESERVED_NAMES = ImmutableSet.of(SELF, PARENT);
+  private static final ImmutableSet<Name> RESERVED_NAMES =
+      ImmutableSet.of(SELF, PARENT);
 
-  private final Map<String, File> entries;
-
-  DirectoryTable(boolean caseSensitive) {
-    if (caseSensitive) {
-      entries = new HashMap<>();
-    } else {
-      // TODO(cgdecker): should the user be able to specify the Locale for this? meh.
-      // TODO(cgdecker): use ICU4J's Collator instead?
-      // TODO(cgdecker): use a HashMap with CollationKey keys instead?
-      entries = new TreeMap<>(collator());
-    }
-  }
-
-  private static Collator collator() {
-    Collator collator = Collator.getInstance();
-    // secondary = different case considered same; different accents considered different
-    collator.setStrength(Collator.SECONDARY);
-    return collator;
-  }
+  private final Map<Name, File> entries = new HashMap<>();
 
   /**
    * Creates a copy of this table. The copy does <i>not</i> contain a copy of the entries in this
@@ -54,20 +41,7 @@ final class DirectoryTable implements FileContent {
    */
   @Override
   public DirectoryTable copy() {
-    return new DirectoryTable(isCaseSensitive());
-  }
-
-  private boolean isCaseSensitive() {
-    return !(entries instanceof SortedMap);
-  }
-
-  @SuppressWarnings("unchecked")
-  private Comparator<String> comparator() {
-    if (entries instanceof SortedMap) {
-      return (Comparator<String>) ((SortedMap<String, File>) entries).comparator();
-    }
-
-    return Ordering.natural();
+    return new DirectoryTable();
   }
 
   @Override
@@ -80,6 +54,13 @@ final class DirectoryTable implements FileContent {
    */
   public File parent() {
     return get(PARENT);
+  }
+
+  /**
+   * Returns the directory table for the parent directory.
+   */
+  public DirectoryTable parentTable() {
+    return entries.get(PARENT).content();
   }
 
   /**
@@ -123,11 +104,11 @@ final class DirectoryTable implements FileContent {
    * @throws IllegalArgumentException if {@code name} is a reserved name such as "." or if an
    *     entry already exists for the it
    */
-  public void link(String name, File file) {
+  public void link(Name name, File file) {
     linkInternal(checkValidName(name, "link"), file);
   }
 
-  private void linkInternal(String name, File file) {
+  private void linkInternal(Name name, File file) {
     checkArgument(!entries.containsKey(name), "entry '%s' already exists", name);
     entries.put(name, file);
     file.linked();
@@ -139,26 +120,20 @@ final class DirectoryTable implements FileContent {
    *
    * @throws IllegalArgumentException if {@code name} is a reserved name such as "."
    */
-  public void unlink(String name) {
+  public void unlink(Name name) {
     unlinkInternal(checkValidName(name, "unlink"));
   }
 
-  private void unlinkInternal(String name) {
+  private void unlinkInternal(Name name) {
     entries.remove(name).unlinked();
   }
 
   /**
-   * Returns whether or not this table contains an entry for the given name.
-   */
-  public boolean containsEntry(String name) {
-    return entries.containsKey(name);
-  }
-
-  /**
-   * Returns the file linked by the given name in this directory.
+   * Returns the file linked by the given name in this directory or {@code null} if no such file
+   * exists.
    */
   @Nullable
-  public File get(String name) {
+  public File get(Name name) {
     return entries.get(name);
   }
 
@@ -167,19 +142,10 @@ final class DirectoryTable implements FileContent {
    *
    * @throws IllegalArgumentException if the table does not contain an entry with the given name
    */
-  public String canonicalize(String name) {
-    if (entries instanceof SortedMap<?, ?>) {
-      SortedMap<String, File> sorted = (SortedMap<String, File>) entries;
-      SortedMap<String, File> tailMap = sorted.tailMap(name);
-      if (!tailMap.isEmpty()) {
-        String possibleMatch = sorted.tailMap(name).firstKey();
-        if (sorted.comparator().compare(name, possibleMatch) == 0) {
-          return possibleMatch;
-        }
-      }
-    } else {
-      if (entries.containsKey(name)) {
-        return name;
+  public Name canonicalize(Name name) {
+    for (Map.Entry<Name, File> entry : entries.entrySet()) {
+      if (entry.getKey().equals(name)) {
+        return entry.getKey();
       }
     }
     throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
@@ -190,10 +156,10 @@ final class DirectoryTable implements FileContent {
    * zero names or more than one name links to the key. Should only be used for getting the name of
    * a directory, as directories cannot have more than one link.
    */
-  public String getName(File file) {
-    String result = null;
-    for (Map.Entry<String, File> entry : entries.entrySet()) {
-      String name = entry.getKey();
+  public Name getName(File file) {
+    Name result = null;
+    for (Map.Entry<Name, File> entry : entries.entrySet()) {
+      Name name = entry.getKey();
       File i = entry.getValue();
       if (i.equals(file)) {
         if (result == null) {
@@ -215,11 +181,10 @@ final class DirectoryTable implements FileContent {
    * Creates an immutable sorted snapshot of the names this directory contains, excluding
    * "." and "..".
    */
-  public ImmutableSortedSet<String> snapshot() {
-    ImmutableSortedSet.Builder<String> builder =
-        ImmutableSortedSet.orderedBy(comparator());
+  public ImmutableSortedSet<Name> snapshot() {
+    ImmutableSortedSet.Builder<Name> builder = new ImmutableSortedSet.Builder<>(STRING_ORDERING);
 
-    for (String name : entries.keySet()) {
+    for (Name name : entries.keySet()) {
       if (!RESERVED_NAMES.contains(name)) {
         builder.add(name);
       }
@@ -227,7 +192,7 @@ final class DirectoryTable implements FileContent {
     return builder.build();
   }
 
-  private static String checkValidName(String name, String action) {
+  private static Name checkValidName(Name name, String action) {
     checkArgument(!RESERVED_NAMES.contains(name), "cannot %s: %s", action, name);
     return name;
   }

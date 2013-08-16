@@ -12,6 +12,7 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import java.io.IOException;
@@ -183,7 +184,7 @@ final class FileTree {
    * Returns a snapshot of the entries in the directory located by the given path.
    */
   public ImmutableSortedSet<Path> snapshotEntries(JimfsPath dir) throws IOException {
-    ImmutableSortedSet<String> names;
+    ImmutableSortedSet<Name> names;
     readLock().lock();
     try {
       File file = requireNonNull(lookupFile(dir, LinkHandling.NOFOLLOW_LINKS), dir);
@@ -198,7 +199,7 @@ final class FileTree {
     }
 
     ImmutableSortedSet.Builder<Path> builder = ImmutableSortedSet.naturalOrder();
-    for (String name : names) {
+    for (Name name : names) {
       builder.add(JimfsPath.name(fs, name));
     }
     return builder.build();
@@ -235,7 +236,7 @@ final class FileTree {
       LookupResult lookupResult = lookupService.lookup(path, linkHandling)
           .requireFound(path);
 
-      List<String> names = new ArrayList<>();
+      List<Name> names = new ArrayList<>();
       names.add(lookupResult.name());
 
       // if the result was a root directory, the name for the result is the only name
@@ -256,7 +257,10 @@ final class FileTree {
         names.add(superRootBaseTable.getName(file));
       }
 
-      return fs.configuration().parsePath(fs, Lists.reverse(names));
+      List<Name> reversed = Lists.reverse(names);
+      Name root = reversed.remove(0);
+
+      return JimfsPath.create(fs, root, reversed);
     } finally {
       readLock().unlock();
     }
@@ -273,7 +277,7 @@ final class FileTree {
     checkNotNull(path);
     checkNotNull(callback);
 
-    String name = name(path);
+    Name name = name(path);
 
     writeLock().lock();
     try {
@@ -318,10 +322,10 @@ final class FileTree {
     table.unlinkParent();
   }
 
-  private static String name(Path path) {
-    return path.getFileName() == null
-        ? path.getRoot().toString()
-        : path.getFileName().toString();
+  private static Name name(JimfsPath path) {
+    return path.getNameCount() == 0
+        ? path.getRootName()
+        : Iterables.getLast(path.asNameList(), null);
   }
 
   /**
@@ -401,7 +405,7 @@ final class FileTree {
           "can't link: source and target are in different file system instances");
     }
 
-    String linkName = name(link);
+    Name linkName = name(link);
 
     // targetTree is in the same file system, so the lock applies for both trees
     writeLock().lock();
@@ -438,7 +442,7 @@ final class FileTree {
    * Deletes the file at the given absolute path.
    */
   public void deleteFile(JimfsPath path, DeleteMode deleteMode) throws IOException {
-    String name = name(path);
+    Name name = name(path);
 
     writeLock().lock();
     try {
@@ -456,9 +460,10 @@ final class FileTree {
   /**
    * Deletes the file with the given name and key from the given parent directory.
    */
-  private void delete(DirectoryTable parentTable, String name,
+  private void delete(DirectoryTable parentTable, Name name,
       DeleteMode deleteMode, JimfsPath pathForException) throws IOException {
     File file = parentTable.get(name);
+    assert file != null;
     checkDeletable(file, deleteMode, pathForException);
     parentTable.unlink(name);
     if (file.isDirectory()) {
@@ -543,8 +548,8 @@ final class FileTree {
 
     LinkHandling linkHandling = move ? NOFOLLOW_LINKS : LinkHandling.fromOptions(options);
 
-    JimfsPath sourceName = source.getFileName();
-    JimfsPath destName = dest.getFileName();
+    Name sourceName = name(source);
+    Name destName = name(dest);
 
     lockBoth(writeLock(), destTree.writeLock());
     try {
@@ -576,7 +581,7 @@ final class FileTree {
         if (destLookup.file() == sourceFile) {
           return;
         } else if (options.contains(REPLACE_EXISTING)) {
-          destTree.delete(destParentTable, destName.toString(), DeleteMode.ANY, dest);
+          destTree.delete(destParentTable, destName, DeleteMode.ANY, dest);
         } else {
           throw new FileAlreadyExistsException(dest.toString());
         }
@@ -585,8 +590,8 @@ final class FileTree {
       // can only do an actual move within one file system instance
       // otherwise we have to copy and delete
       if (move && sameFileSystem) {
-        sourceParent.unlink(sourceName.toString());
-        destParentTable.link(destName.toString(), sourceFile);
+        sourceParent.unlink(sourceName);
+        destParentTable.link(destName, sourceFile);
 
         if (sourceFile.isDirectory()) {
           unlinkSelfAndParent(sourceFile);
@@ -595,7 +600,7 @@ final class FileTree {
       } else {
         // copy
         File copy = destTree.getFileSystem().getFileService().copy(sourceFile);
-        destParentTable.link(destName.toString(), copy);
+        destParentTable.link(destName, copy);
 
         if (copy.isDirectory()) {
           linkSelfAndParent(copy, destParent);
@@ -603,7 +608,7 @@ final class FileTree {
 
         if (move) {
           copyBasicAttributes(sourceFile, destTree, copy);
-          delete(sourceParent, sourceName.toString(), DeleteMode.ANY, source);
+          delete(sourceParent, sourceName, DeleteMode.ANY, source);
         }
       }
     } finally {
