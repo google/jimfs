@@ -242,21 +242,19 @@ final class FileTree {
       // if the result was a root directory, the name for the result is the only name
       if (!lookupResult.file().isRootDirectory()) {
         File file = lookupResult.parent();
-        DirectoryTable fileTable = file.content();
         while (!file.isRootDirectory()) {
-          File parent = fileTable.parent();
-          DirectoryTable parentTable = parent.content();
-          names.add(parentTable.getName(file));
-          file = parent;
-          fileTable = parentTable;
+          DirectoryTable fileTable = file.content();
+          names.add(fileTable.name());
+          file = fileTable.parent();
         }
 
-        // handle root directory
+        // must handle root directory separately
         File superRootBase = getSuperRoot().base();
         DirectoryTable superRootBaseTable = superRootBase.content();
         names.add(superRootBaseTable.getName(file));
       }
 
+      // names are ordered last to first in the list, so get the reverse view
       List<Name> reversed = Lists.reverse(names);
       Name root = reversed.remove(0);
 

@@ -50,6 +50,13 @@ final class DirectoryTable implements FileContent {
   }
 
   /**
+   * Returns the file for this directory.
+   */
+  public File self() {
+    return get(SELF);
+  }
+
+  /**
    * Returns the parent directory.
    */
   public File parent() {
@@ -61,6 +68,16 @@ final class DirectoryTable implements FileContent {
    */
   public DirectoryTable parentTable() {
     return entries.get(PARENT).content();
+  }
+
+  /**
+   * Returns the current name of this directory. This relies on the fact that multiple links to a
+   * directory can't be created, not counting special self and parent links which don't apply
+   * here. Note that this method cannot be used to get the name of a root directory, as its parent
+   * link is to itself.
+   */
+  public Name name() {
+    return parentTable().getName(self());
   }
 
   /**

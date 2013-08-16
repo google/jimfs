@@ -388,6 +388,8 @@ final class JimfsPath implements Path, FileContent {
 
   @Override
   public int compareTo(Path other) {
+    // TODO(cgdecker): should this ensure that it considers absolute paths before relative
+    // or anything like that?
     return toString().compareTo(other.toString());
   }
 
@@ -395,9 +397,20 @@ final class JimfsPath implements Path, FileContent {
   public boolean equals(@Nullable Object obj) {
     if (obj instanceof JimfsPath) {
       JimfsPath other = (JimfsPath) obj;
-      return fs.equals(other.fs)
-          && Objects.equal(root, other.root)
-          && names.equals(other.names);
+      if (fs.equals(other.fs)) {
+        // equality of paths should be based on the string value of each component, not the
+        // equality used for lookup
+        String rootString = root == null ? null : root.toString();
+        String otherRootString = other.root == null ? null : other.root.toString();
+        if (Objects.equal(rootString, otherRootString) && names.size() == other.names.size()) {
+          for (int i = 0; i < names.size(); i++) {
+            if (!names.get(i).toString().equals(other.names.get(i).toString())) {
+              return false;
+            }
+          }
+          return true;
+        }
+      }
     }
     return false;
   }
