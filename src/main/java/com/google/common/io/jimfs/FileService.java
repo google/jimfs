@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 final class FileService {
 
-  private final AtomicLong keyGenerator = new AtomicLong();
+  private final AtomicLong idGenerator = new AtomicLong();
   private final AttributeService attributeService;
 
   FileService(AttributeService attributeService) {
@@ -19,7 +19,7 @@ final class FileService {
   }
 
   private long nextFileId() {
-    return keyGenerator.getAndIncrement();
+    return idGenerator.getAndIncrement();
   }
 
   private File createFile(long id, FileContent content) {

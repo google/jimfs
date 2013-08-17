@@ -45,10 +45,22 @@ final class ByteStoreOutputStream extends OutputStream {
   @Override
   public synchronized void write(int b) throws IOException {
     checkNotClosed();
+
     if (append) {
       store.append((byte) b);
     } else {
       store.write(pos++, (byte) b);
+    }
+  }
+
+  @Override
+  public synchronized void write(byte[] b) throws IOException {
+    checkNotClosed();
+
+    if (append) {
+      store.append(b);
+    } else {
+      pos += store.write(pos, b);
     }
   }
 
