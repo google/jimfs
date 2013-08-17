@@ -1,5 +1,8 @@
 package com.google.common.io.jimfs;
 
+import com.google.common.io.jimfs.config.UnixConfiguration;
+import com.google.common.io.jimfs.config.WindowsConfiguration;
+
 import java.nio.file.FileSystem;
 
 /**
@@ -24,7 +27,7 @@ public final class Jimfs {
    */
   public static FileSystem newUnixLikeFileSystem() {
     return new JimfsFileSystem(
-        PROVIDER, new UnixConfiguration("/work", "root", "root", "rw-r--r--"));
+        PROVIDER, new UnixConfiguration());
   }
 
   /**

@@ -1,12 +1,22 @@
 package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.io.jimfs.JimfsConfiguration.Feature;
-import static com.google.common.io.jimfs.LinkHandling.NOFOLLOW_LINKS;
+import static com.google.common.io.jimfs.config.JimfsConfiguration.Feature;
+import static com.google.common.io.jimfs.file.LinkHandling.NOFOLLOW_LINKS;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.jimfs.attribute.AttributeService;
+import com.google.common.io.jimfs.attribute.UserLookupService;
+import com.google.common.io.jimfs.config.JimfsConfiguration;
+import com.google.common.io.jimfs.file.DirectoryTable;
+import com.google.common.io.jimfs.file.File;
+import com.google.common.io.jimfs.file.FileService;
+import com.google.common.io.jimfs.file.FileTree;
+import com.google.common.io.jimfs.path.JimfsPath;
+import com.google.common.io.jimfs.path.Name;
+import com.google.common.io.jimfs.path.PathMatchers;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -26,7 +36,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author Colin Decker
  */
-final class JimfsFileSystem extends FileSystem {
+public final class JimfsFileSystem extends FileSystem {
 
   private final FileService fileService;
   private final JimfsFileSystemProvider provider;

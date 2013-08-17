@@ -1,10 +1,10 @@
 package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.io.jimfs.ExceptionHelpers.requireNonNull;
-import static com.google.common.io.jimfs.ExceptionHelpers.throwProviderMismatch;
-import static com.google.common.io.jimfs.LinkHandling.FOLLOW_LINKS;
-import static com.google.common.io.jimfs.LinkHandling.NOFOLLOW_LINKS;
+import static com.google.common.io.jimfs.file.LinkHandling.FOLLOW_LINKS;
+import static com.google.common.io.jimfs.file.LinkHandling.NOFOLLOW_LINKS;
+import static com.google.common.io.jimfs.util.ExceptionHelpers.requireNonNull;
+import static com.google.common.io.jimfs.util.ExceptionHelpers.throwProviderMismatch;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.READ;
@@ -12,6 +12,13 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.jimfs.bytestore.ByteStore;
+import com.google.common.io.jimfs.config.UnixConfiguration;
+import com.google.common.io.jimfs.file.File;
+import com.google.common.io.jimfs.file.FileService;
+import com.google.common.io.jimfs.file.FileTree;
+import com.google.common.io.jimfs.file.LinkHandling;
+import com.google.common.io.jimfs.path.JimfsPath;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,7 +53,7 @@ import javax.annotation.Nullable;
 /**
  * @author Colin Decker
  */
-final class JimfsFileSystemProvider extends FileSystemProvider {
+public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   public static final String SCHEME = "jimfs";
 
@@ -137,7 +144,7 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     return getByteStore(path, optionsSet).openOutputStream(optionsSet);
   }
 
-  static Set<? extends OpenOption> getOptionsForChannel(Set<? extends OpenOption> options) {
+  public static Set<? extends OpenOption> getOptionsForChannel(Set<? extends OpenOption> options) {
     if (!options.contains(READ) && !options.contains(WRITE)) {
       OpenOption optionToAdd = options.contains(APPEND) ? WRITE : READ;
       return ImmutableSet.<OpenOption>builder()
