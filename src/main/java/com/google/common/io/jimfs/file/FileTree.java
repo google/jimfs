@@ -150,11 +150,18 @@ public final class FileTree {
   }
 
   /**
+   * Attempt to lookup the file at the given path.
+   */
+  private LookupResult lookup(JimfsPath path, LinkHandling linkHandling) throws IOException {
+    return lookupService.lookup(path, linkHandling);
+  }
+
+  /**
    * Gets the file at the given path, or {@code null} if none exists.
    */
   @Nullable
   public File lookupFile(JimfsPath path, LinkHandling linkHandling) throws IOException {
-    return lookupService.lookup(path, linkHandling).orNull();
+    return lookup(path, linkHandling).orNull();
   }
 
   /**
@@ -176,7 +183,9 @@ public final class FileTree {
    */
   public JimfsSecureDirectoryStream newSecureDirectoryStream(JimfsPath dir,
       DirectoryStream.Filter<? super Path> filter, LinkHandling linkHandling) throws IOException {
-    File file = requireNonNull(lookupFile(dir, linkHandling), dir);
+    File file = lookup(dir, linkHandling)
+        .requireFound(dir)
+        .file();
     if (!file.isDirectory()) {
       throw new NotDirectoryException(dir.toString());
     }
@@ -192,7 +201,9 @@ public final class FileTree {
     ImmutableSortedSet<Name> names;
     readLock().lock();
     try {
-      File file = requireNonNull(lookupFile(dir, LinkHandling.NOFOLLOW_LINKS), dir);
+      File file = lookup(dir, NOFOLLOW_LINKS)
+          .requireFound(dir)
+          .file();
       if (!file.isDirectory()) {
         throw new NotDirectoryException(dir.toString());
       }
@@ -221,8 +232,8 @@ public final class FileTree {
 
     readLock().lock();
     try {
-      File file = lookupService.lookup(path, FOLLOW_LINKS).orNull();
-      File file2 = tree2.lookupService.lookup(path2, FOLLOW_LINKS).orNull();
+      File file = lookup(path, FOLLOW_LINKS).orNull();
+      File file2 = tree2.lookup(path2, FOLLOW_LINKS).orNull();
       return file != null && Objects.equal(file, file2);
     } finally {
       readLock().unlock();
@@ -238,7 +249,7 @@ public final class FileTree {
 
     readLock().lock();
     try {
-      LookupResult lookupResult = lookupService.lookup(path, linkHandling)
+      LookupResult lookupResult = lookup(path, linkHandling)
           .requireFound(path);
 
       List<Name> names = new ArrayList<>();
@@ -284,7 +295,7 @@ public final class FileTree {
 
     writeLock().lock();
     try {
-      LookupResult result = lookupService.lookup(path, NOFOLLOW_LINKS)
+      LookupResult result = lookup(path, NOFOLLOW_LINKS)
           .requireParentFound(path);
 
       if (result.found()) {
@@ -350,7 +361,7 @@ public final class FileTree {
       // that don't provide any options are automatically in CREATE mode make me not want to
       readLock().lock();
       try {
-        LookupResult result = lookupService.lookup(path, linkHandling);
+        LookupResult result = lookup(path, linkHandling);
         if (result.found()) {
           File file = result.file();
           if (!file.isRegularFile()) {
@@ -414,7 +425,7 @@ public final class FileTree {
     writeLock().lock();
     try {
       // we do want to follow links when finding the existing file
-      File existingFile = existingTree.lookupService.lookup(existing, FOLLOW_LINKS)
+      File existingFile = existingTree.lookup(existing, FOLLOW_LINKS)
           .requireFound(existing)
           .file();
       if (!existingFile.isRegularFile()) {
@@ -422,7 +433,7 @@ public final class FileTree {
             "can't link: not a regular file");
       }
 
-      File linkParent = lookupService.lookup(link, NOFOLLOW_LINKS)
+      File linkParent = lookup(link, NOFOLLOW_LINKS)
           .requireParentFound(link)
           .requireNotFound(link)
           .parent();
@@ -449,7 +460,7 @@ public final class FileTree {
 
     writeLock().lock();
     try {
-      File parent = lookupService.lookup(path, NOFOLLOW_LINKS)
+      File parent = lookup(path, NOFOLLOW_LINKS)
           .requireFound(path)
           .parent();
 
@@ -556,9 +567,9 @@ public final class FileTree {
 
     lockBoth(writeLock(), destTree.writeLock());
     try {
-      LookupResult sourceLookup = lookupService.lookup(source, linkHandling)
+      LookupResult sourceLookup = lookup(source, linkHandling)
           .requireFound(source);
-      LookupResult destLookup = destTree.lookupService.lookup(dest, NOFOLLOW_LINKS)
+      LookupResult destLookup = destTree.lookup(dest, NOFOLLOW_LINKS)
           .requireParentFound(dest);
 
       DirectoryTable sourceParent = sourceLookup.parent().content();
@@ -700,7 +711,9 @@ public final class FileTree {
    */
   public <A extends BasicFileAttributes> A readAttributes(
       JimfsPath path, Class<A> type, LinkHandling linkHandling) throws IOException {
-    File file = requireNonNull(lookupFile(path, linkHandling), path);
+    File file = lookup(path, linkHandling)
+        .requireFound(path)
+        .file();
     return fs.getAttributeService().readAttributes(file, type);
   }
 
@@ -709,7 +722,9 @@ public final class FileTree {
    */
   public Map<String, Object> readAttributes(
       JimfsPath path, String attributes, LinkHandling linkHandling) throws IOException {
-    File file = requireNonNull(lookupFile(path, linkHandling), path);
+    File file = lookup(path, linkHandling)
+        .requireFound(path)
+        .file();
     return fs.getAttributeService().readAttributes(file, attributes);
   }
 
@@ -718,7 +733,9 @@ public final class FileTree {
    */
   public void setAttribute(JimfsPath path, String attribute, Object value,
       LinkHandling linkHandling) throws IOException {
-    File file = requireNonNull(lookupFile(path, linkHandling), path);
+    File file = lookup(path, linkHandling)
+        .requireFound(path)
+        .file();
     fs.getAttributeService()
         .setAttribute(file, attribute, value, AttributeService.SetMode.NORMAL);
   }

@@ -31,20 +31,6 @@ public final class ExceptionHelpers {
   }
 
   /**
-   * Throws {@link NoSuchFileException} if the given file is not a directory. Primarily for use
-   * when doing something with a file (such as deleting it) that requires finding its parent
-   * directory first; if the parent is not a directory, {@link NoSuchFileException} should be
-   * thrown rather than {@link NotDirectoryException}.
-   */
-  public static DirectoryTable requireExistsParentDir(
-      @Nullable File file, Path path) throws NoSuchFileException {
-    if (file == null || !file.isDirectory()) {
-      throw new NoSuchFileException(path.toString());
-    }
-    return file.content();
-  }
-
-  /**
    * Throws {@link ProviderMismatchException} for the given path.
    */
   public static ProviderMismatchException throwProviderMismatch(Path path) {
