@@ -18,9 +18,11 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Subject for doing assertions on file system paths.
@@ -137,6 +139,28 @@ public final class PathSubject extends Subject<PathSubject, Path> {
 
     if (!builder.build().equals(ImmutableList.copyOf(names))) {
       fail("has name components", names);
+    }
+    return this;
+  }
+
+  /**
+   * Asserts that the path matches the given syntax and pattern.
+   */
+  public PathSubject matches(String syntaxAndPattern) {
+    PathMatcher matcher = getSubject().getFileSystem().getPathMatcher(syntaxAndPattern);
+    if (!matcher.matches(getSubject())) {
+      fail("matches", syntaxAndPattern);
+    }
+    return this;
+  }
+
+  /**
+   * Asserts that the path does not match the given syntax and pattern.
+   */
+  public PathSubject doesNotMatch(String syntaxAndPattern) {
+    PathMatcher matcher = getSubject().getFileSystem().getPathMatcher(syntaxAndPattern);
+    if (matcher.matches(getSubject())) {
+      fail("does not match", syntaxAndPattern);
     }
     return this;
   }

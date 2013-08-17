@@ -67,6 +67,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * Tests an in-memory file system through the public APIs in {@link Files}, etc.
@@ -183,6 +184,40 @@ public class JimfsIntegrationTest {
     // case insensitivity tests: move to another test
     //ASSERT.that(path("/FOO/BAR").toRealPath()).isEqualTo(path("/foo/bar"));
     //ASSERT.that(path("/Link/FOO/bAR").toRealPath()).isEqualTo(path("/foo/bar"));
+  }
+
+  @Test
+  public void testPathMatchers_regex() {
+    assertThat("bar").matches("regex:.*");
+    assertThat("bar").matches("regex:bar");
+    assertThat("bar").matches("regex:[a-z]+");
+    assertThat("/foo/bar").matches("regex:/.*");
+    assertThat("/foo/bar").matches("regex:/.*/bar");
+  }
+
+  @Test
+  public void testPathMatchers_glob() {
+    assertThat("bar").matches("glob:bar");
+    assertThat("bar").matches("glob:*");
+    assertThat("/foo").doesNotMatch("glob:*");
+    assertThat("/foo/bar").doesNotMatch("glob:*");
+    assertThat("/foo/bar").matches("glob:**");
+    assertThat("/foo/bar").matches("glob:/**");
+    assertThat("foo/bar").doesNotMatch("glob:/**");
+    assertThat("/foo/bar/baz/stuff").matches("glob:/foo/**");
+    assertThat("/foo/bar/baz/stuff").matches("glob:/**/stuff");
+    assertThat("/foo").matches("glob:/[a-z]*");
+    assertThat("/Foo").doesNotMatch("glob:/[a-z]*");
+    assertThat("/foo/bar/baz/Stuff.java").matches("glob:**/*.java");
+    assertThat("/foo/bar/baz/Stuff.java").matches("glob:**/*.{java,class}");
+    assertThat("/foo/bar/baz/Stuff.class").matches("glob:**/*.{java,class}");
+    assertThat("/foo/bar/baz/Stuff.java").matches("glob:**/*.*");
+
+    try {
+      fs.getPathMatcher("glob:**/*.{java,class");
+      fail();
+    } catch (PatternSyntaxException expected) {
+    }
   }
 
   @Test

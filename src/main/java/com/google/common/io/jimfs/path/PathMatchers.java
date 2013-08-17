@@ -53,7 +53,7 @@ public final class PathMatchers {
         syntaxAndPattern);
 
     String syntax = syntaxAndPattern.substring(0, syntaxSeparator);
-    String pattern = syntaxAndPattern.substring(syntaxSeparator);
+    String pattern = syntaxAndPattern.substring(syntaxSeparator + 1);
 
     switch (syntax) {
       case GLOB:
