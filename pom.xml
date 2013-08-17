@@ -26,15 +26,23 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <guava.version>14.0.1</guava.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>14.0.1</version>
+      <version>${guava.version}</version>
     </dependency>
 
+    <!--
+    TODO(cgdecker): Don't really like needing a dependency on ICU4J here.
+    However, it does seem like the best option for dealing with good general purpose case
+    insensitivity with Normalizer2. Of course, not many people probably care about case
+    insensitivity beyond ASCII for an in-memory file system, so I'll see if I can make it optional
+    unless the user really wants Unicode case insensitivity...
+     -->
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
@@ -46,6 +54,7 @@
       <groupId>com.google.code.findbugs</groupId>
       <artifactId>jsr305</artifactId>
       <version>2.0.1</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -58,7 +67,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava-testlib</artifactId>
-      <version>14.0.1</version>
+      <version>${guava.version}</version>
       <scope>test</scope>
     </dependency>
 
