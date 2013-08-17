@@ -40,6 +40,7 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.io.jimfs.testing.PathSubject;
@@ -58,6 +59,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
@@ -65,8 +67,11 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
+import java.nio.file.SecureDirectoryStream;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -1124,13 +1129,6 @@ public class JimfsIntegrationTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Files.copy(path("/test"), out);
     assertArrayEquals(bytes, out.toByteArray());
-
-    try {
-      Files.copy(path("/foo"), path("/bar"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/foo", expected.getMessage());
-    }
   }
 
   @Test
@@ -1147,6 +1145,13 @@ public class JimfsIntegrationTest {
 
     Files.copy(path("/baz"), path("/bar"), REPLACE_EXISTING);
     assertThat("/bar").containsBytes(moreBytes);
+
+    try {
+      Files.copy(path("/none"), path("/bar"));
+      fail();
+    } catch (NoSuchFileException expected) {
+      assertEquals("/none", expected.getMessage());
+    }
   }
 
   @Test
@@ -1418,8 +1423,6 @@ public class JimfsIntegrationTest {
     assertThat("/../../..").isSameFileAs("/");
     assertThat("../../../..").isSameFileAs("/");
 
-    //System.err.println(getFileKey(""));
-
     //assertThat("/work").isSameFileAs("");
 
     Files.createDirectories(path("/foo/bar/baz"));
@@ -1427,6 +1430,110 @@ public class JimfsIntegrationTest {
     Files.createSymbolicLink(path("/foo/link2"), path("/"));
 
     assertThat("/foo/bar/link1/foo/bar/link1/foo").isSameFileAs("/foo");
+  }
+
+  @Test
+  public void testSecureDirectoryStream() throws IOException {
+    Files.createDirectories(path("/foo/bar"));
+    Files.createFile(path("/foo/a"));
+    Files.createFile(path("/foo/b"));
+    Files.createSymbolicLink(path("/foo/barLink"), path("bar"));
+
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path("/foo"))) {
+      if (!(stream instanceof SecureDirectoryStream)) {
+        fail("should be a secure directory stream");
+      }
+
+      SecureDirectoryStream<Path> secureStream = (SecureDirectoryStream<Path>) stream;
+
+      ASSERT.that(ImmutableList.copyOf(secureStream)).isEqualTo(
+          ImmutableList.of(
+              path("/foo/a"), path("/foo/b"), path("/foo/bar"), path("/foo/barLink")));
+
+      secureStream.deleteFile(path("b"));
+      assertThat("/foo/b").doesNotExist();
+
+      secureStream.newByteChannel(path("b"), ImmutableSet.of(CREATE_NEW)).close();
+      assertThat("/foo/b").isRegularFile();
+
+      Files.createDirectory(path("/baz"));
+      Files.move(path("/foo"), path("/baz/stuff"));
+
+      assertThat(path("/foo")).doesNotExist();
+
+      assertThat("/baz/stuff").hasChildren("a", "b", "bar", "barLink");
+
+      secureStream.deleteFile(path("b"));
+
+      assertThat("/baz/stuff/b").doesNotExist();
+      assertThat("/baz/stuff").hasChildren("a", "bar", "barLink");
+
+      // TODO(cgdecker): make empty path work right
+      /*ASSERT.that(secureStream.getFileAttributeView(BasicFileAttributeView.class)
+          .readAttributes()
+          .isDirectory()).isTrue();*/
+
+      ASSERT.that(secureStream.getFileAttributeView(path("a"), BasicFileAttributeView.class)
+          .readAttributes()
+          .isRegularFile()).isTrue();
+
+      try {
+        secureStream.deleteFile(path("bar"));
+        fail();
+      } catch (FileSystemException expected) {
+        ASSERT.that(expected.getFile()).isEqualTo("bar");
+      }
+
+      try {
+        secureStream.deleteDirectory(path("a"));
+        fail();
+      } catch (FileSystemException expected) {
+        ASSERT.that(expected.getFile()).isEqualTo("a");
+      }
+
+      try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
+        barStream.newByteChannel(path("stuff"), ImmutableSet.of(CREATE_NEW)).close();
+        ASSERT.that(barStream.getFileAttributeView(path("stuff"), BasicFileAttributeView.class)
+            .readAttributes()
+            .isRegularFile()).isTrue();
+
+        ASSERT.that(secureStream.getFileAttributeView(
+            path("bar/stuff"), BasicFileAttributeView.class)
+                .readAttributes()
+                .isRegularFile()).isTrue();
+      }
+
+      try (SecureDirectoryStream<Path> barLinkStream = secureStream
+          .newDirectoryStream(path("barLink"))) {
+        ASSERT.that(barLinkStream.getFileAttributeView(
+            path("stuff"), BasicFileAttributeView.class)
+                .readAttributes()
+                .isRegularFile()).isTrue();
+
+        ASSERT.that(barLinkStream.getFileAttributeView(
+            path(".."), BasicFileAttributeView.class)
+                .readAttributes()
+                .isDirectory()).isTrue();
+      }
+
+      try {
+        secureStream.newDirectoryStream(path("barLink"), NOFOLLOW_LINKS);
+        fail();
+      } catch (NotDirectoryException expected) {
+        ASSERT.that(expected.getFile()).isEqualTo("barLink");
+      }
+
+      try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
+        secureStream.move(path("a"), barStream, path("moved"));
+
+        assertThat(path("/baz/stuff/a")).doesNotExist();
+        assertThat(path("/baz/stuff/bar/moved")).isRegularFile();
+
+        ASSERT.that(barStream.getFileAttributeView(path("moved"), BasicFileAttributeView.class)
+            .readAttributes()
+            .isRegularFile()).isTrue();
+      }
+    }
   }
 
   // helpers

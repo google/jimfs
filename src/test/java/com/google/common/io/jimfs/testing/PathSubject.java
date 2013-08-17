@@ -19,8 +19,10 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -286,18 +288,18 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   }
 
   /**
-   * Asserts that the directory has children with the given names.
+   * Asserts that the directory has children with the given names, in the given order.
    */
   public PathSubject hasChildren(String... children) throws IOException {
     isDirectory();
 
-    Set<Path> expectedNames = new HashSet<>();
+    List<Path> expectedNames = new ArrayList<>();
     for (String child : children) {
       expectedNames.add(getSubject().getFileSystem().getPath(child));
     }
 
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(getSubject())) {
-      Set<Path> actualNames = new HashSet<>();
+      List<Path> actualNames = new ArrayList<>();
       for (Path path : stream) {
         actualNames.add(path.getFileName());
       }

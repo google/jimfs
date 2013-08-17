@@ -39,13 +39,6 @@ class JimfsDirectoryStream implements DirectoryStream<Path> {
     return tree;
   }
 
-  /**
-   * Returns the path for the stream's directory.
-   */
-  protected JimfsPath path() {
-    return dirPath;
-  }
-
   @Override
   public Iterator<Path> iterator() {
     if (iterator == null) {
