@@ -137,20 +137,6 @@ public class NameTest {
   }
 
   @Test
-  public void testSpecialNames() {
-    // special cases so that "." and ".." are globally unique and the correct Name object can be
-    // referenced statically
-    new EqualsTester()
-        .addEqualityGroup(Name.simple("."),
-            Name.collating(".", COLLATOR),
-            Name.caseInsensitiveAscii("."))
-        .addEqualityGroup(Name.simple(".."),
-            Name.collating("..", COLLATOR),
-            Name.caseInsensitiveAscii(".."))
-        .testEquals();
-  }
-
-  @Test
   public void testCanonicalizing() {
     Name canonical = Name.simple("foo");
 
@@ -173,5 +159,23 @@ public class NameTest {
     Name alternate = Name.create("c:", Name.simple("C:\\"));
 
     ASSERT.that(alternate).isEqualTo(canonical2);
+  }
+
+  @Test
+  public void testSpecialNames() {
+    // special cases so that "." and ".." are globally unique and the correct Name object can be
+    // referenced statically
+    new EqualsTester()
+        .addEqualityGroup(Name.simple("."),
+            Name.collating(".", COLLATOR),
+            Name.normalizing(".", NORMALIZER),
+            Name.caseInsensitiveAscii("."),
+            Name.create(".", "."))
+        .addEqualityGroup(Name.simple(".."),
+            Name.collating("..", COLLATOR),
+            Name.normalizing("..", NORMALIZER),
+            Name.caseInsensitiveAscii(".."),
+            Name.create("..", ".."))
+        .testEquals();
   }
 }

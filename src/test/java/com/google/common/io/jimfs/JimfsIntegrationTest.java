@@ -221,6 +221,22 @@ public class JimfsIntegrationTest {
   }
 
   @Test
+  public void testPathMatchers_invalid() {
+    try {
+      fs.getPathMatcher("glob");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      fs.getPathMatcher("foo:foo");
+      fail();
+    } catch (UnsupportedOperationException expected) {
+      ASSERT.that(expected.getMessage()).contains("syntax");
+    }
+  }
+
+  @Test
   public void testNewFileSystem_hasRootAndWorkingDirectory() throws IOException {
     assertThat("/").hasChildren("work");
     assertThat("/work").hasNoChildren();

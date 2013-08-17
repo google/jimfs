@@ -19,10 +19,13 @@ package com.google.common.io.jimfs.bytestore;
 import static com.google.common.io.jimfs.testing.TestUtils.buffer;
 import static com.google.common.io.jimfs.testing.TestUtils.buffers;
 import static com.google.common.io.jimfs.testing.TestUtils.bytes;
+import static com.google.common.io.jimfs.testing.TestUtils.preFilledBytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.jimfs.testing.ByteBufferChannel;
 import com.google.common.primitives.Bytes;
 
@@ -31,6 +34,8 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.OpenOption;
 
 /**
  * @author Colin Decker
@@ -95,9 +100,22 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
+  public void testEmpty_append_singleByte() {
+    store.append((byte) 1);
+    assertContentEquals("1", store);
+  }
+
+  @Test
   public void testEmpty_write_byteArray_atStart() {
     byte[] bytes = bytes("111111");
     store.write(0, bytes);
+    assertContentEquals(bytes, store);
+  }
+
+  @Test
+  public void testEmpty_append_byteArray() {
+    byte[] bytes = bytes("111111");
+    store.append(bytes);
     assertContentEquals(bytes, store);
   }
 
@@ -109,14 +127,33 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
+  public void testEmpty_append_ByteArray() {
+    byte[] bytes = bytes("2211111122");
+    store.append(bytes, 2, 6);
+    assertContentEquals("111111", store);
+  }
+
+  @Test
   public void testEmpty_write_singleBuffer_atStart() {
     store.write(0, buffer("111111"));
     assertContentEquals("111111", store);
   }
 
   @Test
+  public void testEmpty_append_singleBuffer() {
+    store.append(buffer("111111"));
+    assertContentEquals("111111", store);
+  }
+
+  @Test
   public void testEmpty_write_multipleBuffers_atStart() {
     store.write(0, buffers("111", "111"));
+    assertContentEquals("111111", store);
+  }
+
+  @Test
+  public void testEmpty_append_multipleBuffers() {
+    store.append(buffers("111", "111"));
     assertContentEquals("111111", store);
   }
 
@@ -291,6 +328,18 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
+  public void testNonEmpty_read_all_multipleBuffers_extraBuffers() {
+    fillContent("222222");
+    ByteBuffer buf1 = ByteBuffer.allocate(4);
+    ByteBuffer buf2 = ByteBuffer.allocate(8);
+    ByteBuffer buf3 = ByteBuffer.allocate(4);
+    assertEquals(6, store.read(0, ImmutableList.of(buf1, buf2, buf3)));
+    assertBufferEquals("2222", 0, buf1);
+    assertBufferEquals("22000000", 6, buf2);
+    assertBufferEquals("0000", 4, buf3);
+  }
+
+  @Test
   public void testNonEmpty_read_partial_fromStart_byteArray() {
     fillContent("222222");
     byte[] array = new byte[3];
@@ -427,6 +476,13 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
+  public void testNonEmpty_append_singleByte() {
+    fillContent("222222");
+    assertEquals(1, store.append((byte) 1));
+    assertContentEquals("2222221", store);
+  }
+
+  @Test
   public void testNonEmpty_write_partial_fromStart_byteArray() {
     fillContent("222222");
     assertEquals(3, store.write(0, bytes("111")));
@@ -459,6 +515,15 @@ public abstract class AbstractByteStoreTest {
     assertEquals(3, store.write(6, bytes("111")));
     assertContentEquals("222222111", store);
     assertEquals(2, store.write(9, bytes("333333"), 3, 2));
+    assertContentEquals("22222211133", store);
+  }
+
+  @Test
+  public void testNonEmpty_append_byteArray() {
+    fillContent("222222");
+    assertEquals(3, store.append(bytes("111")));
+    assertContentEquals("222222111", store);
+    assertEquals(2, store.append(bytes("333333"), 3, 2));
     assertContentEquals("22222211133", store);
   }
 
@@ -500,6 +565,13 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
+  public void testNonEmpty_append_singleBuffer() {
+    fillContent("222222");
+    assertEquals(3, store.append(buffer("111")));
+    assertContentEquals("222222111", store);
+  }
+
+  @Test
   public void testNonEmpty_write_partial_fromPastEnd_singleBuffer() {
     fillContent("222222");
     assertEquals(3, store.write(8, buffer("111")));
@@ -531,6 +603,13 @@ public abstract class AbstractByteStoreTest {
   public void testNonEmpty_write_partial_fromEnd_multipleBuffers() {
     fillContent("222222");
     assertEquals(6, store.write(6, buffers("111", "333")));
+    assertContentEquals("222222111333", store);
+  }
+
+  @Test
+  public void testNonEmpty_append_multipleBuffers() {
+    fillContent("222222");
+    assertEquals(6, store.append(buffers("111", "333")));
     assertContentEquals("222222111333", store);
   }
 
@@ -708,6 +787,121 @@ public abstract class AbstractByteStoreTest {
     fillContent("123456");
     store.truncate(12);
     assertContentEquals("123456", store);
+  }
+
+  @Test
+  public void testIllegalArguments() throws IOException {
+    try {
+      store.write(-1, (byte) 1);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.write(-1, preFilledBytes(10));
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.write(-1, preFilledBytes(10), 0, 10);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.write(-1, ByteBuffer.allocate(10));
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.write(-1, ImmutableList.of(ByteBuffer.allocate(10)));
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.transferFrom(fakeChannel(), -1, 10);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.transferFrom(fakeChannel(), 10, -1);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.transferTo(-1, 10, fakeChannel());
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.transferTo(10, -1, fakeChannel());
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      store.read(0, preFilledBytes(10), -1, 5);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      store.read(0, preFilledBytes(10), 5, -1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      store.read(0, preFilledBytes(10), 8, 5);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      store.write(0, preFilledBytes(10), -1, 5);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      store.write(0, preFilledBytes(10), 5, -1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      store.write(0, preFilledBytes(10), 8, 5);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      store.append(preFilledBytes(10), -1, 5);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      store.append(preFilledBytes(10), 5, -1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      store.append(preFilledBytes(10), 8, 5);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+  }
+
+  private static FileChannel fakeChannel() {
+    return new StubByteStore(1).openFileChannel(ImmutableSet.<OpenOption>of());
   }
 
   private static void assertBufferEquals(String expected, ByteBuffer actual) {

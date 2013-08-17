@@ -188,6 +188,10 @@ public final class ArrayByteStore extends ByteStore {
     checkNotNegative(pos, "pos");
     checkNotNegative(count, "count");
 
+    if (count == 0) {
+      return 0;
+    }
+
     writeLock().lock();
     try {
       int originalSize = size;
@@ -209,7 +213,7 @@ public final class ArrayByteStore extends ByteStore {
         return bytesTransferred;
       } catch (Throwable e) {
         // if there was an exception copying from src into the array, set the size back to the
-        // original size... the array may be corrupted in
+        // original size... the array may be corrupted in the area that was being copied to
         truncate(originalSize);
         throw e;
       }
@@ -268,8 +272,9 @@ public final class ArrayByteStore extends ByteStore {
   @Override
   public int transferTo(int pos, int count, WritableByteChannel dest) throws IOException {
     checkNotNegative(pos, "pos");
+    checkNotNegative(count, "count");
 
-    if (count <= 0) {
+    if (count == 0) {
       return 0;
     }
 
