@@ -695,7 +695,13 @@ public class JimfsIntegrationTest {
 
     // succeeds, ok for file to already exist
     Files.write(test, ImmutableList.of("foo"), UTF_8, CREATE);
-    assertThat(test).containsLines("foo", "o", "world"); // did not truncate or append, so overwrote
+    // did not truncate or append, so overwrote
+    if ("\r\n".equals(System.getProperty("line.separator"))) {
+      // on Windows, an extra character is overwritten by the \r\n line separator
+      assertThat(test).containsLines("foo", "", "world");
+    } else {
+      assertThat(test).containsLines("foo", "o", "world");
+    }
 
     Files.write(test, lines, UTF_8, WRITE, CREATE, TRUNCATE_EXISTING); // default options
     assertThat(test).containsLines(lines);

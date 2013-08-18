@@ -381,8 +381,10 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   public PathSubject containsLines(Iterable<String> lines) throws IOException {
     isRegularFile();
 
-    if (!ImmutableList.copyOf(lines).equals(Files.readAllLines(getSubject(), charset))) {
-      fail("contains lines", Iterables.toArray(lines, String.class));
+    List<String> expected = ImmutableList.copyOf(lines);
+    List<String> actual = Files.readAllLines(getSubject(), charset);
+    if (!expected.equals(actual)) {
+      failWithBadResults("contains lines", expected, "contains", actual);
     }
     return this;
   }
