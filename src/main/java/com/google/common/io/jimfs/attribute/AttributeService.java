@@ -141,7 +141,7 @@ public final class AttributeService {
       File file, String view, String attribute, Object value, SetMode mode) {
     for (AttributeProvider provider : providers(view)) {
       if (provider.isSettable(file, attribute)) {
-        if (mode == SetMode.CREATE && !provider.isSettableInitially(attribute)) {
+        if (mode == SetMode.CREATE && !provider.isSettableOnCreate(attribute)) {
           throw new IllegalArgumentException("cannot set attribute '" + view + ":" + attribute
               + "' during file creation");
         }
@@ -268,7 +268,10 @@ public final class AttributeService {
       return "basic";
     }
 
-    if (attribute.indexOf(':', separatorIndex + 1) != -1) {
+    // separator must not be at the start or end of the string or appear more than once
+    if (separatorIndex == 0
+        || separatorIndex == attribute.length() - 1
+        || attribute.indexOf(':', separatorIndex + 1) != -1) {
       throw new IllegalArgumentException("illegal attribute format: " + attribute);
     }
 
@@ -288,7 +291,7 @@ public final class AttributeService {
     ImmutableList<String> attributeNames = getAttributeNames(attribute);
 
     if (attributeNames.size() != 1 || ALL_ATTRIBUTES.equals(attributeNames.get(0))) {
-      throw new IllegalArgumentException("must specify a single key: " + attribute);
+      throw new IllegalArgumentException("must specify a single attribute: " + attribute);
     }
 
     return attributeNames.get(0);

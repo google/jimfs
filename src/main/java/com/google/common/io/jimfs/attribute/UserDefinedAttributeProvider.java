@@ -93,7 +93,7 @@ public class UserDefinedAttributeProvider implements AttributeProvider,
   }
 
   @Override
-  public boolean isSettableInitially(String attribute) {
+  public boolean isSettableOnCreate(String attribute) {
     return false;
   }
 

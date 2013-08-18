@@ -1,11 +1,7 @@
 package com.google.common.io.jimfs.util;
 
-import com.google.common.io.jimfs.file.DirectoryTable;
-import com.google.common.io.jimfs.file.File;
-
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
 

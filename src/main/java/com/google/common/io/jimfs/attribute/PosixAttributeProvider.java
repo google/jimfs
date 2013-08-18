@@ -49,7 +49,7 @@ public class PosixAttributeProvider extends AbstractAttributeProvider implements
 
   private static final ImmutableSet<AttributeSpec> ATTRIBUTES = ImmutableSet.of(
       AttributeSpec.settable(GROUP, GroupPrincipal.class),
-      AttributeSpec.settable(PERMISSIONS, Set.class));
+      AttributeSpec.settableOnCreate(PERMISSIONS, Set.class));
 
   private final GroupPrincipal defaultGroup;
   private final ImmutableSet<PosixFilePermission> defaultPermissions;
@@ -186,7 +186,7 @@ public class PosixAttributeProvider extends AbstractAttributeProvider implements
 
     protected Attributes(View view) throws IOException {
       super(view.basicView.readAttributes());
-      this.owner = view.get(OwnerAttributeProvider.OWNER);
+      this.owner = view.ownerView.getOwner();
       this.group = view.get(GROUP);
       this.permissions = view.get(PERMISSIONS);
     }

@@ -3,7 +3,6 @@ package com.google.common.io.jimfs.file;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.jimfs.file.LinkHandling.FOLLOW_LINKS;
 import static com.google.common.io.jimfs.file.LinkHandling.NOFOLLOW_LINKS;
-import static com.google.common.io.jimfs.util.ExceptionHelpers.requireNonNull;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.CREATE;

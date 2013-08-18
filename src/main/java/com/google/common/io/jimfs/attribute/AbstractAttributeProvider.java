@@ -66,7 +66,7 @@ abstract class AbstractAttributeProvider implements AttributeProvider {
   }
 
   @Override
-  public boolean isSettableInitially(String attribute) {
+  public boolean isSettableOnCreate(String attribute) {
     return attributes.get(attribute).isSettableOnCreate();
   }
 

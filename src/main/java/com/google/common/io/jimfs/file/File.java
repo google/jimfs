@@ -24,7 +24,7 @@ public final class File {
   private final FileContent content;
   private final AtomicInteger links = new AtomicInteger();
 
-  File(long id, FileContent content) {
+  public File(long id, FileContent content) {
     this.id = id;
     this.content = checkNotNull(content);
   }

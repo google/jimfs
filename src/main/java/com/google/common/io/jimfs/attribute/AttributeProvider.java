@@ -78,7 +78,7 @@ public interface AttributeProvider {
    * {@link Files#createFile(Path, FileAttribute[])}). Only called if
    * {@link #isSettable(File, String)} already returned true.
    */
-  boolean isSettableInitially(String attribute);
+  boolean isSettableOnCreate(String attribute);
 
   /**
    * Sets the value of the given attribute for the given file.
