@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc. All Rights Reserved.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public interface AttributeProvider {
    * {@link Files#createFile(Path, FileAttribute[])}). Only called if
    * {@link #isSettable(File, String)} already returned true.
    */
-  boolean isSettableInitially(String attribute);
+  boolean isSettableOnCreate(String attribute);
 
   /**
    * Sets the value of the given attribute for the given file.

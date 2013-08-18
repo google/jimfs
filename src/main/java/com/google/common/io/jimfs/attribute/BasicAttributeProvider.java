@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc. All Rights Reserved.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
       case IS_SYMBOLIC_LINK:
         return file.isSymbolicLink();
       case IS_OTHER:
-        return false;
+        return !file.isDirectory() && !file.isRegularFile() && !file.isSymbolicLink();
       default:
         return super.get(file, attribute);
     }
@@ -145,18 +145,16 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
     @Override
     public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime)
         throws IOException {
+      // make sure we only lookup the file once
       File file = file();
+      setIfNotNull(file, LAST_MODIFIED_TIME, lastModifiedTime);
+      setIfNotNull(file, LAST_ACCESS_TIME, lastAccessTime);
+      setIfNotNull(file, CREATION_TIME, createTime);
+    }
 
-      if (lastModifiedTime != null) {
-        provider().set(file, LAST_MODIFIED_TIME, lastModifiedTime);
-      }
-
-      if (lastAccessTime != null) {
-        provider().set(file, LAST_ACCESS_TIME, lastAccessTime);
-      }
-
-      if (createTime != null) {
-        provider().set(file, CREATION_TIME, createTime);
+    private void setIfNotNull(File file, String attribute, FileTime time) {
+      if (time != null) {
+        provider().set(file, attribute, time);
       }
     }
   }

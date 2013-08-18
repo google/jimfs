@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc. All Rights Reserved.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,36 +121,37 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
     return super.get(file, attribute);
   }
 
+  @SuppressWarnings("OctalInteger")
   private static int toMode(Set<PosixFilePermission> permissions) {
     int result = 0;
     for (PosixFilePermission permission : permissions) {
       switch (permission) {
         case OWNER_READ:
-          result |= 0x400;
+          result |= 0400;
           break;
         case OWNER_WRITE:
-          result |= 0x200;
+          result |= 0200;
           break;
         case OWNER_EXECUTE:
-          result |= 0x100;
+          result |= 0100;
           break;
         case GROUP_READ:
-          result |= 0x040;
+          result |= 0040;
           break;
         case GROUP_WRITE:
-          result |= 0x020;
+          result |= 0020;
           break;
         case GROUP_EXECUTE:
-          result |= 0x010;
+          result |= 0010;
           break;
         case OTHERS_READ:
-          result |= 0x004;
+          result |= 0004;
           break;
         case OTHERS_WRITE:
-          result |= 0x002;
+          result |= 0002;
           break;
         case OTHERS_EXECUTE:
-          result |= 0x001;
+          result |= 0001;
           break;
       }
     }

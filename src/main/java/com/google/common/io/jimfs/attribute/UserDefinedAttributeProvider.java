@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc. All Rights Reserved.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ public class UserDefinedAttributeProvider implements AttributeProvider,
   public void readAll(File file, ImmutableMap.Builder<String, Object> builder) {
     for (String attribute : file.getAttributeKeys()) {
       if (attribute.startsWith("user:")) {
-        builder.put(attribute.substring(5), get(file, attribute));
+        String attributeName = attribute.substring(5);
+        builder.put(attributeName, get(file, attributeName));
       }
     }
   }
@@ -93,7 +94,7 @@ public class UserDefinedAttributeProvider implements AttributeProvider,
   }
 
   @Override
-  public boolean isSettableInitially(String attribute) {
+  public boolean isSettableOnCreate(String attribute) {
     return false;
   }
 
