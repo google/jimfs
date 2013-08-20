@@ -407,19 +407,19 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   public Attribute attribute(final String attribute) {
     return new Attribute() {
       @Override
-      public Attribute isEqualTo(Object value) throws IOException {
+      public Attribute is(Object value) throws IOException {
         Object actualValue = Files.getAttribute(getSubject(), attribute, linkOptions);
         if (!Objects.equal(value, actualValue)) {
-          fail("attribute '" + attribute + "' is equal to", value);
+          fail("attribute '" + attribute + "' is", value);
         }
         return this;
       }
 
       @Override
-      public Attribute isSameObject(Object value) throws IOException {
+      public Attribute isNot(Object value) throws IOException {
         Object actualValue = Files.getAttribute(getSubject(), attribute, linkOptions);
-        if (value != actualValue) {
-          fail("attribute '" + attribute + "' is same object as", value);
+        if (Objects.equal(value, actualValue)) {
+          fail("attribute '" + attribute + "' is not", value);
         }
         return this;
       }
@@ -447,12 +447,12 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     /**
      * Asserts that the value of this attribute is equal to the given value.
      */
-    Attribute isEqualTo(Object value) throws IOException;
+    Attribute is(Object value) throws IOException;
 
     /**
-     * Asserts that the value of this attribute is the same object as the given value.
+     * Asserts that the value of this attribute is not equal to the given value.
      */
-    Attribute isSameObject(Object value) throws IOException;
+    Attribute isNot(Object value) throws IOException;
 
     /**
      * Returns the path subject for further chaining.

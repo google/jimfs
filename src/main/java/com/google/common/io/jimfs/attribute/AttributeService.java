@@ -135,15 +135,14 @@ public final class AttributeService {
 
   /**
    * Sets the value of the given attribute to the given value for the given view and file.
-   * {@code initial} indicates whether or not this attribute is being set during file creation.
    */
   public void setAttribute(
       File file, String view, String attribute, Object value, SetMode mode) {
     for (AttributeProvider provider : providers(view)) {
       if (provider.isSettable(file, attribute)) {
         if (mode == SetMode.CREATE && !provider.isSettableOnCreate(attribute)) {
-          throw new IllegalArgumentException("cannot set attribute '" + view + ":" + attribute
-              + "' during file creation");
+          throw new UnsupportedOperationException(
+              "cannot set attribute '" + view + ":" + attribute + "' during file creation");
         }
 
         ImmutableSet<Class<?>> acceptedTypes = provider.acceptedTypes(attribute);

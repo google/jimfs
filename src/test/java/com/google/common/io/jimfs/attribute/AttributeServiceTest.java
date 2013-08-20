@@ -24,9 +24,9 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.jimfs.file.FakeFileContent;
 import com.google.common.io.jimfs.file.File;
 import com.google.common.io.jimfs.file.FileProvider;
+import com.google.common.io.jimfs.testing.FakeFileContent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -204,6 +204,7 @@ public class AttributeServiceTest {
       service.setAttribute(file, "test", "foo", "world", CREATE);
       fail();
     } catch (IllegalArgumentException expected) {
+      // IAE because test:foo just can't be set
     }
 
     ASSERT.that(file.getAttribute("test:foo")).isNull();
@@ -211,7 +212,7 @@ public class AttributeServiceTest {
     try {
       service.setAttribute(file, "test", "bar", 5L, CREATE);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (UnsupportedOperationException expected) {
     }
 
     ASSERT.that(file.getAttribute("test:bar")).is(0L);

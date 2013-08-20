@@ -199,7 +199,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   private ByteStore getByteStore(
       Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    return tree(checkedPath).getByteStore(checkedPath, options);
+    return tree(checkedPath).getByteStore(checkedPath, options, attrs);
   }
 
   @Override
@@ -216,7 +216,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     FileTree tree = tree(checkedPath);
     FileService.Callback createDirectory = checkedPath.getFileSystem()
         .getFileService()
-        .directoryCallback();
+        .directoryCallback(attrs);
     tree.createFile(checkedPath, createDirectory, false);
   }
 
@@ -240,7 +240,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     FileTree tree = tree(linkPath);
     FileService.Callback createSymbolicLink = linkPath.getFileSystem()
         .getFileService()
-        .symbolicLinkCallback(targetPath);
+        .symbolicLinkCallback(targetPath, attrs);
     tree.createFile(linkPath, createSymbolicLink, false);
   }
 

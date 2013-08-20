@@ -17,11 +17,13 @@
 package com.google.common.io.jimfs.file;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.CREATE;
 
 import com.google.common.io.jimfs.attribute.AttributeService;
 import com.google.common.io.jimfs.bytestore.ArrayByteStore;
 import com.google.common.io.jimfs.path.JimfsPath;
 
+import java.nio.file.attribute.FileAttribute;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -42,32 +44,35 @@ public final class FileService {
     return idGenerator.getAndIncrement();
   }
 
-  private File createFile(long id, FileContent content) {
+  private File createFile(long id, FileContent content, FileAttribute<?>... attrs) {
     File file = new File(id, content);
     attributeService.setInitialAttributes(file);
+    for (FileAttribute<?> attr : attrs) {
+      attributeService.setAttribute(file, attr.name(), attr.value(), CREATE);
+    }
     return file;
   }
 
   /**
    * Creates a new directory and stores it. Returns the key of the new file.
    */
-  public File createDirectory() {
-    return createFile(nextFileId(), new DirectoryTable());
+  public File createDirectory(FileAttribute<?>... attrs) {
+    return createFile(nextFileId(), new DirectoryTable(), attrs);
   }
 
   /**
    * Creates a new regular file and stores it. Returns the key of the new file.
    */
-  public File createRegularFile() {
-    return createFile(nextFileId(), new ArrayByteStore());
+  public File createRegularFile(FileAttribute<?>... attrs) {
+    return createFile(nextFileId(), new ArrayByteStore(), attrs);
   }
 
   /**
    * Creates a new symbolic link referencing the given target path and stores it. Returns the key
    * of the new file.
    */
-  public File createSymbolicLink(JimfsPath target) {
-    return createFile(nextFileId(), target);
+  public File createSymbolicLink(JimfsPath target, FileAttribute<?>... attrs) {
+    return createFile(nextFileId(), target, attrs);
   }
 
   /**
@@ -81,42 +86,38 @@ public final class FileService {
   /**
    * Returns a {@link Callback} that creates a directory.
    */
-  public Callback directoryCallback() {
-    return directoryCallback;
+  public Callback directoryCallback(final FileAttribute<?>... attrs) {
+    return new Callback() {
+      @Override
+      public File createFile() {
+        return createDirectory(attrs);
+      }
+    };
   }
 
   /**
    * Returns a {@link Callback} that creates a regular file.
    */
-  public Callback regularFileCallback() {
-    return regularFileCallback;
+  public Callback regularFileCallback(final FileAttribute<?>... attrs) {
+    return new Callback() {
+      @Override
+      public File createFile() {
+        return createRegularFile(attrs);
+      }
+    };
   }
 
   /**
    * Returns a {@link Callback} that creates a symbolic link to the given path.
    */
-  public Callback symbolicLinkCallback(final JimfsPath path) {
+  public Callback symbolicLinkCallback(final JimfsPath path, final FileAttribute<?>... attrs) {
     return new Callback() {
       @Override
       public File createFile() {
-        return createSymbolicLink(path);
+        return createSymbolicLink(path, attrs);
       }
     };
   }
-
-  private final Callback directoryCallback = new Callback() {
-    @Override
-    public File createFile() {
-      return createDirectory();
-    }
-  };
-
-  private final Callback regularFileCallback = new Callback() {
-    @Override
-    public File createFile() {
-      return createRegularFile();
-    }
-  };
 
   /**
    * Callback for creating new files.

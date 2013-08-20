@@ -17,14 +17,15 @@
 package com.google.common.io.jimfs.attribute;
 
 import static com.google.common.io.jimfs.attribute.AttributeService.SetMode;
+import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.jimfs.file.DirectoryTable;
-import com.google.common.io.jimfs.file.FakeFileContent;
 import com.google.common.io.jimfs.file.File;
 import com.google.common.io.jimfs.file.FileProvider;
+import com.google.common.io.jimfs.testing.FakeFileContent;
 
 import org.junit.Before;
 
@@ -80,6 +81,11 @@ public abstract class AttributeProviderTest {
     try {
       service.setAttribute(file, attribute, value, mode);
       fail();
+    } catch (UnsupportedOperationException uoe) {
+      if (mode == NORMAL) {
+        // UOE should only be thrown by
+        throw uoe;
+      }
     } catch (IllegalArgumentException expected) {
     }
   }

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.common.io.jimfs.file;
+package com.google.common.io.jimfs.testing;
+
+import com.google.common.io.jimfs.file.FileContent;
 
 /**
  * {@link FileContent} implementation that does nothing.

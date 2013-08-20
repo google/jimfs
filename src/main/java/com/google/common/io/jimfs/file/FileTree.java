@@ -48,6 +48,7 @@ import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.ArrayList;
 import java.util.List;
@@ -183,9 +184,9 @@ public final class FileTree {
    * Gets the byte store for the file at the given path, throwing an exception if the file isn't
    * a regular file.
    */
-  public ByteStore getByteStore(
-      JimfsPath path, Set<? extends OpenOption> options) throws IOException {
-    File file = getOrCreateRegularFile(path, options);
+  public ByteStore getByteStore(JimfsPath path,
+      Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+    File file = getOrCreateRegularFile(path, options, attrs);
     if (!file.isRegularFile()) {
       throw new FileSystemException(path.toString(), null, "not a regular file");
     }
@@ -361,8 +362,8 @@ public final class FileTree {
    * Gets the regular file at the given path, creating it if it doesn't exist and the given options
    * specify that it should be created.
    */
-  public File getOrCreateRegularFile(
-      JimfsPath path, Set<? extends OpenOption> options) throws IOException {
+  public File getOrCreateRegularFile(JimfsPath path,
+      Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     checkNotNull(path);
     LinkHandling linkHandling = LinkHandling.fromOptions(options);
     boolean createNew = options.contains(CREATE_NEW);
@@ -398,7 +399,7 @@ public final class FileTree {
     // existing key if the file already exists when it tries to create it
     writeLock().lock();
     try {
-      File file = createFile(path, fs.getFileService().regularFileCallback(), !createNew);
+      File file = createFile(path, fs.getFileService().regularFileCallback(attrs), !createNew);
       // the file already existed but was not a regular file
       if (!file.isRegularFile()) {
         throw new FileSystemException(path.toString(), null, "not a regular file");

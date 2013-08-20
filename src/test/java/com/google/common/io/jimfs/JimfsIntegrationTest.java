@@ -16,6 +16,7 @@
 
 package com.google.common.io.jimfs;
 
+import static com.google.common.io.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static com.google.common.io.jimfs.testing.PathSubject.paths;
 import static com.google.common.io.jimfs.testing.TestUtils.preFilledBytes;
 import static com.google.common.primitives.Bytes.concat;
@@ -43,6 +44,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import com.google.common.io.jimfs.testing.BasicFileAttribute;
 import com.google.common.io.jimfs.testing.PathSubject;
 
 import org.junit.Before;
@@ -72,6 +74,12 @@ import java.nio.file.NotLinkException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserPrincipal;
+import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -532,6 +540,100 @@ public class JimfsIntegrationTest {
   }
 
   @Test
+  public void testCreateFile_withInitialAttributes() throws IOException {
+    Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rwxrwxrwx");
+    FileAttribute<?> permissionsAttr = PosixFilePermissions.asFileAttribute(permissions);
+
+    Files.createFile(path("/normal"));
+    Files.createFile(path("/foo"), permissionsAttr);
+
+    assertThat("/normal").attribute("posix:permissions").isNot(permissions);
+    assertThat("/foo").attribute("posix:permissions").is(permissions);
+
+    FileAttribute<UserPrincipal> ownerAttr =
+        new BasicFileAttribute<>("posix:owner", createUserPrincipal("foo"));
+
+    Files.createFile(path("/foo2"), ownerAttr, permissionsAttr);
+
+    assertThat("/normal").attribute("owner:owner").isNot(ownerAttr.value());
+    assertThat("/foo2").attribute("owner:owner").is(ownerAttr.value());
+    assertThat("/foo2").attribute("posix:permissions").is(permissions);
+  }
+
+  @Test
+  public void testCreateFile_withInitialAttributes_illegalInitialAttribute() throws IOException {
+    try {
+      Files.createFile(path("/foo"),
+          new BasicFileAttribute<>("basic:lastModifiedTime", FileTime.fromMillis(0L)));
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    assertThat("/foo").doesNotExist();
+
+    try {
+      Files.createFile(path("/foo"),
+          new BasicFileAttribute<>("basic:noSuchAttribute", "foo"));
+    } catch (IllegalArgumentException expected) {
+    }
+
+    assertThat("/foo").doesNotExist();
+  }
+
+  @Test
+  public void testOpenChannel_withInitialAttributes_createNewFile() throws IOException {
+    FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
+        PosixFilePermissions.fromString("rwxrwxrwx"));
+    Files.newByteChannel(path("/foo"), ImmutableSet.of(CREATE), permissions).close();
+
+    assertThat("/foo").isRegularFile()
+        .and().attribute("posix:permissions").is(permissions.value());
+  }
+
+  @Test
+  public void testOpenChannel_withInitialAttributes_fileExists() throws IOException {
+    Files.createFile(path("/foo"));
+
+    FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
+        PosixFilePermissions.fromString("rwxrwxrwx"));
+    Files.newByteChannel(path("/foo"), ImmutableSet.of(CREATE), permissions).close();
+
+    assertThat("/foo").isRegularFile()
+        .and().attribute("posix:permissions").isNot(permissions.value());
+  }
+
+  @Test
+  public void testCreateDirectory_withInitialAttributes() throws IOException {
+    FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
+        PosixFilePermissions.fromString("rwxrwxrwx"));
+
+    Files.createDirectory(path("/foo"), permissions);
+
+    assertThat("/foo").isDirectory()
+        .and().attribute("posix:permissions").is(permissions.value());
+
+    Files.createDirectory(path("/normal"));
+
+    assertThat("/normal").isDirectory()
+        .and().attribute("posix:permissions").isNot(permissions.value());
+  }
+
+  @Test
+  public void testCreateSymbolicLink_withInitialAttributes() throws IOException {
+    FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
+        PosixFilePermissions.fromString("rwxrwxrwx"));
+
+    Files.createSymbolicLink(path("/foo"), path("bar"), permissions);
+
+    assertThat("/foo", NOFOLLOW_LINKS).isSymbolicLink()
+        .and().attribute("posix:permissions").is(permissions.value());
+
+    Files.createSymbolicLink(path("/normal"), path("bar"));
+
+    assertThat("/normal", NOFOLLOW_LINKS).isSymbolicLink()
+        .and().attribute("posix:permissions").isNot(permissions.value());
+  }
+
+  @Test
   public void testCreateDirectories() throws IOException {
     Files.createDirectories(path("/foo/bar/baz"));
 
@@ -962,7 +1064,7 @@ public class JimfsIntegrationTest {
 
     assertThat("/link").isRegularFile()
         .and().hasLinkCount(2)
-        .and().attribute("fileKey").isEqualTo(key);
+        .and().attribute("fileKey").is(key);
   }
 
   @Test
@@ -1322,7 +1424,7 @@ public class JimfsIntegrationTest {
     assertThat("/foo").doesNotExist()
         .andThat("/bar")
         .containsBytes(bytes).and()
-        .attribute("fileKey").isEqualTo(fooKey);
+        .attribute("fileKey").is(fooKey);
 
     Files.createDirectory(path("/foo"));
     Files.move(path("/bar"), path("/foo/bar"));
@@ -1377,7 +1479,7 @@ public class JimfsIntegrationTest {
 
     assertThat("/test")
         .containsBytes(bytes).and()
-        .attribute("fileKey").isEqualTo(testKey);
+        .attribute("fileKey").is(testKey);
 
     Files.delete(path("/bar"));
     Files.createDirectory(path("/bar"));
@@ -1391,7 +1493,7 @@ public class JimfsIntegrationTest {
 
     assertThat("/test")
         .containsBytes(bytes).and()
-        .attribute("fileKey").isEqualTo(testKey);
+        .attribute("fileKey").is(testKey);
   }
 
   @Test
