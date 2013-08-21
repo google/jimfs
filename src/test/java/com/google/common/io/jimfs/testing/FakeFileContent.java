@@ -31,7 +31,7 @@ public final class FakeFileContent implements FileContent {
   }
 
   @Override
-  public int size() {
+  public int sizeInBytes() {
     return 0;
   }
 }

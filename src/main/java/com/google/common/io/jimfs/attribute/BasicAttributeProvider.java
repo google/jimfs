@@ -86,7 +86,7 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
   public Object get(File file, String attribute) {
     switch (attribute) {
       case SIZE:
-        return (long) file.content().size();
+        return (long) file.content().sizeInBytes();
       case FILE_KEY:
         return file.id();
       case IS_DIRECTORY:

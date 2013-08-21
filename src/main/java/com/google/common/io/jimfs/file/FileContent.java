@@ -31,5 +31,5 @@ public interface FileContent {
   /**
    * Returns the size, in bytes, of this content.
    */
-  int size();
+  int sizeInBytes();
 }

@@ -120,7 +120,7 @@ final class ByteStoreFileChannel extends FileChannel {
     int written;
     if (append) {
       written = store.append(src);
-      position = store.size();
+      position = store.sizeInBytes();
     } else {
       written = store.write(position, src);
       position += written;
@@ -142,7 +142,7 @@ final class ByteStoreFileChannel extends FileChannel {
     int written;
     if (append) {
       written = store.append(srcs);
-      position = store.size();
+      position = store.sizeInBytes();
     } else {
       written = store.write(position, srcs);
       position += written;
@@ -168,7 +168,7 @@ final class ByteStoreFileChannel extends FileChannel {
   @Override
   public synchronized long size() throws IOException {
     checkOpen();
-    return store.size();
+    return store.sizeInBytes();
   }
 
   @Override
@@ -214,7 +214,7 @@ final class ByteStoreFileChannel extends FileChannel {
 
     if (append) {
       long appended = store.appendFrom(src, (int) count);
-      this.position = store.size();
+      this.position = store.sizeInBytes();
       return appended;
     } else {
       return store.transferFrom(src, (int) position, (int) count);
@@ -241,7 +241,7 @@ final class ByteStoreFileChannel extends FileChannel {
     int written;
     if (append) {
       written = store.append(src);
-      this.position = store.size();
+      this.position = store.sizeInBytes();
     } else {
       written = store.write((int) position, src);
     }

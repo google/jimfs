@@ -22,6 +22,7 @@ import static com.google.common.io.jimfs.path.Name.PARENT;
 import static com.google.common.io.jimfs.path.Name.SELF;
 import static com.google.common.io.jimfs.util.ExceptionHelpers.throwProviderMismatch;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
@@ -63,28 +64,28 @@ public final class JimfsPath implements Path, FileContent {
    */
   public static JimfsPath empty(JimfsFileSystem fs) {
     // this is what an empty path seems to be in the UnixFileSystem anyway...
-    return new JimfsPath(fs, null, ImmutableList.of(fs.name("")));
+    return new JimfsPath(checkNotNull(fs), null, ImmutableList.of(fs.name("")));
   }
 
   /**
    * Returns a root path for the given file system.
    */
   public static JimfsPath root(JimfsFileSystem fs, Name name) {
-    return new JimfsPath(fs, name, ImmutableList.<Name>of());
+    return new JimfsPath(checkNotNull(fs), name, ImmutableList.<Name>of());
   }
 
   /**
    * Returns a single name path for the given file system.
    */
   public static JimfsPath name(JimfsFileSystem fs, Name name) {
-    return new JimfsPath(fs, null, ImmutableList.of(name));
+    return new JimfsPath(checkNotNull(fs), null, ImmutableList.of(name));
   }
 
   /**
    * Returns a path consisting of the given names and no root for the given file system.
    */
   public static JimfsPath names(JimfsFileSystem fs, Iterable<Name> names) {
-    return new JimfsPath(fs, null, names);
+    return new JimfsPath(checkNotNull(fs), null, names);
   }
 
   /**
@@ -92,7 +93,7 @@ public final class JimfsPath implements Path, FileContent {
    */
   public static JimfsPath create(
       JimfsFileSystem fs, @Nullable Name root, Iterable<Name> names) {
-    return new JimfsPath(fs, root, names);
+    return new JimfsPath(checkNotNull(fs), root, names);
   }
 
   private final JimfsFileSystem fs;
@@ -101,8 +102,12 @@ public final class JimfsPath implements Path, FileContent {
   private final Name root;
   private final ImmutableList<Name> names;
 
-  private JimfsPath(JimfsFileSystem fs, @Nullable Name root, Iterable<Name> names) {
-    this.fs = checkNotNull(fs);
+  /**
+   * This constructor is for internal use and testing only.
+   */
+  @VisibleForTesting
+  public JimfsPath(JimfsFileSystem fs, @Nullable Name root, Iterable<Name> names) {
+    this.fs = fs;
     this.root = root;
     this.names = ImmutableList.copyOf(names);
   }
@@ -114,7 +119,7 @@ public final class JimfsPath implements Path, FileContent {
   }
 
   @Override
-  public int size() {
+  public int sizeInBytes() {
     return 0;
   }
 

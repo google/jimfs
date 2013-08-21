@@ -66,7 +66,7 @@ final class ByteStoreInputStream extends InputStream {
 
   @Override
   public synchronized int available() throws IOException {
-    return Math.max(store.size() - pos, 0);
+    return Math.max(store.sizeInBytes() - pos, 0);
   }
 
   private void checkNotClosed() throws IOException {

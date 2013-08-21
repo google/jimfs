@@ -63,7 +63,7 @@ public abstract class ByteStore implements FileContent {
    * can be read from the store.
    */
   @Override
-  public abstract int size();
+  public abstract int sizeInBytes();
 
   /**
    * Creates a copy of this byte store.
@@ -167,7 +167,7 @@ public abstract class ByteStore implements FileContent {
   public int append(byte b) {
     writeLock().lock();
     try {
-      return write(size(), b);
+      return write(sizeInBytes(), b);
     } finally {
       writeLock().unlock();
     }
@@ -179,7 +179,7 @@ public abstract class ByteStore implements FileContent {
   public int append(byte[] b) {
     writeLock().lock();
     try {
-      return write(size(), b, 0, b.length);
+      return write(sizeInBytes(), b, 0, b.length);
     } finally {
       writeLock().unlock();
     }
@@ -195,7 +195,7 @@ public abstract class ByteStore implements FileContent {
   public int append(byte[] b, int off, int len) {
     writeLock().lock();
     try {
-      return write(size(), b, off, len);
+      return write(sizeInBytes(), b, off, len);
     } finally {
       writeLock().unlock();
     }
@@ -208,7 +208,7 @@ public abstract class ByteStore implements FileContent {
   public int append(ByteBuffer buf) {
     writeLock().lock();
     try {
-      return write(size(), buf);
+      return write(sizeInBytes(), buf);
     } finally {
       writeLock().unlock();
     }
@@ -223,7 +223,7 @@ public abstract class ByteStore implements FileContent {
   public int append(Iterable<ByteBuffer> bufs) {
     writeLock().lock();
     try {
-      return write(size(), bufs);
+      return write(sizeInBytes(), bufs);
     } finally {
       writeLock().unlock();
     }
@@ -236,7 +236,7 @@ public abstract class ByteStore implements FileContent {
   public int appendFrom(ReadableByteChannel src, int count) throws IOException {
     writeLock().lock();
     try {
-      return transferFrom(src, size(), count);
+      return transferFrom(src, sizeInBytes(), count);
     } finally {
       writeLock().unlock();
     }
@@ -297,7 +297,7 @@ public abstract class ByteStore implements FileContent {
 
     readLock().lock();
     try {
-      if (pos >= size()) {
+      if (pos >= sizeInBytes()) {
         return -1;
       }
 

@@ -198,11 +198,11 @@ public class ByteStoreFileChannelTest {
     FileChannel channel = channel(store, WRITE);
 
     channel.truncate(10); // no resize, >= size
-    assertEquals(10, store.size());
+    assertEquals(10, store.sizeInBytes());
     channel.truncate(11); // no resize, > size
-    assertEquals(10, store.size());
+    assertEquals(10, store.sizeInBytes());
     channel.truncate(5); // resize down to 5
-    assertEquals(5, store.size());
+    assertEquals(5, store.sizeInBytes());
 
     channel.position(20);
     channel.truncate(10);

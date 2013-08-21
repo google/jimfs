@@ -62,7 +62,7 @@ public final class DirectoryTable implements FileContent {
   }
 
   @Override
-  public int size() {
+  public int sizeInBytes() {
     return 0;
   }
 
@@ -125,6 +125,10 @@ public final class DirectoryTable implements FileContent {
     unlinkInternal(PARENT);
   }
 
+  public int size() {
+    return entries.size();
+  }
+
   /**
    * Returns true if this directory has no entries other than those to itself and its parent.
    */
@@ -159,7 +163,11 @@ public final class DirectoryTable implements FileContent {
   }
 
   private void unlinkInternal(Name name) {
-    entries.remove(name).unlinked();
+    File file = entries.remove(name);
+    if (file == null) {
+      throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
+    }
+    file.unlinked();
   }
 
   /**

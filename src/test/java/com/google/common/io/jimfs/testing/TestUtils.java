@@ -16,6 +16,10 @@
 
 package com.google.common.io.jimfs.testing;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.jimfs.path.JimfsPath;
+import com.google.common.io.jimfs.path.Name;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +31,14 @@ import java.util.List;
 public final class TestUtils {
 
   private TestUtils() {}
+
+  /**
+   * Returns a path with no file system, no root and no names. Can't be used for much of anything
+   * other than just being an instance of {@link JimfsPath}.
+   */
+  public static JimfsPath fakePath() {
+    return new JimfsPath(null, null, ImmutableList.<Name>of());
+  }
 
   public static byte[] bytes(int... bytes) {
     byte[] result = new byte[bytes.length];

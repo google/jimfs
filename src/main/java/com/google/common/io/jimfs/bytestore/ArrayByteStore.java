@@ -48,7 +48,7 @@ public final class ArrayByteStore extends ByteStore {
   }
 
   @Override
-  public int size() {
+  public int sizeInBytes() {
     readLock().lock();
     try {
       return size;

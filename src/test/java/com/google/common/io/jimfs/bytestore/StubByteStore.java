@@ -42,7 +42,7 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int size() {
+  public int sizeInBytes() {
     return size;
   }
 
