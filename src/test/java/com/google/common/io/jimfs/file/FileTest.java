@@ -2,11 +2,8 @@ package com.google.common.io.jimfs.file;
 
 import static org.truth0.Truth.ASSERT;
 
-import com.google.common.io.jimfs.Jimfs;
-import com.google.common.io.jimfs.JimfsFileSystem;
 import com.google.common.io.jimfs.bytestore.ArrayByteStore;
 import com.google.common.io.jimfs.path.JimfsPath;
-import com.google.common.io.jimfs.path.Name;
 import com.google.common.io.jimfs.testing.FakeFileContent;
 import com.google.common.io.jimfs.testing.TestUtils;
 import com.google.common.testing.EqualsTester;

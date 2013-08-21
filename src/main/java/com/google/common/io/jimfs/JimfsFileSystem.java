@@ -45,7 +45,6 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -71,15 +70,17 @@ public final class JimfsFileSystem extends FileSystem {
 
     this.roots = createRootPaths(configuration.getRoots());
 
-    this.superRoot = new FileTree(this, fileService.createDirectory(), JimfsPath.empty(this));
+    // this FileTree becomes the super root because the super root field is not yet set when
+    // it is created... a little hacky, but it works
+    this.superRoot = new FileTree(fileService.createDirectory(), JimfsPath.empty(this), this);
     createRootDirectories();
 
     this.userLookup = new UserLookupService(configuration.supportsFeature(Feature.GROUPS));
 
     JimfsPath workingDirPath = configuration
         .parsePath(this, Lists.newArrayList(configuration.getWorkingDirectory()));
-    this.workingDirectory = new FileTree(
-        this, createWorkingDirectory(workingDirPath), workingDirPath);
+    this.workingDirectory =
+        new FileTree(createWorkingDirectory(workingDirPath), workingDirPath, this);
   }
 
   private ImmutableSet<Path> createRootPaths(Iterable<String> roots) {
@@ -116,17 +117,10 @@ public final class JimfsFileSystem extends FileSystem {
   }
 
   /**
-   * Returns the file system's read lock.
+   * Returns the read/write lock for the file system.
    */
-  public Lock readLock() {
-    return lock.readLock();
-  }
-
-  /**
-   * Returns the file system's write lock.
-   */
-  public Lock writeLock() {
-    return lock.writeLock();
+  public ReadWriteLock lock() {
+    return lock;
   }
 
   @Override

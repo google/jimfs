@@ -72,7 +72,7 @@ class JimfsDirectoryStream implements DirectoryStream<Path> {
   private final class DirectoryIterator extends AbstractIterator<Path> {
 
     @Nullable
-    private Iterator<Path> fileNames;
+    private Iterator<String> fileNames;
 
     @Override
     protected Path computeNext() {
@@ -87,7 +87,7 @@ class JimfsDirectoryStream implements DirectoryStream<Path> {
         }
 
         while (fileNames.hasNext()) {
-          Path name = fileNames.next();
+          String name = fileNames.next();
           Path path = dirPath.resolve(name);
 
           if (filter.accept(path)) {

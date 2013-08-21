@@ -103,7 +103,8 @@ final class JimfsSecureDirectoryStream
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Class<V> type) {
-    return getFileAttributeView(JimfsPath.empty(tree().getFileSystem()), type);
+    return getFileAttributeView(
+        JimfsPath.empty(tree().getBasePath().getFileSystem()), type);
   }
 
   @Override
