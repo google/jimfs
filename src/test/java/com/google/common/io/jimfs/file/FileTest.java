@@ -2,10 +2,10 @@ package com.google.common.io.jimfs.file;
 
 import static org.truth0.Truth.ASSERT;
 
+import com.google.common.io.jimfs.FakeJimfsFileSystem;
 import com.google.common.io.jimfs.bytestore.ArrayByteStore;
 import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.io.jimfs.testing.FakeFileContent;
-import com.google.common.io.jimfs.testing.TestUtils;
 import com.google.common.testing.EqualsTester;
 
 import org.junit.Test;
@@ -47,7 +47,7 @@ public class FileTest {
 
   @Test
   public void testSymbolicLink() {
-    File file = new File(0L, TestUtils.fakePath());
+    File file = new File(0L, JimfsPath.empty(new FakeJimfsFileSystem()));
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isTrue();

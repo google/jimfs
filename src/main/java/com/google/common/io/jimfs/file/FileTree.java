@@ -100,9 +100,9 @@ public final class FileTree {
    * Creates a new file system with the given base for the given file system. This tree becomes the
    * super root if the file system's super root has not already been initialized.
    */
-  public FileTree(File base, JimfsPath basePath, JimfsFileSystem fileSystem) {
+  public FileTree(JimfsFileSystem fileSystem, File base, JimfsPath basePath) {
     this(base, basePath,
-        fileSystem.getSuperRoot(),
+        fileSystem.getSuperRootTree(),
         fileSystem.lock(),
         fileSystem.getFileService(),
         fileSystem.getAttributeService());

@@ -25,9 +25,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.io.jimfs.JimfsFileSystem;
-import com.google.common.io.jimfs.JimfsFileSystemProvider;
 import com.google.common.io.jimfs.attribute.AclAttributeProvider;
 import com.google.common.io.jimfs.attribute.AttributeProvider;
 import com.google.common.io.jimfs.attribute.BasicAttributeProvider;
@@ -127,17 +125,5 @@ public final class WindowsConfiguration extends JimfsConfiguration {
     Iterable<String> split = SPLITTER.split(joined);
 
     return JimfsPath.create(fileSystem, root, toNames(split));
-  }
-
-  public static void main(String[] args) throws IOException {
-    WindowsConfiguration config = new WindowsConfiguration();
-    JimfsFileSystem fs = new JimfsFileSystem(new JimfsFileSystemProvider(), config);
-
-    Path path = fs.getPath("C:\\").resolve("..").normalize();
-    System.out.println(path);
-    System.out.println(path.getRoot());
-    System.out.println(Iterables.toString(path));
-
-    System.out.println(Files.readAttributes(path, "dos:*"));
   }
 }

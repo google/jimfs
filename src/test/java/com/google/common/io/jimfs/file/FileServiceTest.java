@@ -3,11 +3,12 @@ package com.google.common.io.jimfs.file;
 import static com.google.common.io.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
 
+import com.google.common.io.jimfs.FakeJimfsFileSystem;
 import com.google.common.io.jimfs.attribute.AttributeService;
 import com.google.common.io.jimfs.attribute.BasicAttributeProvider;
 import com.google.common.io.jimfs.attribute.OwnerAttributeProvider;
+import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.io.jimfs.testing.BasicFileAttribute;
-import com.google.common.io.jimfs.testing.TestUtils;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class FileServiceTest {
     ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(USER);
 
-    file = fileService.createSymbolicLink(TestUtils.fakePath());
+    file = fileService.createSymbolicLink(JimfsPath.empty(new FakeJimfsFileSystem()));
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
     ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
@@ -70,7 +71,8 @@ public class FileServiceTest {
     ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(USER);
 
-    file = fileService.symbolicLinkCallback(TestUtils.fakePath()).createFile();
+    file = fileService.symbolicLinkCallback(JimfsPath.empty(new FakeJimfsFileSystem()))
+        .createFile();
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
     ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
@@ -92,7 +94,7 @@ public class FileServiceTest {
     ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(FOO);
 
-    file = fileService.createSymbolicLink(TestUtils.fakePath(), owner);
+    file = fileService.createSymbolicLink(JimfsPath.empty(new FakeJimfsFileSystem()), owner);
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
     ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
@@ -114,7 +116,8 @@ public class FileServiceTest {
     ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(FOO);
 
-    file = fileService.symbolicLinkCallback(TestUtils.fakePath(), owner).createFile();
+    file = fileService.symbolicLinkCallback(JimfsPath.empty(new FakeJimfsFileSystem()), owner)
+        .createFile();
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
     ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);

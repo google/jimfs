@@ -29,6 +29,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.jimfs.JimfsFileSystem;
+import com.google.common.io.jimfs.JimfsFileSystemProvider;
 import com.google.common.io.jimfs.file.FileContent;
 import com.google.common.io.jimfs.file.LinkHandling;
 
@@ -341,14 +342,13 @@ public final class JimfsPath implements Path, FileContent {
 
   @Override
   public JimfsPath toAbsolutePath() {
-    return isAbsolute()
-        ? this
-        : fs.getWorkingDirectory().getBasePath().resolve(this);
+    return fs.getWorkingDirectory().resolve(this);
   }
 
   @Override
   public JimfsPath toRealPath(LinkOption... options) throws IOException {
-    return fs.getFileTree(this).toRealPath(this, LinkHandling.fromOptions(options));
+    return JimfsFileSystemProvider.getFileTree(this)
+        .toRealPath(this, LinkHandling.fromOptions(options));
   }
 
   @Override
