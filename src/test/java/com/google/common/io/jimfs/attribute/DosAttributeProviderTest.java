@@ -1,7 +1,5 @@
 package com.google.common.io.jimfs.attribute;
 
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.CREATE;
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static junit.framework.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
@@ -41,9 +39,9 @@ public class DosAttributeProviderTest extends AttributeProviderTest {
   @Test
   public void testSet() {
     for (String attribute : DOS_ATTRIBUTES) {
-      assertSetAndGetSucceeds("dos:" + attribute, true, NORMAL);
-      assertSetAndGetSucceeds("dos:" + attribute, false, NORMAL);
-      assertSetFails("dos:" + attribute, true, CREATE);
+      assertSetAndGetSucceeds("dos:" + attribute, true);
+      assertSetAndGetSucceeds("dos:" + attribute, false);
+      assertSetOnCreateFails("dos:" + attribute, true);
     }
   }
 
@@ -89,7 +87,7 @@ public class DosAttributeProviderTest extends AttributeProviderTest {
     ASSERT.that(attrs.isReadOnly()).isFalse();
     ASSERT.that(attrs.isSystem()).isFalse();
 
-    service.setAttribute(file, "dos:hidden", true, NORMAL);
+    service.setAttribute(file, "dos:hidden", true);
 
     attrs = service.readAttributes(file, DosFileAttributes.class);
     ASSERT.that(attrs.isHidden()).isTrue();

@@ -1,7 +1,5 @@
 package com.google.common.io.jimfs.attribute;
 
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.CREATE;
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.fail;
 import static org.truth0.Truth.ASSERT;
@@ -47,16 +45,16 @@ public class UserDefinedAttributeProviderTest extends AttributeProviderTest {
   @Test
   public void testGettingAndSetting() {
     byte[] bytes = {0, 1, 2, 3};
-    service.setAttribute(file, "user", "one", bytes, NORMAL);
-    service.setAttribute(file, "user:two", ByteBuffer.wrap(bytes), NORMAL);
+    service.setAttribute(file, "user", "one", bytes);
+    service.setAttribute(file, "user:two", ByteBuffer.wrap(bytes));
 
     byte[] one = service.getAttribute(file, "user:one");
     byte[] two = service.getAttribute(file, "user", "two");
     ASSERT.that(Arrays.equals(one, bytes)).isTrue();
     ASSERT.that(Arrays.equals(two, bytes)).isTrue();
 
-    assertSetFails("user:foo", bytes, CREATE);
-    assertSetFails("user:foo", "hello", NORMAL);
+    assertSetOnCreateFails("user:foo", bytes);
+    assertSetFails("user:foo", "hello");
 
     Map<String, Object> map = service.readAttributes(file, "user:*");
     ASSERT.that(map.size()).is(2);

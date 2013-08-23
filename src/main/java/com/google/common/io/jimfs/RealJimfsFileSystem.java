@@ -3,7 +3,6 @@ package com.google.common.io.jimfs;
 import static com.google.common.io.jimfs.config.JimfsConfiguration.Feature.GROUPS;
 import static com.google.common.io.jimfs.file.LinkHandling.NOFOLLOW_LINKS;
 
-import com.google.common.io.jimfs.attribute.AttributeService;
 import com.google.common.io.jimfs.attribute.UserLookupService;
 import com.google.common.io.jimfs.config.JimfsConfiguration;
 import com.google.common.io.jimfs.file.DirectoryTable;
@@ -28,7 +27,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 final class RealJimfsFileSystem extends JimfsFileSystem {
 
-  private final AttributeService attributeService;
   private final FileService fileService;
   private final UserPrincipalLookupService userLookupService;
 
@@ -42,8 +40,7 @@ final class RealJimfsFileSystem extends JimfsFileSystem {
       JimfsConfiguration configuration) {
     super(provider, configuration);
 
-    this.attributeService = configuration.getAttributeService();
-    this.fileService = new FileService(attributeService);
+    this.fileService = new FileService(configuration.getAttributeProviders());
     this.userLookupService = new UserLookupService(configuration.supportsFeature(GROUPS));
 
     // this FileTree becomes the super root because the super root field is not yet set when
@@ -61,7 +58,7 @@ final class RealJimfsFileSystem extends JimfsFileSystem {
     try {
       for (Path root : roots) {
         File rootDir = superRoot.createFile(
-            (JimfsPath) root, fileService.directoryCallback(), false);
+            (JimfsPath) root, fileService.directoryCreator(), false);
 
         // change root directory's ".." to point to itself
         DirectoryTable rootDirTable = rootDir.content();
@@ -85,11 +82,6 @@ final class RealJimfsFileSystem extends JimfsFileSystem {
   @Override
   public ReadWriteLock lock() {
     return lock;
-  }
-
-  @Override
-  public AttributeService getAttributeService() {
-    return attributeService;
   }
 
   @Override

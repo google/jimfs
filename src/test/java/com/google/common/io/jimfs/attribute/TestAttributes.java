@@ -21,7 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 /**
  * @author Colin Decker
  */
-interface TestAttributes extends BasicFileAttributes {
+public interface TestAttributes extends BasicFileAttributes {
 
   String foo();
 

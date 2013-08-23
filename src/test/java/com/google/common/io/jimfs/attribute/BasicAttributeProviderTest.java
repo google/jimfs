@@ -16,7 +16,6 @@
 
 package com.google.common.io.jimfs.attribute;
 
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
@@ -78,16 +77,16 @@ public class BasicAttributeProviderTest extends AttributeProviderTest {
   @Test
   public void testSet() {
     FileTime time = FileTime.fromMillis(0L);
-    assertSetAndGetSucceeds("basic:creationTime", time, NORMAL);
-    assertSetAndGetSucceeds("basic:lastModifiedTime", time, NORMAL);
-    assertSetAndGetSucceeds("basic:lastAccessTime", time, NORMAL);
-    assertSetFails("basic:fileKey", 10L, NORMAL);
-    assertSetFails("basic:size", 10L, NORMAL);
-    assertSetFails("basic:isRegularFile", true, NORMAL);
-    assertSetFails("basic:isDirectory", true, NORMAL);
-    assertSetFails("basic:isSymbolicLink", true, NORMAL);
-    assertSetFails("basic:isOther", true, NORMAL);
-    assertSetFails("basic:creationTime", "foo", NORMAL);
+    assertSetAndGetSucceeds("basic:creationTime", time);
+    assertSetAndGetSucceeds("basic:lastModifiedTime", time);
+    assertSetAndGetSucceeds("basic:lastAccessTime", time);
+    assertSetFails("basic:fileKey", 10L);
+    assertSetFails("basic:size", 10L);
+    assertSetFails("basic:isRegularFile", true);
+    assertSetFails("basic:isDirectory", true);
+    assertSetFails("basic:isSymbolicLink", true);
+    assertSetFails("basic:isOther", true);
+    assertSetFails("basic:creationTime", "foo");
   }
 
   @Test

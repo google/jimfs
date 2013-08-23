@@ -1,6 +1,5 @@
 package com.google.common.io.jimfs;
 
-import com.google.common.io.jimfs.attribute.AttributeService;
 import com.google.common.io.jimfs.config.JimfsConfiguration;
 import com.google.common.io.jimfs.config.UnixConfiguration;
 import com.google.common.io.jimfs.file.FileService;
@@ -30,11 +29,6 @@ public final class FakeJimfsFileSystem extends JimfsFileSystem {
 
   @Override
   public ReadWriteLock lock() {
-    return null;
-  }
-
-  @Override
-  public AttributeService getAttributeService() {
     return null;
   }
 

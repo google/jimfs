@@ -16,7 +16,6 @@
 
 package com.google.common.io.jimfs.attribute;
 
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
@@ -71,13 +70,13 @@ public class UnixAttributeProviderTest extends AttributeProviderTest {
 
   @Test
   public void testSet() {
-    assertSetFails("unix:uid", 1, NORMAL);
-    assertSetFails("unix:gid", 1, NORMAL);
-    assertSetFails("unix:rdev", 1L, NORMAL);
-    assertSetFails("unix:dev", 2L, NORMAL);
-    assertSetFails("unix:ino", 3, NORMAL);
-    assertSetFails("unix:mode", 0777, NORMAL);
-    assertSetFails("unix:ctime", FileTime.fromMillis(0L), NORMAL);
-    assertSetFails("unix:nlink", 2, NORMAL);
+    assertSetFails("unix:uid", 1);
+    assertSetFails("unix:gid", 1);
+    assertSetFails("unix:rdev", 1L);
+    assertSetFails("unix:dev", 2L);
+    assertSetFails("unix:ino", 3);
+    assertSetFails("unix:mode", 0777);
+    assertSetFails("unix:ctime", FileTime.fromMillis(0L));
+    assertSetFails("unix:nlink", 2);
   }
 }

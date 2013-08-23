@@ -22,7 +22,7 @@ import java.nio.file.attribute.FileAttributeView;
 /**
  * @author Colin Decker
  */
-interface TestAttributeView extends FileAttributeView {
+public interface TestAttributeView extends FileAttributeView {
 
   TestAttributes readAttributes() throws IOException;
 

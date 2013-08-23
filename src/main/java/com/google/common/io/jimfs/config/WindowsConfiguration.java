@@ -93,7 +93,7 @@ public final class WindowsConfiguration extends JimfsConfiguration {
   }
 
   @Override
-  protected Iterable<AttributeProvider> getAttributeProviders() {
+  public Iterable<AttributeProvider> getAttributeProviders() {
     BasicAttributeProvider basic = new BasicAttributeProvider();
     OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal(defaultUser));
     DosAttributeProvider dos = new DosAttributeProvider(basic);

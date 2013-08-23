@@ -32,7 +32,7 @@ import com.google.common.io.jimfs.bytestore.ByteStore;
 import com.google.common.io.jimfs.config.JimfsConfiguration;
 import com.google.common.io.jimfs.config.UnixConfiguration;
 import com.google.common.io.jimfs.file.File;
-import com.google.common.io.jimfs.file.FileService;
+import com.google.common.io.jimfs.file.FileCreator;
 import com.google.common.io.jimfs.file.FileTree;
 import com.google.common.io.jimfs.file.LinkHandling;
 import com.google.common.io.jimfs.path.JimfsPath;
@@ -218,8 +218,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
     FileTree tree = getFileTree(checkedPath);
-    FileService.Callback createDirectory = checkedPath.getFileSystem().getFileService()
-        .directoryCallback(attrs);
+    FileCreator createDirectory = checkedPath.getFileSystem().getFileService()
+        .directoryCreator(attrs);
     tree.createFile(checkedPath, createDirectory, false);
   }
 
@@ -241,8 +241,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     checkArgument(linkPath.getFileSystem().equals(targetPath.getFileSystem()),
         "link and target paths must belong to the same file system instance");
     FileTree tree = getFileTree(linkPath);
-    FileService.Callback createSymbolicLink = linkPath.getFileSystem().getFileService()
-        .symbolicLinkCallback(targetPath, attrs);
+    FileCreator createSymbolicLink = linkPath.getFileSystem().getFileService()
+        .symbolicLinkCreator(targetPath, attrs);
     tree.createFile(linkPath, createSymbolicLink, false);
   }
 

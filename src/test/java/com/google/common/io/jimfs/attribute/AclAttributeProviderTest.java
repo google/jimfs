@@ -1,7 +1,5 @@
 package com.google.common.io.jimfs.attribute;
 
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.CREATE;
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static com.google.common.io.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static java.nio.file.attribute.AclEntryFlag.DIRECTORY_INHERIT;
 import static java.nio.file.attribute.AclEntryPermission.APPEND_DATA;
@@ -59,10 +57,10 @@ public class AclAttributeProviderTest extends AttributeProviderTest {
 
   @Test
   public void testSet() {
-    assertSetAndGetSucceeds("acl:acl", ImmutableList.of(), NORMAL);
-    assertSetFails("acl:acl", defaultAcl, CREATE);
-    assertSetFails("acl:acl", ImmutableSet.of(), NORMAL);
-    assertSetFails("acl:acl", ImmutableList.of("hello"), NORMAL);
+    assertSetAndGetSucceeds("acl:acl", ImmutableList.of());
+    assertSetOnCreateFails("acl:acl", defaultAcl);
+    assertSetFails("acl:acl", ImmutableSet.of());
+    assertSetFails("acl:acl", ImmutableList.of("hello"));
   }
 
   @Test

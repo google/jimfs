@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.io.jimfs.attribute.AttributeService;
 import com.google.common.io.jimfs.config.JimfsConfiguration;
 import com.google.common.io.jimfs.file.FileService;
 import com.google.common.io.jimfs.file.FileTree;
@@ -56,8 +55,7 @@ public abstract class JimfsFileSystem extends FileSystem {
   JimfsFileSystem(JimfsFileSystemProvider provider, JimfsConfiguration configuration) {
     this.provider = checkNotNull(provider);
     this.configuration = checkNotNull(configuration);
-    this.supportedFileAttributeViews =
-        configuration.getAttributeService().supportedFileAttributeViews();
+    this.supportedFileAttributeViews = configuration.supportedFileAttributeViews();
 
     this.roots = createRootPaths(configuration.getRoots());
     this.workingDir = getPath(configuration.getWorkingDirectory());
@@ -147,12 +145,6 @@ public abstract class JimfsFileSystem extends FileSystem {
    * Returns the read/write lock for this file system.
    */
   public abstract ReadWriteLock lock();
-
-  /**
-   * Returns the attribute service for the file system, which provides methods for reading and
-   * setting file attributes and getting attribute views.
-   */
-  public abstract AttributeService getAttributeService();
 
   /**
    * Returns the file service for this file system.

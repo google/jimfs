@@ -26,7 +26,7 @@ import java.nio.file.attribute.FileTime;
 /**
  * @author Colin Decker
  */
-class TestAttributeProvider extends AbstractAttributeProvider
+public class TestAttributeProvider extends AbstractAttributeProvider
     implements AttributeViewProvider<TestAttributeView>, AttributeReader<TestAttributes> {
 
   private static final AttributeSpec FOO = AttributeSpec.unsettable("foo", String.class);
