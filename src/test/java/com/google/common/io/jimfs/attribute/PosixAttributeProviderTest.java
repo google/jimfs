@@ -16,10 +16,9 @@
 
 package com.google.common.io.jimfs.attribute;
 
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.CREATE;
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static com.google.common.io.jimfs.attribute.UserLookupService.createGroupPrincipal;
 import static com.google.common.io.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static junit.framework.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
@@ -63,23 +62,20 @@ public class PosixAttributeProviderTest extends AttributeProviderTest {
 
   @Test
   public void testSet() {
-    assertSetAndGetSucceeds("posix:group", createGroupPrincipal("foo"), NORMAL);
-    assertSetAndGetSucceeds(
-        "posix:permissions", PosixFilePermissions.fromString("rwxrwxrwx"), NORMAL);
-    assertSetAndGetSucceeds(
-        "posix:permissions", PosixFilePermissions.fromString("rwxrwxrwx"), CREATE);
-    assertSetAndGetSucceeds("posix:permissions", ImmutableSet.of(), NORMAL);
-    assertSetFails("posix:group", createGroupPrincipal("foo"), CREATE);
-    assertSetFails(
-        "posix:permissions", ImmutableList.of(PosixFilePermission.GROUP_EXECUTE), NORMAL);
-    assertSetFails("posix:permissions", ImmutableSet.of("foo"), NORMAL);
+    assertSetAndGetSucceeds("posix:group", createGroupPrincipal("foo"));
+    assertSetAndGetSucceeds("posix:permissions", PosixFilePermissions.fromString("rwxrwxrwx"));
+    assertSetOnCreateSucceeds("posix:permissions", PosixFilePermissions.fromString("rwxrwxrwx"));
+    assertSetOnCreateSucceeds("posix:permissions", ImmutableSet.of());
+    assertSetOnCreateFails("posix:group", createGroupPrincipal("foo"));
+    assertSetFails("posix:permissions", ImmutableList.of(PosixFilePermission.GROUP_EXECUTE));
+    assertSetFails("posix:permissions", ImmutableSet.of("foo"));
   }
 
   @Test
   public void testView() throws IOException {
     PosixFileAttributeView view = service.getFileAttributeView(
         fileProvider(), PosixFileAttributeView.class);
-    ASSERT.that(view).isNotNull();
+    assertNotNull(view);
 
     ASSERT.that(view.name()).is("posix");
     ASSERT.that(view.getOwner()).is(createUserPrincipal("user"));

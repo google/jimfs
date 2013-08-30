@@ -56,7 +56,11 @@ public final class WindowsConfiguration extends JimfsConfiguration {
   private final ImmutableSet<String> roots;
 
   public WindowsConfiguration() {
-    this("C:\\work", "user", ImmutableList.<AclEntry>of(), "C:\\");
+    this("C:\\");
+  }
+
+  public WindowsConfiguration(String... roots) {
+    this("C:\\work", "user", ImmutableList.<AclEntry>of(), roots);
   }
 
   public WindowsConfiguration(String workingDirectory, String defaultUser,
@@ -93,7 +97,7 @@ public final class WindowsConfiguration extends JimfsConfiguration {
   }
 
   @Override
-  protected Iterable<AttributeProvider> getAttributeProviders() {
+  public Iterable<AttributeProvider> getAttributeProviders() {
     BasicAttributeProvider basic = new BasicAttributeProvider();
     OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal(defaultUser));
     DosAttributeProvider dos = new DosAttributeProvider(basic);

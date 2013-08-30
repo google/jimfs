@@ -47,8 +47,7 @@ public final class DirectoryTable implements FileContent {
   private static final Ordering<Object> STRING_ORDERING = Ordering.natural()
       .onResultOf(Functions.toStringFunction());
 
-  private static final ImmutableSet<Name> RESERVED_NAMES =
-      ImmutableSet.of(SELF, PARENT);
+  private static final ImmutableSet<Name> RESERVED_NAMES = ImmutableSet.of(SELF, PARENT);
 
   private final Map<Name, File> entries = new HashMap<>();
 

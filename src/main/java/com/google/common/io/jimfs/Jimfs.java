@@ -42,7 +42,7 @@ public final class Jimfs {
    * <p>The working directory for the file system, which exists when it is created, is "/work".
    */
   public static FileSystem newUnixLikeFileSystem() {
-    return new RealJimfsFileSystem(PROVIDER, new UnixConfiguration());
+    return new JimfsFileSystem(PROVIDER, new UnixConfiguration());
   }
 
   /**
@@ -56,6 +56,6 @@ public final class Jimfs {
    * <p>The working directory for the file system, which exists when it is created, is "C:\work".
    */
   public static FileSystem newWindowsLikeFileSystem() {
-    return new RealJimfsFileSystem(PROVIDER, new WindowsConfiguration());
+    return new JimfsFileSystem(PROVIDER, new WindowsConfiguration());
   }
 }

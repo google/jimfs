@@ -16,8 +16,6 @@
 
 package com.google.common.io.jimfs.attribute;
 
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.CREATE;
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static com.google.common.io.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
 
@@ -47,8 +45,8 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest {
 
   @Test
   public void testSet() {
-    assertSetAndGetSucceeds("owner:owner", createUserPrincipal("root"), CREATE);
-    assertSetFails("owner:owner", "root", NORMAL);
+    assertSetOnCreateSucceeds("owner:owner", createUserPrincipal("root"));
+    assertSetFails("owner:owner", "root");
   }
 
   @Test

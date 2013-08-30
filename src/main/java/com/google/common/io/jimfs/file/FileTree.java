@@ -17,7 +17,6 @@
 package com.google.common.io.jimfs.file;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static com.google.common.io.jimfs.file.LinkHandling.FOLLOW_LINKS;
 import static com.google.common.io.jimfs.file.LinkHandling.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -27,11 +26,10 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.io.jimfs.JimfsFileSystem;
-import com.google.common.io.jimfs.attribute.AttributeService;
 import com.google.common.io.jimfs.bytestore.ByteStore;
 import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.io.jimfs.path.Name;
@@ -92,34 +90,20 @@ public final class FileTree {
 
   private final ReadWriteLock lock;
   private final FileTree superRoot;
-  private final FileService fileService;
-  private final AttributeService attributeService;
+  private final JimfsFileStore jimfsFileStore;
   private final LookupService lookupService;
-
-  /**
-   * Creates a new file system with the given base for the given file system. This tree becomes the
-   * super root if the file system's super root has not already been initialized.
-   */
-  public FileTree(JimfsFileSystem fileSystem, File base, JimfsPath basePath) {
-    this(base, basePath,
-        fileSystem.getSuperRootTree(),
-        fileSystem.lock(),
-        fileSystem.getFileService(),
-        fileSystem.getAttributeService());
-  }
 
   /**
    * Creates a new file tree with the given base, using the given services.
    */
   public FileTree(File base, JimfsPath basePath, @Nullable FileTree superRoot,
-      ReadWriteLock lock, FileService fileService, AttributeService attributeService) {
+      ReadWriteLock lock, JimfsFileStore jimfsFileStore) {
     this.base = checkNotNull(base);
     this.basePath = checkNotNull(basePath);
     this.superRoot = superRoot == null ? this : superRoot;
 
     this.lock = checkNotNull(lock);
-    this.fileService = checkNotNull(fileService);
-    this.attributeService = checkNotNull(attributeService);
+    this.jimfsFileStore = checkNotNull(jimfsFileStore);
     this.lookupService = new LookupService(this);
   }
 
@@ -222,8 +206,7 @@ public final class FileTree {
     }
 
     JimfsPath newBasePath = dir.isAbsolute() ? dir : basePath.resolve(dir);
-    FileTree tree =
-        new FileTree(file, newBasePath, superRoot, lock, fileService, attributeService);
+    FileTree tree = new FileTree(file, newBasePath, superRoot, lock, jimfsFileStore);
     return new JimfsSecureDirectoryStream(tree, filter);
   }
 
@@ -298,7 +281,7 @@ public final class FileTree {
         }
 
         // must handle root directory separately
-        File superRootBase = getSuperRoot().base();
+        File superRootBase = superRoot.base();
         DirectoryTable superRootBaseTable = superRootBase.content();
         names.add(superRootBaseTable.getName(file));
       }
@@ -313,6 +296,15 @@ public final class FileTree {
     }
   }
 
+  public File createDirectory(JimfsPath path, FileAttribute<?>... attrs) throws IOException {
+    return createFile(path, jimfsFileStore.directorySupplier(attrs), false);
+  }
+
+  public File createSymbolicLink(
+      JimfsPath path, JimfsPath target, FileAttribute<?>... attrs) throws IOException {
+    return createFile(path, jimfsFileStore.symbolicLinkSupplier(target, attrs), false);
+  }
+
   /**
    * Creates a new file at the given path if possible, using the given factory to create and
    * store the file. Returns the key of the new file. If {@code allowExisting} is {@code true} and
@@ -320,9 +312,9 @@ public final class FileTree {
    * {@link FileAlreadyExistsException}.
    */
   public File createFile(
-      JimfsPath path, FileService.Callback callback, boolean allowExisting) throws IOException {
+      JimfsPath path, Supplier<File> fileSupplier, boolean allowExisting) throws IOException {
     checkNotNull(path);
-    checkNotNull(callback);
+    checkNotNull(fileSupplier);
 
     Name name = name(path);
 
@@ -345,7 +337,7 @@ public final class FileTree {
       File parent = result.parent();
       DirectoryTable parentTable = parent.content();
 
-      File newFile = callback.createFile();
+      File newFile = fileSupplier.get();
       parentTable.link(name, newFile);
 
       if (newFile.isDirectory()) {
@@ -416,7 +408,7 @@ public final class FileTree {
     // existing key if the file already exists when it tries to create it
     writeLock().lock();
     try {
-      File file = createFile(path, fileService.regularFileCallback(attrs), !createNew);
+      File file = createFile(path, jimfsFileStore.regularFileSupplier(attrs), !createNew);
       // the file already existed but was not a regular file
       if (!file.isRegularFile()) {
         throw new FileSystemException(path.toString(), null, "not a regular file");
@@ -646,7 +638,7 @@ public final class FileTree {
         }
       } else {
         // copy
-        File copy = destTree.fileService.copy(sourceFile);
+        File copy = destTree.jimfsFileStore.copy(sourceFile);
         destParentTable.link(destName, copy);
 
         if (copy.isDirectory()) {
@@ -671,9 +663,9 @@ public final class FileTree {
   }
 
   private void copyBasicAttributes(File source, FileTree destTree, File dest) throws IOException {
-    BasicFileAttributes sourceAttributes = attributeService.readAttributes(
-        source, BasicFileAttributes.class);
-    BasicFileAttributeView destAttributeView = destTree.attributeService.getFileAttributeView(
+    BasicFileAttributes sourceAttributes =
+        jimfsFileStore.readAttributes(source, BasicFileAttributes.class);
+    BasicFileAttributeView destAttributeView = destTree.jimfsFileStore.getFileAttributeView(
         FileProvider.ofFile(dest), BasicFileAttributeView.class);
 
     assert destAttributeView != null;
@@ -732,7 +724,7 @@ public final class FileTree {
   public <V extends FileAttributeView> V getFileAttributeView(
       JimfsPath path, Class<V> type, LinkHandling linkHandling) {
     FileProvider fileProvider = FileProvider.lookup(this, path, linkHandling);
-    return attributeService.getFileAttributeView(fileProvider, type);
+    return jimfsFileStore.getFileAttributeView(fileProvider, type);
   }
 
   /**
@@ -743,7 +735,7 @@ public final class FileTree {
     File file = lookup(path, linkHandling)
         .requireFound(path)
         .file();
-    return attributeService.readAttributes(file, type);
+    return jimfsFileStore.readAttributes(file, type);
   }
 
   /**
@@ -754,7 +746,7 @@ public final class FileTree {
     File file = lookup(path, linkHandling)
         .requireFound(path)
         .file();
-    return attributeService.readAttributes(file, attributes);
+    return jimfsFileStore.readAttributes(file, attributes);
   }
 
   /**
@@ -765,6 +757,6 @@ public final class FileTree {
     File file = lookup(path, linkHandling)
         .requireFound(path)
         .file();
-    attributeService.setAttribute(file, attribute, value, NORMAL);
+    jimfsFileStore.setAttribute(file, attribute, value);
   }
 }

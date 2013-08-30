@@ -16,16 +16,14 @@
 
 package com.google.common.io.jimfs.attribute;
 
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode;
-import static com.google.common.io.jimfs.attribute.AttributeService.SetMode.NORMAL;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.jimfs.file.DirectoryTable;
 import com.google.common.io.jimfs.file.File;
 import com.google.common.io.jimfs.file.FileProvider;
-import com.google.common.io.jimfs.testing.FakeFileContent;
+import com.google.common.io.jimfs.file.JimfsFileStore;
+import com.google.common.io.jimfs.testing.BasicFileAttribute;
 
 import org.junit.Before;
 
@@ -33,14 +31,14 @@ import java.util.Map;
 
 /**
  * Base class for tests of individual {@link AttributeProvider} implementations. Implementations
- * are tested through an {@link AttributeService}, since some of the functionality of the
+ * are tested through an {@link JimfsFileStore}, since some of the functionality of the
  * behavior specified by the provider is only exposed through the service methods.
  *
  * @author Colin Decker
  */
 public abstract class AttributeProviderTest {
 
-  protected AttributeService service;
+  protected JimfsFileStore service;
   protected File file;
   protected File dir;
 
@@ -51,11 +49,9 @@ public abstract class AttributeProviderTest {
 
   @Before
   public void setUp() {
-    this.service = new AttributeService(createProviders());
-    this.file = new File(0L, new FakeFileContent());
-    this.dir = new File(1L, new DirectoryTable());
-    service.setInitialAttributes(file);
-    service.setInitialAttributes(dir);
+    this.service = new JimfsFileStore("foo", createProviders());
+    this.file = service.createRegularFile();
+    this.dir = service.createDirectory();
   }
 
   protected FileProvider fileProvider() {
@@ -71,22 +67,31 @@ public abstract class AttributeProviderTest {
     }
   }
 
-  protected void assertSetAndGetSucceeds(String attribute, Object value, SetMode mode) {
-    service.setAttribute(file, attribute, value, mode);
+  protected void assertSetAndGetSucceeds(String attribute, Object value) {
+    service.setAttribute(file, attribute, value);
     ASSERT.that(service.getAttribute(file, attribute)).is(value);
   }
 
-  @SuppressWarnings("EmptyCatchBlock")
-  protected void assertSetFails(String attribute, Object value, SetMode mode) {
+  protected void assertSetOnCreateSucceeds(String attribute, Object value) {
+    File file = service.createRegularFile(new BasicFileAttribute<>(attribute, value));
+    ASSERT.that(service.getAttribute(file, attribute)).is(value);
+  }
+
+  @SuppressWarnings("EmptyCatchBlock") // why am I having to suppress this here?
+  protected void assertSetFails(String attribute, Object value) {
     try {
-      service.setAttribute(file, attribute, value, mode);
+      service.setAttribute(file, attribute, value);
       fail();
-    } catch (UnsupportedOperationException uoe) {
-      if (mode == NORMAL) {
-        // UOE should only be thrown by
-        throw uoe;
-      }
     } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @SuppressWarnings("EmptyCatchBlock")
+  protected void assertSetOnCreateFails(String attribute, Object value) {
+    try {
+      service.createRegularFile(new BasicFileAttribute<>(attribute, value));
+      fail();
+    } catch (UnsupportedOperationException expected) {
     }
   }
 }

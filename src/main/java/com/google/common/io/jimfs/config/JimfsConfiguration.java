@@ -16,11 +16,12 @@
 
 package com.google.common.io.jimfs.config;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.io.jimfs.JimfsFileSystem;
 import com.google.common.io.jimfs.attribute.AttributeProvider;
-import com.google.common.io.jimfs.attribute.AttributeService;
 import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.io.jimfs.path.Name;
 
@@ -32,6 +33,8 @@ import java.nio.file.SecureDirectoryStream;
 import java.text.Collator;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 /**
  * Provider of configuration options for an instance of {@link JimfsFileSystem}.
  *
@@ -39,7 +42,6 @@ import java.util.List;
  */
 public abstract class JimfsConfiguration {
 
-  private volatile AttributeService attributeService;
   private volatile String recognizedSeparators;
   private volatile ImmutableSet<Feature> supportedFeatures;
 
@@ -137,19 +139,20 @@ public abstract class JimfsConfiguration {
   /**
    * Returns the names identifying the attribute views the file system supports.
    */
-  protected abstract Iterable<AttributeProvider> getAttributeProviders();
+  public abstract Iterable<AttributeProvider> getAttributeProviders();
 
   /**
-   * Gets the attribute service for this configuration.
+   * Returns the set of file attribute views the file system supports.
    */
-  public final AttributeService getAttributeService() {
-    if (attributeService == null) {
-      AttributeService manager = new AttributeService(getAttributeProviders());
-      attributeService = manager;
-      return manager;
-    }
-
-    return attributeService;
+  public final ImmutableSet<String> supportedFileAttributeViews() {
+    return ImmutableSet.copyOf(Iterables.transform(getAttributeProviders(),
+        new Function<AttributeProvider, String>() {
+          @Nullable
+          @Override
+          public String apply(AttributeProvider input) {
+            return input.name();
+          }
+        }));
   }
 
   /**
