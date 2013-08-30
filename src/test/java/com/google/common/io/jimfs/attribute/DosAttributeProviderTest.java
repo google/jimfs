@@ -1,5 +1,6 @@
 package com.google.common.io.jimfs.attribute;
 
+import static com.google.common.io.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static junit.framework.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
@@ -25,8 +26,9 @@ public class DosAttributeProviderTest extends AttributeProviderTest {
   @Override
   protected Iterable<? extends AttributeProvider> createProviders() {
     BasicAttributeProvider basic = new BasicAttributeProvider();
+    OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal("user"));
     DosAttributeProvider dos = new DosAttributeProvider(basic);
-    return ImmutableList.of(basic, dos);
+    return ImmutableList.of(basic, owner, dos);
   }
 
   @Test

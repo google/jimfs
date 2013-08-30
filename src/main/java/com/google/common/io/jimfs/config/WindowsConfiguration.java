@@ -56,7 +56,11 @@ public final class WindowsConfiguration extends JimfsConfiguration {
   private final ImmutableSet<String> roots;
 
   public WindowsConfiguration() {
-    this("C:\\work", "user", ImmutableList.<AclEntry>of(), "C:\\");
+    this("C:\\");
+  }
+
+  public WindowsConfiguration(String... roots) {
+    this("C:\\work", "user", ImmutableList.<AclEntry>of(), roots);
   }
 
   public WindowsConfiguration(String workingDirectory, String defaultUser,

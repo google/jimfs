@@ -22,6 +22,8 @@ import static org.junit.Assert.fail;
 import com.google.common.collect.Iterables;
 import com.google.common.io.jimfs.Jimfs;
 import com.google.common.io.jimfs.JimfsFileSystem;
+import com.google.common.io.jimfs.JimfsFileSystemProvider;
+import com.google.common.io.jimfs.config.WindowsConfiguration;
 import com.google.common.io.jimfs.testing.PathTester;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
@@ -78,7 +80,8 @@ public class JimfsPathTest {
 
   @Test
   public void testPathParsing_windowsStylePaths() throws IOException {
-    fs = (JimfsFileSystem) Jimfs.newWindowsLikeFileSystem();
+    fs = new JimfsFileSystem(
+        new JimfsFileSystemProvider(), new WindowsConfiguration(new String[0]));
     assertEquals("C:", fs.getPath("C:").toString());
     // TODO(cgdecker): the windows implementation keeps the root in whatever format you give it
     // should try to support that while still having lookup work...

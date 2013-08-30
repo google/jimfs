@@ -28,11 +28,10 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.io.jimfs.bytestore.ByteStore;
 import com.google.common.io.jimfs.config.JimfsConfiguration;
-import com.google.common.io.jimfs.config.UnixConfiguration;
 import com.google.common.io.jimfs.file.File;
-import com.google.common.io.jimfs.file.FileCreator;
 import com.google.common.io.jimfs.file.FileTree;
 import com.google.common.io.jimfs.file.LinkHandling;
 import com.google.common.io.jimfs.path.JimfsPath;
@@ -74,6 +73,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   public static final String SCHEME = "jimfs";
 
+  public static final String CONFIG_KEY = "configuration";
+
   @Override
   public String getScheme() {
     return SCHEME;
@@ -83,8 +84,12 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public JimfsFileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-    JimfsConfiguration config = new UnixConfiguration("/work", "root", "root", "rw-r--r--");
-    JimfsFileSystem fileSystem = new RealJimfsFileSystem(this, config);
+    checkArgument(uri.getScheme().equalsIgnoreCase(SCHEME),
+        "uri (%s) scheme must be '%s'", uri, SCHEME);
+    checkArgument(env.get(CONFIG_KEY) instanceof JimfsConfiguration,
+        "env map (%s) must contain key 'config' mapped to an instance of JimfsConfiguration", env);
+    JimfsConfiguration config = (JimfsConfiguration) env.get(CONFIG_KEY);
+    JimfsFileSystem fileSystem = new JimfsFileSystem(this, config);
     if (fileSystems.putIfAbsent(uri, fileSystem) != null) {
       throw new FileSystemAlreadyExistsException(uri.toString());
     }
@@ -218,9 +223,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
     FileTree tree = getFileTree(checkedPath);
-    FileCreator createDirectory = checkedPath.getFileSystem().getFileService()
-        .directoryCreator(attrs);
-    tree.createFile(checkedPath, createDirectory, false);
+    tree.createDirectory(checkedPath, attrs);
   }
 
   @Override
@@ -241,9 +244,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     checkArgument(linkPath.getFileSystem().equals(targetPath.getFileSystem()),
         "link and target paths must belong to the same file system instance");
     FileTree tree = getFileTree(linkPath);
-    FileCreator createSymbolicLink = linkPath.getFileSystem().getFileService()
-        .symbolicLinkCreator(targetPath, attrs);
-    tree.createFile(linkPath, createSymbolicLink, false);
+    tree.createSymbolicLink(linkPath, targetPath, attrs);
   }
 
   @Override
@@ -309,7 +310,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public FileStore getFileStore(Path path) throws IOException {
-    return null;
+    // only one FileStore per file system
+    return Iterables.getOnlyElement(checkPath(path).getFileSystem().getFileStores());
   }
 
   @Override

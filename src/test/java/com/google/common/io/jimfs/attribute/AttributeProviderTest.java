@@ -20,12 +20,10 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.jimfs.file.DirectoryTable;
 import com.google.common.io.jimfs.file.File;
 import com.google.common.io.jimfs.file.FileProvider;
-import com.google.common.io.jimfs.file.FileService;
+import com.google.common.io.jimfs.file.JimfsFileStore;
 import com.google.common.io.jimfs.testing.BasicFileAttribute;
-import com.google.common.io.jimfs.testing.FakeFileContent;
 
 import org.junit.Before;
 
@@ -33,14 +31,14 @@ import java.util.Map;
 
 /**
  * Base class for tests of individual {@link AttributeProvider} implementations. Implementations
- * are tested through an {@link FileService}, since some of the functionality of the
+ * are tested through an {@link JimfsFileStore}, since some of the functionality of the
  * behavior specified by the provider is only exposed through the service methods.
  *
  * @author Colin Decker
  */
 public abstract class AttributeProviderTest {
 
-  protected FileService service;
+  protected JimfsFileStore service;
   protected File file;
   protected File dir;
 
@@ -51,11 +49,9 @@ public abstract class AttributeProviderTest {
 
   @Before
   public void setUp() {
-    this.service = new FileService(createProviders());
-    this.file = new File(0L, new FakeFileContent());
-    this.dir = new File(1L, new DirectoryTable());
-    service.setInitialAttributes(file);
-    service.setInitialAttributes(dir);
+    this.service = new JimfsFileStore("foo", createProviders());
+    this.file = service.createRegularFile();
+    this.dir = service.createDirectory();
   }
 
   protected FileProvider fileProvider() {

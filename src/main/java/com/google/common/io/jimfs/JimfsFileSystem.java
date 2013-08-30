@@ -17,56 +17,92 @@
 package com.google.common.io.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.io.jimfs.file.LinkHandling.NOFOLLOW_LINKS;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.io.jimfs.config.JimfsConfiguration;
-import com.google.common.io.jimfs.file.FileService;
+import com.google.common.io.jimfs.file.DirectoryTable;
+import com.google.common.io.jimfs.file.File;
 import com.google.common.io.jimfs.file.FileTree;
+import com.google.common.io.jimfs.file.JimfsFileStore;
 import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.io.jimfs.path.Name;
 import com.google.common.io.jimfs.path.PathMatchers;
 
+import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.WatchService;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * Abstract base implementation of {@link FileSystem} for JIMFS. Abstract to allow for a fake,
- * lightweight subclass for testing that doesn't implement the actual file system.
- *
  * @author Colin Decker
  */
-public abstract class JimfsFileSystem extends FileSystem {
+public final class JimfsFileSystem extends FileSystem {
 
   private final JimfsFileSystemProvider provider;
   private final JimfsConfiguration configuration;
-  private final ImmutableSet<String> supportedFileAttributeViews;
+  private final JimfsFileStore store;
 
-  private final ImmutableSet<Path> roots;
-  private final JimfsPath workingDir;
+  private final ImmutableSet<JimfsPath> rootDirPaths;
+  private final JimfsPath workingDirPath;
 
-  JimfsFileSystem(JimfsFileSystemProvider provider, JimfsConfiguration configuration) {
+  private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+  private final FileTree superRootTree;
+  private final FileTree workingDirTree;
+
+  public JimfsFileSystem(JimfsFileSystemProvider provider, JimfsConfiguration config) {
     this.provider = checkNotNull(provider);
-    this.configuration = checkNotNull(configuration);
-    this.supportedFileAttributeViews = configuration.supportedFileAttributeViews();
+    this.configuration = checkNotNull(config);
+    this.store = new JimfsFileStore("jimfs", config.getAttributeProviders());
 
-    this.roots = createRootPaths(configuration.getRoots());
-    this.workingDir = getPath(configuration.getWorkingDirectory());
+    Set<JimfsPath> rootPaths = new HashSet<>();
+    for (String root : config.getRoots()) {
+      rootPaths.add(JimfsPath.root(this, config.createName(root, true)));
+    }
+    this.rootDirPaths = ImmutableSet.copyOf(rootPaths);
+    this.workingDirPath = getPath(config.getWorkingDirectory());
+
+    if (rootDirPaths.isEmpty()) {
+      this.superRootTree = null;
+      this.workingDirTree = null;
+    } else {
+      File superRoot = store.createDirectory();
+      DirectoryTable superRootTable = superRoot.content();
+      for (JimfsPath path : rootDirPaths) {
+        File dir = store.createDirectory();
+        superRootTable.link(path.getRootName(), dir);
+
+        DirectoryTable dirTable = dir.content();
+        dirTable.linkSelf(dir);
+        dirTable.linkParent(dir);
+      }
+
+      this.superRootTree = new FileTree(superRoot, JimfsPath.empty(this), null, lock(),
+          store);
+      this.workingDirTree = new FileTree(createWorkingDirectory(workingDirPath), workingDirPath,
+          superRootTree, lock(), store);
+    }
   }
 
-  private ImmutableSet<Path> createRootPaths(Iterable<String> roots) {
-    ImmutableSet.Builder<Path> rootPathsBuilder = ImmutableSet.builder();
-    for (String root : roots) {
-      rootPathsBuilder.add(getPath(root));
+  private File createWorkingDirectory(JimfsPath workingDir) {
+    try {
+      Files.createDirectories(workingDir);
+      return superRootTree.lookupFile(workingDir, NOFOLLOW_LINKS);
+    } catch (IOException e) {
+      throw new RuntimeException("failed to create working dir", e);
     }
-    return rootPathsBuilder.build();
   }
 
   @Override
@@ -86,26 +122,27 @@ public abstract class JimfsFileSystem extends FileSystem {
     return configuration.getSeparator();
   }
 
+  @SuppressWarnings("unchecked") // safe because set is immutable
   @Override
-  public Iterable<Path> getRootDirectories() {
-    return roots;
+  public ImmutableSet<Path> getRootDirectories() {
+    return (ImmutableSet<Path>) (ImmutableSet) rootDirPaths;
   }
 
   /**
    * Returns the working directory path for this file system.
    */
   public JimfsPath getWorkingDirectory() {
-    return workingDir;
+    return workingDirPath;
   }
 
   @Override
-  public Iterable<FileStore> getFileStores() {
-    return ImmutableList.of();
+  public ImmutableSet<FileStore> getFileStores() {
+    return ImmutableSet.<FileStore>of(store);
   }
 
   @Override
-  public Set<String> supportedFileAttributeViews() {
-    return supportedFileAttributeViews;
+  public ImmutableSet<String> supportedFileAttributeViews() {
+    return store.supportedFileAttributeViews();
   }
 
   @Override
@@ -131,6 +168,16 @@ public abstract class JimfsFileSystem extends FileSystem {
     return PathMatchers.getPathMatcher(syntaxAndPattern, configuration.getRecognizedSeparators());
   }
 
+  @Override
+  public UserPrincipalLookupService getUserPrincipalLookupService() {
+    return null;
+  }
+
+  @Override
+  public WatchService newWatchService() throws IOException {
+    return null;
+  }
+
   /**
    * Returns {@code false}; currently, cannot create a read-only file system.
    *
@@ -144,26 +191,24 @@ public abstract class JimfsFileSystem extends FileSystem {
   /**
    * Returns the read/write lock for this file system.
    */
-  public abstract ReadWriteLock lock();
-
-  /**
-   * Returns the file service for this file system.
-   */
-  public abstract FileService getFileService();
-
-  /**
-   * Returns the super root for this file system.
-   */
-  public abstract FileTree getSuperRootTree();
-
-  /**
-   * Returns the working directory tree for this file system.
-   */
-  public abstract FileTree getWorkingDirectoryTree();
+  public ReadWriteLock lock() {
+    return lock;
+  }
 
   /**
    * Returns the file tree to use for the given path. If the path is absolute, the super root is
    * returned. Otherwise, the working directory is returned.
    */
-  public abstract FileTree getFileTree(JimfsPath path);
+  public FileTree getFileTree(JimfsPath path) {
+    return path.isAbsolute() ? superRootTree : workingDirTree;
+  }
+
+  @Override
+  public boolean isOpen() {
+    return true;
+  }
+
+  @Override
+  public void close() throws IOException {
+  }
 }
