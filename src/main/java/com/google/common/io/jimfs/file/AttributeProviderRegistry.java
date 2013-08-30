@@ -106,14 +106,6 @@ final class AttributeProviderRegistry {
   }
 
   /**
-   * Returns whether or not this registry contains an attribute reader for the given attributes
-   * type.
-   */
-  public boolean hasReader(Class<? extends BasicFileAttributes> type) {
-    return readers.containsKey(type);
-  }
-
-  /**
    * Gets the attribute reader for the given attributes type.
    */
   @SuppressWarnings("unchecked")
