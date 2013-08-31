@@ -76,10 +76,10 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
   public void setInitial(File file) {
     // FileTime now = file.clock().now();
     // TODO(cgdecker): re-add use of a Clock... maybe.
-    FileTime now = FileTime.fromMillis(System.currentTimeMillis());
-    set(file, LAST_MODIFIED_TIME, now);
-    set(file, LAST_ACCESS_TIME, now);
-    set(file, CREATION_TIME, now);
+    long now = System.currentTimeMillis();
+    file.setCreationTime(now);
+    file.setLastAccessTime(now);
+    file.setLastModifiedTime(now);
   }
 
   @Override
@@ -97,8 +97,31 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
         return file.isSymbolicLink();
       case IS_OTHER:
         return !file.isDirectory() && !file.isRegularFile() && !file.isSymbolicLink();
+      case CREATION_TIME:
+        return FileTime.fromMillis(file.getCreationTime());
+      case LAST_ACCESS_TIME:
+        return FileTime.fromMillis(file.getLastAccessTime());
+      case LAST_MODIFIED_TIME:
+        return FileTime.fromMillis(file.getLastModifiedTime());
       default:
         return super.get(file, attribute);
+    }
+  }
+
+  @Override
+  public void set(File file, String attribute, Object value) {
+    switch (attribute) {
+      case CREATION_TIME:
+        file.setCreationTime(((FileTime) value).toMillis());
+        break;
+      case LAST_ACCESS_TIME:
+        file.setLastAccessTime(((FileTime) value).toMillis());
+        break;
+      case LAST_MODIFIED_TIME:
+        file.setLastModifiedTime(((FileTime) value).toMillis());
+        break;
+      default:
+        super.set(file, attribute, value);
     }
   }
 

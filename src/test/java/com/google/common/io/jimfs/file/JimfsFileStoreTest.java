@@ -52,19 +52,19 @@ public class JimfsFileStoreTest {
     File file = store.createDirectory();
     ASSERT.that(file.id()).is(0L);
     ASSERT.that(file.isDirectory()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(USER);
 
     file = store.createRegularFile();
     ASSERT.that(file.id()).is(1L);
     ASSERT.that(file.isRegularFile()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(USER);
 
     file = store.createSymbolicLink(fakePath());
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(USER);
   }
 
@@ -73,19 +73,19 @@ public class JimfsFileStoreTest {
     File file = store.directorySupplier().get();
     ASSERT.that(file.id()).is(0L);
     ASSERT.that(file.isDirectory()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(USER);
 
     file = store.regularFileSupplier().get();
     ASSERT.that(file.id()).is(1L);
     ASSERT.that(file.isRegularFile()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(USER);
 
     file = store.symbolicLinkSupplier(fakePath()).get();
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(USER);
   }
 
@@ -95,19 +95,19 @@ public class JimfsFileStoreTest {
     File file = store.createDirectory(owner);
     ASSERT.that(file.id()).is(0L);
     ASSERT.that(file.isDirectory()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(FOO);
 
     file = store.createRegularFile(owner);
     ASSERT.that(file.id()).is(1L);
     ASSERT.that(file.isRegularFile()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(FOO);
 
     file = store.createSymbolicLink(fakePath(), owner);
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(FOO);
   }
 
@@ -117,19 +117,19 @@ public class JimfsFileStoreTest {
     File file = store.directorySupplier(owner).get();
     ASSERT.that(file.id()).is(0L);
     ASSERT.that(file.isDirectory()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(FOO);
 
     file = store.regularFileSupplier(owner).get();
     ASSERT.that(file.id()).is(1L);
     ASSERT.that(file.isRegularFile()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(FOO);
 
     file = store.symbolicLinkSupplier(fakePath(), owner).get();
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("owner:owner")).is(FOO);
   }
 
@@ -153,14 +153,11 @@ public class JimfsFileStoreTest {
     // setInitialAttributes() is called during setUp()
     ASSERT.that(ImmutableSet.copyOf(file.getAttributeKeys())).is(
         ImmutableSet.of(
-            "basic:lastModifiedTime",
-            "basic:creationTime",
-            "basic:lastAccessTime",
             "test:bar",
             "test:baz",
             "owner:owner"));
 
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
     ASSERT.that(file.getAttribute("test:bar")).is(0L);
     ASSERT.that(file.getAttribute("test:baz")).is(1);
   }
@@ -214,7 +211,7 @@ public class JimfsFileStoreTest {
     File file = store.createRegularFile();
     store.setAttribute(file, "test:lastModifiedTime", FileTime.fromMillis(0L));
     ASSERT.that(file.getAttribute("test:lastModifiedTime")).isNull();
-    ASSERT.that(file.getAttribute("basic:lastModifiedTime")).is(FileTime.fromMillis(0L));
+    ASSERT.that(store.getAttribute(file, "basic:lastModifiedTime")).is(FileTime.fromMillis(0L));
   }
 
   @Test
@@ -340,7 +337,7 @@ public class JimfsFileStoreTest {
             "bar", 0L,
             "baz", 1));
 
-    FileTime time = (FileTime) file.getAttribute("basic:creationTime");
+    FileTime time = store.getAttribute(file, "basic:creationTime");
 
     map = store.readAttributes(file, "test:*");
     ASSERT.that(map).isEqualTo(

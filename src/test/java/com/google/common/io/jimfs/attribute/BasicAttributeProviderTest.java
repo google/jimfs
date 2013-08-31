@@ -42,8 +42,10 @@ public class BasicAttributeProviderTest extends AttributeProviderTest {
 
   @Test
   public void testInitialAttributes() {
-    FileTime time = (FileTime) file.getAttribute("basic:creationTime");
-    ASSERT.that(time).isNotNull();
+    long time = file.getCreationTime();
+    ASSERT.that(time).isNotEqualTo(0L);
+    ASSERT.that(time).isEqualTo(file.getLastAccessTime());
+    ASSERT.that(time).isEqualTo(file.getLastModifiedTime());
 
     assertContainsAll(file,
         ImmutableMap.<String, Object>builder()
@@ -53,12 +55,12 @@ public class BasicAttributeProviderTest extends AttributeProviderTest {
             .put("basic:isRegularFile", true)
             .put("basic:isSymbolicLink", false)
             .put("basic:isOther", false)
-            .put("basic:creationTime", time)
-            .put("basic:lastAccessTime", time)
-            .put("basic:lastModifiedTime", time)
             .build());
 
-    time = (FileTime) dir.getAttribute("basic:creationTime");
+    time = dir.getCreationTime();
+    ASSERT.that(time).isNotEqualTo(0L);
+    ASSERT.that(time).isEqualTo(dir.getLastAccessTime());
+    ASSERT.that(time).isEqualTo(dir.getLastModifiedTime());
 
     assertContainsAll(dir,
         ImmutableMap.<String, Object>builder()
@@ -68,9 +70,6 @@ public class BasicAttributeProviderTest extends AttributeProviderTest {
             .put("basic:isRegularFile", false)
             .put("basic:isSymbolicLink", false)
             .put("basic:isOther", false)
-            .put("basic:creationTime", time)
-            .put("basic:lastAccessTime", time)
-            .put("basic:lastModifiedTime", time)
             .build());
   }
 

@@ -23,9 +23,11 @@ import com.google.common.io.jimfs.bytestore.ByteStore;
 import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.primitives.Longs;
 
+import java.nio.file.attribute.FileTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * A single file object. Similar in concept to an <i>inode</i> in that it mostly stores file
@@ -36,6 +38,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class File {
 
   private final long id;
+  private final AtomicLong creationTime = new AtomicLong();
+  private final AtomicLong lastAccessTime = new AtomicLong();
+  private final AtomicLong lastModifiedTime = new AtomicLong();
+
   private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
   private final FileContent content;
   private final AtomicInteger links = new AtomicInteger();
@@ -136,6 +142,62 @@ public final class File {
    */
   public void deleteAttribute(String key) {
     attributes.remove(key);
+  }
+
+  /**
+   * Gets the creation time of this file.
+   */
+  public long getCreationTime() {
+    return creationTime.get();
+  }
+
+  /**
+   * Gets the last access time of this file.
+   */
+  public long getLastAccessTime() {
+    return lastAccessTime.get();
+  }
+
+  /**
+   * Gets the last modified time of this file.
+   */
+  public long getLastModifiedTime() {
+    return lastModifiedTime.get();
+  }
+
+  /**
+   * Sets the creation time of this file.
+   */
+  public void setCreationTime(long creationTime) {
+    this.creationTime.set(creationTime);
+  }
+
+  /**
+   * Sets the last access time of this file.
+   */
+  public void setLastAccessTime(long lastAccessTime) {
+    this.lastAccessTime.set(lastAccessTime);
+  }
+
+  /**
+   * Sets the last modified time of this file.
+   */
+  public void setLastModifiedTime(long lastModifiedTime) {
+    this.lastModifiedTime.set(lastModifiedTime);
+  }
+
+  /**
+   * Called when the content of this file is read.
+   */
+  public void accessed() {
+    setLastAccessTime(System.currentTimeMillis());
+  }
+
+  /**
+   * Called when the content of this file is written.
+   */
+  public void modified() {
+    setLastModifiedTime(System.currentTimeMillis());
   }
 
   @Override
