@@ -32,7 +32,7 @@ import com.google.common.io.jimfs.JimfsFileSystem;
 import com.google.common.io.jimfs.JimfsFileSystemProvider;
 import com.google.common.io.jimfs.file.FileContent;
 import com.google.common.io.jimfs.file.LinkHandling;
-import com.google.common.io.jimfs.watch.PollingWatchService;
+import com.google.common.io.jimfs.watch.AbstractWatchService;
 
 import java.io.File;
 import java.io.IOException;
@@ -370,12 +370,12 @@ public final class JimfsPath implements Path, FileContent {
   public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) throws IOException {
     checkNotNull(watcher);
     checkNotNull(events);
-    if (!(watcher instanceof PollingWatchService)) {
+    if (!(watcher instanceof AbstractWatchService)) {
       throw new IllegalArgumentException(
           "watcher (" + watcher + ") is not associated with this file system");
     }
 
-    PollingWatchService service = (PollingWatchService) watcher;
+    AbstractWatchService service = (AbstractWatchService) watcher;
     return service.register(this, Arrays.asList(events));
   }
 

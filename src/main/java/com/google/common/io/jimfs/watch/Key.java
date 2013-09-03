@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc. All Rights Reserved.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,12 @@
 package com.google.common.io.jimfs.watch;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.io.jimfs.watch.Key.State.READY;
+import static com.google.common.io.jimfs.watch.Key.State.SIGNALLED;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import java.nio.file.WatchEvent;
@@ -52,7 +55,7 @@ public final class Key implements WatchKey {
   private final Watchable watchable;
   private final ImmutableSet<WatchEvent.Kind<?>> subscribedTypes;
 
-  private final AtomicReference<State> state = new AtomicReference<>(State.READY);
+  private final AtomicReference<State> state = new AtomicReference<>(READY);
   private final AtomicBoolean valid = new AtomicBoolean(true);
   private final AtomicInteger overflow = new AtomicInteger();
 
@@ -95,7 +98,7 @@ public final class Key implements WatchKey {
    * READY state.
    */
   void signal() {
-    if (state.getAndSet(State.SIGNALLED) == State.READY) {
+    if (state.getAndSet(SIGNALLED) == READY) {
       watcher.enqueue(this);
     }
   }
@@ -107,6 +110,10 @@ public final class Key implements WatchKey {
 
   @Override
   public List<WatchEvent<?>> pollEvents() {
+    if (state.get() != SIGNALLED) {
+      return ImmutableList.of();
+    }
+
     List<WatchEvent<?>> result = new ArrayList<>(events.size());
     events.drainTo(result);
     int overflowCount = overflow.getAndSet(0);
@@ -120,7 +127,7 @@ public final class Key implements WatchKey {
   public boolean reset() {
     // calling reset() multiple times without polling events would cause key to be placed in watcher
     // queue multiple times, but not much that can be done about that
-    if (isValid() && state.compareAndSet(State.SIGNALLED, State.READY)) {
+    if (isValid() && state.compareAndSet(SIGNALLED, READY)) {
       // requeue if events are pending
       if (!events.isEmpty()) {
         signal();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc. All Rights Reserved.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public abstract class AbstractWatchService implements WatchService {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     if (open.compareAndSet(true, false)) {
       // TODO(cgdecker): If there's a better way to guarantee that no thread is blocked on the queue
       // after this is closed I'd love to know

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc. All Rights Reserved.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,6 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.jimfs.Jimfs;
-import com.google.common.io.jimfs.JimfsFileSystem;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -51,12 +49,10 @@ import java.util.List;
  */
 public class AbstractWatchServiceTest {
 
-  private JimfsFileSystem fs;
   private AbstractWatchService watcher;
 
   @Before
   public void setUp() throws IOException {
-    fs = (JimfsFileSystem) Jimfs.newUnixLikeFileSystem();
     watcher = new AbstractWatchService() {};
   }
 
@@ -85,7 +81,6 @@ public class AbstractWatchServiceTest {
   public void testPostEvent() throws IOException {
     Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
 
-    // manually post an event and signal the watcher
     Event<Path> event = new Event<>(ENTRY_CREATE, 1, null);
     key.post(event);
     key.signal();
@@ -206,7 +201,7 @@ public class AbstractWatchServiceTest {
     } catch (ClosedWatchServiceException expected) {}
 
     try {
-      watcher.register(fs.getPath("/"), ImmutableList.<WatchEvent.Kind<?>>of());
+      watcher.register(new StubWatchable(), ImmutableList.<WatchEvent.Kind<?>>of());
       fail();
     } catch (ClosedWatchServiceException expected) {}
   }

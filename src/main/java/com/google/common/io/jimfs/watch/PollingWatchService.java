@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Google Inc. All Rights Reserved.
+ * Copyright 2013 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.io.jimfs.path.Name;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchService;
@@ -121,6 +122,11 @@ public class PollingWatchService extends AbstractWatchService {
     }
   }
 
+  @VisibleForTesting
+  synchronized boolean isPolling() {
+    return pollingFuture != null;
+  }
+
   @Override
   synchronized void cancelled(Key key) {
     snapshots.remove(key);
@@ -131,15 +137,17 @@ public class PollingWatchService extends AbstractWatchService {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     super.close();
 
-    for (Key key : snapshots.keySet()) {
-      key.cancel();
-    }
+    synchronized (this) {
+      for (Key key : snapshots.keySet()) {
+        key.cancel();
+      }
 
-    pollingService.shutdown();
-    fs.closed(this);
+      pollingService.shutdown();
+      fs.closed(this);
+    }
   }
 
   private void startPolling() {
@@ -161,54 +169,51 @@ public class PollingWatchService extends AbstractWatchService {
           Snapshot previousSnapshot = entry.getValue();
 
           JimfsPath path = (JimfsPath) key.watchable();
-          Snapshot newSnapshot = takeSnapshot(path);
-
-          if (newSnapshot == null) {
-            // dir at path was moved or deleted, so cancel the key
-            key.cancel();
-          } else {
+          try {
+            Snapshot newSnapshot = takeSnapshot(path);
             boolean posted = previousSnapshot.postChanges(newSnapshot, key);
             entry.setValue(newSnapshot);
             if (posted) {
               key.signal();
             }
+          } catch (IOException e) {
+            // snapshot failed; assume file does not exist or isn't a directory and cancel the key
+            key.cancel();
           }
+
         }
       }
     }
   };
 
-  private Snapshot takeSnapshot(JimfsPath path) {
-    File dir;
+  private Snapshot takeSnapshot(JimfsPath path) throws IOException {
+    FileTree tree = fs.getFileTree(path);
+
+    Map<Name, Long> modifiedTimes = new HashMap<>();
+
+    lock.readLock().lock();
     try {
-      FileTree tree = fs.getFileTree(path);
+      File dir = tree.lookupFile(path, LinkHandling.NOFOLLOW_LINKS);
 
-      Map<Name, Long> modifiedTimes = new HashMap<>();
-
-      lock.readLock().lock();
-      try {
-        dir = tree.lookupFile(path, LinkHandling.NOFOLLOW_LINKS);
-
-        if (dir == null || !dir.isDirectory()) {
-          return null;
-        }
-
-        DirectoryTable table = dir.content();
-        for (Map.Entry<Name, File> entry : table.asMap().entrySet()) {
-          Name name = entry.getKey();
-          File file = entry.getValue();
-
-          long modifiedTime = file.getLastModifiedTime();
-          modifiedTimes.put(name, modifiedTime);
-        }
-      } finally {
-        lock.readLock().unlock();
+      if (dir == null) {
+        throw new NoSuchFileException(path.toString());
+      } else if (!dir.isDirectory()) {
+        throw new NotDirectoryException(path.toString());
       }
 
-      return new Snapshot(modifiedTimes);
-    } catch (IOException e) {
-      return null;
+      DirectoryTable table = dir.content();
+      for (Map.Entry<Name, File> entry : table.asMap().entrySet()) {
+        Name name = entry.getKey();
+        File file = entry.getValue();
+
+        long modifiedTime = file.getLastModifiedTime();
+        modifiedTimes.put(name, modifiedTime);
+      }
+    } finally {
+      lock.readLock().unlock();
     }
+
+    return new Snapshot(modifiedTimes);
   }
 
   /**
