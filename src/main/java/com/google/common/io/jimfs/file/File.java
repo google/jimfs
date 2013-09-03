@@ -23,7 +23,6 @@ import com.google.common.io.jimfs.bytestore.ByteStore;
 import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.primitives.Longs;
 
-import java.nio.file.attribute.FileTime;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -159,7 +158,7 @@ public final class File {
   }
 
   /**
-   * Gets the last modified time of this file.
+   * Gets the last updateModifiedTime time of this file.
    */
   public long getLastModifiedTime() {
     return lastModifiedTime.get();
@@ -180,23 +179,25 @@ public final class File {
   }
 
   /**
-   * Sets the last modified time of this file.
+   * Sets the last updateModifiedTime time of this file.
    */
   public void setLastModifiedTime(long lastModifiedTime) {
     this.lastModifiedTime.set(lastModifiedTime);
   }
 
   /**
-   * Called when the content of this file is read.
+   * Updates the last access time of this file to the current time. Called when the file content
+   * is read.
    */
-  public void accessed() {
+  public void updateAccessTime() {
     setLastAccessTime(System.currentTimeMillis());
   }
 
   /**
-   * Called when the content of this file is written.
+   * Updates the last modified time of this file to the current time. Called when the file content
+   * is written.
    */
-  public void modified() {
+  public void updateModifiedTime() {
     setLastModifiedTime(System.currentTimeMillis());
   }
 

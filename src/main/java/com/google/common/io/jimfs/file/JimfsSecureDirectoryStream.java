@@ -68,7 +68,7 @@ final class JimfsSecureDirectoryStream
       FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     options = getOptionsForChannel(options);
-    return tree(checkedPath).getByteStore(checkedPath, options).openFileChannel(options);
+    return new JimfsFileChannel(tree(checkedPath).getRegularFile(checkedPath, options), options);
   }
 
   @Override

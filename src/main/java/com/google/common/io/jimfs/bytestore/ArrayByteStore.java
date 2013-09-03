@@ -16,10 +16,6 @@
 
 package com.google.common.io.jimfs.bytestore;
 
-import static com.google.common.base.Preconditions.checkPositionIndexes;
-
-import com.google.common.primitives.UnsignedBytes;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -137,37 +133,6 @@ public final class ArrayByteStore extends ByteStore {
   }
 
   @Override
-  public int write(int pos, byte b) {
-    checkNotNegative(pos, "pos");
-
-    writeLock().lock();
-    try {
-      resizeForWrite(pos + 1);
-
-      bytes[pos] = b;
-      return 1;
-    } finally {
-      writeLock().unlock();
-    }
-  }
-
-  @Override
-  public int write(int pos, byte[] b, int off, int len) {
-    checkNotNegative(pos, "pos");
-    checkPositionIndexes(off, off + len, b.length);
-
-    writeLock().lock();
-    try {
-      resizeForWrite(pos + len);
-
-      System.arraycopy(b, off, bytes, pos, len);
-      return len;
-    } finally {
-      writeLock().unlock();
-    }
-  }
-
-  @Override
   public int write(int pos, ByteBuffer buf) {
     checkNotNegative(pos, "pos");
 
@@ -219,37 +184,6 @@ public final class ArrayByteStore extends ByteStore {
       }
     } finally {
       writeLock().unlock();
-    }
-  }
-
-  @Override
-  public int read(int pos) {
-    readLock().lock();
-    try {
-      if (pos >= size) {
-        return -1;
-      }
-
-      return UnsignedBytes.toInt(bytes[pos]);
-    } finally {
-      readLock().unlock();
-    }
-  }
-
-  @Override
-  public int read(int pos, byte[] b, int off, int len) {
-    checkNotNegative(pos, "pos");
-    checkPositionIndexes(off, off + len, b.length);
-
-    readLock().lock();
-    try {
-      int bytesToRead = bytesToRead(pos, len);
-      if (bytesToRead > 0) {
-        System.arraycopy(bytes, pos, b, off, bytesToRead);
-      }
-      return bytesToRead;
-    } finally {
-      readLock().unlock();
     }
   }
 

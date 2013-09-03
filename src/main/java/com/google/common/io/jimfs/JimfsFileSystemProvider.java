@@ -29,10 +29,11 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.io.jimfs.bytestore.ByteStore;
+import com.google.common.collect.Sets;
 import com.google.common.io.jimfs.config.JimfsConfiguration;
 import com.google.common.io.jimfs.file.File;
 import com.google.common.io.jimfs.file.FileTree;
+import com.google.common.io.jimfs.file.JimfsFileChannel;
 import com.google.common.io.jimfs.file.LinkHandling;
 import com.google.common.io.jimfs.path.JimfsPath;
 
@@ -42,7 +43,6 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.AsynchronousFileChannel;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -58,6 +58,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -138,10 +139,12 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options,
+  public JimfsFileChannel newFileChannel(Path path, Set<? extends OpenOption> options,
       FileAttribute<?>... attrs) throws IOException {
+    JimfsPath checkedPath = checkPath(path);
     options = getOptionsForChannel(options);
-    return getByteStore(path, options, attrs).openFileChannel(options);
+    File file = getFileTree(checkedPath).getRegularFile(checkedPath, options, attrs);
+    return new JimfsFileChannel(file, options);
   }
 
   @Override
@@ -154,19 +157,17 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public AsynchronousFileChannel newAsynchronousFileChannel(Path path,
       Set<? extends OpenOption> options, ExecutorService executor, FileAttribute<?>... attrs)
       throws IOException {
-    options = getOptionsForChannel(options);
-    return getByteStore(path, options, attrs).openAsynchronousFileChannel(executor, options);
+    return newFileChannel(path, options, attrs).asAsynchronousFileChannel(executor);
   }
 
   @Override
   public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
-    return getByteStore(path, getOptionsForRead(options)).openInputStream();
+    return newFileChannel(checkPath(path), getOptionsForRead(options)).asInputStream();
   }
 
   @Override
   public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
-    ImmutableSet<OpenOption> optionsSet = getOptionsForWrite(options);
-    return getByteStore(path, optionsSet).openOutputStream(optionsSet);
+    return newFileChannel(checkPath(path), getOptionsForWrite(options)).asOutputStream();
   }
 
   public static Set<? extends OpenOption> getOptionsForChannel(Set<? extends OpenOption> options) {
@@ -180,35 +181,26 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     return options;
   }
 
-  static ImmutableSet<OpenOption> getOptionsForRead(OpenOption... options) {
-    ImmutableSet<OpenOption> optionsSet = ImmutableSet.copyOf(options);
-    if (optionsSet.isEmpty()) {
-      optionsSet = ImmutableSet.<OpenOption>of(READ);
-    } else if (optionsSet.contains(WRITE)) {
+  static Set<OpenOption> getOptionsForRead(OpenOption... options) {
+    Set<OpenOption> optionsSet = Sets.newHashSet(options);
+    if (optionsSet.contains(WRITE)) {
       throw new UnsupportedOperationException("WRITE");
+    } else {
+      optionsSet.add(READ);
     }
-
     return optionsSet;
   }
 
-  static ImmutableSet<OpenOption> getOptionsForWrite(OpenOption... options) {
-    ImmutableSet<OpenOption> optionsSet = ImmutableSet.copyOf(options);
-    if (optionsSet.isEmpty()) {
-      optionsSet = ImmutableSet.<OpenOption>of(CREATE, WRITE, TRUNCATE_EXISTING);
-    } else if (optionsSet.contains(READ)) {
+  static Set<OpenOption> getOptionsForWrite(OpenOption... options) {
+    Set<OpenOption> optionsSet = Sets.newHashSet(options);
+    if (optionsSet.contains(READ)) {
       throw new UnsupportedOperationException("READ");
+    } else if (optionsSet.isEmpty()) {
+      optionsSet.addAll(Arrays.asList(CREATE, WRITE, TRUNCATE_EXISTING));
+    } else if (!optionsSet.contains(WRITE)) {
+      optionsSet.add(WRITE);
     }
     return optionsSet;
-  }
-
-  /**
-   * Gets the byte store for the regular file at the given path, throwing an exception if it
-   * doesn't exist or isn't a regular file.
-   */
-  private ByteStore getByteStore(
-      Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-    JimfsPath checkedPath = checkPath(path);
-    return getFileTree(checkedPath).getByteStore(checkedPath, options, attrs);
   }
 
   @Override

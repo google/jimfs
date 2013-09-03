@@ -33,6 +33,7 @@ import static java.nio.file.StandardOpenOption.SPARSE;
 import static java.nio.file.StandardOpenOption.SYNC;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -42,10 +43,12 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterators;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.io.jimfs.testing.BasicFileAttribute;
 import com.google.common.io.jimfs.testing.PathSubject;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -59,6 +62,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.NonReadableChannelException;
+import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
@@ -74,6 +79,7 @@ import java.nio.file.NotLinkException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
@@ -1644,6 +1650,126 @@ public class JimfsIntegrationTest {
     }
   }
 
+  @Test
+  public void testDirectoryAccessAndModifiedTimeUpdates() throws IOException {
+    Files.createDirectories(path("/foo/bar"));
+    FileTimeTester tester = new FileTimeTester(path("/foo/bar"));
+    tester.assertAccessTimeDidNotChange();
+    tester.assertModifiedTimeDidNotChange();
+
+    // TODO(cgdecker): Use a Clock for file times so I can test this reliably without sleeping
+    Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+    Files.createFile(path("/foo/bar/baz.txt"));
+
+    tester.assertAccessTimeDidNotChange();
+    tester.assertModifiedTimeChanged();
+
+    Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+    // access time is updated by reading the full contents of the directory
+    // not just by doing a lookup in it
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path("/foo/bar"))) {
+      // iterate the stream, forcing the directory to actually be read
+      Iterators.advance(stream.iterator(), Integer.MAX_VALUE);
+    }
+
+    tester.assertAccessTimeChanged();
+    tester.assertModifiedTimeDidNotChange();
+
+    Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+    Files.move(path("/foo/bar/baz.txt"), path("/foo/bar/baz2.txt"));
+
+    tester.assertAccessTimeDidNotChange();
+    tester.assertModifiedTimeChanged();
+
+    Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+    Files.delete(path("/foo/bar/baz2.txt"));
+
+    tester.assertAccessTimeDidNotChange();
+    tester.assertModifiedTimeChanged();
+  }
+
+  @Test
+  public void testRegularFileAccessAndModifiedTimeUpdates() throws IOException {
+    Path foo = path("foo");
+    Files.createFile(foo);
+
+    FileTimeTester tester = new FileTimeTester(foo);
+    tester.assertAccessTimeDidNotChange();
+    tester.assertModifiedTimeDidNotChange();
+
+    Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+    try (FileChannel channel = FileChannel.open(foo, READ)) {
+      // opening READ channel does not change times
+      tester.assertAccessTimeDidNotChange();
+      tester.assertModifiedTimeDidNotChange();
+
+      Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+      channel.read(ByteBuffer.allocate(100));
+
+      // read call on channel does
+      tester.assertAccessTimeChanged();
+      tester.assertModifiedTimeDidNotChange();
+
+      Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+      channel.read(ByteBuffer.allocate(100));
+
+      tester.assertAccessTimeChanged();
+      tester.assertModifiedTimeDidNotChange();
+
+      Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+      try {
+        channel.write(ByteBuffer.wrap(new byte[]{0, 1, 2, 3}));
+      } catch (NonWritableChannelException ignore) {
+      }
+
+      // failed write on non-readable channel does not change times
+      tester.assertAccessTimeDidNotChange();
+      tester.assertModifiedTimeDidNotChange();
+
+      Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+    }
+
+    // closing channel does not change times
+    tester.assertAccessTimeDidNotChange();
+    tester.assertModifiedTimeDidNotChange();
+
+    Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+    try (FileChannel channel = FileChannel.open(foo, WRITE)) {
+      // opening WRITE channel does not change times
+      tester.assertAccessTimeDidNotChange();
+      tester.assertModifiedTimeDidNotChange();
+
+      Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+      channel.write(ByteBuffer.wrap(new byte[]{0, 1, 2, 3}));
+
+      // write call on channel does
+      tester.assertAccessTimeDidNotChange();
+      tester.assertModifiedTimeChanged();
+
+      Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+      channel.write(ByteBuffer.wrap(new byte[]{4, 5, 6, 7}));
+
+      tester.assertAccessTimeDidNotChange();
+      tester.assertModifiedTimeChanged();
+
+      Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+      try {
+        channel.read(ByteBuffer.allocate(100));
+      } catch (NonReadableChannelException ignore) {
+      }
+
+      // failed read on non-readable channel does not change times
+      tester.assertAccessTimeDidNotChange();
+      tester.assertModifiedTimeDidNotChange();
+
+      Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
+    }
+
+    // closing channel does not change times
+    tester.assertAccessTimeDidNotChange();
+    tester.assertModifiedTimeDidNotChange();
+  }
+
   // helpers
 
   private Path path(String first, String... more) {
@@ -1664,5 +1790,50 @@ public class JimfsIntegrationTest {
       subject = subject.noFollowLinks();
     }
     return subject;
+  }
+
+  /**
+   * Tester for testing changes in file times.
+   */
+  private static final class FileTimeTester {
+
+    private final Path path;
+
+    private FileTime accessTime;
+    private FileTime modifiedTime;
+
+    private FileTimeTester(Path path) throws IOException {
+      this.path = path;
+
+      BasicFileAttributes attrs = attrs();
+      accessTime = attrs.lastAccessTime();
+      modifiedTime = attrs.lastModifiedTime();
+    }
+
+    private BasicFileAttributes attrs() throws IOException {
+      return Files.readAttributes(path, BasicFileAttributes.class);
+    }
+
+    public void assertAccessTimeChanged() throws IOException {
+      FileTime t = attrs().lastAccessTime();
+      ASSERT.that(t).isNotEqualTo(accessTime);
+      accessTime = t;
+    }
+
+    public void assertAccessTimeDidNotChange() throws IOException {
+      FileTime t = attrs().lastAccessTime();
+      ASSERT.that(t).isEqualTo(accessTime);
+    }
+
+    public void assertModifiedTimeChanged() throws IOException {
+      FileTime t = attrs().lastModifiedTime();
+      ASSERT.that(t).isNotEqualTo(modifiedTime);
+      modifiedTime = t;
+    }
+
+    public void assertModifiedTimeDidNotChange() throws IOException {
+      FileTime t = attrs().lastModifiedTime();
+      ASSERT.that(t).isEqualTo(modifiedTime);
+    }
   }
 }

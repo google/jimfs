@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.common.io.jimfs.bytestore;
+package com.google.common.io.jimfs.file;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -23,10 +23,15 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
+import com.google.common.io.jimfs.bytestore.ByteStore;
+
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -38,6 +43,7 @@ import java.nio.file.OpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 /**
  * A {@link FileChannel} implementation that reads and writes to a {@link ByteStore} object. The
@@ -48,8 +54,9 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
-final class ByteStoreFileChannel extends FileChannel {
+public final class JimfsFileChannel extends FileChannel {
 
+  private volatile File file;
   private volatile ByteStore store;
 
   private final boolean readable;
@@ -58,11 +65,36 @@ final class ByteStoreFileChannel extends FileChannel {
 
   private int position;
 
-  public ByteStoreFileChannel(ByteStore store, Set<? extends OpenOption> options) {
-    this.store = checkNotNull(store);
+  public JimfsFileChannel(File file, Set<? extends OpenOption> options) {
+    this.file = file;
+    this.store = file.content();
     this.readable = options.contains(READ);
     this.writable = options.contains(WRITE);
     this.append = options.contains(APPEND);
+  }
+
+  /**
+   * Returns an {@link InputStream} view of this channel.
+   */
+  public InputStream asInputStream() {
+    checkReadable();
+    return Channels.newInputStream(this);
+  }
+
+  /**
+   * Returns an {@link OutputStream} view of this channel.
+   */
+  public OutputStream asOutputStream() {
+    checkWritable();
+    return Channels.newOutputStream(this);
+  }
+
+  /**
+   * Returns an {@link AsynchronousFileChannel} view of this channel using the given executor for
+   * asynchronous operations.
+   */
+  public AsynchronousFileChannel asAsynchronousFileChannel(ExecutorService executor) {
+    return new JimfsAsynchronousFileChannel(this, executor);
   }
 
   void checkReadable() {
@@ -88,6 +120,8 @@ final class ByteStoreFileChannel extends FileChannel {
     checkOpen();
     checkReadable();
 
+    file.updateAccessTime();
+
     int read = store.read(position, dst);
     if (read != -1) {
       position += read;
@@ -105,6 +139,8 @@ final class ByteStoreFileChannel extends FileChannel {
     checkOpen();
     checkReadable();
 
+    file.updateAccessTime();
+
     int read = store.read(position, buffers);
     if (read != -1) {
       position += read;
@@ -116,6 +152,8 @@ final class ByteStoreFileChannel extends FileChannel {
   public synchronized int write(ByteBuffer src) throws IOException {
     checkOpen();
     checkWritable();
+
+    file.updateModifiedTime();
 
     int written;
     if (append) {
@@ -138,6 +176,8 @@ final class ByteStoreFileChannel extends FileChannel {
   private synchronized int write(List<ByteBuffer> srcs) throws IOException {
     checkOpen();
     checkWritable();
+
+    file.updateModifiedTime();
 
     int written;
     if (append) {
@@ -177,6 +217,8 @@ final class ByteStoreFileChannel extends FileChannel {
     checkOpen();
     checkWritable();
 
+    file.updateModifiedTime();
+
     store.truncate((int) size);
     if (position > size) {
       position = (int) size;
@@ -200,6 +242,8 @@ final class ByteStoreFileChannel extends FileChannel {
     checkOpen();
     checkReadable();
 
+    file.updateAccessTime();
+
     return store.transferTo((int) position, (int) count, target);
   }
 
@@ -211,6 +255,8 @@ final class ByteStoreFileChannel extends FileChannel {
     checkNotNegative(count, "count");
     checkOpen();
     checkWritable();
+
+    file.updateModifiedTime();
 
     if (append) {
       long appended = store.appendFrom(src, (int) count);
@@ -228,6 +274,8 @@ final class ByteStoreFileChannel extends FileChannel {
     checkOpen();
     checkReadable();
 
+    file.updateAccessTime();
+
     return store.read((int) position, dst);
   }
 
@@ -237,6 +285,8 @@ final class ByteStoreFileChannel extends FileChannel {
     checkNotNegative(position, "position");
     checkOpen();
     checkWritable();
+
+    file.updateModifiedTime();
 
     int written;
     if (append) {
@@ -282,6 +332,7 @@ final class ByteStoreFileChannel extends FileChannel {
   protected synchronized void implCloseChannel() throws IOException {
     // if the file has been deleted, allow it to be GCed even if a reference to this channel is
     // held after closing for some reason
+    file = null;
     store = null;
   }
 

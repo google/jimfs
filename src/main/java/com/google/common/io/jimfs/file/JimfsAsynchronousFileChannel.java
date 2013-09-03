@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.common.io.jimfs.bytestore;
+package com.google.common.io.jimfs.file;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.io.jimfs.bytestore.ByteStoreFileChannel.checkNotNegative;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -37,16 +36,16 @@ import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * {@link AsynchronousFileChannel} implementation that delegates to a {@link ByteStoreFileChannel}.
+ * {@link AsynchronousFileChannel} implementation that delegates to a {@link JimfsFileChannel}.
  *
  * @author Colin Decker
  */
-final class ByteStoreAsynchronousFileChannel extends AsynchronousFileChannel {
+final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
 
-  private final ByteStoreFileChannel channel;
+  private final JimfsFileChannel channel;
   private final ListeningExecutorService executor;
 
-  public ByteStoreAsynchronousFileChannel(ByteStoreFileChannel channel, ExecutorService executor) {
+  public JimfsAsynchronousFileChannel(JimfsFileChannel channel, ExecutorService executor) {
     this.channel = checkNotNull(channel);
     this.executor = MoreExecutors.listeningDecorator(executor);
   }
@@ -83,8 +82,8 @@ final class ByteStoreAsynchronousFileChannel extends AsynchronousFileChannel {
   @Override
   public ListenableFuture<FileLock> lock(final long position, final long size,
       final boolean shared) {
-    checkNotNegative(position, "position");
-    checkNotNegative(size, "size");
+    JimfsFileChannel.checkNotNegative(position, "position");
+    JimfsFileChannel.checkNotNegative(size, "size");
     if (shared) {
       channel.checkReadable();
     } else {
@@ -100,15 +99,15 @@ final class ByteStoreAsynchronousFileChannel extends AsynchronousFileChannel {
 
   @Override
   public FileLock tryLock(long position, long size, boolean shared) throws IOException {
-    checkNotNegative(position, "position");
-    checkNotNegative(size, "size");
+    JimfsFileChannel.checkNotNegative(position, "position");
+    JimfsFileChannel.checkNotNegative(size, "size");
     channel.checkOpen();
     if (shared) {
       channel.checkReadable();
     } else {
       channel.checkWritable();
     }
-    return new ByteStoreFileChannel.FakeFileLock(this, position, size, shared);
+    return new JimfsFileChannel.FakeFileLock(this, position, size, shared);
   }
 
   @Override
@@ -120,7 +119,7 @@ final class ByteStoreAsynchronousFileChannel extends AsynchronousFileChannel {
   @Override
   public ListenableFuture<Integer> read(final ByteBuffer dst, final long position) {
     checkArgument(!dst.isReadOnly(), "dst may not be read-only");
-    checkNotNegative(position, "position");
+    JimfsFileChannel.checkNotNegative(position, "position");
     channel.checkReadable();
     return executor.submit(new Callable<Integer>() {
       @Override
@@ -138,7 +137,7 @@ final class ByteStoreAsynchronousFileChannel extends AsynchronousFileChannel {
 
   @Override
   public ListenableFuture<Integer> write(final ByteBuffer src, final long position) {
-    checkNotNegative(position, "position");
+    JimfsFileChannel.checkNotNegative(position, "position");
     channel.checkWritable();
     return executor.submit(new Callable<Integer>() {
       @Override

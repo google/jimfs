@@ -16,8 +16,6 @@
 
 package com.google.common.io.jimfs.bytestore;
 
-import com.google.common.primitives.UnsignedBytes;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -33,11 +31,11 @@ public class StubByteStore extends ByteStore {
   private int size;
   private boolean throwException;
 
-  StubByteStore(int initialSize) {
+  public StubByteStore(int initialSize) {
     setSize(initialSize);
   }
 
-  StubByteStore(StubByteStore other) {
+  public StubByteStore(StubByteStore other) {
     setSize(other.size);
   }
 
@@ -70,16 +68,6 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int write(int pos, byte b) {
-    return write(pos, new byte[]{b});
-  }
-
-  @Override
-  public int write(int pos, byte[] b, int off, int len) {
-    return write(pos, ByteBuffer.wrap(b, off, len));
-  }
-
-  @Override
   public int write(int pos, ByteBuffer buf) {
     checkThrowException();
     int written = buf.remaining();
@@ -96,20 +84,6 @@ public class StubByteStore extends ByteStore {
     int read = src.read(buffer);
     setSize(Math.max(size, position + read));
     return read;
-  }
-
-  @Override
-  public int read(int pos) {
-    byte[] b = new byte[1];
-    if (read(pos, b) != -1) {
-      return UnsignedBytes.toInt(b[0]);
-    }
-    return -1;
-  }
-
-  @Override
-  public int read(int pos, byte[] b, int off, int len) {
-    return read(pos, ByteBuffer.wrap(b, off, len));
   }
 
   @Override

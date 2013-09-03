@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.common.io.jimfs.bytestore;
+package com.google.common.io.jimfs.file;
 
 import static com.google.common.io.jimfs.testing.TestUtils.buffer;
 import static java.nio.file.StandardOpenOption.READ;
@@ -27,6 +27,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.jimfs.bytestore.ByteStore;
+import com.google.common.io.jimfs.bytestore.StubByteStore;
 
 import org.junit.Test;
 
@@ -46,13 +48,13 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Colin Decker
  */
-public class ByteStoreAsynchronousFileChannelTest {
+public class JimfsAsynchronousFileChannelTest {
 
-  private static ByteStoreAsynchronousFileChannel channel(
+  private static JimfsAsynchronousFileChannel channel(
       ByteStore store, ExecutorService executor, OpenOption... options) throws IOException {
     ImmutableSet<OpenOption> opts = ImmutableSet.copyOf(options);
-    return new ByteStoreAsynchronousFileChannel(
-        new ByteStoreFileChannel(store, opts), executor);
+    return new JimfsAsynchronousFileChannel(
+        new JimfsFileChannel(new File(-1, store), opts), executor);
   }
 
   private static StubByteStore store(int size) throws IOException {
@@ -67,7 +69,7 @@ public class ByteStoreAsynchronousFileChannelTest {
   public void testAsyncChannel() throws Throwable {
     StubByteStore store = store(15);
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    ByteStoreAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
+    JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
 
     try {
       assertEquals(15, channel.size());

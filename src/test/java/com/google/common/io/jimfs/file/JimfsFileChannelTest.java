@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.common.io.jimfs.bytestore;
+package com.google.common.io.jimfs.file;
 
 import static com.google.common.io.jimfs.testing.TestUtils.buffer;
 import static com.google.common.io.jimfs.testing.TestUtils.bytes;
@@ -29,6 +29,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.jimfs.bytestore.AbstractByteStoreTest;
+import com.google.common.io.jimfs.bytestore.ByteStore;
+import com.google.common.io.jimfs.bytestore.StubByteStore;
 import com.google.common.io.jimfs.testing.ByteBufferChannel;
 import com.google.common.testing.NullPointerTester;
 
@@ -46,18 +49,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Most of the behavior of {@link ByteStoreFileChannel} is handled by the {@link ByteStore}
+ * Most of the behavior of {@link JimfsFileChannel} is handled by the {@link ByteStore}
  * implementations, so the thorough tests of that are in {@link AbstractByteStoreTest}. This mostly
  * tests interactions with the store and channel positions.
  *
  * @author Colin Decker
  */
-public class ByteStoreFileChannelTest {
+public class JimfsFileChannelTest {
 
   private static FileChannel channel(ByteStore store, OpenOption... options)
       throws IOException {
     ImmutableSet<OpenOption> opts = ImmutableSet.copyOf(options);
-    return store.openFileChannel(opts);
+    return new JimfsFileChannel(new File(-1, store), opts);
   }
 
   private static StubByteStore store(int size) throws IOException {

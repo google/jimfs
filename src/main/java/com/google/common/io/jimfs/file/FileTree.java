@@ -180,17 +180,18 @@ public final class FileTree {
   }
 
   /**
-   * Gets the byte store for the file at the given path, throwing an exception if the file isn't
-   * a regular file.
+   * Gets the regular file at the given path, throwing an exception if the file isn't a regular
+   * file. If the CREATE or CREATE_NEW option is specified, the file will be created if it does not
+   * exist.
    */
-  public ByteStore getByteStore(JimfsPath path,
+  public File getRegularFile(JimfsPath path,
       Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     File file = getOrCreateRegularFile(path, options, attrs);
     if (!file.isRegularFile()) {
       throw new FileSystemException(path.toString(), null, "not a regular file");
     }
 
-    return file.content();
+    return file;
   }
 
   /**
@@ -226,6 +227,7 @@ public final class FileTree {
 
       DirectoryTable table = file.content();
       names = table.snapshot();
+      file.updateAccessTime();
     } finally {
       readLock().unlock();
     }
@@ -339,6 +341,7 @@ public final class FileTree {
 
       File newFile = fileSupplier.get();
       parentTable.link(name, newFile);
+      parent.updateModifiedTime();
 
       if (newFile.isDirectory()) {
         linkSelfAndParent(newFile, parent);
@@ -465,6 +468,7 @@ public final class FileTree {
 
       DirectoryTable linkParentTable = linkParent.content();
       linkParentTable.link(linkName, existingFile);
+      linkParent.updateModifiedTime();
     } finally {
       writeLock().unlock();
     }
@@ -489,8 +493,7 @@ public final class FileTree {
           .requireFound(path)
           .parent();
 
-      DirectoryTable parentTable = parent.content();
-      delete(parentTable, name, deleteMode, path);
+      delete(parent, name, deleteMode, path);
     } finally {
       writeLock().unlock();
     }
@@ -499,12 +502,15 @@ public final class FileTree {
   /**
    * Deletes the file with the given name and key from the given parent directory.
    */
-  private void delete(DirectoryTable parentTable, Name name,
+  private void delete(File parent, Name name,
       DeleteMode deleteMode, JimfsPath pathForException) throws IOException {
+    DirectoryTable parentTable = parent.content();
     File file = parentTable.get(name);
     assert file != null;
+
     checkDeletable(file, deleteMode, pathForException);
     parentTable.unlink(name);
+    parent.updateModifiedTime();
     if (file.isDirectory()) {
       unlinkSelfAndParent(file);
     }
@@ -597,7 +603,8 @@ public final class FileTree {
       LookupResult destLookup = destTree.lookup(dest, NOFOLLOW_LINKS)
           .requireParentFound(dest);
 
-      DirectoryTable sourceParent = sourceLookup.parent().content();
+      File sourceParent = sourceLookup.parent();
+      DirectoryTable sourceParentTable = sourceLookup.parent().content();
       File sourceFile = sourceLookup.file();
 
       File destParent = destLookup.parent();
@@ -620,7 +627,7 @@ public final class FileTree {
         if (destLookup.file() == sourceFile) {
           return;
         } else if (options.contains(REPLACE_EXISTING)) {
-          destTree.delete(destParentTable, destName, DeleteMode.ANY, dest);
+          destTree.delete(destParent, destName, DeleteMode.ANY, dest);
         } else {
           throw new FileAlreadyExistsException(dest.toString());
         }
@@ -629,8 +636,11 @@ public final class FileTree {
       // can only do an actual move within one file system instance
       // otherwise we have to copy and delete
       if (move && sameFileSystem) {
-        sourceParent.unlink(sourceName);
+        sourceParentTable.unlink(sourceName);
+        sourceParent.updateModifiedTime();
+
         destParentTable.link(destName, sourceFile);
+        destParent.updateModifiedTime();
 
         if (sourceFile.isDirectory()) {
           unlinkSelfAndParent(sourceFile);
@@ -640,6 +650,7 @@ public final class FileTree {
         // copy
         File copy = destTree.jimfsFileStore.copy(sourceFile);
         destParentTable.link(destName, copy);
+        destParent.updateModifiedTime();
 
         if (copy.isDirectory()) {
           linkSelfAndParent(copy, destParent);
