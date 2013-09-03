@@ -151,13 +151,12 @@ public class PollingWatchServiceTest {
     try {
       watcher.poll(5, MILLISECONDS);
     } catch (InterruptedException expected) {
-      // since key hasn't been reset(), the events aren't posted to it yet
+      // since key hasn't been reset(), it isn't requeued with the watcher
     }
-
-    ASSERT.that(key.pollEvents()).isEmpty();
 
     key.reset();
 
+    // now the key will be requeued
     ASSERT.that(watcher.take()).is(key);
 
     events = key.pollEvents();

@@ -159,6 +159,7 @@ public class AbstractWatchServiceTest {
     for (int i = 0; i < Key.MAX_QUEUE_SIZE + 10; i++) {
       key.post(new Event<>(ENTRY_CREATE, 1, null));
     }
+    key.signal();
 
     List<WatchEvent<?>> events = key.pollEvents();
 
