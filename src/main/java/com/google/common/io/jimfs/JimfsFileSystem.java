@@ -19,8 +19,10 @@ package com.google.common.io.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.io.jimfs.file.LinkHandling.NOFOLLOW_LINKS;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.common.io.jimfs.config.JimfsConfiguration;
 import com.google.common.io.jimfs.file.DirectoryTable;
 import com.google.common.io.jimfs.file.File;
@@ -29,7 +31,9 @@ import com.google.common.io.jimfs.file.JimfsFileStore;
 import com.google.common.io.jimfs.path.JimfsPath;
 import com.google.common.io.jimfs.path.Name;
 import com.google.common.io.jimfs.path.PathMatchers;
+import com.google.common.io.jimfs.watch.PollingWatchService;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -49,6 +53,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Colin Decker
  */
 public final class JimfsFileSystem extends FileSystem {
+
+  private final Set<Closeable> openCloseables = Sets.newConcurrentHashSet();
 
   private final JimfsFileSystemProvider provider;
   private final JimfsConfiguration configuration;
@@ -175,7 +181,9 @@ public final class JimfsFileSystem extends FileSystem {
 
   @Override
   public WatchService newWatchService() throws IOException {
-    return null;
+    PollingWatchService service = new PollingWatchService(this);
+    openCloseables.add(service);
+    return service;
   }
 
   /**
@@ -208,7 +216,28 @@ public final class JimfsFileSystem extends FileSystem {
     return true;
   }
 
+  /**
+   * Called when an opened closeable such as watch service is closed.
+   */
+  public void closed(Closeable closeable) {
+    openCloseables.remove(closeable);
+  }
+
   @Override
   public void close() throws IOException {
+    Throwable thrown = null;
+    for (Closeable closeable : openCloseables) {
+      try {
+        closeable.close();
+      } catch (Throwable e) {
+        if (thrown == null) {
+          thrown = e;
+        } else {
+          thrown.addSuppressed(e);
+        }
+      }
+    }
+
+    Throwables.propagateIfPossible(thrown, IOException.class);
   }
 }

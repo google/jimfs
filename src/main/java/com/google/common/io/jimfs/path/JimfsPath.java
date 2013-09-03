@@ -32,6 +32,7 @@ import com.google.common.io.jimfs.JimfsFileSystem;
 import com.google.common.io.jimfs.JimfsFileSystemProvider;
 import com.google.common.io.jimfs.file.FileContent;
 import com.google.common.io.jimfs.file.LinkHandling;
+import com.google.common.io.jimfs.watch.PollingWatchService;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +46,7 @@ import java.nio.file.WatchService;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
@@ -360,12 +362,21 @@ public final class JimfsPath implements Path, FileContent {
   @Override
   public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events,
       WatchEvent.Modifier... modifiers) throws IOException {
-    throw new UnsupportedOperationException();
+    checkNotNull(modifiers);
+    return register(watcher, events);
   }
 
   @Override
   public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) throws IOException {
-    throw new UnsupportedOperationException();
+    checkNotNull(watcher);
+    checkNotNull(events);
+    if (!(watcher instanceof PollingWatchService)) {
+      throw new IllegalArgumentException(
+          "watcher (" + watcher + ") is not associated with this file system");
+    }
+
+    PollingWatchService service = (PollingWatchService) watcher;
+    return service.register(this, Arrays.asList(events));
   }
 
   @Override

@@ -22,8 +22,10 @@ import static com.google.common.io.jimfs.path.Name.PARENT;
 import static com.google.common.io.jimfs.path.Name.SELF;
 
 import com.google.common.base.Functions;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.io.jimfs.path.Name;
 
@@ -223,14 +225,14 @@ public final class DirectoryTable implements FileContent {
    * "." and "..".
    */
   public ImmutableSortedSet<Name> snapshot() {
-    ImmutableSortedSet.Builder<Name> builder = new ImmutableSortedSet.Builder<>(STRING_ORDERING);
+    return ImmutableSortedSet.copyOf(Ordering.usingToString(), asMap().keySet());
+  }
 
-    for (Name name : entries.keySet()) {
-      if (!RESERVED_NAMES.contains(name)) {
-        builder.add(name);
-      }
-    }
-    return builder.build();
+  /**
+   * Returns a view of the entries in this table, excluding entries for "." and "..", as a map.
+   */
+  public Map<Name, File> asMap() {
+    return Maps.filterKeys(entries, Predicates.not(Predicates.in(RESERVED_NAMES)));
   }
 
   private static Name checkValidName(Name name, String action) {
