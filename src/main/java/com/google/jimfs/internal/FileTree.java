@@ -44,7 +44,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
@@ -92,20 +91,20 @@ public final class FileTree {
 
   private final ReadWriteLock lock;
   private final FileTree superRoot;
-  private final JimfsFileStore jimfsFileStore;
+  private final JimfsFileStore store;
   private final LookupService lookupService;
 
   /**
    * Creates a new file tree with the given base, using the given services.
    */
   public FileTree(File base, JimfsPath basePath, @Nullable FileTree superRoot,
-      ReadWriteLock lock, JimfsFileStore jimfsFileStore) {
+      ReadWriteLock lock, JimfsFileStore store) {
     this.base = checkNotNull(base);
     this.basePath = checkNotNull(basePath);
     this.superRoot = superRoot == null ? this : superRoot;
 
     this.lock = checkNotNull(lock);
-    this.jimfsFileStore = checkNotNull(jimfsFileStore);
+    this.store = checkNotNull(store);
     this.lookupService = new LookupService(this);
   }
 
@@ -198,39 +197,31 @@ public final class FileTree {
   }
 
   /**
-   * Creates a new secure directory stream for the directory located by the given path.
+   * Creates a new secure directory stream for the directory located by the given path. The given
+   * {@code basePathForStream} is that base path that the returned stream will use. This will be
+   * the same as {@code dir} except for streams created relative to another secure stream.
    */
   public JimfsSecureDirectoryStream newSecureDirectoryStream(JimfsPath dir,
-      DirectoryStream.Filter<? super Path> filter, LinkHandling linkHandling) throws IOException {
+      DirectoryStream.Filter<? super Path> filter, LinkHandling linkHandling,
+      JimfsPath basePathForStream) throws IOException {
     File file = lookup(dir, linkHandling)
-        .requireFound(dir)
+        .requireDirectory(dir)
         .file();
-    if (!file.isDirectory()) {
-      throw new NotDirectoryException(dir.toString());
-    }
 
-    JimfsPath newBasePath = dir.isAbsolute() ? dir : basePath.resolve(dir);
-    FileTree tree = new FileTree(file, newBasePath, superRoot, lock, jimfsFileStore);
+    FileTree tree = new FileTree(file, basePathForStream, superRoot, lock, store);
     return new JimfsSecureDirectoryStream(tree, filter);
   }
 
   /**
-   * Returns a snapshot of the entries in the directory located by the given path.
+   * Returns a snapshot of the entries in the base directory of this tree.
    */
-  public ImmutableSortedSet<String> snapshotEntries(JimfsPath dir) throws IOException {
+  public ImmutableSortedSet<String> snapshotBaseEntries() {
     ImmutableSortedSet<Name> names;
     readLock().lock();
     try {
-      File file = lookup(dir, NOFOLLOW_LINKS)
-          .requireFound(dir)
-          .file();
-      if (!file.isDirectory()) {
-        throw new NotDirectoryException(dir.toString());
-      }
-
-      DirectoryTable table = file.content();
+      DirectoryTable table = base.content();
       names = table.snapshot();
-      file.updateAccessTime();
+      base.updateAccessTime();
     } finally {
       readLock().unlock();
     }
@@ -302,12 +293,12 @@ public final class FileTree {
   }
 
   public File createDirectory(JimfsPath path, FileAttribute<?>... attrs) throws IOException {
-    return createFile(path, jimfsFileStore.directorySupplier(attrs), false);
+    return createFile(path, store.directorySupplier(attrs), false);
   }
 
   public File createSymbolicLink(
       JimfsPath path, JimfsPath target, FileAttribute<?>... attrs) throws IOException {
-    return createFile(path, jimfsFileStore.symbolicLinkSupplier(target, attrs), false);
+    return createFile(path, store.symbolicLinkSupplier(target, attrs), false);
   }
 
   /**
@@ -414,7 +405,7 @@ public final class FileTree {
     // existing key if the file already exists when it tries to create it
     writeLock().lock();
     try {
-      File file = createFile(path, jimfsFileStore.regularFileSupplier(attrs), !createNew);
+      File file = createFile(path, store.regularFileSupplier(attrs), !createNew);
       // the file already existed but was not a regular file
       if (!file.isRegularFile()) {
         throw new FileSystemException(path.toString(), null, "not a regular file");
@@ -651,7 +642,7 @@ public final class FileTree {
         }
       } else {
         // copy
-        File copy = destTree.jimfsFileStore.copy(sourceFile);
+        File copy = destTree.store.copy(sourceFile);
         destParentTable.link(destName, copy);
         destParent.updateModifiedTime();
 
@@ -678,8 +669,8 @@ public final class FileTree {
 
   private void copyBasicAttributes(File source, FileTree destTree, File dest) throws IOException {
     BasicFileAttributes sourceAttributes =
-        jimfsFileStore.readAttributes(source, BasicFileAttributes.class);
-    BasicFileAttributeView destAttributeView = destTree.jimfsFileStore.getFileAttributeView(
+        store.readAttributes(source, BasicFileAttributes.class);
+    BasicFileAttributeView destAttributeView = destTree.store.getFileAttributeView(
         FileProvider.ofFile(dest), BasicFileAttributeView.class);
 
     assert destAttributeView != null;
@@ -737,7 +728,7 @@ public final class FileTree {
    */
   public <V extends FileAttributeView> V getFileAttributeView(
       JimfsPath path, Class<V> type, LinkHandling linkHandling) {
-    return jimfsFileStore.getFileAttributeView(lookupProvider(path, linkHandling), type);
+    return store.getFileAttributeView(lookupProvider(path, linkHandling), type);
   }
 
   /**
@@ -748,7 +739,7 @@ public final class FileTree {
     File file = lookup(path, linkHandling)
         .requireFound(path)
         .file();
-    return jimfsFileStore.readAttributes(file, type);
+    return store.readAttributes(file, type);
   }
 
   /**
@@ -759,7 +750,7 @@ public final class FileTree {
     File file = lookup(path, linkHandling)
         .requireFound(path)
         .file();
-    return jimfsFileStore.readAttributes(file, attributes);
+    return store.readAttributes(file, attributes);
   }
 
   /**
@@ -770,6 +761,6 @@ public final class FileTree {
     File file = lookup(path, linkHandling)
         .requireFound(path)
         .file();
-    jimfsFileStore.setAttribute(file, attribute, value);
+    store.setAttribute(file, attribute, value);
   }
 }

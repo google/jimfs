@@ -20,6 +20,7 @@ import static com.google.jimfs.internal.FileTree.DeleteMode;
 import static com.google.jimfs.internal.JimfsFileSystemProvider.getOptionsForChannel;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.internal.file.JimfsFileChannel;
 import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;
@@ -42,8 +43,11 @@ import java.util.Set;
 final class JimfsSecureDirectoryStream
     extends JimfsDirectoryStream implements SecureDirectoryStream<Path> {
 
+  private final FileTree tree;
+
   public JimfsSecureDirectoryStream(FileTree tree, Filter<? super Path> filter) {
-    super(tree, tree.getBasePath(), filter);
+    super(tree.getBasePath(), filter);
+    this.tree = tree;
   }
 
   /**
@@ -51,7 +55,17 @@ final class JimfsSecureDirectoryStream
    * if the path is relative and the super root tree if it's absolute.
    */
   private FileTree tree(JimfsPath path) {
-    return path.isAbsolute() ? tree().getSuperRoot() : tree();
+    return path.isAbsolute() ? tree.getSuperRoot() : tree;
+  }
+
+  @Override
+  protected Iterable<String> snapshotEntryNames() throws IOException {
+    tree.readLock().lock();
+    try {
+      return tree.snapshotBaseEntries();
+    } finally {
+      tree.readLock().unlock();
+    }
   }
 
   @Override
@@ -59,7 +73,8 @@ final class JimfsSecureDirectoryStream
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
     return tree(checkedPath).newSecureDirectoryStream(
-        checkedPath, ALWAYS_TRUE_FILTER, LinkHandling.fromOptions(options));
+        checkedPath, ALWAYS_TRUE_FILTER, LinkHandling.fromOptions(options),
+        tree.getBasePath().resolve(checkedPath));
   }
 
   @Override
@@ -103,14 +118,14 @@ final class JimfsSecureDirectoryStream
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Class<V> type) {
     return getFileAttributeView(
-        JimfsPath.empty(tree().getBasePath().getFileSystem()), type);
+        JimfsPath.empty(tree.getBasePath().getFileSystem()), type);
   }
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
       LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
-    return tree().getFileAttributeView(checkedPath, type, LinkHandling.fromOptions(options));
+    return tree.getFileAttributeView(checkedPath, type, LinkHandling.fromOptions(options));
   }
 
   private static JimfsPath checkPath(Path path) {

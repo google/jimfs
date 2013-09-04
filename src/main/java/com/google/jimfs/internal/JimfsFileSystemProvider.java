@@ -30,6 +30,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.jimfs.JimfsConfiguration;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.JimfsFileChannel;
 import com.google.jimfs.internal.file.TargetPath;
 import com.google.jimfs.internal.path.JimfsPath;
 
@@ -208,7 +209,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       DirectoryStream.Filter<? super Path> filter) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
     return getFileTree(checkedPath)
-        .newSecureDirectoryStream(checkedPath, filter, LinkHandling.FOLLOW_LINKS);
+        .newSecureDirectoryStream(checkedPath, filter, LinkHandling.FOLLOW_LINKS, checkedPath);
   }
 
   @Override

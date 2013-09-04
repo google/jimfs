@@ -23,8 +23,10 @@ import com.google.common.base.Objects;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.Name;
 
+import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 
 import javax.annotation.Nullable;
@@ -106,6 +108,17 @@ final class LookupResult {
   public LookupResult requireNotFound(Path pathForException) throws FileAlreadyExistsException {
     if (found()) {
       throw new FileAlreadyExistsException(pathForException.toString());
+    }
+    return this;
+  }
+
+  /**
+   * Throws an exception if the file was not found or if it was found but is not a directory.
+   */
+  public LookupResult requireDirectory(Path pathForException) throws IOException {
+    requireFound(pathForException);
+    if (!file.isDirectory()) {
+      throw new NotDirectoryException(pathForException.toString());
     }
     return this;
   }

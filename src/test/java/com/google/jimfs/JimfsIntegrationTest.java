@@ -1651,6 +1651,28 @@ public class JimfsIntegrationTest {
   }
 
   @Test
+  public void testSecureDirectoryStreamBasedOnRelativePath() throws IOException {
+    Files.createDirectories(path("foo"));
+    Files.createFile(path("foo/a"));
+    Files.createFile(path("foo/b"));
+    Files.createDirectory(path("foo/c"));
+    Files.createFile(path("foo/c/d"));
+    Files.createFile(path("foo/c/e"));
+
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path("foo"))) {
+      SecureDirectoryStream<Path> secureStream = (SecureDirectoryStream<Path>) stream;
+
+      ASSERT.that(ImmutableList.copyOf(secureStream)).has()
+          .exactly(path("foo/a"), path("foo/b"), path("foo/c"));
+
+      try (DirectoryStream<Path> stream2 = secureStream.newDirectoryStream(path("c"))) {
+        ASSERT.that(ImmutableList.copyOf(stream2)).has()
+            .exactly(path("foo/c/d"), path("foo/c/e"));
+      }
+    }
+  }
+
+  @Test
   public void testDirectoryAccessAndModifiedTimeUpdates() throws IOException {
     Files.createDirectories(path("/foo/bar"));
     FileTimeTester tester = new FileTimeTester(path("/foo/bar"));

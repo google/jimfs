@@ -34,25 +34,24 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-class JimfsDirectoryStream implements DirectoryStream<Path> {
+abstract class JimfsDirectoryStream implements DirectoryStream<Path> {
 
-  private final FileTree tree;
   private final JimfsPath dirPath;
   private final Filter<? super Path> filter;
   private volatile DirectoryIterator iterator;
 
-  public JimfsDirectoryStream(FileTree tree, JimfsPath dirPath, Filter<? super Path> filter) {
-    this.tree = checkNotNull(tree);
+  public JimfsDirectoryStream(JimfsPath dirPath, Filter<? super Path> filter) {
     this.dirPath = checkNotNull(dirPath);
     this.filter = checkNotNull(filter);
     this.iterator = new DirectoryIterator();
   }
 
   /**
-   * Returns the file tree used to resolve the path of this stream.
+   *
+   * @return
    */
-  protected FileTree tree() {
-    return tree;
+  protected JimfsPath path() {
+    return dirPath;
   }
 
   @Override
@@ -69,6 +68,11 @@ class JimfsDirectoryStream implements DirectoryStream<Path> {
   public void close() throws IOException {
   }
 
+  /**
+   * Returns a snapshot of names of the entries in the directory.
+   */
+  protected abstract Iterable<String> snapshotEntryNames() throws IOException;
+
   private final class DirectoryIterator extends AbstractIterator<Path> {
 
     @Nullable
@@ -78,12 +82,7 @@ class JimfsDirectoryStream implements DirectoryStream<Path> {
     protected Path computeNext() {
       try {
         if (fileNames == null) {
-          tree.readLock().lock();
-          try {
-            fileNames = tree.snapshotEntries(dirPath).iterator();
-          } finally {
-            tree.readLock().unlock();
-          }
+          fileNames = snapshotEntryNames().iterator();
         }
 
         while (fileNames.hasNext()) {

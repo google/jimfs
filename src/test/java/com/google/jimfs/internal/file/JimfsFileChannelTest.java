@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal;
+package com.google.jimfs.internal.file;
 
 import static com.google.jimfs.testing.TestUtils.buffer;
 import static com.google.jimfs.testing.TestUtils.bytes;
@@ -30,10 +30,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
-import com.google.jimfs.internal.file.AbstractByteStoreTest;
-import com.google.jimfs.internal.file.ByteStore;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.StubByteStore;
 import com.google.jimfs.testing.ByteBufferChannel;
 
 import org.junit.Test;
