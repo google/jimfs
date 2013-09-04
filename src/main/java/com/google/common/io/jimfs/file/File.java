@@ -37,13 +37,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class File {
 
   private final long id;
+
+  private final AtomicInteger links = new AtomicInteger();
   private final AtomicLong creationTime = new AtomicLong();
   private final AtomicLong lastAccessTime = new AtomicLong();
   private final AtomicLong lastModifiedTime = new AtomicLong();
 
   private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
+
   private final FileContent content;
-  private final AtomicInteger links = new AtomicInteger();
 
   public File(long id, FileContent content) {
     this.id = id;

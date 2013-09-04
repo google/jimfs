@@ -54,6 +54,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class JimfsFileSystem extends FileSystem {
 
+  /** Set of closeables that need to be closed when this file system is closed. */
   private final Set<Closeable> openCloseables = Sets.newConcurrentHashSet();
 
   private final JimfsFileSystemProvider provider;
@@ -181,9 +182,7 @@ public final class JimfsFileSystem extends FileSystem {
 
   @Override
   public WatchService newWatchService() throws IOException {
-    PollingWatchService service = new PollingWatchService(this);
-    openCloseables.add(service);
-    return service;
+    return opened(new PollingWatchService(this));
   }
 
   /**
@@ -217,7 +216,16 @@ public final class JimfsFileSystem extends FileSystem {
   }
 
   /**
-   * Called when an opened closeable such as watch service is closed.
+   * Called when a closeable associated with this file system is opened. Returns the given
+   * closeable.
+   */
+  public <C extends Closeable> C opened(C closeable) {
+    openCloseables.add(closeable);
+    return closeable;
+  }
+
+  /**
+   * Called when an opened closeable such as a watch service is closed.
    */
   public void closed(Closeable closeable) {
     openCloseables.remove(closeable);
