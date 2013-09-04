@@ -104,7 +104,9 @@ public final class JimfsFileSystem extends FileSystem {
   private File createWorkingDirectory(JimfsPath workingDir) {
     try {
       Files.createDirectories(workingDir);
-      return superRootTree.lookupFile(workingDir, NOFOLLOW_LINKS);
+      return superRootTree.lookup(workingDir, NOFOLLOW_LINKS)
+          .requireDirectory(workingDir)
+          .file();
     } catch (IOException e) {
       throw new RuntimeException("failed to create working dir", e);
     }

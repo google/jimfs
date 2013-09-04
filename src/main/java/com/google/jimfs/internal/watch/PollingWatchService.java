@@ -35,7 +35,6 @@ import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
 
 import java.io.IOException;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchService;
@@ -193,13 +192,9 @@ public final class PollingWatchService extends AbstractWatchService {
 
     lock.readLock().lock();
     try {
-      File dir = tree.lookupFile(path, LinkHandling.NOFOLLOW_LINKS);
-
-      if (dir == null) {
-        throw new NoSuchFileException(path.toString());
-      } else if (!dir.isDirectory()) {
-        throw new NotDirectoryException(path.toString());
-      }
+      File dir = tree.lookup(path, LinkHandling.NOFOLLOW_LINKS)
+          .requireDirectory(path)
+          .file();
 
       DirectoryTable table = dir.content();
       for (Map.Entry<Name, File> entry : table.asMap().entrySet()) {

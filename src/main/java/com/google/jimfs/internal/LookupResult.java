@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
+import java.nio.file.NotLinkException;
 import java.nio.file.Path;
 
 import javax.annotation.Nullable;
@@ -46,7 +47,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class LookupResult {
+public final class LookupResult {
 
   /**
    * Returns a lookup result with neither the parent nor the file.
@@ -119,6 +120,17 @@ final class LookupResult {
     requireFound(pathForException);
     if (!file.isDirectory()) {
       throw new NotDirectoryException(pathForException.toString());
+    }
+    return this;
+  }
+
+  /**
+   * Throws an exception if the file was not found or if it was found but is not a symbolic link.
+   */
+  public LookupResult requireSymbolicLink(Path pathForException) throws IOException {
+    requireFound(pathForException);
+    if (!file.isSymbolicLink()) {
+      throw new NotLinkException(pathForException.toString());
     }
     return this;
   }

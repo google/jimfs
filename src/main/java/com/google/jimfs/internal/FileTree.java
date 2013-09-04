@@ -154,7 +154,7 @@ public final class FileTree {
   /**
    * Attempt to lookup the file at the given path.
    */
-  private LookupResult lookup(JimfsPath path, LinkHandling linkHandling) throws IOException {
+  public LookupResult lookup(JimfsPath path, LinkHandling linkHandling) throws IOException {
     return lookupService.lookup(path, linkHandling);
   }
 
@@ -168,17 +168,11 @@ public final class FileTree {
     return new FileProvider() {
       @Override
       public File getFile() throws IOException {
-        return lookupFile(path, linkHandling);
+        return lookup(path, linkHandling)
+            .requireFound(path)
+            .file();
       }
     };
-  }
-
-  /**
-   * Gets the file at the given path, or {@code null} if none exists.
-   */
-  @Nullable
-  public File lookupFile(JimfsPath path, LinkHandling linkHandling) throws IOException {
-    return lookup(path, linkHandling).orNull();
   }
 
   /**

@@ -48,8 +48,6 @@ import java.nio.file.FileStore;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.NotLinkException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
@@ -63,8 +61,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-
-import javax.annotation.Nullable;
 
 /**
  * @author Colin Decker
@@ -132,11 +128,10 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     return path.getFileSystem().getFileTree(path);
   }
 
-  @Nullable
-  private static File lookup(Path path, LinkHandling linkHandling) throws IOException {
+  private static LookupResult lookup(Path path, LinkHandling linkHandling) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     FileTree tree = getFileTree(checkedPath);
-    return tree.lookupFile(checkedPath, linkHandling);
+    return tree.lookup(checkedPath, linkHandling);
   }
 
   @Override
@@ -242,13 +237,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public Path readSymbolicLink(Path link) throws IOException {
-    File file = lookup(link, NOFOLLOW_LINKS);
-    if (file == null) {
-      throw new NoSuchFileException(link.toString());
-    }
-    if (!file.isSymbolicLink()) {
-      throw new NotLinkException(link.toString());
-    }
+    File file = lookup(link, NOFOLLOW_LINKS)
+        .requireSymbolicLink(link)
+        .file();
 
     TargetPath target = file.content();
     return target.path();
@@ -315,9 +306,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   @Override
   public void checkAccess(Path path, AccessMode... modes) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    if (lookup(checkedPath, FOLLOW_LINKS) == null) {
-      throw new NoSuchFileException(path.toString());
-    }
+    lookup(checkedPath, FOLLOW_LINKS).requireFound(path);
   }
 
   @Override
