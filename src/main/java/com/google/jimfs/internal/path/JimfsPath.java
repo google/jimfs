@@ -30,7 +30,6 @@ import com.google.common.collect.Iterables;
 import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.JimfsFileSystemProvider;
 import com.google.jimfs.internal.LinkHandling;
-import com.google.jimfs.internal.file.FileContent;
 import com.google.jimfs.internal.watch.AbstractWatchService;
 
 import java.io.File;
@@ -54,12 +53,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Implementation of {@link Path}. Also implements {@link FileContent}, as the content of a
- * symbolic link is a path.
+ * Implementation of {@link Path}.
  *
  * @author Colin Decker
  */
-public final class JimfsPath implements Path, FileContent {
+public final class JimfsPath implements Path {
 
   /**
    * Returns an empty path for the given file system.
@@ -112,17 +110,6 @@ public final class JimfsPath implements Path, FileContent {
     this.fs = fs;
     this.root = root;
     this.names = ImmutableList.copyOf(names);
-  }
-
-  @Override
-  public JimfsPath copy() {
-    // immutable
-    return this;
-  }
-
-  @Override
-  public int sizeInBytes() {
-    return 0;
   }
 
   @Override

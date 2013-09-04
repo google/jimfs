@@ -33,6 +33,7 @@ import com.google.common.collect.Lists;
 import com.google.jimfs.internal.file.ByteStore;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
 
@@ -156,6 +157,21 @@ public final class FileTree {
    */
   private LookupResult lookup(JimfsPath path, LinkHandling linkHandling) throws IOException {
     return lookupService.lookup(path, linkHandling);
+  }
+
+  /**
+   * Returns a {@link FileProvider} that does a lookup of the given path in this given tree, using
+   * the given link handling option.
+   */
+  public FileProvider lookupProvider(final JimfsPath path, final LinkHandling linkHandling) {
+    checkNotNull(path);
+    checkNotNull(linkHandling);
+    return new FileProvider() {
+      @Override
+      public File getFile() throws IOException {
+        return lookupFile(path, linkHandling);
+      }
+    };
   }
 
   /**
@@ -721,8 +737,7 @@ public final class FileTree {
    */
   public <V extends FileAttributeView> V getFileAttributeView(
       JimfsPath path, Class<V> type, LinkHandling linkHandling) {
-    FileProvider fileProvider = FileProvider.lookup(this, path, linkHandling);
-    return jimfsFileStore.getFileAttributeView(fileProvider, type);
+    return jimfsFileStore.getFileAttributeView(lookupProvider(path, linkHandling), type);
   }
 
   /**

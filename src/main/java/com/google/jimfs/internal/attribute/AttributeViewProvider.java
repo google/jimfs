@@ -16,7 +16,7 @@
 
 package com.google.jimfs.internal.attribute;
 
-import com.google.jimfs.internal.FileProvider;
+import com.google.jimfs.internal.file.FileProvider;
 
 import java.nio.file.attribute.FileAttributeView;
 

@@ -22,6 +22,7 @@ import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 import com.google.common.collect.Iterables;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.TargetPath;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
 
@@ -136,8 +137,8 @@ final class LookupService {
       throw new IOException("too many levels of symbolic links");
     }
 
-    JimfsPath targetPath = link.content();
-    return lookup(table.get(Name.SELF), targetPath, FOLLOW_LINKS, linkDepth + 1);
+    TargetPath targetPath = link.content();
+    return lookup(table.get(Name.SELF), targetPath.path(), FOLLOW_LINKS, linkDepth + 1);
   }
 
   @Nullable

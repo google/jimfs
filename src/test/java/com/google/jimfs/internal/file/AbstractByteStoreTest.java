@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Bytes;
-import com.google.jimfs.internal.file.ByteStore;
 import com.google.jimfs.testing.ByteBufferChannel;
 
 import org.junit.Before;

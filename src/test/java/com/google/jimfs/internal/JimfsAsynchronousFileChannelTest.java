@@ -27,9 +27,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.StubByteStore;
 import com.google.jimfs.internal.file.ByteStore;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.StubByteStore;
 
 import org.junit.Test;
 

@@ -20,8 +20,8 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.FileProvider;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.testing.FakeFileContent;
 
 import org.junit.Before;

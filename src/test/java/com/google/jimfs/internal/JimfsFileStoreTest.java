@@ -13,6 +13,7 @@ import com.google.jimfs.internal.attribute.TestAttributeProvider;
 import com.google.jimfs.internal.attribute.TestAttributeView;
 import com.google.jimfs.internal.attribute.TestAttributes;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.testing.BasicFileAttribute;
 
 import org.junit.Before;

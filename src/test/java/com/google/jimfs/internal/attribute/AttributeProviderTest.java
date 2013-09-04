@@ -20,9 +20,9 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.jimfs.internal.FileProvider;
 import com.google.jimfs.internal.JimfsFileStore;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.testing.BasicFileAttribute;
 
 import org.junit.Before;

@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
-import com.google.jimfs.internal.path.JimfsPath;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -76,7 +75,7 @@ public final class File {
    * Returns whether or not this file is a symbolic link.
    */
   public boolean isSymbolicLink() {
-    return content instanceof JimfsPath;
+    return content instanceof TargetPath;
   }
 
   /**

@@ -19,8 +19,8 @@ package com.google.jimfs.internal.attribute;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.FileProvider;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.FileProvider;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

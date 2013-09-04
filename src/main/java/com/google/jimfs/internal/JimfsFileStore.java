@@ -29,6 +29,8 @@ import com.google.jimfs.internal.file.ArrayByteStore;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.file.FileContent;
+import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.internal.file.TargetPath;
 import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;
@@ -143,7 +145,7 @@ public final class JimfsFileStore extends FileStore {
    * the new file.
    */
   public File createSymbolicLink(JimfsPath target, FileAttribute<?>... attrs) {
-    return createFile(nextFileId(), target, attrs);
+    return createFile(nextFileId(), new TargetPath(target), attrs);
   }
 
   /**

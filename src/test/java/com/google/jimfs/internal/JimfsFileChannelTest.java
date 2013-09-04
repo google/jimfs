@@ -31,9 +31,9 @@ import static org.junit.Assert.fail;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import com.google.jimfs.internal.file.AbstractByteStoreTest;
-import com.google.jimfs.internal.file.StubByteStore;
 import com.google.jimfs.internal.file.ByteStore;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.StubByteStore;
 import com.google.jimfs.testing.ByteBufferChannel;
 
 import org.junit.Test;

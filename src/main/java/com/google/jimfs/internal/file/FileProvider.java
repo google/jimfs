@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal;
+package com.google.jimfs.internal.file;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;
 
 /**
- * A provider of a {@link File} object. May provide the file directly or by looking it up at a
- * specific path in a {@link FileTree}.
+ * A provider of a {@link File} object. May provide the file directly or by looking it up in a
+ * file tree.
  *
  * @author Colin Decker
  */
@@ -47,23 +44,6 @@ public abstract class FileProvider {
       @Override
       public File getFile() throws IOException {
         return file;
-      }
-    };
-  }
-
-  /**
-   * Returns a {@link FileProvider} that does a lookup of the given path in the given tree, using
-   * the given link handling option.
-   */
-  public static FileProvider lookup(
-      final FileTree tree, final JimfsPath path, final LinkHandling linkHandling) {
-    checkNotNull(tree);
-    checkNotNull(path);
-    checkNotNull(linkHandling);
-    return new FileProvider() {
-      @Override
-      public File getFile() throws IOException {
-        return tree.lookupFile(path, linkHandling);
       }
     };
   }

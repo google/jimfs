@@ -30,6 +30,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.jimfs.JimfsConfiguration;
 import com.google.jimfs.internal.file.File;
+import com.google.jimfs.internal.file.TargetPath;
 import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;
@@ -247,7 +248,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     if (!file.isSymbolicLink()) {
       throw new NotLinkException(link.toString());
     }
-    return (Path) file.content();
+
+    TargetPath target = file.content();
+    return target.path();
   }
 
   @Override

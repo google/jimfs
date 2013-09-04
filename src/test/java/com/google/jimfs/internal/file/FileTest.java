@@ -4,7 +4,6 @@ import static com.google.jimfs.testing.TestUtils.fakePath;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.testing.EqualsTester;
-import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.testing.FakeFileContent;
 
 import org.junit.Test;
@@ -46,11 +45,11 @@ public class FileTest {
 
   @Test
   public void testSymbolicLink() {
-    File file = new File(0L, fakePath());
+    File file = new File(0L, new TargetPath(fakePath()));
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isTrue();
-    ASSERT.that(file.content()).isA(JimfsPath.class);
+    ASSERT.that(file.content()).isA(TargetPath.class);
   }
 
   @Test
