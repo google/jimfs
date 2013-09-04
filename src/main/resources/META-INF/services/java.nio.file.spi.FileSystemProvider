@@ -1,1 +1,1 @@
-com.google.common.io.jimfs.JimfsFileSystemProvider
+com.google.jimfs.internal.JimfsFileSystemProvider
