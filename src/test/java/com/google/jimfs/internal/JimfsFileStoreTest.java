@@ -1,4 +1,4 @@
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
 import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
 import static com.google.jimfs.testing.TestUtils.fakePath;
@@ -12,6 +12,7 @@ import com.google.jimfs.internal.attribute.OwnerAttributeProvider;
 import com.google.jimfs.internal.attribute.TestAttributeProvider;
 import com.google.jimfs.internal.attribute.TestAttributeView;
 import com.google.jimfs.internal.attribute.TestAttributes;
+import com.google.jimfs.internal.file.File;
 import com.google.jimfs.testing.BasicFileAttribute;
 
 import org.junit.Before;

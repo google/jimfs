@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.bytestore;
+package com.google.jimfs.internal.file;
 
 import static com.google.jimfs.testing.TestUtils.buffer;
 import static com.google.jimfs.testing.TestUtils.buffers;
@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Bytes;
+import com.google.jimfs.internal.file.ByteStore;
 import com.google.jimfs.testing.ByteBufferChannel;
 
 import org.junit.Before;

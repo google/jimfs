@@ -4,7 +4,6 @@ import static com.google.jimfs.testing.TestUtils.fakePath;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.testing.EqualsTester;
-import com.google.jimfs.internal.bytestore.ArrayByteStore;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.testing.FakeFileContent;
 

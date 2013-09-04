@@ -17,8 +17,8 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.jimfs.internal.file.LinkHandling.FOLLOW_LINKS;
-import static com.google.jimfs.internal.file.LinkHandling.NOFOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.READ;
@@ -30,9 +30,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.jimfs.JimfsConfiguration;
 import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileTree;
-import com.google.jimfs.internal.file.JimfsFileChannel;
-import com.google.jimfs.internal.file.LinkHandling;
 import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;

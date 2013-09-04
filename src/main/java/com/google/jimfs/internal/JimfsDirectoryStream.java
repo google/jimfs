@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

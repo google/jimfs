@@ -139,9 +139,10 @@ public abstract class AbstractWatchService implements WatchService {
       // on the queue (if none are blocked, they will be blocked soon)
       while (!lock.writeLock().tryLock()) {
         // so transfer the poison to each blocked thread and attempt to acquire the lock again
-        while (queue.tryTransfer(poison)) {
-          // nothing to do here
-        }
+        boolean poisonTransferred;
+        do {
+          poisonTransferred = queue.tryTransfer(poison);
+        } while (poisonTransferred);
       }
 
       // the write lock has been acquired, so no threads are blocking on the queue

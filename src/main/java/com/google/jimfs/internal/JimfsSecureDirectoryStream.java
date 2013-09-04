@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.FileTree.DeleteMode;
 import static com.google.jimfs.internal.JimfsFileSystemProvider.getOptionsForChannel;
-import static com.google.jimfs.internal.file.FileTree.DeleteMode;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.internal.path.JimfsPath;

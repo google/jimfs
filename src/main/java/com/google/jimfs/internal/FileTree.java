@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.file.LinkHandling.FOLLOW_LINKS;
-import static com.google.jimfs.internal.file.LinkHandling.NOFOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -30,7 +30,9 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.jimfs.internal.bytestore.ByteStore;
+import com.google.jimfs.internal.file.ByteStore;
+import com.google.jimfs.internal.file.DirectoryTable;
+import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
 
@@ -82,7 +84,6 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-@SuppressWarnings("unused")
 public final class FileTree {
 
   private final File base;
@@ -130,13 +131,6 @@ public final class FileTree {
   }
 
   /**
-   * Returns whether or not this tree is the super root of its file system.
-   */
-  public boolean isSuperRoot() {
-    return this == superRoot;
-  }
-
-  /**
    * Returns the super root tree for the file system.
    */
   public FileTree getSuperRoot() {
@@ -148,13 +142,6 @@ public final class FileTree {
    */
   private boolean isSameFileSystem(FileTree other) {
     return superRoot == other.superRoot;
-  }
-
-  /**
-   * Returns the lookup service for this tree.
-   */
-  public LookupService getLookupService() {
-    return lookupService;
   }
 
   /**

@@ -57,7 +57,7 @@ public class PollingWatchServiceTest {
   @Before
   public void setUp() {
     fs = (JimfsFileSystem) Jimfs.newUnixLikeFileSystem();
-    watcher = new PollingWatchService(fs, 1, MILLISECONDS);
+    watcher = new PollingWatchService(fs, 4, MILLISECONDS);
   }
 
   @After
@@ -200,13 +200,12 @@ public class PollingWatchServiceTest {
     ensureTimeToPoll(); // otherwise we could read 1 event but not all the events we're expecting
     WatchKey key = watcher.take();
     List<WatchEvent<?>> keyEvents = key.pollEvents();
-    ASSERT.that(keyEvents.size()).is(events.length);
     ASSERT.that(keyEvents).has().exactlyAs(Arrays.<WatchEvent<?>>asList(events));
     key.reset();
   }
 
   private static void ensureTimeToPoll() {
-    Uninterruptibles.sleepUninterruptibly(5, MILLISECONDS);
+    Uninterruptibles.sleepUninterruptibly(8, MILLISECONDS);
   }
 
   private JimfsPath createDirectory() throws IOException {

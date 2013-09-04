@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -23,7 +23,8 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-import com.google.jimfs.internal.bytestore.ByteStore;
+import com.google.jimfs.internal.file.ByteStore;
+import com.google.jimfs.internal.file.File;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,7 +55,7 @@ import java.util.concurrent.ExecutorService;
  *
  * @author Colin Decker
  */
-public final class JimfsFileChannel extends FileChannel {
+final class JimfsFileChannel extends FileChannel {
 
   private volatile File file;
   private volatile ByteStore store;

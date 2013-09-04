@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.file.LinkHandling.FOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 
 import com.google.common.collect.Iterables;
+import com.google.jimfs.internal.file.DirectoryTable;
+import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
 

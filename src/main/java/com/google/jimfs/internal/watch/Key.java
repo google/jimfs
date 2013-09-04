@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
 /**
  * Implementation of {@link WatchKey} linked to a {@link AbstractWatchService}.
  */
-public final class Key implements WatchKey {
+final class Key implements WatchKey {
 
   @VisibleForTesting
   static final int MAX_QUEUE_SIZE = 256;

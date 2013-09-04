@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.bytestore;
+package com.google.jimfs.internal.file;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.jimfs.internal.file.FileContent;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

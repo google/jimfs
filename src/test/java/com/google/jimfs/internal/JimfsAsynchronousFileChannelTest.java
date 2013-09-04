@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
 import static com.google.jimfs.testing.TestUtils.buffer;
 import static java.nio.file.StandardOpenOption.READ;
@@ -27,8 +27,9 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.bytestore.ByteStore;
-import com.google.jimfs.internal.bytestore.StubByteStore;
+import com.google.jimfs.internal.file.StubByteStore;
+import com.google.jimfs.internal.file.ByteStore;
+import com.google.jimfs.internal.file.File;
 
 import org.junit.Test;
 

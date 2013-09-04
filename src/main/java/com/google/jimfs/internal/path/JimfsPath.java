@@ -29,8 +29,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.JimfsFileSystemProvider;
+import com.google.jimfs.internal.LinkHandling;
 import com.google.jimfs.internal.file.FileContent;
-import com.google.jimfs.internal.file.LinkHandling;
 import com.google.jimfs.internal.watch.AbstractWatchService;
 
 import java.io.File;

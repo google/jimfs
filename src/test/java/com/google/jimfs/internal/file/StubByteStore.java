@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.bytestore;
+package com.google.jimfs.internal.file;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

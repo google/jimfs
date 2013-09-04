@@ -26,11 +26,11 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.google.jimfs.internal.FileTree;
 import com.google.jimfs.internal.JimfsFileSystem;
+import com.google.jimfs.internal.LinkHandling;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileTree;
-import com.google.jimfs.internal.file.LinkHandling;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
 
@@ -56,7 +56,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  *
  * @author Colin Decker
  */
-public class PollingWatchService extends AbstractWatchService {
+public final class PollingWatchService extends AbstractWatchService {
 
   private final ScheduledExecutorService pollingService
       = Executors.newSingleThreadScheduledExecutor();

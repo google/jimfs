@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Objects;
+import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.Name;
 
 import java.nio.file.FileAlreadyExistsException;

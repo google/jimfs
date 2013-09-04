@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;

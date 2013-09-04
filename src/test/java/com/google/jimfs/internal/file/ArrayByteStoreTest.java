@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.bytestore;
+package com.google.jimfs.internal.file;
 
 /**
  * @author Colin Decker

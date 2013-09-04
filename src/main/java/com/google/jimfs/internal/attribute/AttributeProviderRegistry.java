@@ -1,4 +1,4 @@
-package com.google.jimfs.internal.file;
+package com.google.jimfs.internal.attribute;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
@@ -6,9 +6,6 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
-import com.google.jimfs.internal.attribute.AttributeProvider;
-import com.google.jimfs.internal.attribute.AttributeReader;
-import com.google.jimfs.internal.attribute.AttributeViewProvider;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
@@ -20,7 +17,7 @@ import java.util.Map;
  *
  * @author Colin Decker
  */
-final class AttributeProviderRegistry {
+public final class AttributeProviderRegistry {
 
   private final ImmutableSet<AttributeProvider> providers;
   private final ImmutableListMultimap<String, AttributeProvider> allProviders;

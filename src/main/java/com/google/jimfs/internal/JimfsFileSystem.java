@@ -17,7 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.file.LinkHandling.NOFOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -26,8 +26,6 @@ import com.google.common.collect.Sets;
 import com.google.jimfs.JimfsConfiguration;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileTree;
-import com.google.jimfs.internal.file.JimfsFileStore;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
 import com.google.jimfs.internal.path.PathMatchers;
