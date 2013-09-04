@@ -174,6 +174,14 @@ public class AbstractWatchServiceTest {
   }
 
   @Test
+  public void testResetAfterCancelReturnsFalse() throws IOException {
+    Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    key.signal();
+    key.cancel();
+    ASSERT.that(key.reset()).isFalse();
+  }
+
+  @Test
   public void testClosedWatcher() throws IOException, InterruptedException {
     Key key1 = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     Key key2 = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_MODIFY));
@@ -185,6 +193,8 @@ public class AbstractWatchServiceTest {
 
     ASSERT.that(key1.isValid()).isFalse();
     ASSERT.that(key2.isValid()).isFalse();
+    ASSERT.that(key1.reset()).isFalse();
+    ASSERT.that(key2.reset()).isFalse();
 
     try {
       watcher.poll();
