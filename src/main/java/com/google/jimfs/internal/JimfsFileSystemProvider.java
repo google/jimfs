@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -45,8 +46,10 @@ import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -103,14 +106,54 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
+  public FileSystem newFileSystem(Path path, Map<String, ?> env) throws IOException {
+    JimfsPath checkedPath = checkPath(path);
+    checkNotNull(env);
+
+    URI pathUri = checkedPath.toUri();
+    URI jarUri = URI.create("jar:" + pathUri);
+
+    try {
+      return FileSystems.newFileSystem(jarUri, env);
+    } catch (Exception e) {
+      // if any exception occurred, assume the file wasn't a zip file and that we don't support
+      // viewing it as a file system
+      throw new UnsupportedOperationException(e);
+    }
+  }
+
+  @Override
   public Path getPath(URI uri) {
     try {
-      URI withoutPath = new URI(
-          uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), null, null, null);
+      URI withoutPath = new URI(uri.getScheme(), uri.getHost(), null, null);
       return getFileSystem(withoutPath).getPath(uri.getPath());
     } catch (URISyntaxException e) {
       throw new AssertionError();
     }
+  }
+
+  /**
+   * Returns a URI for the given path.
+   */
+  public URI toUri(JimfsPath path) {
+    String absolutePath = path.toAbsolutePath().toString();
+    if (!absolutePath.startsWith("/")) {
+      absolutePath = "/" + absolutePath;
+    }
+
+    for (Map.Entry<URI, JimfsFileSystem> entry : fileSystems.entrySet()) {
+      if (path.getFileSystem().equals(entry.getValue())) {
+        URI fileSystemUri = entry.getKey();
+        try {
+          return new URI(fileSystemUri.getScheme(), fileSystemUri.getHost(), absolutePath, null);
+        } catch (URISyntaxException e) {
+          throw new AssertionError(e);
+        }
+      }
+    }
+
+    throw new ProviderMismatchException(
+        "the file system " + path + " is associated with was not found in this provider");
   }
 
   private static JimfsPath checkPath(Path path) {
