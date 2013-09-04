@@ -19,8 +19,6 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.jimfs.internal.file.LinkHandling.FOLLOW_LINKS;
 import static com.google.jimfs.internal.file.LinkHandling.NOFOLLOW_LINKS;
-import static com.google.jimfs.internal.util.ExceptionHelpers.requireNonNull;
-import static com.google.jimfs.internal.util.ExceptionHelpers.throwProviderMismatch;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.READ;
@@ -51,9 +49,11 @@ import java.nio.file.FileStore;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.NotLinkException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.ProviderMismatchException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -122,7 +122,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     if (path instanceof JimfsPath) {
       return (JimfsPath) path;
     }
-    throw throwProviderMismatch(path);
+    throw new ProviderMismatchException(
+        "path " + path + " is not associated with a JIMFS file system");
   }
 
   /**
@@ -242,7 +243,10 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public Path readSymbolicLink(Path link) throws IOException {
-    File file = requireNonNull(lookup(link, NOFOLLOW_LINKS), link);
+    File file = lookup(link, NOFOLLOW_LINKS);
+    if (file == null) {
+      throw new NoSuchFileException(link.toString());
+    }
     if (!file.isSymbolicLink()) {
       throw new NotLinkException(link.toString());
     }
@@ -310,7 +314,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   @Override
   public void checkAccess(Path path, AccessMode... modes) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    requireNonNull(lookup(checkedPath, FOLLOW_LINKS), path);
+    if (lookup(checkedPath, FOLLOW_LINKS) == null) {
+      throw new NoSuchFileException(path.toString());
+    }
   }
 
   @Override

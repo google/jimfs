@@ -16,12 +16,12 @@
 
 package com.google.jimfs;
 
-import static com.google.jimfs.internal.attribute.UserLookupService.createGroupPrincipal;
-import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
 import static com.google.jimfs.JimfsConfiguration.Feature.GROUPS;
 import static com.google.jimfs.JimfsConfiguration.Feature.LINKS;
 import static com.google.jimfs.JimfsConfiguration.Feature.SECURE_DIRECTORY_STREAMS;
 import static com.google.jimfs.JimfsConfiguration.Feature.SYMBOLIC_LINKS;
+import static com.google.jimfs.internal.attribute.UserLookupService.createGroupPrincipal;
+import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;

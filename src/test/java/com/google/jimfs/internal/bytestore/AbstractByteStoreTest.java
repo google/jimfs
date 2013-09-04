@@ -23,8 +23,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
-import com.google.jimfs.testing.ByteBufferChannel;
 import com.google.common.primitives.Bytes;
+import com.google.jimfs.testing.ByteBufferChannel;
 
 import org.junit.Before;
 import org.junit.Test;

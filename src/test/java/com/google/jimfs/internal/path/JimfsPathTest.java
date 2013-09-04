@@ -20,13 +20,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.Iterables;
-import com.google.jimfs.Jimfs;
-import com.google.jimfs.internal.JimfsFileSystem;
-import com.google.jimfs.internal.JimfsFileSystemProvider;
-import com.google.jimfs.WindowsConfiguration;
-import com.google.jimfs.testing.PathTester;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
+import com.google.jimfs.Jimfs;
+import com.google.jimfs.WindowsConfiguration;
+import com.google.jimfs.internal.JimfsFileSystem;
+import com.google.jimfs.internal.JimfsFileSystemProvider;
+import com.google.jimfs.testing.PathTester;
 
 import org.junit.Before;
 import org.junit.Test;

@@ -29,11 +29,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.testing.NullPointerTester;
 import com.google.jimfs.internal.bytestore.AbstractByteStoreTest;
 import com.google.jimfs.internal.bytestore.ByteStore;
 import com.google.jimfs.internal.bytestore.StubByteStore;
 import com.google.jimfs.testing.ByteBufferChannel;
-import com.google.common.testing.NullPointerTester;
 
 import org.junit.Test;
 

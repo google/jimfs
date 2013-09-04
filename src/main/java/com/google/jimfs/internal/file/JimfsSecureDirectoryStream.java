@@ -18,7 +18,6 @@ package com.google.jimfs.internal.file;
 
 import static com.google.jimfs.internal.JimfsFileSystemProvider.getOptionsForChannel;
 import static com.google.jimfs.internal.file.FileTree.DeleteMode;
-import static com.google.jimfs.internal.util.ExceptionHelpers.throwProviderMismatch;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.internal.path.JimfsPath;
@@ -118,6 +117,7 @@ final class JimfsSecureDirectoryStream
     if (path instanceof JimfsPath) {
       return (JimfsPath) path;
     }
-    throw throwProviderMismatch(path);
+    throw new ProviderMismatchException(
+        "path " + path + " is not associated with a JIMFS file system");
   }
 }

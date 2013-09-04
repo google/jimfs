@@ -24,10 +24,10 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.Jimfs;
 import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.path.JimfsPath;
-import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.After;
 import org.junit.Before;

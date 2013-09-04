@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.path.Name.PARENT;
 import static com.google.jimfs.internal.path.Name.SELF;
-import static com.google.jimfs.internal.util.ExceptionHelpers.throwProviderMismatch;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
@@ -256,7 +255,7 @@ public final class JimfsPath implements Path, FileContent {
   public JimfsPath resolve(Path other) {
     JimfsPath otherPath = checkPath(other);
     if (otherPath == null) {
-      throw throwProviderMismatch(other);
+      throw new ProviderMismatchException(other.toString());
     }
 
     if (otherPath.isAbsolute()) {
@@ -300,7 +299,7 @@ public final class JimfsPath implements Path, FileContent {
   public JimfsPath relativize(Path other) {
     JimfsPath otherPath = checkPath(other);
     if (otherPath == null) {
-      throw throwProviderMismatch(other);
+      throw new ProviderMismatchException(other.toString());
     }
 
     checkArgument(Objects.equal(root, otherPath.root), "Cannot relativize %s against %s--" +

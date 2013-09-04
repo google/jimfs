@@ -16,10 +16,10 @@
 
 package com.google.jimfs;
 
+import static com.google.common.primitives.Bytes.concat;
 import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
 import static com.google.jimfs.testing.PathSubject.paths;
 import static com.google.jimfs.testing.TestUtils.preFilledBytes;
-import static com.google.common.primitives.Bytes.concat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -46,9 +46,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.testing.BasicFileAttribute;
 import com.google.jimfs.testing.PathSubject;
-import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.Before;
 import org.junit.Test;

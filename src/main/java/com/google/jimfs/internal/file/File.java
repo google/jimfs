@@ -19,9 +19,9 @@ package com.google.jimfs.internal.file;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
+import com.google.common.primitives.Longs;
 import com.google.jimfs.internal.bytestore.ByteStore;
 import com.google.jimfs.internal.path.JimfsPath;
-import com.google.common.primitives.Longs;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
