@@ -19,8 +19,6 @@ package com.google.jimfs.internal.file;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -31,6 +29,7 @@ import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileLock;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 import javax.annotation.Nullable;
@@ -57,8 +56,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
 
   private <R, A> void addCallback(ListenableFuture<R> future,
       CompletionHandler<R, ? super A> handler, @Nullable A attachment) {
-    // TODO(cgdecker): Futures.addCallback is @Beta
-    Futures.addCallback(future, new CompletionHandlerCallback<>(handler, attachment), executor);
+    future.addListener(new CompletionHandlerCallback<>(future, handler, attachment), executor);
   }
 
   @Override
@@ -158,26 +156,44 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   }
 
   /**
-   * {@link FutureCallback} implementation that wraps a {@link CompletionHandler} and an attachment.
+   * Runnable callback that wraps a {@link CompletionHandler} and an attachment.
    */
-  private static final class CompletionHandlerCallback<R, A> implements FutureCallback<R> {
+  private static final class CompletionHandlerCallback<R, A> implements Runnable {
 
+    private final ListenableFuture<R> future;
     private final CompletionHandler<R, ? super A> completionHandler;
     private final @Nullable A attachment;
 
-    private CompletionHandlerCallback(
+    private CompletionHandlerCallback(ListenableFuture<R> future,
         CompletionHandler<R, ? super A> completionHandler, @Nullable A attachment) {
+      this.future = checkNotNull(future);
       this.completionHandler = checkNotNull(completionHandler);
       this.attachment = attachment;
     }
 
     @Override
-    public void onSuccess(R result) {
+    public void run() {
+      R result;
+      try {
+        result = future.get();
+      } catch (ExecutionException e) {
+        onFailure(e.getCause());
+        return;
+      } catch (InterruptedException | RuntimeException | Error e) {
+        // get() shouldn't be interrupted since this should only be called when the result is
+        // ready, but just handle it anyway to be sure and to satisfy the compiler
+        onFailure(e);
+        return;
+      }
+
+      onSuccess(result);
+    }
+
+    private void onSuccess(R result) {
       completionHandler.completed(result, attachment);
     }
 
-    @Override
-    public void onFailure(Throwable t) {
+    private void onFailure(Throwable t) {
       completionHandler.failed(t, attachment);
     }
   }
