@@ -1536,8 +1536,7 @@ public class JimfsIntegrationTest {
     assertThat("/..").isSameFileAs("/");
     assertThat("/../../..").isSameFileAs("/");
     assertThat("../../../..").isSameFileAs("/");
-
-    //assertThat("/work").isSameFileAs("");
+    assertThat("").isSameFileAs("/work");
 
     Files.createDirectories(path("/foo/bar/baz"));
     Files.createSymbolicLink(path("/foo/bar/link1"), path("../link2"));
@@ -1582,10 +1581,9 @@ public class JimfsIntegrationTest {
       assertThat("/baz/stuff/b").doesNotExist();
       assertThat("/baz/stuff").hasChildren("a", "bar", "barLink");
 
-      // TODO(cgdecker): make empty path work right
-      /*ASSERT.that(secureStream.getFileAttributeView(BasicFileAttributeView.class)
+      ASSERT.that(secureStream.getFileAttributeView(BasicFileAttributeView.class)
           .readAttributes()
-          .isDirectory()).isTrue();*/
+          .isDirectory()).isTrue();
 
       ASSERT.that(secureStream.getFileAttributeView(path("a"), BasicFileAttributeView.class)
           .readAttributes()

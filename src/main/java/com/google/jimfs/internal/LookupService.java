@@ -54,9 +54,16 @@ final class LookupService {
     checkNotNull(path);
     checkNotNull(linkHandling);
 
-    File base = path.isAbsolute()
-        ? tree.getSuperRoot().base()
-        : tree.base();
+    File base;
+    if (path.isAbsolute()) {
+      base = tree.getSuperRoot().base();
+    } else {
+      base = tree.base();
+      if (isEmpty(path)) {
+        // empty path is equivalent to "." in a lookup
+        path = path.getFileSystem().getPath(".");
+      }
+    }
 
     tree.readLock().lock();
     try {
@@ -74,6 +81,9 @@ final class LookupService {
       throws IOException {
     if (path.isAbsolute()) {
       base = tree.getSuperRoot().base();
+    } else if (isEmpty(path)) {
+      // empty path is equivalent to "." in a lookup
+      path = path.getFileSystem().getPath(".");
     }
 
     checkNotNull(linkHandling);
@@ -138,7 +148,7 @@ final class LookupService {
     }
 
     TargetPath targetPath = link.content();
-    return lookup(table.get(Name.SELF), targetPath.path(), FOLLOW_LINKS, linkDepth + 1);
+    return lookup(table.self(), targetPath.path(), FOLLOW_LINKS, linkDepth + 1);
   }
 
   @Nullable
@@ -154,5 +164,14 @@ final class LookupService {
     Deque<Name> names = new ArrayDeque<>();
     Iterables.addAll(names, path.allNames());
     return names;
+  }
+
+  /**
+   * Returns true if path has no root component (is not absolute) and either has no name
+   * components or only has a single name component, the empty string.
+   */
+  private static boolean isEmpty(JimfsPath path) {
+    return !path.isAbsolute() && (path.getNameCount() == 0
+        || path.getNameCount() == 1 && path.getName(0).toString().equals(""));
   }
 }

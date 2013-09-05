@@ -114,6 +114,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     URI jarUri = URI.create("jar:" + pathUri);
 
     try {
+      // pass the new jar:jimfs://... URI to be handled by ZipFileSystemProvider
       return FileSystems.newFileSystem(jarUri, env);
     } catch (Exception e) {
       // if any exception occurred, assume the file wasn't a zip file and that we don't support

@@ -60,12 +60,7 @@ final class JimfsSecureDirectoryStream
 
   @Override
   protected Iterable<String> snapshotEntryNames() throws IOException {
-    tree.readLock().lock();
-    try {
-      return tree.snapshotBaseEntries();
-    } finally {
-      tree.readLock().unlock();
-    }
+    return tree.snapshotBaseEntries();
   }
 
   @Override
@@ -117,8 +112,7 @@ final class JimfsSecureDirectoryStream
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Class<V> type) {
-    return getFileAttributeView(
-        JimfsPath.empty(tree.getBasePath().getFileSystem()), type);
+    return getFileAttributeView(tree.getBasePath().getFileSystem().getPath("."), type);
   }
 
   @Override
