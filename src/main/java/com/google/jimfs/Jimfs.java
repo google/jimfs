@@ -64,7 +64,9 @@ public final class Jimfs {
   private static FileSystem newFileSystem(JimfsConfiguration config) {
     ImmutableMap<String, ?> env = ImmutableMap.of(JimfsFileSystemProvider.CONFIG_KEY, config);
     try {
-      return FileSystems.newFileSystem(newRandomUri(), env);
+      // Need to use Jimfs.class.getClassLoader() to ensure the class that loaded the jar is used
+      // to locate the FileSystemProvider
+      return FileSystems.newFileSystem(newRandomUri(), env, Jimfs.class.getClassLoader());
     } catch (IOException e) {
       throw new AssertionError(e);
     }
