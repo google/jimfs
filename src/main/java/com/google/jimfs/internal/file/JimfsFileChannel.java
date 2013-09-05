@@ -54,8 +54,10 @@ import java.util.concurrent.ExecutorService;
  */
 public final class JimfsFileChannel extends FileChannel {
 
-  private volatile File file;
-  private volatile ByteStore store;
+  private final Object lock = new Object();
+
+  private File file;
+  private ByteStore store;
 
   private final boolean readable;
   private final boolean writable;
@@ -114,17 +116,19 @@ public final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
-  public synchronized int read(ByteBuffer dst) throws IOException {
-    checkOpen();
-    checkReadable();
+  public int read(ByteBuffer dst) throws IOException {
+    synchronized (lock) {
+      checkOpen();
+      checkReadable();
 
-    file.updateAccessTime();
+      file.updateAccessTime();
 
-    int read = store.read(position, dst);
-    if (read != -1) {
-      position += read;
+      int read = store.read(position, dst);
+      if (read != -1) {
+        position += read;
+      }
+      return read;
     }
-    return read;
   }
 
   @Override
@@ -133,36 +137,40 @@ public final class JimfsFileChannel extends FileChannel {
     return read(Arrays.asList(dsts).subList(offset, offset + length));
   }
 
-  private synchronized int read(List<ByteBuffer> buffers) throws IOException {
-    checkOpen();
-    checkReadable();
+  private int read(List<ByteBuffer> buffers) throws IOException {
+    synchronized (lock) {
+      checkOpen();
+      checkReadable();
 
-    file.updateAccessTime();
+      file.updateAccessTime();
 
-    int read = store.read(position, buffers);
-    if (read != -1) {
-      position += read;
+      int read = store.read(position, buffers);
+      if (read != -1) {
+        position += read;
+      }
+      return read;
     }
-    return read;
   }
 
   @Override
-  public synchronized int write(ByteBuffer src) throws IOException {
-    checkOpen();
-    checkWritable();
+  public int write(ByteBuffer src) throws IOException {
+    synchronized (lock) {
+      checkOpen();
+      checkWritable();
 
-    file.updateModifiedTime();
+      file.updateModifiedTime();
 
-    int written;
-    if (append) {
-      written = store.append(src);
-      position = store.sizeInBytes();
-    } else {
-      written = store.write(position, src);
-      position += written;
+      int written;
+      if (append) {
+        written = store.append(src);
+        position = store.sizeInBytes();
+      } else {
+        written = store.write(position, src);
+        position += written;
+      }
+
+      return written;
     }
-
-    return written;
   }
 
   @Override
@@ -171,130 +179,154 @@ public final class JimfsFileChannel extends FileChannel {
     return write(Arrays.asList(srcs).subList(offset, offset + length));
   }
 
-  private synchronized int write(List<ByteBuffer> srcs) throws IOException {
-    checkOpen();
-    checkWritable();
+  private int write(List<ByteBuffer> srcs) throws IOException {
+    synchronized (lock) {
+      checkOpen();
+      checkWritable();
 
-    file.updateModifiedTime();
+      file.updateModifiedTime();
 
-    int written;
-    if (append) {
-      written = store.append(srcs);
-      position = store.sizeInBytes();
-    } else {
-      written = store.write(position, srcs);
-      position += written;
+      int written;
+      if (append) {
+        written = store.append(srcs);
+        position = store.sizeInBytes();
+      } else {
+        written = store.write(position, srcs);
+        position += written;
+      }
+
+      return written;
     }
-
-    return written;
   }
 
   @Override
-  public synchronized long position() throws IOException {
-    checkOpen();
-    return position;
+  public long position() throws IOException {
+    synchronized (lock) {
+      checkOpen();
+      return position;
+    }
   }
 
   @Override
-  public synchronized FileChannel position(long newPosition) throws IOException {
+  public FileChannel position(long newPosition) throws IOException {
     checkNotNegative(newPosition, "newPosition");
-    checkOpen();
-    this.position = (int) newPosition;
-    return this;
-  }
 
-  @Override
-  public synchronized long size() throws IOException {
-    checkOpen();
-    return store.sizeInBytes();
-  }
-
-  @Override
-  public synchronized FileChannel truncate(long size) throws IOException {
-    checkNotNegative(size, "size");
-    checkOpen();
-    checkWritable();
-
-    file.updateModifiedTime();
-
-    store.truncate((int) size);
-    if (position > size) {
-      position = (int) size;
+    synchronized (lock) {
+      checkOpen();
+      this.position = (int) newPosition;
+      return this;
     }
-
-    return this;
   }
 
   @Override
-  public synchronized void force(boolean metaData) throws IOException {
-    checkOpen();
-    // do nothing... writes are all synchronous anyway
+  public long size() throws IOException {
+    synchronized (lock) {
+      checkOpen();
+      return store.sizeInBytes();
+    }
   }
 
   @Override
-  public synchronized long transferTo(long position, long count,
-      WritableByteChannel target) throws IOException {
+  public FileChannel truncate(long size) throws IOException {
+    checkNotNegative(size, "size");
+
+    synchronized (lock) {
+      checkOpen();
+      checkWritable();
+
+      file.updateModifiedTime();
+
+      store.truncate((int) size);
+      if (position > size) {
+        position = (int) size;
+      }
+
+      return this;
+    }
+  }
+
+  @Override
+  public void force(boolean metaData) throws IOException {
+    synchronized (lock) {
+      checkOpen();
+      // do nothing... writes are all synchronous anyway
+    }
+  }
+
+  @Override
+  public long transferTo(long position, long count, WritableByteChannel target) throws IOException {
     checkNotNull(target);
     checkNotNegative(position, "position");
     checkNotNegative(count, "count");
-    checkOpen();
-    checkReadable();
 
-    file.updateAccessTime();
+    synchronized (lock) {
+      checkOpen();
+      checkReadable();
 
-    return store.transferTo((int) position, (int) count, target);
+      file.updateAccessTime();
+
+      return store.transferTo((int) position, (int) count, target);
+    }
   }
 
   @Override
-  public synchronized long transferFrom(ReadableByteChannel src,
-      long position, long count) throws IOException {
+  public long transferFrom(ReadableByteChannel src, long position, long count) throws IOException {
     checkNotNull(src);
     checkNotNegative(position, "position");
     checkNotNegative(count, "count");
-    checkOpen();
-    checkWritable();
 
-    file.updateModifiedTime();
+    synchronized (lock) {
+      checkOpen();
+      checkWritable();
 
-    if (append) {
-      long appended = store.appendFrom(src, (int) count);
-      this.position = store.sizeInBytes();
-      return appended;
-    } else {
-      return store.transferFrom(src, (int) position, (int) count);
+      file.updateModifiedTime();
+
+      if (append) {
+        long appended = store.appendFrom(src, (int) count);
+        this.position = store.sizeInBytes();
+        return appended;
+      } else {
+        return store.transferFrom(src, (int) position, (int) count);
+      }
     }
   }
 
   @Override
-  public synchronized int read(ByteBuffer dst, long position) throws IOException {
+  public int read(ByteBuffer dst, long position) throws IOException {
     checkNotNull(dst);
     checkNotNegative(position, "position");
-    checkOpen();
-    checkReadable();
 
-    file.updateAccessTime();
+    synchronized (lock) {
+      checkOpen();
+      checkReadable();
 
-    return store.read((int) position, dst);
+      file.updateAccessTime();
+
+      return store.read((int) position, dst);
+    }
   }
 
   @Override
-  public synchronized int write(ByteBuffer src, long position) throws IOException {
+  public int write(ByteBuffer src, long position) throws IOException {
     checkNotNull(src);
     checkNotNegative(position, "position");
-    checkOpen();
-    checkWritable();
 
-    file.updateModifiedTime();
+    synchronized (lock) {
+      checkOpen();
+      checkWritable();
 
-    int written;
-    if (append) {
-      written = store.append(src);
-      this.position = store.sizeInBytes();
-    } else {
-      written = store.write((int) position, src);
+      file.updateModifiedTime();
+
+      int written;
+      if (append) {
+        written = store.append(src);
+        this.position = store.sizeInBytes();
+      } else {
+        written = store.write((int) position, src);
+      }
+
+      return written;
     }
-
-    return written;
   }
 
   @Override
@@ -306,18 +338,21 @@ public final class JimfsFileChannel extends FileChannel {
   // TODO(cgdecker): Throw UOE from these lock methods since we aren't really supporting it?
 
   @Override
-  public synchronized FileLock lock(long position, long size, boolean shared) throws IOException {
+  public FileLock lock(long position, long size, boolean shared) throws IOException {
     checkNotNegative(position, "position");
     checkNotNegative(size, "size");
-    checkOpen();
-    if (shared) {
-      // shared is for a read lock
-      checkReadable();
-    } else {
-      // non-shared is for a write lock
-      checkWritable();
+    
+    synchronized (lock) {
+      checkOpen();
+      if (shared) {
+        // shared is for a read lock
+        checkReadable();
+      } else {
+        // non-shared is for a write lock
+        checkWritable();
+      }
+      return new FakeFileLock(this, position, size, shared);
     }
-    return new FakeFileLock(this, position, size, shared);
   }
 
   @Override
@@ -327,11 +362,13 @@ public final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
-  protected synchronized void implCloseChannel() throws IOException {
+  protected void implCloseChannel() throws IOException {
     // if the file has been deleted, allow it to be GCed even if a reference to this channel is
     // held after closing for some reason
-    file = null;
-    store = null;
+    synchronized (lock) {
+      file = null;
+      store = null;
+    }
   }
 
   /**
