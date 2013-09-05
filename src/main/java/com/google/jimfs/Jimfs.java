@@ -16,10 +16,14 @@
 
 package com.google.jimfs;
 
-import com.google.jimfs.internal.JimfsFileSystem;
+import com.google.common.collect.ImmutableMap;
 import com.google.jimfs.internal.JimfsFileSystemProvider;
 
+import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.util.UUID;
 
 /**
  * Static factory methods for JIMFS file systems.
@@ -29,8 +33,6 @@ import java.nio.file.FileSystem;
 public final class Jimfs {
 
   private Jimfs() {}
-
-  private static final JimfsFileSystemProvider PROVIDER = new JimfsFileSystemProvider();
 
   /**
    * Returns a new in-memory file system with semantics similar to UNIX.
@@ -42,7 +44,7 @@ public final class Jimfs {
    * <p>The working directory for the file system, which exists when it is created, is "/work".
    */
   public static FileSystem newUnixLikeFileSystem() {
-    return new JimfsFileSystem(PROVIDER, new UnixConfiguration());
+    return newFileSystem(new UnixConfiguration());
   }
 
   /**
@@ -56,6 +58,19 @@ public final class Jimfs {
    * <p>The working directory for the file system, which exists when it is created, is "C:\work".
    */
   public static FileSystem newWindowsLikeFileSystem() {
-    return new JimfsFileSystem(PROVIDER, new WindowsConfiguration());
+    return newFileSystem(new WindowsConfiguration());
+  }
+
+  private static FileSystem newFileSystem(JimfsConfiguration config) {
+    ImmutableMap<String, ?> env = ImmutableMap.of(JimfsFileSystemProvider.CONFIG_KEY, config);
+    try {
+      return FileSystems.newFileSystem(newRandomUri(), env);
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
+  private static URI newRandomUri() {
+    return URI.create("jimfs://" + UUID.randomUUID().toString());
   }
 }

@@ -324,7 +324,7 @@ public final class JimfsPath implements Path {
 
   @Override
   public URI toUri() {
-    return getFileSystem().provider().toUri(this);
+    return getFileSystem().getUri(this);
   }
 
   @Override

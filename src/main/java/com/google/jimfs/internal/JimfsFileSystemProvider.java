@@ -59,6 +59,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -82,14 +83,14 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   private final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new ConcurrentHashMap<>();
 
   @Override
-  public JimfsFileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
+  public JimfsFileSystem newFileSystem(URI uri, Map<String, ?> env) {
     checkArgument(uri.getScheme().equalsIgnoreCase(SCHEME),
         "uri (%s) scheme must be '%s'", uri, SCHEME);
     checkArgument(env.get(CONFIG_KEY) instanceof JimfsConfiguration,
         "env map (%s) must contain key '%s' mapped to an instance of JimfsConfiguration",
         env, CONFIG_KEY);
     JimfsConfiguration config = (JimfsConfiguration) env.get(CONFIG_KEY);
-    JimfsFileSystem fileSystem = new JimfsFileSystem(this, config);
+    JimfsFileSystem fileSystem = new JimfsFileSystem(this, uri, config);
     if (fileSystems.putIfAbsent(uri, fileSystem) != null) {
       throw new FileSystemAlreadyExistsException(uri.toString());
     }
@@ -131,30 +132,6 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     } catch (URISyntaxException e) {
       throw new AssertionError();
     }
-  }
-
-  /**
-   * Returns a URI for the given path.
-   */
-  public URI toUri(JimfsPath path) {
-    String absolutePath = path.toAbsolutePath().toString();
-    if (!absolutePath.startsWith("/")) {
-      absolutePath = "/" + absolutePath;
-    }
-
-    for (Map.Entry<URI, JimfsFileSystem> entry : fileSystems.entrySet()) {
-      if (path.getFileSystem().equals(entry.getValue())) {
-        URI fileSystemUri = entry.getKey();
-        try {
-          return new URI(fileSystemUri.getScheme(), fileSystemUri.getHost(), absolutePath, null);
-        } catch (URISyntaxException e) {
-          throw new AssertionError(e);
-        }
-      }
-    }
-
-    throw new ProviderMismatchException(
-        "the file system " + path + " is associated with was not found in this provider");
   }
 
   private static JimfsPath checkPath(Path path) {
@@ -222,7 +199,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   static Set<OpenOption> getOptionsForRead(OpenOption... options) {
-    Set<OpenOption> optionsSet = Sets.newHashSet(options);
+    Set<OpenOption> optionsSet = new HashSet<>(Arrays.asList(options));
     if (optionsSet.contains(WRITE)) {
       throw new UnsupportedOperationException("WRITE");
     } else {

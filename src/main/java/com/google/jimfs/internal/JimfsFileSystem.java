@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 
@@ -33,6 +34,7 @@ import com.google.jimfs.internal.watch.PollingWatchService;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -52,23 +54,25 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class JimfsFileSystem extends FileSystem {
 
-  /** Set of closeables that need to be closed when this file system is closed. */
-  private final Set<Closeable> openCloseables = Sets.newConcurrentHashSet();
-
   private final JimfsFileSystemProvider provider;
+  private final URI uri;
+
   private final JimfsConfiguration configuration;
   private final JimfsFileStore store;
-
   private final ImmutableSet<JimfsPath> rootDirPaths;
-  private final JimfsPath workingDirPath;
 
+  private final JimfsPath workingDirPath;
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final FileTree superRootTree;
   private final FileTree workingDirTree;
 
-  public JimfsFileSystem(JimfsFileSystemProvider provider, JimfsConfiguration config) {
+  /** Set of closeables that need to be closed when this file system is closed. */
+  private final Set<Closeable> openCloseables = Sets.newConcurrentHashSet();
+
+  public JimfsFileSystem(JimfsFileSystemProvider provider, URI uri, JimfsConfiguration config) {
     this.provider = checkNotNull(provider);
+    this.uri = checkNotNull(uri);
     this.configuration = checkNotNull(config);
     this.store = new JimfsFileStore("jimfs", config.getAttributeProviders());
 
@@ -168,6 +172,20 @@ public final class JimfsFileSystem extends FileSystem {
    */
   public Name name(String name) {
     return configuration.createName(name, false);
+  }
+
+  /**
+   * Gets the URI of the given path in this file system.
+   */
+  public URI getUri(JimfsPath path) {
+    checkArgument(path.getFileSystem() == this);
+
+    String pathString = path.toString();
+    if (!pathString.startsWith("/")) {
+      pathString = "/" + pathString;
+    }
+
+    return URI.create(uri.toString() + pathString);
   }
 
   @Override

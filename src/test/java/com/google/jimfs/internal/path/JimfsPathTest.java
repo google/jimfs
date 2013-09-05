@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 
 /**
@@ -80,8 +81,9 @@ public class JimfsPathTest {
 
   @Test
   public void testPathParsing_windowsStylePaths() throws IOException {
+    URI uri = URI.create("jimfs://foo");
     fs = new JimfsFileSystem(
-        new JimfsFileSystemProvider(), new WindowsConfiguration(new String[0]));
+        new JimfsFileSystemProvider(), uri, new WindowsConfiguration(new String[0]));
     assertEquals("C:", fs.getPath("C:").toString());
     // TODO(cgdecker): the windows implementation keeps the root in whatever format you give it
     // should try to support that while still having lookup work...
