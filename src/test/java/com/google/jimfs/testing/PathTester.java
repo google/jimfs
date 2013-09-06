@@ -21,7 +21,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.base.Joiner;
@@ -69,7 +68,6 @@ public final class PathTester {
   }
 
   public void test(Path path) {
-    assertSame(pathService, path.getFileSystem());
     assertEquals(string, path.toString());
 
     testRoot(path);
