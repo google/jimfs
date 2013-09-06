@@ -19,15 +19,15 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.file.TargetPath;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
+import com.google.jimfs.internal.path.PathService;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import javax.annotation.Nullable;
 
@@ -39,6 +39,12 @@ import javax.annotation.Nullable;
 public final class LookupService {
 
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
+
+  private final PathService pathService;
+
+  public LookupService(PathService pathService) {
+    this.pathService = checkNotNull(pathService);
+  }
 
   /**
    * Looks up the file key for the given absolute path.
@@ -55,13 +61,13 @@ public final class LookupService {
       base = tree.base();
       if (isEmpty(path)) {
         // empty path is equivalent to "." in a lookup
-        path = path.getFileSystem().getPath(".");
+        path = pathService.createFileName(Name.SELF);
       }
     }
 
     tree.readLock().lock();
     try {
-      return lookup(tree.getSuperRoot(), base, path.allNames(), linkHandling, 0);
+      return lookup(tree.getSuperRoot(), base, path.path(), linkHandling, 0);
     } finally {
       tree.readLock().unlock();
     }
@@ -77,11 +83,11 @@ public final class LookupService {
       dir = superRoot.base();
     } else if (isEmpty(path)) {
       // empty path is equivalent to "." in a lookup
-      path = path.getFileSystem().getPath(".");
+      path = pathService.createFileName(Name.SELF);
     }
 
     checkNotNull(linkHandling);
-    return lookup(superRoot, dir, path.allNames(), linkHandling, linkDepth);
+    return lookup(superRoot, dir, path.path(), linkHandling, linkDepth);
   }
 
   /**
@@ -89,10 +95,10 @@ public final class LookupService {
    * lookup fails.
    */
   private LookupResult lookup(FileTree superRoot, @Nullable File dir,
-      ImmutableList<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
-    for (int i = 0; i < names.size() - 1; i++) {
-      Name name = names.get(i);
-
+      Iterable<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
+    Iterator<Name> nameIterator = names.iterator();
+    Name name = nameIterator.next();
+    while (nameIterator.hasNext()) {
       DirectoryTable table = getDirectoryTable(dir);
       File file = table == null ? null : table.get(name);
 
@@ -107,9 +113,11 @@ public final class LookupService {
       } else {
         dir = file;
       }
+
+      name = nameIterator.next();
     }
 
-    return lookupLast(superRoot, dir, Iterables.getLast(names), linkHandling, linkDepth);
+    return lookupLast(superRoot, dir, name, linkHandling, linkDepth);
   }
 
   /**

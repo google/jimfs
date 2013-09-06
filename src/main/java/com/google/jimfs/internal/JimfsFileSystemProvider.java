@@ -146,7 +146,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
    * Returns the file tree to use for the given path.
    */
   public static FileTree getFileTree(JimfsPath path) {
-    return path.getFileSystem().getFileTree(path);
+    return ((JimfsFileSystem) path.getFileSystem()).getFileTree(path);
   }
 
   private static LookupResult lookup(Path path, LinkHandling linkHandling) throws IOException {
@@ -314,7 +314,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public boolean isHidden(Path path) throws IOException {
-    return checkPath(path).getFileSystem().configuration()
+    return ((JimfsFileSystem) checkPath(path).getFileSystem()).configuration()
         .isHidden(path);
   }
 

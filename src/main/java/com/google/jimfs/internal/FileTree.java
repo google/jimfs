@@ -28,7 +28,6 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.jimfs.internal.file.ByteStore;
 import com.google.jimfs.internal.file.DirectoryTable;
@@ -36,6 +35,7 @@ import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
+import com.google.jimfs.internal.path.PathService;
 
 import java.io.IOException;
 import java.nio.file.CopyOption;
@@ -92,19 +92,22 @@ public final class FileTree {
   private final ReadWriteLock lock;
   private final FileTree superRoot;
   private final JimfsFileStore store;
+  private final PathService pathService;
   private final LookupService lookupService;
 
   /**
    * Creates a new file tree with the given base, using the given services.
    */
   public FileTree(File base, JimfsPath basePath, @Nullable FileTree superRoot,
-      ReadWriteLock lock, JimfsFileStore store, LookupService lookupService) {
+      ReadWriteLock lock, JimfsFileStore store,
+      PathService pathService, LookupService lookupService) {
     this.base = checkNotNull(base);
     this.basePath = checkNotNull(basePath);
     this.superRoot = superRoot == null ? this : superRoot;
 
     this.lock = checkNotNull(lock);
     this.store = checkNotNull(store);
+    this.pathService = checkNotNull(pathService);
     this.lookupService = checkNotNull(lookupService);
   }
 
@@ -202,7 +205,8 @@ public final class FileTree {
         .requireDirectory(dir)
         .file();
 
-    FileTree tree = new FileTree(file, basePathForStream, superRoot, lock, store, lookupService);
+    FileTree tree = new FileTree(file, basePathForStream,
+        superRoot, lock, store, pathService, lookupService);
     return new JimfsSecureDirectoryStream(tree, filter);
   }
 
@@ -278,8 +282,8 @@ public final class FileTree {
 
       // names are ordered last to first in the list, so get the reverse view
       List<Name> reversed = Lists.reverse(names);
-
-      return JimfsPath.create(path.getFileSystem(), reversed, true);
+      Name root = reversed.remove(0);
+      return pathService.createPath(root, reversed);
     } finally {
       readLock().unlock();
     }
@@ -305,7 +309,7 @@ public final class FileTree {
     checkNotNull(path);
     checkNotNull(fileSupplier);
 
-    Name name = name(path);
+    Name name = path.name();
 
     writeLock().lock();
     try {
@@ -349,12 +353,6 @@ public final class FileTree {
     DirectoryTable table = dir.content();
     table.unlinkSelf();
     table.unlinkParent();
-  }
-
-  private static Name name(JimfsPath path) {
-    return path.getNameCount() == 0
-        ? path.root()
-        : Iterables.getLast(path.asNameList(), null);
   }
 
   /**
@@ -434,7 +432,7 @@ public final class FileTree {
           "can't link: source and target are in different file system instances");
     }
 
-    Name linkName = name(link);
+    Name linkName = link.name();
 
     // targetTree is in the same file system, so the lock applies for both trees
     writeLock().lock();
@@ -472,7 +470,7 @@ public final class FileTree {
    * Deletes the file at the given absolute path.
    */
   public void deleteFile(JimfsPath path, DeleteMode deleteMode) throws IOException {
-    Name name = name(path);
+    Name name = path.name();
 
     writeLock().lock();
     try {
@@ -580,8 +578,8 @@ public final class FileTree {
 
     LinkHandling linkHandling = move ? NOFOLLOW_LINKS : LinkHandling.fromOptions(options);
 
-    Name sourceName = name(source);
-    Name destName = name(dest);
+    Name sourceName = source.name();
+    Name destName = dest.name();
 
     lockBoth(writeLock(), destTree.writeLock());
     try {

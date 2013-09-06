@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.watch;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -26,13 +26,13 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.google.jimfs.internal.FileTree;
-import com.google.jimfs.internal.JimfsFileSystem;
-import com.google.jimfs.internal.LinkHandling;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
+import com.google.jimfs.internal.watch.AbstractWatchService;
+import com.google.jimfs.internal.watch.Event;
+import com.google.jimfs.internal.watch.Key;
 
 import java.io.IOException;
 import java.nio.file.NotDirectoryException;
@@ -127,7 +127,7 @@ public final class PollingWatchService extends AbstractWatchService {
   }
 
   @Override
-  synchronized void cancelled(Key key) {
+  public synchronized void cancelled(Key key) {
     snapshots.remove(key);
 
     if (snapshots.isEmpty()) {
@@ -238,7 +238,7 @@ public final class PollingWatchService extends AbstractWatchService {
             modifiedTimes.keySet());
 
         for (Name name : created) {
-          key.post(new Event<>(ENTRY_CREATE, 1, JimfsPath.name(fs, name)));
+          key.post(new Event<>(ENTRY_CREATE, 1, fs.getPathService().createFileName(name)));
           changesPosted = true;
         }
       }
@@ -249,7 +249,7 @@ public final class PollingWatchService extends AbstractWatchService {
             newState.modifiedTimes.keySet());
 
         for (Name name : deleted) {
-          key.post(new Event<>(ENTRY_DELETE, 1, JimfsPath.name(fs, name)));
+          key.post(new Event<>(ENTRY_DELETE, 1, fs.getPathService().createFileName(name)));
           changesPosted = true;
         }
       }
@@ -261,7 +261,7 @@ public final class PollingWatchService extends AbstractWatchService {
 
           Long newModifiedTime = newState.modifiedTimes.get(name);
           if (newModifiedTime != null && !modifiedTime.equals(newModifiedTime)) {
-            key.post(new Event<>(ENTRY_MODIFY, 1, JimfsPath.name(fs, name)));
+            key.post(new Event<>(ENTRY_MODIFY, 1, fs.getPathService().createFileName(name)));
             changesPosted = true;
           }
         }

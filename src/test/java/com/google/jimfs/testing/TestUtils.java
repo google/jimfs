@@ -16,9 +16,8 @@
 
 package com.google.jimfs.testing;
 
-import com.google.jimfs.Jimfs;
-import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.path.JimfsPath;
+import com.google.jimfs.internal.path.PathType;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -32,12 +31,8 @@ public final class TestUtils {
 
   private TestUtils() {}
 
-  public static JimfsFileSystem fakeFileSystem() {
-    return (JimfsFileSystem) Jimfs.newUnixLikeFileSystem();
-  }
-
   public static JimfsPath fakePath() {
-    return JimfsPath.empty(fakeFileSystem());
+    return new TestPathService(PathType.unix()).emptyPath();
   }
 
   public static byte[] bytes(int... bytes) {

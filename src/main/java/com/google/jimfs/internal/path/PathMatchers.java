@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
  *
  * @author Colin Decker
  */
-public final class PathMatchers {
+final class PathMatchers {
 
   private static final String GLOB = "glob";
   private static final String REGEX = "regex";

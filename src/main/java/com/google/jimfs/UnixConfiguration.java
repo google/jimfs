@@ -23,23 +23,17 @@ import static com.google.jimfs.JimfsConfiguration.Feature.SYMBOLIC_LINKS;
 import static com.google.jimfs.internal.attribute.UserLookupService.createGroupPrincipal;
 import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.attribute.AttributeProvider;
 import com.google.jimfs.internal.attribute.BasicAttributeProvider;
 import com.google.jimfs.internal.attribute.OwnerAttributeProvider;
 import com.google.jimfs.internal.attribute.PosixAttributeProvider;
 import com.google.jimfs.internal.attribute.UnixAttributeProvider;
-import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.path.Name;
+import com.google.jimfs.internal.path.PathType;
 
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.List;
 
 /**
  * Configuration for UNIX-like instances of {@link JimfsFileSystem}.
@@ -47,9 +41,6 @@ import java.util.List;
  * @author Colin Decker
  */
 public final class UnixConfiguration extends JimfsConfiguration {
-
-  private static final Joiner JOINER = Joiner.on('/');
-  private static final Splitter SPLITTER = Splitter.on('/').omitEmptyStrings();
 
   private final String workingDirectory;
   private final String defaultOwner;
@@ -62,15 +53,11 @@ public final class UnixConfiguration extends JimfsConfiguration {
 
   public UnixConfiguration(String workingDirectory,
       String defaultOwner, String defaultGroup, String defaultPermissions) {
+    super(PathType.unix());
     this.workingDirectory = workingDirectory;
     this.defaultOwner = defaultOwner;
     this.defaultGroup = defaultGroup;
     this.defaultPermissions = defaultPermissions;
-  }
-
-  @Override
-  public String getSeparator() {
-    return "/";
   }
 
   @Override
@@ -92,29 +79,6 @@ public final class UnixConfiguration extends JimfsConfiguration {
   @Override
   protected Iterable<Feature> getSupportedFeatures() {
     return ImmutableSet.of(SYMBOLIC_LINKS, LINKS, GROUPS, SECURE_DIRECTORY_STREAMS);
-  }
-
-  @Override
-  public JimfsPath parsePath(JimfsFileSystem fileSystem, List<String> parts) {
-    if (parts.isEmpty()) {
-      return JimfsPath.empty(fileSystem);
-    }
-
-    String first = parts.get(0);
-    Name root = null;
-    if (first.startsWith("/")) {
-      root = createName("/", true);
-      if (first.length() == 1) {
-        parts.remove(0);
-      } else {
-        parts.set(0, first.substring(1));
-      }
-    }
-
-    String joined = JOINER.join(parts);
-    Iterable<String> split = SPLITTER.split(joined);
-    Iterable<Name> result = Iterables.concat(Optional.fromNullable(root).asSet(), toNames(split));
-    return JimfsPath.create(fileSystem, result, root != null);
   }
 
   @Override

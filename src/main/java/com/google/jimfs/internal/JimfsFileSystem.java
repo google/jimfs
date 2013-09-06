@@ -22,15 +22,13 @@ import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.jimfs.JimfsConfiguration;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
-import com.google.jimfs.internal.path.PathMatchers;
-import com.google.jimfs.internal.watch.PollingWatchService;
+import com.google.jimfs.internal.path.PathService;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -42,9 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -58,6 +54,7 @@ public final class JimfsFileSystem extends FileSystem {
   private final URI uri;
 
   private final JimfsConfiguration configuration;
+  private final PathService pathService;
   private final JimfsFileStore store;
   private final ImmutableSet<JimfsPath> rootDirPaths;
 
@@ -74,11 +71,12 @@ public final class JimfsFileSystem extends FileSystem {
     this.provider = checkNotNull(provider);
     this.uri = checkNotNull(uri);
     this.configuration = checkNotNull(config);
+    this.pathService = new RealJimfsPathService(this, config.getPathType());
     this.store = new JimfsFileStore("jimfs", config.getAttributeProviders());
 
     Set<JimfsPath> rootPaths = new HashSet<>();
     for (String root : config.getRoots()) {
-      rootPaths.add(JimfsPath.root(this, config.createName(root, true)));
+      rootPaths.add(pathService.createRoot(pathService.getName(root, true)));
     }
     this.rootDirPaths = ImmutableSet.copyOf(rootPaths);
     this.workingDirPath = getPath(config.getWorkingDirectory());
@@ -99,13 +97,13 @@ public final class JimfsFileSystem extends FileSystem {
       }
 
 
-      LookupService lookupService = new LookupService();
+      LookupService lookupService = new LookupService(pathService);
       this.superRootTree = new FileTree(
-          superRoot, JimfsPath.empty(this), null, lock(), store, lookupService);
+          superRoot, pathService.emptyPath(), null, lock(), store, pathService, lookupService);
 
       File workingDir = createWorkingDirectory(workingDirPath);
       this.workingDirTree = new FileTree(
-          workingDir, workingDirPath, superRootTree, lock(), store, lookupService);
+          workingDir, workingDirPath, superRootTree, lock(), store, pathService, lookupService);
     }
   }
 
@@ -126,6 +124,13 @@ public final class JimfsFileSystem extends FileSystem {
   }
 
   /**
+   * Returns the path service for this file system.
+   */
+  public PathService getPathService() {
+    return pathService;
+  }
+
+  /**
    * Returns the configuration for this file system.
    */
   public JimfsConfiguration configuration() {
@@ -134,7 +139,7 @@ public final class JimfsFileSystem extends FileSystem {
 
   @Override
   public String getSeparator() {
-    return configuration.getSeparator();
+    return pathService.type().getSeparator();
   }
 
   @SuppressWarnings("unchecked") // safe because set is immutable
@@ -162,20 +167,14 @@ public final class JimfsFileSystem extends FileSystem {
 
   @Override
   public JimfsPath getPath(String first, String... more) {
-    List<String> parts = new ArrayList<>();
-    for (String s : Lists.asList(first, more)) {
-      if (!s.isEmpty()) {
-        parts.add(s);
-      }
-    }
-    return configuration.parsePath(this, parts);
+    return pathService.parsePath(first, more);
   }
 
   /**
    * Returns the {@link Name} representation of the given string for this file system.
    */
   public Name name(String name) {
-    return configuration.createName(name, false);
+    return pathService.getName(name, false);
   }
 
   /**
@@ -194,7 +193,7 @@ public final class JimfsFileSystem extends FileSystem {
 
   @Override
   public PathMatcher getPathMatcher(String syntaxAndPattern) {
-    return PathMatchers.getPathMatcher(syntaxAndPattern, configuration.getRecognizedSeparators());
+    return pathService.createPathMatcher(syntaxAndPattern);
   }
 
   @Override

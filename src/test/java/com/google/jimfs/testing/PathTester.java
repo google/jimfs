@@ -28,8 +28,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
+import com.google.jimfs.internal.path.PathService;
 
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -39,13 +39,13 @@ import java.util.List;
  */
 public final class PathTester {
 
-  private final FileSystem fs;
+  private final PathService pathService;
   private final String string;
   private String root;
   private ImmutableList<String> names = ImmutableList.of();
 
-  public PathTester(FileSystem fs, String string) {
-    this.fs = fs;
+  public PathTester(PathService pathService, String string) {
+    this.pathService = pathService;
     this.string = string;
   }
 
@@ -64,12 +64,12 @@ public final class PathTester {
   }
 
   public void test(String first, String... more) {
-    Path path = fs.getPath(first, more);
+    Path path = pathService.parsePath(first, more);
     test(path);
   }
 
   public void test(Path path) {
-    assertSame(fs, path.getFileSystem());
+    assertSame(pathService, path.getFileSystem());
     assertEquals(string, path.toString());
 
     testRoot(path);
@@ -98,7 +98,7 @@ public final class PathTester {
       assertEquals(names.get(i), path.getName(i).toString());
       // don't test individual names if this is an individual name
       if (names.size() > 1) {
-        new PathTester(fs, names.get(i))
+        new PathTester(pathService, names.get(i))
             .names(names.get(i))
             .test(path.getName(i));
       }
@@ -108,7 +108,7 @@ public final class PathTester {
       assertEquals(fileName, path.getFileName().toString());
       // don't test individual names if this is an individual name
       if (names.size() > 1) {
-        new PathTester(fs, fileName)
+        new PathTester(pathService, fileName)
             .names(fileName)
             .test(path.getFileName());
       }
@@ -125,7 +125,7 @@ public final class PathTester {
     if (parent != null) {
       String parentName = names.size() == 1 ? root :
           string.substring(0, string.lastIndexOf('/'));
-      new PathTester(fs, parentName)
+      new PathTester(pathService, parentName)
           .root(root)
           .names(names.subList(0, names.size() - 1))
           .test(parent);
@@ -146,7 +146,7 @@ public final class PathTester {
       List<String> startNames = ImmutableList.copyOf(Splitter.on('/').split(stringWithoutRoot))
           .subList(1, path.getNameCount());
 
-      new PathTester(fs, Joiner.on('/').join(startNames))
+      new PathTester(pathService, Joiner.on('/').join(startNames))
           .names(startNames)
           .test(startSubpath);
 
@@ -154,7 +154,7 @@ public final class PathTester {
       List<String> endNames = ImmutableList.copyOf(Splitter.on('/').split(stringWithoutRoot))
           .subList(0, path.getNameCount() - 1);
 
-      new PathTester(fs, Joiner.on('/').join(endNames))
+      new PathTester(pathService, Joiner.on('/').join(endNames))
           .names(endNames)
           .test(endSubpath);
     }
