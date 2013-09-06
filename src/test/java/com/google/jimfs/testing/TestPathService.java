@@ -30,6 +30,9 @@ import javax.annotation.Nullable;
  */
 public final class TestPathService extends PathService {
 
+  public static final TestPathService UNIX = new TestPathService(PathType.unix());
+  public static final TestPathService WINDOWS = new TestPathService(PathType.windows());
+
   public TestPathService(PathType type) {
     super(type);
   }

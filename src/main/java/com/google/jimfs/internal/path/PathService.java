@@ -47,20 +47,6 @@ public abstract class PathService {
     return type;
   }
 
-  /**
-   * Creates a name object for the given string.
-   */
-  public final Name getName(String name, boolean root) {
-    return type.getName(name, root);
-  }
-
-  /**
-   * Returns a view of the given string names as an iterable of name objects.
-   */
-  public final Iterable<Name> asNames(Iterable<String> names) {
-    return type.asNames(names);
-  }
-
   private volatile JimfsPath emptyPath;
 
   /**
@@ -70,7 +56,7 @@ public abstract class PathService {
     JimfsPath result = emptyPath;
     if (result == null) {
       // use createPathInternal to avoid recursive call from createPath()
-      result = createPathInternal(null, ImmutableList.of(getName("", false)));
+      result = createPathInternal(null, ImmutableList.of(type.getName("", false)));
       emptyPath = result;
       return result;
     }

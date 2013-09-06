@@ -34,7 +34,7 @@ import java.nio.file.Path;
  */
 public class JimfsPathTest {
 
-  private final PathService pathService = new TestPathService(PathType.unix());
+  private final PathService pathService = TestPathService.UNIX;
 
   @Test
   public void testPathParsing() {
@@ -52,15 +52,6 @@ public class JimfsPathTest {
   }
 
   @Test
-  public void testPathParsing_withAlternateSeparator() {
-    // TODO(cgdecker): Unix-style paths don't recognize \ as a separator, right?
-    /*assertPathEquals("/foo/bar", "/foo\\bar");
-    assertPathEquals("foo/bar/baz", "foo/bar\\baz");
-    assertPathEquals("foo/bar/baz", "foo\\bar", "baz");
-    assertPathEquals("/foo/bar/baz", "/foo\\bar\\baz");*/
-  }
-
-  @Test
   public void testPathParsing_withExtraSeparators() {
     assertPathEquals("/foo/bar", "///foo/bar");
     assertPathEquals("/foo/bar", "/foo///bar//");
@@ -70,7 +61,7 @@ public class JimfsPathTest {
 
   @Test
   public void testPathParsing_windowsStylePaths() throws IOException {
-    TestPathService windowsPathService = new TestPathService(PathType.windows());
+    TestPathService windowsPathService = TestPathService.WINDOWS;
     assertEquals("C:", windowsPathService.parsePath("C:").toString());
     assertEquals("C:\\", pathService.parsePath("C:\\").toString());
     assertEquals("C:\\foo", windowsPathService.parsePath("C:\\foo").toString());
@@ -78,6 +69,18 @@ public class JimfsPathTest {
     assertEquals("C:\\foo", windowsPathService.parsePath("C:", "\\foo").toString());
     assertEquals("C:\\foo", windowsPathService.parsePath("C:", "foo").toString());
     assertEquals("C:\\foo\\bar", windowsPathService.parsePath("C:", "foo/bar").toString());
+  }
+
+  @Test
+  public void testPathParsing_withAlternateSeparator() {
+    // windows recognizes / as an alternate separator
+    TestPathService windowsPathService = TestPathService.WINDOWS;
+    assertEquals(windowsPathService.parsePath("foo\\bar\\baz"),
+        windowsPathService.parsePath("foo/bar/baz"));
+    assertEquals(windowsPathService.parsePath("C:\\foo\\bar"),
+        windowsPathService.parsePath("C:\\foo/bar"));
+    assertEquals(windowsPathService.parsePath("c:\\foo\\bar\\baz"),
+        windowsPathService.parsePath("c:", "foo/", "bar/baz"));
   }
 
   @Test
@@ -107,42 +110,38 @@ public class JimfsPathTest {
 
   @Test
   public void testRelativePath_fourNames() {
-    PathTester tester = new PathTester(pathService, "foo/bar/baz/test")
-        .names("foo", "bar", "baz", "test");
-
-    tester.test("foo/bar/baz/test");
+    new PathTester(pathService, "foo/bar/baz/test")
+        .names("foo", "bar", "baz", "test")
+        .test("foo/bar/baz/test");
   }
 
   @Test
   public void testAbsolutePath_singleName() {
-    PathTester tester = new PathTester(pathService, "/foo")
+    new PathTester(pathService, "/foo")
         .root("/")
-        .names("foo");
-
-    tester.test("/foo");
+        .names("foo")
+        .test("/foo");
   }
 
   @Test
   public void testAbsolutePath_twoNames() {
-    PathTester tester = new PathTester(pathService, "/foo/bar")
+    new PathTester(pathService, "/foo/bar")
         .root("/")
-        .names("foo", "bar");
-
-    tester.test("/foo/bar");
+        .names("foo", "bar")
+        .test("/foo/bar");
   }
 
   @Test
   public void testAbsoluteMultiNamePath_fourNames() {
-    PathTester tester = new PathTester(pathService, "/foo/bar/baz/test")
+    new PathTester(pathService, "/foo/bar/baz/test")
         .root("/")
-        .names("foo", "bar", "baz", "test");
-
-    tester.test("/foo/bar/baz/test");
+        .names("foo", "bar", "baz", "test")
+        .test("/foo/bar/baz/test");
   }
 
   @Test
   public void testResolve_fromRoot() {
-    Path root = pathService.createRoot(pathService.getName("/", true));
+    Path root = pathService.createRoot(pathService.type().getName("/", true));
 
     assertResolvedPathEquals("/foo", root, "foo");
     assertResolvedPathEquals("/foo/bar", root, "foo/bar");

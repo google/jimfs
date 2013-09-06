@@ -27,7 +27,6 @@ import com.google.jimfs.JimfsConfiguration;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.path.Name;
 import com.google.jimfs.internal.path.PathService;
 
 import java.io.Closeable;
@@ -76,7 +75,7 @@ public final class JimfsFileSystem extends FileSystem {
 
     Set<JimfsPath> rootPaths = new HashSet<>();
     for (String root : config.getRoots()) {
-      rootPaths.add(pathService.createRoot(pathService.getName(root, true)));
+      rootPaths.add(pathService.createRoot(pathService.type().getName(root, true)));
     }
     this.rootDirPaths = ImmutableSet.copyOf(rootPaths);
     this.workingDirPath = getPath(config.getWorkingDirectory());
@@ -168,13 +167,6 @@ public final class JimfsFileSystem extends FileSystem {
   @Override
   public JimfsPath getPath(String first, String... more) {
     return pathService.parsePath(first, more);
-  }
-
-  /**
-   * Returns the {@link Name} representation of the given string for this file system.
-   */
-  public Name name(String name) {
-    return pathService.getName(name, false);
   }
 
   /**
