@@ -91,7 +91,7 @@ public final class JimfsFileSystem extends FileSystem {
       DirectoryTable superRootTable = superRoot.content();
       for (JimfsPath path : rootDirPaths) {
         File dir = store.createDirectory();
-        superRootTable.link(path.getRootName(), dir);
+        superRootTable.link(path.root(), dir);
 
         DirectoryTable dirTable = dir.content();
         dirTable.linkSelf(dir);

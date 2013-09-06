@@ -278,9 +278,8 @@ public final class FileTree {
 
       // names are ordered last to first in the list, so get the reverse view
       List<Name> reversed = Lists.reverse(names);
-      Name root = reversed.remove(0);
 
-      return JimfsPath.create(path.getFileSystem(), root, reversed);
+      return JimfsPath.create(path.getFileSystem(), reversed, true);
     } finally {
       readLock().unlock();
     }
@@ -354,7 +353,7 @@ public final class FileTree {
 
   private static Name name(JimfsPath path) {
     return path.getNameCount() == 0
-        ? path.getRootName()
+        ? path.root()
         : Iterables.getLast(path.asNameList(), null);
   }
 

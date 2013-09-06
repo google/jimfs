@@ -22,9 +22,11 @@ import static com.google.jimfs.internal.attribute.UserLookupService.createUserPr
 import com.google.common.base.Ascii;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.attribute.AclAttributeProvider;
 import com.google.jimfs.internal.attribute.AttributeProvider;
@@ -127,7 +129,7 @@ public final class WindowsConfiguration extends JimfsConfiguration {
     }
 
     Iterable<String> split = SPLITTER.split(joined);
-
-    return JimfsPath.create(fileSystem, root, toNames(split));
+    Iterable<Name> result = Iterables.concat(Optional.fromNullable(root).asSet(), toNames(split));
+    return JimfsPath.create(fileSystem, result, root != null);
   }
 }

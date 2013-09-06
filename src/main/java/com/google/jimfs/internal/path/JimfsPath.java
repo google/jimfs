@@ -24,9 +24,10 @@ import static com.google.jimfs.internal.path.Name.SELF;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Ordering;
 import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.JimfsFileSystemProvider;
 import com.google.jimfs.internal.LinkHandling;
@@ -64,52 +65,53 @@ public final class JimfsPath implements Path {
    */
   public static JimfsPath empty(JimfsFileSystem fs) {
     // this is what an empty path seems to be in the UnixFileSystem anyway...
-    return new JimfsPath(checkNotNull(fs), null, ImmutableList.of(fs.name("")));
+    return new JimfsPath(checkNotNull(fs), ImmutableList.of(fs.name("")), false);
   }
 
   /**
    * Returns a root path for the given file system.
    */
   public static JimfsPath root(JimfsFileSystem fs, Name name) {
-    return new JimfsPath(checkNotNull(fs), name, ImmutableList.<Name>of());
+    return new JimfsPath(checkNotNull(fs), ImmutableList.of(name), true);
   }
 
   /**
    * Returns a single name path for the given file system.
    */
   public static JimfsPath name(JimfsFileSystem fs, Name name) {
-    return new JimfsPath(checkNotNull(fs), null, ImmutableList.of(name));
+    return new JimfsPath(checkNotNull(fs), ImmutableList.of(name), false);
   }
 
   /**
    * Returns a path consisting of the given names and no root for the given file system.
    */
   public static JimfsPath names(JimfsFileSystem fs, Iterable<Name> names) {
-    return new JimfsPath(checkNotNull(fs), null, names);
+    return new JimfsPath(checkNotNull(fs), names, false);
   }
 
   /**
    * Creates a new path with the given (optional) root and names for the given file system.
    */
   public static JimfsPath create(
-      JimfsFileSystem fs, @Nullable Name root, Iterable<Name> names) {
-    return new JimfsPath(checkNotNull(fs), root, names);
+      JimfsFileSystem fs, Iterable<Name> path, boolean absolute) {
+    return new JimfsPath(checkNotNull(fs), path, absolute);
   }
 
   private final JimfsFileSystem fs;
 
-  @Nullable
-  private final Name root;
+  private final ImmutableList<Name> path;
   private final ImmutableList<Name> names;
+  private final boolean absolute;
 
   /**
    * This constructor is for internal use and testing only.
    */
   @VisibleForTesting
-  public JimfsPath(JimfsFileSystem fs, @Nullable Name root, Iterable<Name> names) {
+  public JimfsPath(JimfsFileSystem fs, Iterable<Name> path, boolean absolute) {
     this.fs = fs;
-    this.root = root;
-    this.names = ImmutableList.copyOf(names);
+    this.path = ImmutableList.copyOf(path);
+    this.names = absolute ? this.path.subList(1, this.path.size()) : this.path;
+    this.absolute = absolute;
   }
 
   @Override
@@ -117,40 +119,41 @@ public final class JimfsPath implements Path {
     return fs;
   }
 
+  /**
+   * Returns the root name for this path if there is one; null otherwise.
+   */
+  @Nullable
+  public Name root() {
+    return absolute ? path.get(0) : null;
+  }
+
   @Override
   public boolean isAbsolute() {
-    return root != null;
+    return absolute;
   }
 
   @Override
   public JimfsPath getRoot() {
-    if (root == null) {
+    if (!absolute) {
       return null;
     }
-    return names.isEmpty() ? this : root(fs, root);
+    return new JimfsPath(fs, ImmutableList.of(root()), true);
   }
 
   @Override
   public JimfsPath getFileName() {
-    switch (names.size()) {
-      case 0: return null;
-      case 1:
-        if (root == null) {
-          return this;
-        }
-        // else fall through to default
-      default:
-        return name(fs, Iterables.getLast(names));
-    }
+    return names.isEmpty()
+        ? null
+        : subpath(names.size() - 1, names.size());
   }
 
   @Override
   public JimfsPath getParent() {
-    switch (names.size()) {
-      case 0: return null;
-      case 1: return root == null ? null : root(fs, root);
-      default: return create(fs, root, names.subList(0, names.size() - 1));
+    if (path.size() <= 1) {
+      return null;
     }
+
+    return new JimfsPath(fs, path.subList(0, path.size() - 1), absolute);
   }
 
   @Override
@@ -182,10 +185,15 @@ public final class JimfsPath implements Path {
 
   @Override
   public boolean startsWith(Path other) {
-    JimfsPath otherPath = checkPath(other);
-    return otherPath != null
-        && Objects.equal(root, otherPath.root)
-        && startsWith(names, otherPath.names);
+    checkNotNull(other);
+    if (!(other instanceof JimfsPath)) {
+      return false;
+    }
+
+    JimfsPath otherPath = (JimfsPath) other;
+    return fs.equals(otherPath.fs)
+        && absolute == otherPath.absolute
+        && startsWith(path, otherPath.path);
   }
 
   @Override
@@ -195,12 +203,13 @@ public final class JimfsPath implements Path {
 
   @Override
   public boolean endsWith(Path other) {
-    JimfsPath otherPath = checkPath(other);
-    if (otherPath == null) {
+    checkNotNull(other);
+    if (!(other instanceof JimfsPath)) {
       return false;
     }
 
-    if (otherPath.root != null) {
+    JimfsPath otherPath = (JimfsPath) other;
+    if (otherPath.absolute) {
       return equals(otherPath);
     }
     return startsWith(names.reverse(), otherPath.names.reverse());
@@ -213,7 +222,7 @@ public final class JimfsPath implements Path {
 
   @Override
   public JimfsPath normalize() {
-    if (root == null) {
+    if (!absolute) {
       if (getNameCount() <= 1) {
         return this;
       }
@@ -227,7 +236,7 @@ public final class JimfsPath implements Path {
         Name lastName = Iterables.getLast(newNames, null);
         if (lastName != null && !lastName.equals(PARENT)) {
           newNames.removeLast();
-        } else if (root == null) {
+        } else if (!absolute) {
           // if there's a root and we have an extra ".." that would go up above the root, ignore it
           newNames.add(name);
         }
@@ -235,7 +244,11 @@ public final class JimfsPath implements Path {
         newNames.add(name);
       }
     }
-    return newNames.equals(names) ? this : new JimfsPath(fs, root, newNames);
+
+    if (absolute) {
+      newNames.addFirst(path.get(0));
+    }
+    return newNames.equals(path) ? this : new JimfsPath(fs, newNames, absolute);
   }
 
   @Override
@@ -252,7 +265,7 @@ public final class JimfsPath implements Path {
         || (other.getNameCount() == 1 && other.getFileName().toString().equals(""))) {
       return this;
     }
-    return new JimfsPath(fs, root, Iterables.concat(names, otherPath.names));
+    return new JimfsPath(fs, Iterables.concat(path, otherPath.path), absolute);
   }
 
   @Override
@@ -289,7 +302,7 @@ public final class JimfsPath implements Path {
       throw new ProviderMismatchException(other.toString());
     }
 
-    checkArgument(Objects.equal(root, otherPath.root), "Cannot relativize %s against %s--" +
+    checkArgument(Objects.equal(root(), otherPath.root()), "Cannot relativize %s against %s--" +
         "both paths must have no root or the same root.", other, this);
 
     if (equals(other)) {
@@ -384,14 +397,6 @@ public final class JimfsPath implements Path {
   }
 
   /**
-   * Returns the root name, or {@code null} if this path does not have a root.
-   */
-  @Nullable
-  public Name getRootName() {
-    return root;
-  }
-
-  /**
    * Returns the list of {@link Name} objects that this path consists of, not including the root
    * name.
    */
@@ -402,35 +407,31 @@ public final class JimfsPath implements Path {
   /**
    * Returns an iterable of all names in the path, including the root if present.
    */
-  public Iterable<Name> allNames() {
-    return Iterables.concat(Optional.fromNullable(root).asSet(), names);
+  public ImmutableList<Name> allNames() {
+    return path;
   }
+
+  private static final Ordering<Iterable<Name>> ORDERING =
+      Ordering.usingToString().lexicographical();
 
   @Override
   public int compareTo(Path other) {
-    // TODO(cgdecker): should this ensure that it considers absolute paths before relative
-    // or anything like that?
-    return toString().compareTo(other.toString());
+    JimfsPath otherPath = checkPath(other);
+    if (otherPath == null) {
+      return -1;
+    }
+    return ComparisonChain.start()
+        .compareTrueFirst(absolute, otherPath.absolute)
+        .compare(path, otherPath.path, ORDERING)
+        .result();
   }
 
   @Override
   public boolean equals(@Nullable Object obj) {
     if (obj instanceof JimfsPath) {
       JimfsPath other = (JimfsPath) obj;
-      if (fs.equals(other.fs)) {
-        // equality of paths should be based on the string value of each component, not the
-        // equality used for lookup
-        String rootString = root == null ? null : root.toString();
-        String otherRootString = other.root == null ? null : other.root.toString();
-        if (Objects.equal(rootString, otherRootString) && names.size() == other.names.size()) {
-          for (int i = 0; i < names.size(); i++) {
-            if (!names.get(i).toString().equals(other.names.get(i).toString())) {
-              return false;
-            }
-          }
-          return true;
-        }
-      }
+      return fs.equals(other.fs)
+          && compareTo(other) == 0;
     }
     return false;
   }
@@ -439,8 +440,8 @@ public final class JimfsPath implements Path {
   public int hashCode() {
     int hash = 31;
     hash = 31 * hash + fs.hashCode();
-    hash = 31 * hash + (root == null ? 0 : root.toString().hashCode());
-    for (Name name : names) {
+    hash = 31 * hash + (absolute ? 0 : 1);
+    for (Name name : path) {
       hash = 31 * hash + name.toString().hashCode();
     }
     return hash;
@@ -449,9 +450,11 @@ public final class JimfsPath implements Path {
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder();
+    Name root = root();
     if (root != null) {
-      builder.append(root);
-      if (getNameCount() > 0 && !root.toString().endsWith(fs.getSeparator())) {
+      String rootString = root.toString();
+      builder.append(rootString);
+      if (getNameCount() > 0 && !rootString.endsWith(fs.getSeparator())) {
         builder.append(fs.getSeparator());
       }
     }

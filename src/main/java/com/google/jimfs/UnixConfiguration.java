@@ -24,8 +24,10 @@ import static com.google.jimfs.internal.attribute.UserLookupService.createGroupP
 import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.attribute.AttributeProvider;
 import com.google.jimfs.internal.attribute.BasicAttributeProvider;
@@ -111,8 +113,8 @@ public final class UnixConfiguration extends JimfsConfiguration {
 
     String joined = JOINER.join(parts);
     Iterable<String> split = SPLITTER.split(joined);
-
-    return JimfsPath.create(fileSystem, root, toNames(split));
+    Iterable<Name> result = Iterables.concat(Optional.fromNullable(root).asSet(), toNames(split));
+    return JimfsPath.create(fileSystem, result, root != null);
   }
 
   @Override

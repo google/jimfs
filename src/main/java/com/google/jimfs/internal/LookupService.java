@@ -19,6 +19,7 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
@@ -27,8 +28,6 @@ import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.Name;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 import javax.annotation.Nullable;
 
@@ -62,7 +61,7 @@ public final class LookupService {
 
     tree.readLock().lock();
     try {
-      return lookup(tree.getSuperRoot(), base, toNames(path), linkHandling, 0);
+      return lookup(tree.getSuperRoot(), base, path.allNames(), linkHandling, 0);
     } finally {
       tree.readLock().unlock();
     }
@@ -82,7 +81,7 @@ public final class LookupService {
     }
 
     checkNotNull(linkHandling);
-    return lookup(superRoot, dir, toNames(path), linkHandling, linkDepth);
+    return lookup(superRoot, dir, path.allNames(), linkHandling, linkDepth);
   }
 
   /**
@@ -90,9 +89,10 @@ public final class LookupService {
    * lookup fails.
    */
   private LookupResult lookup(FileTree superRoot, @Nullable File dir,
-      Deque<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
-    Name name = names.removeFirst();
-    while (!names.isEmpty()) {
+      ImmutableList<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
+    for (int i = 0; i < names.size() - 1; i++) {
+      Name name = names.get(i);
+
       DirectoryTable table = getDirectoryTable(dir);
       File file = table == null ? null : table.get(name);
 
@@ -107,11 +107,9 @@ public final class LookupService {
       } else {
         dir = file;
       }
-
-      name = names.removeFirst();
     }
 
-    return lookupLast(superRoot, dir, name, linkHandling, linkDepth);
+    return lookupLast(superRoot, dir, Iterables.getLast(names), linkHandling, linkDepth);
   }
 
   /**
@@ -155,12 +153,6 @@ public final class LookupService {
     }
 
     return null;
-  }
-
-  private static Deque<Name> toNames(JimfsPath path) {
-    Deque<Name> names = new ArrayDeque<>();
-    Iterables.addAll(names, path.allNames());
-    return names;
   }
 
   /**
