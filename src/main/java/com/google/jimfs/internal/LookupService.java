@@ -37,20 +37,15 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class LookupService {
+public final class LookupService {
 
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
-
-  private final FileTree tree;
-
-  LookupService(FileTree tree) {
-    this.tree = tree;
-  }
 
   /**
    * Looks up the file key for the given absolute path.
    */
-  public LookupResult lookup(JimfsPath path, LinkHandling linkHandling) throws IOException {
+  public LookupResult lookup(
+      FileTree tree, JimfsPath path, LinkHandling linkHandling) throws IOException {
     checkNotNull(path);
     checkNotNull(linkHandling);
 
@@ -67,7 +62,7 @@ final class LookupService {
 
     tree.readLock().lock();
     try {
-      return lookup(base, toNames(path), linkHandling, 0);
+      return lookup(tree.getSuperRoot(), base, toNames(path), linkHandling, 0);
     } finally {
       tree.readLock().unlock();
     }
@@ -77,78 +72,80 @@ final class LookupService {
    * Looks up the file key for the given path.
    */
   private LookupResult lookup(
-      File base, JimfsPath path, LinkHandling linkHandling, int linkDepth)
+      FileTree superRoot, File dir, JimfsPath path, LinkHandling linkHandling, int linkDepth)
       throws IOException {
     if (path.isAbsolute()) {
-      base = tree.getSuperRoot().base();
+      dir = superRoot.base();
     } else if (isEmpty(path)) {
       // empty path is equivalent to "." in a lookup
       path = path.getFileSystem().getPath(".");
     }
 
     checkNotNull(linkHandling);
-    return lookup(base, toNames(path), linkHandling, linkDepth);
+    return lookup(superRoot, dir, toNames(path), linkHandling, linkDepth);
   }
 
   /**
    * Looks up the given names against the given base file. If the file is not a directory, the
    * lookup fails.
    */
-  private LookupResult lookup(@Nullable File base,
+  private LookupResult lookup(FileTree superRoot, @Nullable File dir,
       Deque<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
     Name name = names.removeFirst();
-    if (names.isEmpty()) {
-      return lookupLast(base, name, linkHandling, linkDepth);
-    }
+    while (!names.isEmpty()) {
+      DirectoryTable table = getDirectoryTable(dir);
+      File file = table == null ? null : table.get(name);
 
-    DirectoryTable table = getDirectoryTable(base);
-    File file = table == null ? null : table.get(name);
+      if (file != null && file.isSymbolicLink()) {
+        LookupResult linkResult = followSymbolicLink(superRoot, table, file, linkDepth);
 
-    if (file != null && file.isSymbolicLink()) {
-      LookupResult linkResult = followSymbolicLink(table, file, linkDepth);
+        if (!linkResult.found()) {
+          return LookupResult.notFound();
+        }
 
-      if (!linkResult.found()) {
-        return LookupResult.notFound();
+        dir = linkResult.file();
+      } else {
+        dir = file;
       }
 
-      file = linkResult.file();
+      name = names.removeFirst();
     }
 
-    return lookup(file, names, linkHandling, linkDepth);
+    return lookupLast(superRoot, dir, name, linkHandling, linkDepth);
   }
 
   /**
    * Looks up the last element of a path.
    */
-  private LookupResult lookupLast(File base,
+  private LookupResult lookupLast(FileTree superRoot, File dir,
       Name name, LinkHandling linkHandling, int linkDepth) throws IOException {
-    DirectoryTable table = getDirectoryTable(base);
+    DirectoryTable table = getDirectoryTable(dir);
     if (table == null) {
       return LookupResult.notFound();
     }
 
     File file = table.get(name);
     if (file == null) {
-      return LookupResult.parentFound(base);
+      return LookupResult.parentFound(dir);
     }
 
     if (linkHandling == FOLLOW_LINKS && file.isSymbolicLink()) {
       // TODO(cgdecker): can add info on the symbolic link and its parent here if needed
       // for now it doesn't seem like it's needed though
-      return followSymbolicLink(table, file, linkDepth);
+      return followSymbolicLink(superRoot, table, file, linkDepth);
     }
 
-    return LookupResult.found(base, file, table.canonicalize(name));
+    return LookupResult.found(dir, file, table.canonicalize(name));
   }
 
   private LookupResult followSymbolicLink(
-      DirectoryTable table, File link, int linkDepth) throws IOException {
+      FileTree superRoot, DirectoryTable table, File link, int linkDepth) throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");
     }
 
     TargetPath targetPath = link.content();
-    return lookup(table.self(), targetPath.path(), FOLLOW_LINKS, linkDepth + 1);
+    return lookup(superRoot, table.self(), targetPath.path(), FOLLOW_LINKS, linkDepth + 1);
   }
 
   @Nullable

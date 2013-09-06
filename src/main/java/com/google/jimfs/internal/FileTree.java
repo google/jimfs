@@ -98,14 +98,14 @@ public final class FileTree {
    * Creates a new file tree with the given base, using the given services.
    */
   public FileTree(File base, JimfsPath basePath, @Nullable FileTree superRoot,
-      ReadWriteLock lock, JimfsFileStore store) {
+      ReadWriteLock lock, JimfsFileStore store, LookupService lookupService) {
     this.base = checkNotNull(base);
     this.basePath = checkNotNull(basePath);
     this.superRoot = superRoot == null ? this : superRoot;
 
     this.lock = checkNotNull(lock);
     this.store = checkNotNull(store);
-    this.lookupService = new LookupService(this);
+    this.lookupService = checkNotNull(lookupService);
   }
 
   /**
@@ -155,7 +155,7 @@ public final class FileTree {
    * Attempt to lookup the file at the given path.
    */
   public LookupResult lookup(JimfsPath path, LinkHandling linkHandling) throws IOException {
-    return lookupService.lookup(path, linkHandling);
+    return lookupService.lookup(this, path, linkHandling);
   }
 
   /**
@@ -202,7 +202,7 @@ public final class FileTree {
         .requireDirectory(dir)
         .file();
 
-    FileTree tree = new FileTree(file, basePathForStream, superRoot, lock, store);
+    FileTree tree = new FileTree(file, basePathForStream, superRoot, lock, store, lookupService);
     return new JimfsSecureDirectoryStream(tree, filter);
   }
 

@@ -98,10 +98,14 @@ public final class JimfsFileSystem extends FileSystem {
         dirTable.linkParent(dir);
       }
 
-      this.superRootTree = new FileTree(superRoot, JimfsPath.empty(this), null, lock(),
-          store);
-      this.workingDirTree = new FileTree(createWorkingDirectory(workingDirPath), workingDirPath,
-          superRootTree, lock(), store);
+
+      LookupService lookupService = new LookupService();
+      this.superRootTree = new FileTree(
+          superRoot, JimfsPath.empty(this), null, lock(), store, lookupService);
+
+      File workingDir = createWorkingDirectory(workingDirPath);
+      this.workingDirTree = new FileTree(
+          workingDir, workingDirPath, superRootTree, lock(), store, lookupService);
     }
   }
 
