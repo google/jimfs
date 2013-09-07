@@ -1,14 +1,14 @@
 package com.google.jimfs.internal.file;
 
-import static com.google.jimfs.internal.path.Name.PARENT;
-import static com.google.jimfs.internal.path.Name.SELF;
+import static com.google.jimfs.path.Name.PARENT;
+import static com.google.jimfs.path.Name.SELF;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-import com.google.jimfs.internal.path.Name;
+import com.google.jimfs.path.Name;
 
 import com.ibm.icu.text.Normalizer2;
 

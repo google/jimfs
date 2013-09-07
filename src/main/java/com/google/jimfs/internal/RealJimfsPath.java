@@ -19,8 +19,8 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.path.Name;
 import com.google.jimfs.internal.watch.AbstractWatchService;
+import com.google.jimfs.path.Name;
 
 import java.io.IOException;
 import java.net.URI;

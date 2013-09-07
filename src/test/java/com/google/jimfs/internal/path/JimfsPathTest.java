@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
+import com.google.jimfs.path.Name;
 import com.google.jimfs.testing.PathTester;
 import com.google.jimfs.testing.TestPathService;
 

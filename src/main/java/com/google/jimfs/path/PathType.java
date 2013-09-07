@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.path;
+package com.google.jimfs.path;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Ascii;
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-
-import com.ibm.icu.text.Normalizer2;
 
 import java.util.regex.Pattern;
 
@@ -130,14 +128,21 @@ public abstract class PathType {
   }
 
   /**
+   * Returns an empty path.
+   */
+  protected final SimplePath emptyPath() {
+    return new SimplePath(null, ImmutableList.of(getName("", false)));
+  }
+
+  /**
    * Parses the given strings as a path.
    */
-  public abstract JimfsPath parsePath(PathService service, String first, String... more);
+  public abstract SimplePath parsePath(String first, String... more);
 
   /**
    * Returns the string form of the given path.
    */
-  public abstract String toString(JimfsPath path);
+  public abstract String toString(SimplePath path);
 
   /**
    * Unix-style path type.
@@ -159,9 +164,9 @@ public abstract class PathType {
     }
 
     @Override
-    public JimfsPath parsePath(PathService service, String first, String... more) {
+    public SimplePath parsePath(String first, String... more) {
       if (first.isEmpty() && more.length == 0) {
-        return service.emptyPath();
+        return emptyPath();
       }
 
       Name root = null;
@@ -171,13 +176,13 @@ public abstract class PathType {
       }
 
       String joined = JOINER.join(Lists.asList(first, more));
-      return service.createPath(root, asNames(SPLITTER.split(joined)));
+      return new SimplePath(root, asNames(SPLITTER.split(joined)));
     }
 
     @Override
-    public String toString(JimfsPath path) {
+    public String toString(SimplePath path) {
       StringBuilder builder = new StringBuilder();
-      if (path.isAbsolute()) {
+      if (path.root() != null) {
         builder.append(path.root());
       }
       JOINER.appendTo(builder, path.names());
@@ -211,27 +216,32 @@ public abstract class PathType {
     }
 
     @Override
-    public JimfsPath parsePath(PathService service, String first, String... more) {
+    public SimplePath parsePath(String first, String... more) {
       String joined = JOINER.join(Lists.asList(first, more));
       Name root = null;
       if (joined.length() >= 2
-          && CharMatcher.JAVA_LETTER.matches(joined.charAt(0))
+          && isLetter(joined.charAt(0))
           && joined.charAt(1) == ':') {
+        // TODO(cgdecker): If the full path is "C:\", should the root be "C:" or "C:\"?
         root = getName(joined.substring(0, 2), true);
         joined = joined.substring(2);
       }
 
-      return service.createPath(root, asNames(SPLITTER.split(joined)));
+      return new SimplePath(root, asNames(SPLITTER.split(joined)));
+    }
+
+    private static boolean isLetter(char c) {
+      return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
     }
 
     @Override
-    public String toString(JimfsPath path) {
+    public String toString(SimplePath path) {
       StringBuilder builder = new StringBuilder();
       Name root = path.root();
       if (root != null) {
         String rootString = root.toString();
         builder.append(rootString);
-        if (!rootString.endsWith("\\") && path.getNameCount() > 0) {
+        if (!rootString.endsWith("\\") && !path.names().isEmpty()) {
           builder.append("\\");
         }
       }
@@ -240,48 +250,4 @@ public abstract class PathType {
     }
   }
 
-  /**
-   * Case sensitivity settings for paths. Note that path case sensitivity only affects the case
-   * sensitivity of lookups. Two path objects with the same characters in different cases will
-   * always be considered unequal.
-   */
-  @SuppressWarnings("unused")
-  public enum CaseSensitivity {
-    /**
-     * Paths are case sensitive.
-     */
-    CASE_SENSITIVE {
-      @Override
-      protected Name createName(String string) {
-        return Name.simple(string);
-      }
-    },
-
-    /**
-     * Paths are case insensitive, but only for ASCII characters. Faster than
-     * {@link #CASE_INSENSITIVE_UNICODE} if you only plan on using ASCII file names anyway.
-     */
-    CASE_INSENSITIVE_ASCII {
-      @Override
-      protected Name createName(String string) {
-        return Name.caseInsensitiveAscii(string);
-      }
-    },
-
-    /**
-     * Paths are case sensitive by way of Unicode NFKC Casefolding normalization. Requires ICU4J
-     * on your classpath.
-     */
-    CASE_INSENSITIVE_UNICODE {
-      @Override
-      protected Name createName(String string) {
-        return Name.normalizing(string, Normalizer2.getNFKCCasefoldInstance());
-      }
-    };
-
-    /**
-     * Creates a new name with these case sensitivity settings.
-     */
-    protected abstract Name createName(String string);
-  }
 }

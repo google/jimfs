@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs;
+package com.google.jimfs.config;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
@@ -27,7 +27,7 @@ import com.google.jimfs.internal.attribute.BasicAttributeProvider;
 import com.google.jimfs.internal.attribute.DosAttributeProvider;
 import com.google.jimfs.internal.attribute.OwnerAttributeProvider;
 import com.google.jimfs.internal.attribute.UserDefinedAttributeProvider;
-import com.google.jimfs.internal.path.PathType;
+import com.google.jimfs.path.PathType;
 
 import java.io.IOException;
 import java.nio.file.Files;

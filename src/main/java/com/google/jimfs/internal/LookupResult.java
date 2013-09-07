@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Objects;
 import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.path.Name;
+import com.google.jimfs.path.Name;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;

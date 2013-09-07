@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-package com.google.jimfs;
+package com.google.jimfs.config;
 
-import static com.google.jimfs.JimfsConfiguration.Feature.GROUPS;
-import static com.google.jimfs.JimfsConfiguration.Feature.LINKS;
-import static com.google.jimfs.JimfsConfiguration.Feature.SECURE_DIRECTORY_STREAMS;
-import static com.google.jimfs.JimfsConfiguration.Feature.SYMBOLIC_LINKS;
 import static com.google.jimfs.internal.attribute.UserLookupService.createGroupPrincipal;
 import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.attribute.AttributeProvider;
 import com.google.jimfs.internal.attribute.BasicAttributeProvider;
 import com.google.jimfs.internal.attribute.OwnerAttributeProvider;
 import com.google.jimfs.internal.attribute.PosixAttributeProvider;
 import com.google.jimfs.internal.attribute.UnixAttributeProvider;
-import com.google.jimfs.internal.path.PathType;
+import com.google.jimfs.path.PathType;
 
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 
 /**
- * Configuration for UNIX-like instances of {@link JimfsFileSystem}.
+ * Configuration for UNIX-like file systems.
  *
  * @author Colin Decker
  */
@@ -78,7 +73,8 @@ public final class UnixConfiguration extends JimfsConfiguration {
 
   @Override
   protected Iterable<Feature> getSupportedFeatures() {
-    return ImmutableSet.of(SYMBOLIC_LINKS, LINKS, GROUPS, SECURE_DIRECTORY_STREAMS);
+    return ImmutableSet.of(Feature.SYMBOLIC_LINKS, Feature.LINKS, Feature.GROUPS,
+        Feature.SECURE_DIRECTORY_STREAMS);
   }
 
   @Override

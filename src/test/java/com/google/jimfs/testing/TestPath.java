@@ -17,8 +17,8 @@
 package com.google.jimfs.testing;
 
 import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.path.Name;
-import com.google.jimfs.internal.path.PathType;
+import com.google.jimfs.path.Name;
+import com.google.jimfs.path.PathType;
 
 import java.io.IOException;
 import java.net.URI;

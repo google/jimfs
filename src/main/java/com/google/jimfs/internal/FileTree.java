@@ -34,8 +34,8 @@ import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.path.Name;
 import com.google.jimfs.internal.path.PathService;
+import com.google.jimfs.path.Name;
 
 import java.io.IOException;
 import java.nio.file.CopyOption;

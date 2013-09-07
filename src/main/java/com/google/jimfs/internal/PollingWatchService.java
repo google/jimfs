@@ -29,10 +29,10 @@ import com.google.common.collect.Sets;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.path.Name;
 import com.google.jimfs.internal.watch.AbstractWatchService;
 import com.google.jimfs.internal.watch.Event;
 import com.google.jimfs.internal.watch.Key;
+import com.google.jimfs.path.Name;
 
 import java.io.IOException;
 import java.nio.file.NotDirectoryException;

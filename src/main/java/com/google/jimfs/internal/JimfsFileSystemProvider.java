@@ -29,7 +29,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.jimfs.JimfsConfiguration;
+import com.google.jimfs.config.JimfsConfiguration;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.file.JimfsFileChannel;
 import com.google.jimfs.internal.file.TargetPath;

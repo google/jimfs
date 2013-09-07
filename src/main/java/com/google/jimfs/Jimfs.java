@@ -17,7 +17,9 @@
 package com.google.jimfs;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.jimfs.internal.JimfsFileSystemProvider;
+import com.google.jimfs.config.JimfsConfiguration;
+import com.google.jimfs.config.UnixConfiguration;
+import com.google.jimfs.config.WindowsConfiguration;
 
 import java.io.IOException;
 import java.net.URI;
@@ -62,7 +64,7 @@ public final class Jimfs {
   }
 
   private static FileSystem newFileSystem(JimfsConfiguration config) {
-    ImmutableMap<String, ?> env = ImmutableMap.of(JimfsFileSystemProvider.CONFIG_KEY, config);
+    ImmutableMap<String, ?> env = ImmutableMap.of("config", config);
     try {
       // Need to use Jimfs.class.getClassLoader() to ensure the class that loaded the jar is used
       // to locate the FileSystemProvider

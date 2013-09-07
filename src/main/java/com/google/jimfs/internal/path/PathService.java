@@ -21,6 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.jimfs.path.Name;
+import com.google.jimfs.path.PathType;
+import com.google.jimfs.path.SimplePath;
 
 import java.nio.file.FileSystem;
 import java.nio.file.PathMatcher;
@@ -106,7 +109,8 @@ public abstract class PathService {
    * Parses the given strings as a path.
    */
   public final JimfsPath parsePath(String first, String... more) {
-    return type.parsePath(this, first, more);
+    SimplePath path = type.parsePath(first, more);
+    return createPath(path.root(), path.names());
   }
 
   /**

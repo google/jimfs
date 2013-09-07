@@ -14,28 +14,26 @@
  * limitations under the License.
  */
 
-package com.google.jimfs;
+package com.google.jimfs.config;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.attribute.AttributeProvider;
-import com.google.jimfs.internal.path.PathType;
+import com.google.jimfs.path.PathType;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 
 /**
- * Provider of configuration options for an instance of {@link JimfsFileSystem}.
+ * Provider of configuration options for a file system.
  *
  * @author Colin Decker
  */
 public abstract class JimfsConfiguration {
 
   private final PathType pathType;
-  private volatile String recognizedSeparators;
   private volatile ImmutableSet<Feature> supportedFeatures;
 
   protected JimfsConfiguration(PathType pathType) {
