@@ -18,8 +18,8 @@ package com.google.jimfs.internal.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileAttributeView;
@@ -32,12 +32,12 @@ import java.nio.file.attribute.FileAttributeView;
 abstract class AbstractAttributeView implements FileAttributeView {
 
   private final AttributeProvider attributeProvider;
-  private final FileProvider fileProvider;
+  private final IoSupplier<? extends AttributeStore> supplier;
 
   public AbstractAttributeView(AttributeProvider attributeProvider,
-      FileProvider fileProvider) {
+      IoSupplier<? extends AttributeStore> supplier) {
     this.attributeProvider = checkNotNull(attributeProvider);
-    this.fileProvider = checkNotNull(fileProvider);
+    this.supplier = checkNotNull(supplier);
   }
 
   @Override
@@ -46,10 +46,10 @@ abstract class AbstractAttributeView implements FileAttributeView {
   }
 
   /**
-   * Gets the file to get or set attributes for.
+   * Gets the attribute store to get or set attributes on.
    */
-  public final File file() throws IOException {
-    return fileProvider.getFile();
+  public final AttributeStore store() throws IOException {
+    return supplier.get();
   }
 
   /**
@@ -64,13 +64,13 @@ abstract class AbstractAttributeView implements FileAttributeView {
    */
   @SuppressWarnings("unchecked")
   public final <V> V get(String attribute) throws IOException {
-    return (V) attributeProvider.get(file(), attribute);
+    return (V) attributeProvider.get(store(), attribute);
   }
 
   /**
    * Sets the value of the given attribute for the file located by this view.
    */
   public final void set(String attribute, Object value) throws IOException {
-    attributeProvider.set(file(), attribute, value);
+    attributeProvider.set(store(), attribute, value);
   }
 }

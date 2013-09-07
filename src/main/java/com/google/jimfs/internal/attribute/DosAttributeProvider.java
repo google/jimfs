@@ -19,8 +19,8 @@ package com.google.jimfs.internal.attribute;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -35,7 +35,7 @@ import java.nio.file.attribute.FileTime;
  *
  * @author Colin Decker
  */
-public class DosAttributeProvider extends AbstractAttributeProvider implements
+public final class DosAttributeProvider extends AbstractAttributeProvider implements
     AttributeViewProvider<DosFileAttributeView>, AttributeReader<DosFileAttributes> {
 
   public static final String READ_ONLY = "readonly";
@@ -67,11 +67,11 @@ public class DosAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public void setInitial(File file) {
-    set(file, READ_ONLY, false);
-    set(file, HIDDEN, false);
-    set(file, ARCHIVE, false);
-    set(file, SYSTEM, false);
+  public void setInitial(AttributeStore store) {
+    set(store, READ_ONLY, false);
+    set(store, HIDDEN, false);
+    set(store, ARCHIVE, false);
+    set(store, SYSTEM, false);
   }
 
   @Override
@@ -80,8 +80,8 @@ public class DosAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public DosFileAttributeView getView(FileProvider fileProvider) {
-    return new View(this, fileProvider);
+  public DosFileAttributeView getView(IoSupplier<? extends AttributeStore> supplier) {
+    return new View(this, supplier);
   }
 
   @Override
@@ -90,11 +90,11 @@ public class DosAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public DosFileAttributes read(File file) {
+  public DosFileAttributes read(AttributeStore store) {
     try {
-      return getView(FileProvider.ofFile(file)).readAttributes();
+      return getView(IoSupplier.of(store)).readAttributes();
     } catch (IOException e) {
-      throw new AssertionError(e); // FileProvider.ofFile doesn't throw IOException
+      throw new AssertionError(e); // IoSupplier.of doesn't throw IOException
     }
   }
 
@@ -105,9 +105,10 @@ public class DosAttributeProvider extends AbstractAttributeProvider implements
 
     private final BasicFileAttributeView basicView;
 
-    public View(DosAttributeProvider attributeProvider, FileProvider fileProvider) {
-      super(attributeProvider, fileProvider);
-      this.basicView = attributeProvider.basic.getView(fileProvider);
+    public View(
+        DosAttributeProvider attributeProvider, IoSupplier<? extends AttributeStore> supplier) {
+      super(attributeProvider, supplier);
+      this.basicView = attributeProvider.basic.getView(supplier);
     }
 
     @Override

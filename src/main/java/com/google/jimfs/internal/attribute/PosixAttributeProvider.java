@@ -19,8 +19,8 @@ package com.google.jimfs.internal.attribute;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -39,7 +39,7 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
-public class PosixAttributeProvider extends AbstractAttributeProvider implements
+public final class PosixAttributeProvider extends AbstractAttributeProvider implements
     AttributeViewProvider<PosixFileAttributeView>, AttributeReader<PosixFileAttributes> {
 
   public static final String VIEW = "posix";
@@ -78,13 +78,13 @@ public class PosixAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public void setInitial(File file) {
-    set(file, GROUP, defaultGroup);
-    set(file, PERMISSIONS, defaultPermissions);
+  public void setInitial(AttributeStore store) {
+    set(store, GROUP, defaultGroup);
+    set(store, PERMISSIONS, defaultPermissions);
   }
 
   @Override
-  public void set(File file, String attribute, Object value) {
+  public void set(AttributeStore store, String attribute, Object value) {
     switch (attribute) {
       case PERMISSIONS:
         Set<?> set = (Set<?>) value;
@@ -97,10 +97,10 @@ public class PosixAttributeProvider extends AbstractAttributeProvider implements
           }
         }
 
-        super.set(file, attribute, ImmutableSet.copyOf(set));
+        super.set(store, attribute, ImmutableSet.copyOf(set));
         break;
       default:
-        super.set(file, attribute, value);
+        super.set(store, attribute, value);
     }
   }
 
@@ -110,8 +110,8 @@ public class PosixAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public View getView(FileProvider fileProvider) {
-    return new View(this, fileProvider);
+  public View getView(IoSupplier<? extends AttributeStore> supplier) {
+    return new View(this, supplier);
   }
 
   @Override
@@ -120,11 +120,11 @@ public class PosixAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public PosixFileAttributes read(File file) {
+  public PosixFileAttributes read(AttributeStore store) {
     try {
-      return new Attributes(getView(FileProvider.ofFile(file)));
+      return new Attributes(getView(IoSupplier.of(store)));
     } catch (IOException e) {
-      throw new AssertionError(e); // FileProvider.ofFile doesn't throw IOException
+      throw new AssertionError(e); // IoSupplier<AttributeStore>.ofFile doesn't throw IOException
     }
   }
 
@@ -136,15 +136,15 @@ public class PosixAttributeProvider extends AbstractAttributeProvider implements
     private final BasicFileAttributeView basicView;
     private final FileOwnerAttributeView ownerView;
 
-    protected View(PosixAttributeProvider provider, FileProvider fileProvider) {
-      super(provider, fileProvider);
-      this.basicView = provider.basic.getView(fileProvider);
-      this.ownerView = provider.owner.getView(fileProvider);
+    protected View(PosixAttributeProvider provider, IoSupplier<? extends AttributeStore> supplier) {
+      super(provider, supplier);
+      this.basicView = provider.basic.getView(supplier);
+      this.ownerView = provider.owner.getView(supplier);
     }
 
     @Override
     public PosixFileAttributes readAttributes() throws IOException {
-      View view = new View((PosixAttributeProvider) provider(), FileProvider.ofFile(file()));
+      View view = new View((PosixAttributeProvider) provider(), IoSupplier.of(store()));
       return new Attributes(view);
     }
 

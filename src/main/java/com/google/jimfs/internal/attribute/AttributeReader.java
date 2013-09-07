@@ -16,7 +16,7 @@
 
 package com.google.jimfs.internal.attribute;
 
-import com.google.jimfs.internal.file.File;
+import com.google.jimfs.attribute.AttributeStore;
 
 import java.nio.file.attribute.BasicFileAttributes;
 
@@ -30,13 +30,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 public interface AttributeReader<A extends BasicFileAttributes> extends AttributeProvider {
 
   /**
-   * Returns the type of attributes interface this reader supports.
+   * Returns the type of the attributes interface this reader supports.
    */
   Class<A> attributesType();
 
   /**
-   * Returns an attributes object containing the current value of one or more attributes for the
-   * given file.
+   * Returns an immutable attributes object containing the current value of one or more attributes
+   * from the given store.
    */
-  A read(File file);
+  A read(AttributeStore store);
 }

@@ -18,7 +18,9 @@ package com.google.jimfs.internal.attribute;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
+import com.google.jimfs.attribute.AttributeStore;
+
+import java.util.Map;
 
 /**
  * Abstract base class for most implementations of {@link AttributeProvider}.
@@ -38,20 +40,20 @@ abstract class AbstractAttributeProvider implements AttributeProvider {
   }
 
   @Override
-  public void readAll(File file, ImmutableMap.Builder<String, Object> builder) {
+  public void readAll(AttributeStore store, Map<String, Object> map) {
     for (String attribute : attributes.keySet()) {
-      builder.put(attribute, get(file, attribute));
+      map.put(attribute, get(store, attribute));
     }
   }
 
   @Override
-  public boolean isGettable(File file, String attribute) {
+  public boolean isGettable(AttributeStore store, String attribute) {
     return attributes.containsKey(attribute);
   }
 
   @Override
-  public Object get(File file, String attribute) {
-    return file.getAttribute(name() + ":" + attribute);
+  public Object get(AttributeStore store, String attribute) {
+    return store.getAttribute(name() + ":" + attribute);
   }
 
   @Override
@@ -60,7 +62,7 @@ abstract class AbstractAttributeProvider implements AttributeProvider {
   }
 
   @Override
-  public boolean isSettable(File file, String attribute) {
+  public boolean isSettable(AttributeStore store, String attribute) {
     return attributes.containsKey(attribute) &&
         attributes.get(attribute).isUserSettable();
   }
@@ -71,7 +73,7 @@ abstract class AbstractAttributeProvider implements AttributeProvider {
   }
 
   @Override
-  public void set(File file, String attribute, Object value) {
-    file.setAttribute(name() + ":" + attribute, value);
+  public void set(AttributeStore store, String attribute, Object value) {
+    store.setAttribute(name() + ":" + attribute, value);
   }
 }

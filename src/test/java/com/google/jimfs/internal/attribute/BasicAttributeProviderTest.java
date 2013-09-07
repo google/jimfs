@@ -91,7 +91,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest {
   @Test
   public void testView() throws IOException {
     BasicFileAttributeView view = service.getFileAttributeView(
-        fileProvider(), BasicFileAttributeView.class);
+        fileSupplier(), BasicFileAttributeView.class);
     assert view != null;
     ASSERT.that(view.name()).is("basic");
 

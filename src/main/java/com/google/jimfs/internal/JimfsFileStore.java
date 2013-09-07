@@ -23,13 +23,14 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 import com.google.jimfs.internal.attribute.AttributeProvider;
 import com.google.jimfs.internal.attribute.AttributeProviderRegistry;
 import com.google.jimfs.internal.file.ArrayByteStore;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.file.FileContent;
-import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.internal.file.TargetPath;
 import com.google.jimfs.internal.path.JimfsPath;
 
@@ -44,7 +45,9 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.annotation.Nullable;
@@ -292,9 +295,9 @@ public final class JimfsFileStore extends FileStore {
    */
   @Nullable
   public <V extends FileAttributeView> V getFileAttributeView(
-      FileProvider fileProvider, Class<V> type) {
+      IoSupplier<? extends AttributeStore> supplier, Class<V> type) {
     if (supportsFileAttributeView(type)) {
-      return attributeProviders.getViewProvider(type).getView(fileProvider);
+      return attributeProviders.getViewProvider(type).getView(supplier);
     }
 
     return null;
@@ -312,7 +315,7 @@ public final class JimfsFileStore extends FileStore {
       throw new IllegalArgumentException("invalid attributes: " + attributes);
     }
 
-    ImmutableMap.Builder<String, Object> result = ImmutableMap.builder();
+    Map<String, Object> result = new HashMap<>();
     if (attrs.size() == 1 && attrs.contains(ALL_ATTRIBUTES)) {
       // for 'view:*' format, get all keys for all providers for the view
       for (AttributeProvider provider : attributeProviders.getProviders(view)) {
@@ -336,7 +339,7 @@ public final class JimfsFileStore extends FileStore {
       }
     }
 
-    return result.build();
+    return ImmutableMap.copyOf(result);
   }
 
   /**

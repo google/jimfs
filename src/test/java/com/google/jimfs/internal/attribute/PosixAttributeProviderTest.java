@@ -74,7 +74,7 @@ public class PosixAttributeProviderTest extends AttributeProviderTest {
   @Test
   public void testView() throws IOException {
     PosixFileAttributeView view = service.getFileAttributeView(
-        fileProvider(), PosixFileAttributeView.class);
+        fileSupplier(), PosixFileAttributeView.class);
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("posix");

@@ -17,8 +17,8 @@
 package com.google.jimfs.internal.attribute;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -73,55 +73,55 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public void setInitial(File file) {
-    // FileTime now = file.clock().now();
+  public void setInitial(AttributeStore store) {
+    // FileTime now = store.clock().now();
     // TODO(cgdecker): re-add use of a Clock... maybe.
     long now = System.currentTimeMillis();
-    file.setCreationTime(now);
-    file.setLastAccessTime(now);
-    file.setLastModifiedTime(now);
+    store.setCreationTime(now);
+    store.setLastAccessTime(now);
+    store.setLastModifiedTime(now);
   }
 
   @Override
-  public Object get(File file, String attribute) {
+  public Object get(AttributeStore store, String attribute) {
     switch (attribute) {
       case SIZE:
-        return (long) file.content().sizeInBytes();
+        return store.size();
       case FILE_KEY:
-        return file.id();
+        return store.id();
       case IS_DIRECTORY:
-        return file.isDirectory();
+        return store.isDirectory();
       case IS_REGULAR_FILE:
-        return file.isRegularFile();
+        return store.isRegularFile();
       case IS_SYMBOLIC_LINK:
-        return file.isSymbolicLink();
+        return store.isSymbolicLink();
       case IS_OTHER:
-        return !file.isDirectory() && !file.isRegularFile() && !file.isSymbolicLink();
+        return !store.isDirectory() && !store.isRegularFile() && !store.isSymbolicLink();
       case CREATION_TIME:
-        return FileTime.fromMillis(file.getCreationTime());
+        return FileTime.fromMillis(store.getCreationTime());
       case LAST_ACCESS_TIME:
-        return FileTime.fromMillis(file.getLastAccessTime());
+        return FileTime.fromMillis(store.getLastAccessTime());
       case LAST_MODIFIED_TIME:
-        return FileTime.fromMillis(file.getLastModifiedTime());
+        return FileTime.fromMillis(store.getLastModifiedTime());
       default:
-        return super.get(file, attribute);
+        return super.get(store, attribute);
     }
   }
 
   @Override
-  public void set(File file, String attribute, Object value) {
+  public void set(AttributeStore store, String attribute, Object value) {
     switch (attribute) {
       case CREATION_TIME:
-        file.setCreationTime(((FileTime) value).toMillis());
+        store.setCreationTime(((FileTime) value).toMillis());
         break;
       case LAST_ACCESS_TIME:
-        file.setLastAccessTime(((FileTime) value).toMillis());
+        store.setLastAccessTime(((FileTime) value).toMillis());
         break;
       case LAST_MODIFIED_TIME:
-        file.setLastModifiedTime(((FileTime) value).toMillis());
+        store.setLastModifiedTime(((FileTime) value).toMillis());
         break;
       default:
-        super.set(file, attribute, value);
+        super.set(store, attribute, value);
     }
   }
 
@@ -131,8 +131,8 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public View getView(FileProvider fileProvider) {
-    return new View(this, fileProvider);
+  public View getView(IoSupplier<? extends AttributeStore> supplier) {
+    return new View(this, supplier);
   }
 
   @Override
@@ -141,11 +141,11 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
   }
 
   @Override
-  public Attributes read(File file) {
+  public Attributes read(AttributeStore store) {
     try {
-      return new Attributes(getView(FileProvider.ofFile(file)));
+      return new Attributes(getView(IoSupplier.of(store)));
     } catch (IOException e) {
-      throw new AssertionError(e); // FileProvider.ofFile won't throw IOException
+      throw new AssertionError(e); // IoSupplier.of won't throw IOException
     }
   }
 
@@ -154,14 +154,14 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
    */
   private static class View extends AbstractAttributeView implements BasicFileAttributeView {
 
-    protected View(AttributeProvider provider, FileProvider fileProvider) {
-      super(provider, fileProvider);
+    protected View(AttributeProvider provider, IoSupplier<? extends AttributeStore> supplier) {
+      super(provider, supplier);
     }
 
     @Override
     public BasicFileAttributes readAttributes() throws IOException {
       // create a temporary view that doesn't have to locate the file for each get
-      View view = new View(provider(), FileProvider.ofFile(file()));
+      View view = new View(provider(), IoSupplier.of(store()));
       return new Attributes(view);
     }
 
@@ -169,15 +169,15 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
     public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime)
         throws IOException {
       // make sure we only lookup the file once
-      File file = file();
-      setIfNotNull(file, LAST_MODIFIED_TIME, lastModifiedTime);
-      setIfNotNull(file, LAST_ACCESS_TIME, lastAccessTime);
-      setIfNotNull(file, CREATION_TIME, createTime);
+      AttributeStore store = store();
+      setIfNotNull(store, LAST_MODIFIED_TIME, lastModifiedTime);
+      setIfNotNull(store, LAST_ACCESS_TIME, lastAccessTime);
+      setIfNotNull(store, CREATION_TIME, createTime);
     }
 
-    private void setIfNotNull(File file, String attribute, FileTime time) {
+    private void setIfNotNull(AttributeStore store, String attribute, FileTime time) {
       if (time != null) {
-        provider().set(file, attribute, time);
+        provider().set(store, attribute, time);
       }
     }
   }

@@ -20,14 +20,16 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
-import com.google.jimfs.testing.FakeFileContent;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
+import com.google.jimfs.testing.TestAttributeStore;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Tests for {@link AbstractAttributeProvider}, as well as for handling views and bulk attributes
@@ -40,11 +42,11 @@ public class AbstractAttributeProviderTest {
 
   private static final TestAttributeProvider PROVIDER = new TestAttributeProvider();
 
-  private File file;
+  private AttributeStore store;
 
   @Before
   public void setUp() {
-    file = new File(0, new FakeFileContent());
+    store = new TestAttributeStore(0, TestAttributeStore.Type.REGULAR_FILE);
   }
 
   @Test
@@ -58,69 +60,69 @@ public class AbstractAttributeProviderTest {
 
   @Test
   public void testIsGettableAndSettable() {
-    ASSERT.that(PROVIDER.isGettable(file, "foo")).isTrue();
-    ASSERT.that(PROVIDER.isGettable(file, "bar")).isTrue();
-    ASSERT.that(PROVIDER.isGettable(file, "baz")).isTrue();
+    ASSERT.that(PROVIDER.isGettable(store, "foo")).isTrue();
+    ASSERT.that(PROVIDER.isGettable(store, "bar")).isTrue();
+    ASSERT.that(PROVIDER.isGettable(store, "baz")).isTrue();
 
-    ASSERT.that(PROVIDER.isSettable(file, "foo")).isFalse();
-    ASSERT.that(PROVIDER.isSettable(file, "bar")).isTrue();
-    ASSERT.that(PROVIDER.isSettable(file, "baz")).isTrue();
+    ASSERT.that(PROVIDER.isSettable(store, "foo")).isFalse();
+    ASSERT.that(PROVIDER.isSettable(store, "bar")).isTrue();
+    ASSERT.that(PROVIDER.isSettable(store, "baz")).isTrue();
 
     ASSERT.that(PROVIDER.isSettableOnCreate("foo")).isFalse();
     ASSERT.that(PROVIDER.isSettableOnCreate("bar")).isFalse();
     ASSERT.that(PROVIDER.isSettableOnCreate("baz")).isTrue();
 
-    ASSERT.that(PROVIDER.isGettable(file, "blah")).isFalse();
-    ASSERT.that(PROVIDER.isSettable(file, "blah")).isFalse();
+    ASSERT.that(PROVIDER.isGettable(store, "blah")).isFalse();
+    ASSERT.that(PROVIDER.isSettable(store, "blah")).isFalse();
     // calling isSettableOnCreate if isSettable is false is illegal and throws; don't test it
     // ASSERT.that(PROVIDER.isSettableOnCreate("blah")).isFalse();
   }
 
   @Test
   public void testGet() {
-    ASSERT.that(PROVIDER.get(file, "foo")).is("hello");
-    ASSERT.that(PROVIDER.get(file, "bar")).isNull();
-    ASSERT.that(PROVIDER.get(file, "baz")).isNull();
+    ASSERT.that(PROVIDER.get(store, "foo")).is("hello");
+    ASSERT.that(PROVIDER.get(store, "bar")).isNull();
+    ASSERT.that(PROVIDER.get(store, "baz")).isNull();
   }
 
   @Test
   public void testSetInitialAndGet() {
-    PROVIDER.setInitial(file);
+    PROVIDER.setInitial(store);
 
-    ASSERT.that(file.getAttribute("test:bar")).is(0L);
-    ASSERT.that(file.getAttribute("test:baz")).is(1);
+    ASSERT.that(store.getAttribute("test:bar")).is(0L);
+    ASSERT.that(store.getAttribute("test:baz")).is(1);
 
-    ASSERT.that(PROVIDER.get(file, "foo")).is("hello");
-    ASSERT.that(PROVIDER.get(file, "bar")).is(0L);
-    ASSERT.that(PROVIDER.get(file, "baz")).is(1);
+    ASSERT.that(PROVIDER.get(store, "foo")).is("hello");
+    ASSERT.that(PROVIDER.get(store, "bar")).is(0L);
+    ASSERT.that(PROVIDER.get(store, "baz")).is(1);
   }
 
   @Test
   public void testSetAndGet() {
-    PROVIDER.set(file, "baz", 100);
-    ASSERT.that(file.getAttribute("test:baz")).is(100);
-    ASSERT.that(PROVIDER.get(file, "baz")).is(100);
+    PROVIDER.set(store, "baz", 100);
+    ASSERT.that(store.getAttribute("test:baz")).is(100);
+    ASSERT.that(PROVIDER.get(store, "baz")).is(100);
 
-    PROVIDER.set(file, "bar", 10L);
-    ASSERT.that(file.getAttribute("test:bar")).is(10L);
-    ASSERT.that(PROVIDER.get(file, "bar")).is(10L);
+    PROVIDER.set(store, "bar", 10L);
+    ASSERT.that(store.getAttribute("test:bar")).is(10L);
+    ASSERT.that(PROVIDER.get(store, "bar")).is(10L);
   }
 
   @Test
   public void testSetAndGet_withDifferentAcceptedTypes() {
-    PROVIDER.set(file, "bar", 10);
-    ASSERT.that(PROVIDER.get(file, "bar")).is(10L);
+    PROVIDER.set(store, "bar", 10);
+    ASSERT.that(PROVIDER.get(store, "bar")).is(10L);
 
-    PROVIDER.set(file, "bar", 123.0F);
-    ASSERT.that(PROVIDER.get(file, "bar")).is(123L);
+    PROVIDER.set(store, "bar", 123.0F);
+    ASSERT.that(PROVIDER.get(store, "bar")).is(123L);
   }
 
   @Test
   public void testReadAll() {
-    PROVIDER.setInitial(file);
-    ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
-    PROVIDER.readAll(file, builder);
-    ImmutableMap<String, Object> attributes = builder.build();
+    PROVIDER.setInitial(store);
+    Map<String, Object> builder = new HashMap<>();
+    PROVIDER.readAll(store, builder);
+    ImmutableMap<String, Object> attributes = ImmutableMap.copyOf(builder);
 
     ASSERT.that(attributes).is(
         ImmutableMap.<String, Object>of(
@@ -133,9 +135,9 @@ public class AbstractAttributeProviderTest {
   public void testView() throws IOException {
     ASSERT.that(PROVIDER.viewType()).is(TestAttributeView.class);
 
-    PROVIDER.setInitial(file);
+    PROVIDER.setInitial(store);
 
-    TestAttributeView view = PROVIDER.getView(FileProvider.ofFile(file));
+    TestAttributeView view = PROVIDER.getView(IoSupplier.of(store));
 
     ASSERT.that(view.name()).is("test");
 
@@ -156,17 +158,17 @@ public class AbstractAttributeProviderTest {
   public void testReadAttributes() {
     ASSERT.that(PROVIDER.attributesType()).is(TestAttributes.class);
 
-    PROVIDER.setInitial(file);
+    PROVIDER.setInitial(store);
 
-    TestAttributes attrs = PROVIDER.read(file);
+    TestAttributes attrs = PROVIDER.read(store);
 
     ASSERT.that(attrs.foo()).is("hello");
     ASSERT.that(attrs.bar()).is(0L);
     ASSERT.that(attrs.baz()).is(1);
 
-    PROVIDER.set(file, "bar", 100L);
+    PROVIDER.set(store, "bar", 100L);
 
     ASSERT.that(attrs.bar()).is(0L);
-    ASSERT.that(PROVIDER.read(file).bar()).is(100L);
+    ASSERT.that(PROVIDER.read(store).bar()).is(100L);
   }
 }

@@ -16,13 +16,13 @@
 
 package com.google.jimfs.internal.attribute;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
+import com.google.jimfs.attribute.AttributeStore;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
+import java.util.Map;
 
 /**
  * Provider for handling a specific group of file attributes.
@@ -42,25 +42,25 @@ public interface AttributeProvider {
   ImmutableSet<String> inherits();
 
   /**
-   * Reads all of the attributes associated with this provider from the given file into the given
-   * map builder.
+   * Reads all of the attributes associated with this provider from the given store into the given
+   * map.
    */
-  void readAll(File file, ImmutableMap.Builder<String, Object> builder);
+  void readAll(AttributeStore attributes, Map<String, Object> map);
 
   /**
-   * Sets any initial attributes on the given file.
+   * Sets any initial attributes in the given store.
    */
-  void setInitial(File file);
+  void setInitial(AttributeStore store);
 
   /**
-   * Returns whether or not it's currently possible to get the given attribute from the given file.
+   * Returns whether or not it's currently possible to get the given attribute from the given store.
    */
-  boolean isGettable(File file, String attribute);
+  boolean isGettable(AttributeStore store, String attribute);
 
   /**
-   * Returns the value of the given attribute for the given file.
+   * Returns the value of the given attribute in the given store.
    */
-  Object get(File file, String attribute);
+  Object get(AttributeStore store, String attribute);
 
   /**
    * Returns the types that are accepted when setting the given attribute.
@@ -68,20 +68,20 @@ public interface AttributeProvider {
   ImmutableSet<Class<?>> acceptedTypes(String attribute);
 
   /**
-   * Returns whether or not it's possible for a user to set the given attribute for the given file.
+   * Returns whether or not it's possible for a user to set the given attribute in the given store.
    */
-  boolean isSettable(File file, String attribute);
+  boolean isSettable(AttributeStore store, String attribute);
 
   /**
    * Returns whether or not it's possible for a user to set the given attribute during file
    * creation (e.g. by passing a {@link FileAttribute} to
    * {@link Files#createFile(Path, FileAttribute[])}). Only called if
-   * {@link #isSettable(File, String)} already returned true.
+   * {@link #isSettable(AttributeStore, String)} already returned true.
    */
   boolean isSettableOnCreate(String attribute);
 
   /**
-   * Sets the value of the given attribute for the given file.
+   * Sets the value of the given attribute in the given store.
    */
-  void set(File file, String attribute, Object value);
+  void set(AttributeStore store, String attribute, Object value);
 }

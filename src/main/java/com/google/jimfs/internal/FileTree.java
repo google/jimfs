@@ -29,10 +29,10 @@ import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
+import com.google.jimfs.common.IoSupplier;
 import com.google.jimfs.internal.file.ByteStore;
 import com.google.jimfs.internal.file.DirectoryTable;
 import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.internal.path.JimfsPath;
 import com.google.jimfs.internal.path.PathService;
 import com.google.jimfs.path.Name;
@@ -162,15 +162,16 @@ public final class FileTree {
   }
 
   /**
-   * Returns a {@link FileProvider} that does a lookup of the given path in this given tree, using
-   * the given link handling option.
+   * Returns a supplier that suppliers a file by looking up the given path in this tree, using the
+   * given link handling option.
    */
-  public FileProvider lookupProvider(final JimfsPath path, final LinkHandling linkHandling) {
+  public IoSupplier<File> lookupFileSupplier(
+      final JimfsPath path, final LinkHandling linkHandling) {
     checkNotNull(path);
     checkNotNull(linkHandling);
-    return new FileProvider() {
+    return new IoSupplier<File>() {
       @Override
-      public File getFile() throws IOException {
+      public File get() throws IOException {
         return lookup(path, linkHandling)
             .requireFound(path)
             .file();
@@ -662,7 +663,7 @@ public final class FileTree {
     BasicFileAttributes sourceAttributes =
         store.readAttributes(source, BasicFileAttributes.class);
     BasicFileAttributeView destAttributeView = destTree.store.getFileAttributeView(
-        FileProvider.ofFile(dest), BasicFileAttributeView.class);
+        IoSupplier.of(dest), BasicFileAttributeView.class);
 
     assert destAttributeView != null;
 
@@ -719,7 +720,7 @@ public final class FileTree {
    */
   public <V extends FileAttributeView> V getFileAttributeView(
       JimfsPath path, Class<V> type, LinkHandling linkHandling) {
-    return store.getFileAttributeView(lookupProvider(path, linkHandling), type);
+    return store.getFileAttributeView(lookupFileSupplier(path, linkHandling), type);
   }
 
   /**

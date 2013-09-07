@@ -17,8 +17,8 @@
 package com.google.jimfs.internal.attribute;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
@@ -56,26 +56,26 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public void set(File file, String attribute, Object value) {
+  public void set(AttributeStore store, String attribute, Object value) {
     if (attribute.equals("bar")) {
-      file.setAttribute("test:bar", ((Number) value).longValue());
+      store.setAttribute("test:bar", ((Number) value).longValue());
     } else {
-      super.set(file, attribute, value);
+      super.set(store, attribute, value);
     }
   }
 
   @Override
-  public void setInitial(File file) {
-    file.setAttribute("test:bar", 0L);
-    file.setAttribute("test:baz", 1);
+  public void setInitial(AttributeStore store) {
+    store.setAttribute("test:bar", 0L);
+    store.setAttribute("test:baz", 1);
   }
 
   @Override
-  public Object get(File file, String attribute) {
+  public Object get(AttributeStore store, String attribute) {
     if (attribute.equals("foo")) {
       return "hello";
     }
-    return super.get(file, attribute);
+    return super.get(store, attribute);
   }
 
   @Override
@@ -84,9 +84,9 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public TestAttributes read(File file) {
+  public TestAttributes read(AttributeStore store) {
     try {
-      return getView(FileProvider.ofFile(file)).readAttributes();
+      return getView(IoSupplier.of(store)).readAttributes();
     } catch (IOException unexpected) {
       throw new AssertionError(unexpected);
     }
@@ -98,13 +98,13 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public TestAttributeView getView(FileProvider fileProvider) {
+  public TestAttributeView getView(IoSupplier<? extends AttributeStore> fileProvider) {
     return new View(this, fileProvider);
   }
 
   public static final class View extends AbstractAttributeView implements TestAttributeView {
 
-    public View(AttributeProvider attributeProvider, FileProvider fileProvider) {
+    public View(AttributeProvider attributeProvider, IoSupplier<? extends AttributeStore> fileProvider) {
       super(attributeProvider, fileProvider);
     }
 

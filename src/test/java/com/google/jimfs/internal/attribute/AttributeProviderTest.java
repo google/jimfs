@@ -20,9 +20,9 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.jimfs.common.IoSupplier;
 import com.google.jimfs.internal.JimfsFileStore;
 import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.testing.BasicFileAttribute;
 
 import org.junit.Before;
@@ -54,8 +54,8 @@ public abstract class AttributeProviderTest {
     this.dir = service.createDirectory();
   }
 
-  protected FileProvider fileProvider() {
-    return FileProvider.ofFile(file);
+  protected IoSupplier<File> fileSupplier() {
+    return IoSupplier.of(file);
   }
 
   protected void assertContainsAll(File file, ImmutableMap<String, Object> expectedAttributes) {

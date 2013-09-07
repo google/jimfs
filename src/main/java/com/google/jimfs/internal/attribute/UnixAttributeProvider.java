@@ -22,7 +22,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
+import com.google.jimfs.attribute.AttributeStore;
 
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
@@ -89,36 +89,36 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
   }
 
   @Override
-  public void setInitial(File file) {
+  public void setInitial(AttributeStore store) {
     // doesn't actually set anything in the attribute map
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object get(File file, String attribute) {
+  public Object get(AttributeStore store, String attribute) {
     switch (attribute) {
       case UID:
-        UserPrincipal user = (UserPrincipal) owner.get(file, OwnerAttributeProvider.OWNER);
+        UserPrincipal user = (UserPrincipal) owner.get(store, OwnerAttributeProvider.OWNER);
         return idCache.getUnchecked(user);
       case GID:
-        GroupPrincipal group = (GroupPrincipal) posix.get(file, PosixAttributeProvider.GROUP);
+        GroupPrincipal group = (GroupPrincipal) posix.get(store, PosixAttributeProvider.GROUP);
         return idCache.getUnchecked(group);
       case MODE:
         Set<PosixFilePermission> permissions
-            = (Set<PosixFilePermission>) posix.get(file, PosixAttributeProvider.PERMISSIONS);
+            = (Set<PosixFilePermission>) posix.get(store, PosixAttributeProvider.PERMISSIONS);
         return toMode(permissions);
       case CTIME:
-        return basic.get(file, BasicAttributeProvider.CREATION_TIME);
+        return basic.get(store, BasicAttributeProvider.CREATION_TIME);
       case RDEV:
         return 0L;
       case DEV:
         return 1L;
       case INO:
-        return idCache.getUnchecked(file);
+        return idCache.getUnchecked(store);
       case NLINK:
-        return file.links();
+        return store.links();
     }
-    return super.get(file, attribute);
+    return super.get(store, attribute);
   }
 
   @SuppressWarnings("OctalInteger")

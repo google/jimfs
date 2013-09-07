@@ -20,8 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.AclEntry;
@@ -64,12 +64,12 @@ public class AclAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public void setInitial(File file) {
-    set(file, ACL, defaultAcl);
+  public void setInitial(AttributeStore store) {
+    set(store, ACL, defaultAcl);
   }
 
   @Override
-  public void set(File file, String attribute, Object value) {
+  public void set(AttributeStore store, String attribute, Object value) {
     switch (attribute) {
       case ACL:
         List<?> list = (List<?>) value;
@@ -81,10 +81,10 @@ public class AclAttributeProvider extends AbstractAttributeProvider
                 + obj.getClass());
           }
         }
-        super.set(file, attribute, ImmutableList.copyOf(list));
+        super.set(store, attribute, ImmutableList.copyOf(list));
         break;
       default:
-        super.set(file, attribute, value);
+        super.set(store, attribute, value);
     }
   }
 
@@ -94,17 +94,18 @@ public class AclAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public AclFileAttributeView getView(FileProvider fileProvider) {
-    return new View(this, fileProvider);
+  public AclFileAttributeView getView(IoSupplier<? extends AttributeStore> supplier) {
+    return new View(this, supplier);
   }
 
   private static final class View extends AbstractAttributeView implements AclFileAttributeView {
 
     private final FileOwnerAttributeView ownerView;
 
-    public View(AclAttributeProvider attributeProvider, FileProvider fileProvider) {
-      super(attributeProvider, fileProvider);
-      this.ownerView = attributeProvider.owner.getView(fileProvider);
+    public View(
+        AclAttributeProvider attributeProvider, IoSupplier<? extends AttributeStore> supplier) {
+      super(attributeProvider, supplier);
+      this.ownerView = attributeProvider.owner.getView(supplier);
     }
 
     @Override

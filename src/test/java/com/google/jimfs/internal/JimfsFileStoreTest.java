@@ -1,3 +1,19 @@
+/*
+ * Copyright 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.jimfs.internal;
 
 import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
@@ -7,13 +23,13 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.common.IoSupplier;
 import com.google.jimfs.internal.attribute.BasicAttributeProvider;
 import com.google.jimfs.internal.attribute.OwnerAttributeProvider;
 import com.google.jimfs.internal.attribute.TestAttributeProvider;
 import com.google.jimfs.internal.attribute.TestAttributeView;
 import com.google.jimfs.internal.attribute.TestAttributes;
 import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
 import com.google.jimfs.testing.BasicFileAttribute;
 
 import org.junit.Before;
@@ -307,15 +323,15 @@ public class JimfsFileStoreTest {
   @Test
   public void testGetFileAttributeView() throws IOException {
     File file = store.createRegularFile();
-    FileProvider fileProvider = FileProvider.ofFile(file);
+    IoSupplier<File> fileSupplier = IoSupplier.of(file);
 
-    ASSERT.that(store.getFileAttributeView(fileProvider, TestAttributeView.class))
+    ASSERT.that(store.getFileAttributeView(fileSupplier, TestAttributeView.class))
         .isNotNull();
-    ASSERT.that(store.getFileAttributeView(fileProvider, BasicFileAttributeView.class))
+    ASSERT.that(store.getFileAttributeView(fileSupplier, BasicFileAttributeView.class))
         .isNotNull();
 
     TestAttributes attrs
-        = store.getFileAttributeView(fileProvider, TestAttributeView.class).readAttributes();
+        = store.getFileAttributeView(fileSupplier, TestAttributeView.class).readAttributes();
     ASSERT.that(attrs.foo()).is("hello");
     ASSERT.that(attrs.bar()).is(0L);
     ASSERT.that(attrs.baz()).is(1);
@@ -324,8 +340,8 @@ public class JimfsFileStoreTest {
   @Test
   public void testGetFileAttributeView_isNullForUnsupportedView() {
     File file = store.createRegularFile();
-    FileProvider fileProvider = FileProvider.ofFile(file);
-    ASSERT.that(store.getFileAttributeView(fileProvider, PosixFileAttributeView.class))
+    IoSupplier<File> fileSupplier = IoSupplier.of(file);
+    ASSERT.that(store.getFileAttributeView(fileSupplier, PosixFileAttributeView.class))
         .isNull();
   }
 

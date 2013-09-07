@@ -52,7 +52,7 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest {
   @Test
   public void testView() throws IOException {
     FileOwnerAttributeView view = service.getFileAttributeView(
-        fileProvider(), FileOwnerAttributeView.class);
+        fileSupplier(), FileOwnerAttributeView.class);
     assert view != null;
 
     ASSERT.that(view.name()).is("owner");

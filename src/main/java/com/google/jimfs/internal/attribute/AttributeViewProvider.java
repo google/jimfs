@@ -16,7 +16,8 @@
 
 package com.google.jimfs.internal.attribute;
 
-import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 
 import java.nio.file.attribute.FileAttributeView;
 
@@ -35,7 +36,7 @@ public interface AttributeViewProvider<V extends FileAttributeView> extends Attr
   Class<V> viewType();
 
   /**
-   * Returns an attribute view for the given file provider.
+   * Returns an attribute view for the given attribute store supplier.
    */
-  V getView(FileProvider fileProvider);
+  V getView(IoSupplier<? extends AttributeStore> supplier);
 }

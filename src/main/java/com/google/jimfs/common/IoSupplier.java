@@ -14,36 +14,30 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.file;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+package com.google.jimfs.common;
 
 import java.io.IOException;
 
 /**
- * A provider of a {@link File} object. May provide the file directly or by looking it up in a
- * file tree.
+ * Supplier that may throw {@link IOException}.
  *
  * @author Colin Decker
  */
-public abstract class FileProvider {
+public abstract class IoSupplier<T> {
 
   /**
-   * Gets a file.
-   *
-   * @throws IOException if an I/O error occurred looking up the file, the file doesn't exist, etc.
+   * Gets an object, throwing an exception if the object can't be retrieved for any reason.
    */
-  public abstract File getFile() throws IOException;
+  public abstract T get() throws IOException;
 
   /**
-   * Returns a {@link FileProvider} that always returns the given {@link File} instance.
+   * Returns a supplier that always returns the given instance.
    */
-  public static FileProvider ofFile(final File file) {
-    checkNotNull(file);
-    return new FileProvider() {
+  public static <T> IoSupplier<T> of(final T instance) {
+    return new IoSupplier<T>() {
       @Override
-      public File getFile() throws IOException {
-        return file;
+      public T get() {
+        return instance;
       }
     };
   }

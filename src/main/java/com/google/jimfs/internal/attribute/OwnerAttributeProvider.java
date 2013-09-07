@@ -19,8 +19,8 @@ package com.google.jimfs.internal.attribute;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileProvider;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileOwnerAttributeView;
@@ -31,7 +31,7 @@ import java.nio.file.attribute.UserPrincipal;
  *
  * @author Colin Decker
  */
-public class OwnerAttributeProvider extends AbstractAttributeProvider
+public final class OwnerAttributeProvider extends AbstractAttributeProvider
     implements AttributeViewProvider<FileOwnerAttributeView> {
 
   public static final String VIEW = "owner";
@@ -60,8 +60,8 @@ public class OwnerAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public void setInitial(File file) {
-    set(file, OWNER, defaultOwner);
+  public void setInitial(AttributeStore store) {
+    set(store, OWNER, defaultOwner);
   }
 
   @Override
@@ -70,14 +70,14 @@ public class OwnerAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public FileOwnerAttributeView getView(FileProvider fileProvider) {
-    return new View(fileProvider);
+  public FileOwnerAttributeView getView(IoSupplier<? extends AttributeStore> supplier) {
+    return new View(supplier);
   }
 
   private class View extends AbstractAttributeView implements FileOwnerAttributeView {
 
-    public View(FileProvider fileProvider) {
-      super(OwnerAttributeProvider.this, fileProvider);
+    public View(IoSupplier<? extends AttributeStore> supplier) {
+      super(OwnerAttributeProvider.this, supplier);
     }
 
     @Override

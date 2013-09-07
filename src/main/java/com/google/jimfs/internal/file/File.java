@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
+import com.google.jimfs.attribute.AttributeStore;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Colin Decker
  */
-public final class File {
+public final class File implements AttributeStore {
 
   private final long id;
 
@@ -50,32 +51,28 @@ public final class File {
     this.content = checkNotNull(content);
   }
 
-  /**
-   * Returns the ID of this file.
-   */
+  @Override
   public long id() {
     return id;
   }
 
-  /**
-   * Returns whether or not this file is a directory.
-   */
-  public boolean isDirectory() {
+  @Override  public boolean isDirectory() {
     return content instanceof DirectoryTable;
   }
 
-  /**
-   * Returns whether or not this file is a regular file.
-   */
+  @Override
   public boolean isRegularFile() {
     return content instanceof ByteStore;
   }
 
-  /**
-   * Returns whether or not this file is a symbolic link.
-   */
+  @Override
   public boolean isSymbolicLink() {
     return content instanceof TargetPath;
+  }
+
+  @Override
+  public long size() {
+    return content().sizeInBytes();
   }
 
   /**
@@ -94,9 +91,7 @@ public final class File {
     return (C) content;
   }
 
-  /**
-   * Returns the current count of links to this file.
-   */
+  @Override
   public int links() {
     return links.get();
   }
@@ -115,72 +110,52 @@ public final class File {
     return links.decrementAndGet();
   }
 
-  /**
-   * Returns the attribute keys contained in the attributes map for this file.
-   */
+  @Override
   public Iterable<String> getAttributeKeys() {
     return attributes.keySet();
   }
 
-  /**
-   * Gets the value of the attribute with the given key.
-   */
+  @Override
   public Object getAttribute(String key) {
     return attributes.get(key);
   }
 
-  /**
-   * Sets the attribute with the given key to the given value.
-   */
+  @Override
   public void setAttribute(String key, Object value) {
     attributes.put(key, value);
   }
 
-  /**
-   * Deletes the attribute with the given key.
-   */
+  @Override
   public void deleteAttribute(String key) {
     attributes.remove(key);
   }
 
-  /**
-   * Gets the creation time of this file.
-   */
+  @Override
   public long getCreationTime() {
     return creationTime.get();
   }
 
-  /**
-   * Gets the last access time of this file.
-   */
+  @Override
   public long getLastAccessTime() {
     return lastAccessTime.get();
   }
 
-  /**
-   * Gets the last updateModifiedTime time of this file.
-   */
+  @Override
   public long getLastModifiedTime() {
     return lastModifiedTime.get();
   }
 
-  /**
-   * Sets the creation time of this file.
-   */
+  @Override
   public void setCreationTime(long creationTime) {
     this.creationTime.set(creationTime);
   }
 
-  /**
-   * Sets the last access time of this file.
-   */
+  @Override
   public void setLastAccessTime(long lastAccessTime) {
     this.lastAccessTime.set(lastAccessTime);
   }
 
-  /**
-   * Sets the last updateModifiedTime time of this file.
-   */
+  @Override
   public void setLastModifiedTime(long lastModifiedTime) {
     this.lastModifiedTime.set(lastModifiedTime);
   }
