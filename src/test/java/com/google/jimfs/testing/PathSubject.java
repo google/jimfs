@@ -38,6 +38,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 /**
  * Subject for doing assertions on file system paths.
  *
@@ -124,9 +126,11 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /**
    * Asserts that the path has the given root component.
    */
-  public PathSubject hasRootComponent(String root) {
+  public PathSubject hasRootComponent(@Nullable String root) {
     Path rootComponent = getSubject().getRoot();
-    if (rootComponent == null || !root.equals(rootComponent.toString())) {
+    if (root == null && rootComponent != null) {
+      fail("has root component", root);
+    } else if (root != null && !root.equals(rootComponent.toString())) {
       fail("has root component", root);
     }
     return this;

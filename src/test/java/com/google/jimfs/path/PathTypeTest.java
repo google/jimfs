@@ -27,7 +27,7 @@ public class PathTypeTest {
 
   @Test
   public void testNames() {
-    ASSERT.that(type.getName("foo", false)).is(Name.simple("foo"));
+    ASSERT.that(type.getName("foo")).is(Name.simple("foo"));
     ASSERT.that(type.asNames(ImmutableList.of("foo", "bar")))
         .iteratesAs(Name.simple("foo"), Name.simple("bar"));
   }
@@ -35,8 +35,8 @@ public class PathTypeTest {
   @Test
   public void testNames_caseInsensitiveAscii() {
     FakePathType type2 = new FakePathType(CaseSensitivity.CASE_INSENSITIVE_ASCII);
-    ASSERT.that(type2.getName("foo", false)).is(Name.caseInsensitiveAscii("foo"));
-    ASSERT.that(type2.getName("foo", false)).isEqualTo(type2.getName("FOO", false));
+    ASSERT.that(type2.getName("foo")).is(Name.caseInsensitiveAscii("foo"));
+    ASSERT.that(type2.getName("foo")).isEqualTo(type2.getName("FOO"));
     ASSERT.that(type2.asNames(ImmutableList.of("foo", "bar")))
         .iteratesAs(type2.asNames(ImmutableList.of("FOO", "bAr")));
   }
@@ -91,14 +91,14 @@ public class PathTypeTest {
     ASSERT.that(windows.getOtherSeparators()).is("/");
     ASSERT.that(windows.getCaseSensitivity()).is(CaseSensitivity.CASE_INSENSITIVE_ASCII);
 
-    ASSERT.that(windows.getName("foo", false)).isEqualTo(Name.caseInsensitiveAscii("foo"));
-    ASSERT.that(windows.getName("C:", true)).isEqualTo(windows.getName("c:", true));
+    ASSERT.that(windows.getName("foo")).isEqualTo(Name.caseInsensitiveAscii("foo"));
+    ASSERT.that(windows.getRootName("C:")).isEqualTo(windows.getRootName("c:"));
 
     SimplePath path = windows.parsePath("C:\\", "foo", "bar");
     ASSERT.that(path.isAbsolute()).isTrue();
     ASSERT.that(String.valueOf(path.root())).is("C:");
-    ASSERT.that(path.root()).isEqualTo(windows.getName("C:", true));
-    ASSERT.that(path.root()).isEqualTo(windows.getName("c:", true));
+    ASSERT.that(path.root()).isEqualTo(windows.getRootName("C:"));
+    ASSERT.that(path.root()).isEqualTo(windows.getRootName("c:"));
     ASSERT.that(path.names())
         .iteratesAs(Name.caseInsensitiveAscii("foo"), Name.caseInsensitiveAscii("bar"));
     ASSERT.that(windows.toString(path)).is("C:\\foo\\bar");
@@ -120,16 +120,11 @@ public class PathTypeTest {
     }
 
     @Override
-    public Name getName(String name, boolean root) {
-      return getCaseSensitivity().createName(name);
-    }
-
-    @Override
     public SimplePath parsePath(String first, String... more) {
       String joined = Joiner.on(getSeparator()).join(Lists.asList(first, more));
       Name root = null;
       if (joined.startsWith("$")) {
-        root = getName("$", true);
+        root = getRootName("$");
         joined = joined.substring(1);
       }
 

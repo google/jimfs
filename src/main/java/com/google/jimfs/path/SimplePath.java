@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
 
 /**
- * Simple struct representing a path.
+ * Simplest representation of a path; contains an optional root and a list of names.
  *
  * @author Colin Decker
  */

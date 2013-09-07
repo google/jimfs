@@ -75,7 +75,11 @@ public final class JimfsFileSystem extends FileSystem {
 
     Set<JimfsPath> rootPaths = new HashSet<>();
     for (String root : config.getRoots()) {
-      rootPaths.add(pathService.createRoot(pathService.type().getName(root, true)));
+      JimfsPath rootPath = pathService.parsePath(root);
+      if (!rootPath.isAbsolute() && rootPath.getNameCount() == 0) {
+        throw new IllegalArgumentException("Invalid root path: " + root);
+      }
+      rootPaths.add(rootPath);
     }
     this.rootDirPaths = ImmutableSet.copyOf(rootPaths);
     this.workingDirPath = getPath(config.getWorkingDirectory());
@@ -138,7 +142,7 @@ public final class JimfsFileSystem extends FileSystem {
 
   @Override
   public String getSeparator() {
-    return pathService.type().getSeparator();
+    return pathService.getSeparator();
   }
 
   @SuppressWarnings("unchecked") // safe because set is immutable

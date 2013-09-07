@@ -43,14 +43,14 @@ public abstract class PathService {
     this.type = checkNotNull(type);
   }
 
-  /**
-   * Returns the path type for this service.
-   */
-  public final PathType type() {
-    return type;
-  }
-
   private volatile JimfsPath emptyPath;
+
+  /**
+   * Returns the default path separator.
+   */
+  public String getSeparator() {
+    return type.getSeparator();
+  }
 
   /**
    * Returns an empty path which has a single name, the empty string.
@@ -59,7 +59,7 @@ public abstract class PathService {
     JimfsPath result = emptyPath;
     if (result == null) {
       // use createPathInternal to avoid recursive call from createPath()
-      result = createPathInternal(null, ImmutableList.of(type.getName("", false)));
+      result = createPathInternal(null, ImmutableList.of(type.getName("")));
       emptyPath = result;
       return result;
     }

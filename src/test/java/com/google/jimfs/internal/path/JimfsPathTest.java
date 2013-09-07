@@ -142,7 +142,7 @@ public class JimfsPathTest {
 
   @Test
   public void testResolve_fromRoot() {
-    Path root = pathService.createRoot(pathService.type().getName("/", true));
+    Path root = pathService.parsePath("/");
 
     assertResolvedPathEquals("/foo", root, "foo");
     assertResolvedPathEquals("/foo/bar", root, "foo/bar");

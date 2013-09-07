@@ -110,9 +110,20 @@ public abstract class PathType {
   }
 
   /**
-   * Returns a name object for the given string.
+   * Returns the name for a root. By default, just calls {@link #getName(String)}. Override if
+   * something else is needed.
    */
-  public abstract Name getName(String name, boolean root);
+  public Name getRootName(String name) {
+    return getName(name);
+  }
+
+  /**
+   * Returns a name object for the given string. By default, just returns a name for this type's
+   * case sensitivity. Override if something else is needed.
+   */
+  public Name getName(String name) {
+    return getCaseSensitivity().createName(name);
+  }
 
   /**
    * Returns a view of the given iterable of non-root name strings as name objects.
@@ -122,7 +133,7 @@ public abstract class PathType {
       @Nullable
       @Override
       public Name apply(String input) {
-        return getName(input, false);
+        return getName(input);
       }
     });
   }
@@ -131,7 +142,7 @@ public abstract class PathType {
    * Returns an empty path.
    */
   protected final SimplePath emptyPath() {
-    return new SimplePath(null, ImmutableList.of(getName("", false)));
+    return new SimplePath(null, ImmutableList.of(getName("")));
   }
 
   /**
@@ -149,6 +160,9 @@ public abstract class PathType {
    */
   private static final class UnixPathType extends PathType {
 
+    /**
+     * Default Unix path type, with case sensitive names as in Linux.
+     */
     private static final UnixPathType INSTANCE = new UnixPathType(CaseSensitivity.CASE_SENSITIVE);
 
     private static final Joiner JOINER = Joiner.on('/');
@@ -159,11 +173,6 @@ public abstract class PathType {
     }
 
     @Override
-    public Name getName(String name, boolean root) {
-      return getCaseSensitivity().createName(name);
-    }
-
-    @Override
     public SimplePath parsePath(String first, String... more) {
       if (first.isEmpty() && more.length == 0) {
         return emptyPath();
@@ -171,7 +180,7 @@ public abstract class PathType {
 
       Name root = null;
       if (first.startsWith("/")) {
-        root = getName("/", true);
+        root = getRootName("/");
         first = first.substring(1);
       }
 
@@ -195,6 +204,10 @@ public abstract class PathType {
    */
   private static final class WindowsPathType extends PathType {
 
+    /**
+     * Default Windows path type, with ASCII case insensitive names, as Windows is case insensitive
+     * by default and ASCII case insensitivity should be fine for most usages.
+     */
     private static final WindowsPathType INSTANCE
         = new WindowsPathType(CaseSensitivity.CASE_INSENSITIVE_ASCII);
 
@@ -207,12 +220,9 @@ public abstract class PathType {
     }
 
     @Override
-    public Name getName(String name, boolean root) {
-      if (root) {
-        Name canonical = getCaseSensitivity().createName(Ascii.toUpperCase(name) + "\\");
-        return Name.create(name, canonical);
-      }
-      return getCaseSensitivity().createName(name);
+    public Name getRootName(String name) {
+      Name canonical = getName(Ascii.toUpperCase(name) + "\\");
+      return Name.create(name, canonical);
     }
 
     @Override
@@ -223,7 +233,7 @@ public abstract class PathType {
           && isLetter(joined.charAt(0))
           && joined.charAt(1) == ':') {
         // TODO(cgdecker): If the full path is "C:\", should the root be "C:" or "C:\"?
-        root = getName(joined.substring(0, 2), true);
+        root = getRootName(joined.substring(0, 2));
         joined = joined.substring(2);
       }
 

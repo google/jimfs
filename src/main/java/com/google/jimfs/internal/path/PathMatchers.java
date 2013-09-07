@@ -19,6 +19,7 @@ package com.google.jimfs.internal.path;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 
 import java.nio.file.FileSystem;
@@ -77,11 +78,12 @@ final class PathMatchers {
    * {@code PathMatcher} that matches the {@code toString()} form of a {@code Path} against a regex
    * {@code Pattern}.
    */
-  private static class RegexPathMatcher implements PathMatcher {
+  @VisibleForTesting
+  static final class RegexPathMatcher implements PathMatcher {
 
     private final Pattern pattern;
 
-    public RegexPathMatcher(Pattern pattern) {
+    private RegexPathMatcher(Pattern pattern) {
       this.pattern = checkNotNull(pattern);
     }
 
