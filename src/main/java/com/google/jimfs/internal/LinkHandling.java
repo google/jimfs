@@ -26,7 +26,7 @@ import java.util.Arrays;
  *
  * @author Colin Decker
  */
-public enum LinkHandling {
+enum LinkHandling {
   /**
    * Follow symbolic link if it's the last file in a path.
    */

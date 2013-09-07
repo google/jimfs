@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-public final class LookupResult {
+final class LookupResult {
 
   /**
    * Returns a lookup result with neither the parent nor the file.

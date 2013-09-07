@@ -22,7 +22,6 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -37,24 +37,26 @@ import java.util.Map;
  *
  * @author Colin Decker
  */
-public class UserDefinedAttributeProviderTest extends AttributeProviderTest {
+public class UserDefinedAttributeProviderTest
+    extends AttributeProviderTest<UserDefinedAttributeProvider> {
 
   @Override
-  protected Iterable<? extends AttributeProvider> createProviders() {
-    return ImmutableList.of(new UserDefinedAttributeProvider());
+  protected UserDefinedAttributeProvider createProvider() {
+    return new UserDefinedAttributeProvider();
   }
 
   @Test
   public void testInitialAttributes() {
     // no initial attributes
-    ASSERT.that(ImmutableList.copyOf(file.getAttributeKeys())).isEmpty();
+    ASSERT.that(ImmutableList.copyOf(store.getAttributeKeys())).isEmpty();
   }
 
   @Test
   public void testBasicProperties() {
     UserDefinedAttributeProvider provider = new UserDefinedAttributeProvider();
+    assertCannotSetOnCreate("anything");
     ASSERT.that(provider.isSettableOnCreate("anything")).isFalse();
-    ASSERT.that(provider.isSettable(file, "anything")).isTrue();
+    ASSERT.that(provider.isSettable(store, "anything")).isTrue();
     ASSERT.that(provider.acceptedTypes("anything"))
         .is(ImmutableSet.of(byte[].class, ByteBuffer.class));
   }
@@ -62,18 +64,18 @@ public class UserDefinedAttributeProviderTest extends AttributeProviderTest {
   @Test
   public void testGettingAndSetting() {
     byte[] bytes = {0, 1, 2, 3};
-    service.setAttribute(file, "user", "one", bytes);
-    service.setAttribute(file, "user:two", ByteBuffer.wrap(bytes));
+    provider.set(store, "one", bytes);
+    provider.set(store, "two", ByteBuffer.wrap(bytes));
 
-    byte[] one = service.getAttribute(file, "user:one");
-    byte[] two = service.getAttribute(file, "user", "two");
+    byte[] one = (byte[]) provider.get(store, "one");
+    byte[] two = (byte[]) provider.get(store, "two");
     ASSERT.that(Arrays.equals(one, bytes)).isTrue();
     ASSERT.that(Arrays.equals(two, bytes)).isTrue();
 
-    assertSetOnCreateFails("user:foo", bytes);
-    assertSetFails("user:foo", "hello");
+    assertSetFails("foo", "hello");
 
-    Map<String, Object> map = service.readAttributes(file, "user:*");
+    Map<String, Object> map = new HashMap<>();
+    provider.readAll(store, map);
     ASSERT.that(map.size()).is(2);
     ASSERT.that(Arrays.equals((byte[]) map.get("one"), bytes)).isTrue();
     ASSERT.that(Arrays.equals((byte[]) map.get("two"), bytes)).isTrue();
@@ -81,8 +83,7 @@ public class UserDefinedAttributeProviderTest extends AttributeProviderTest {
 
   @Test
   public void testView() throws IOException {
-    UserDefinedFileAttributeView view =
-        service.getFileAttributeView(fileSupplier(), UserDefinedFileAttributeView.class);
+    UserDefinedFileAttributeView view = provider.getView(attributeStoreSupplier());
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("user");
@@ -95,8 +96,7 @@ public class UserDefinedAttributeProviderTest extends AttributeProviderTest {
     view.write("b2", ByteBuffer.wrap(b2));
 
     ASSERT.that(view.list()).has().allOf("b1", "b2");
-    ASSERT.that(service.readAttributes(file, "user:*").keySet())
-        .has().allOf("b1", "b2");
+    ASSERT.that(store.getAttributeKeys()).has().exactly("user:b1", "user:b2");
 
     ASSERT.that(view.size("b1")).is(3);
     ASSERT.that(view.size("b2")).is(5);
@@ -113,8 +113,7 @@ public class UserDefinedAttributeProviderTest extends AttributeProviderTest {
     view.delete("b2");
 
     ASSERT.that(view.list()).has().exactly("b1");
-    ASSERT.that(service.readAttributes(file, "user:*").keySet())
-        .has().exactly("b1");
+    ASSERT.that(store.getAttributeKeys()).has().exactly("user:b1");
 
     try {
       view.size("b2");

@@ -21,78 +21,87 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.BasicFileAttribute;
+import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.attribute.TestAttributeStore;
 import com.google.jimfs.common.IoSupplier;
-import com.google.jimfs.internal.JimfsFileStore;
-import com.google.jimfs.internal.file.File;
 
 import org.junit.Before;
 
 import java.util.Map;
 
 /**
- * Base class for tests of individual {@link AttributeProvider} implementations. Implementations
- * are tested through an {@link JimfsFileStore}, since some of the functionality of the
- * behavior specified by the provider is only exposed through the service methods.
+ * Base class for tests of individual {@link AttributeProvider} implementations.
  *
  * @author Colin Decker
  */
-public abstract class AttributeProviderTest {
+public abstract class AttributeProviderTest<P extends AttributeProvider> {
 
-  protected JimfsFileStore service;
-  protected File file;
-  protected File dir;
+  protected P provider;
+  protected TestAttributeStore store;
 
   /**
    * Create the needed providers, including the provider being tested.
    */
-  protected abstract Iterable<? extends AttributeProvider> createProviders();
+  protected abstract P createProvider();
 
   @Before
   public void setUp() {
-    this.service = new JimfsFileStore("foo", createProviders());
-    this.file = service.createRegularFile();
-    this.dir = service.createDirectory();
+    this.provider = createProvider();
+    this.store = new TestAttributeStore(0, TestAttributeStore.Type.DIRECTORY);
+    provider.setInitial(store);
   }
 
-  protected IoSupplier<File> fileSupplier() {
-    return IoSupplier.of(file);
+  protected IoSupplier<AttributeStore> attributeStoreSupplier() {
+    return IoSupplier.<AttributeStore>of(store);
   }
 
-  protected void assertContainsAll(File file, ImmutableMap<String, Object> expectedAttributes) {
+  protected void assertContainsAll(
+      AttributeStore store, ImmutableMap<String, Object> expectedAttributes) {
     for (Map.Entry<String, Object> entry : expectedAttributes.entrySet()) {
       String attribute = entry.getKey();
       Object value = entry.getValue();
 
-      ASSERT.that(service.getAttribute(file, attribute)).is(value);
+      ASSERT.that(provider.get(store, attribute)).is(value);
     }
   }
 
   protected void assertSetAndGetSucceeds(String attribute, Object value) {
-    service.setAttribute(file, attribute, value);
-    ASSERT.that(service.getAttribute(file, attribute)).is(value);
+    ASSERT.that(provider.isSettable(store, attribute));
+    provider.set(store, attribute, value);
+    ASSERT.that(provider.get(store, attribute)).is(value);
   }
 
-  protected void assertSetOnCreateSucceeds(String attribute, Object value) {
-    File file = service.createRegularFile(new BasicFileAttribute<>(attribute, value));
-    ASSERT.that(service.getAttribute(file, attribute)).is(value);
-  }
-
-  @SuppressWarnings("EmptyCatchBlock") // why am I having to suppress this here?
-  protected void assertSetFails(String attribute, Object value) {
-    try {
-      service.setAttribute(file, attribute, value);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+  protected void assertCannotSet(String attribute) {
+    ASSERT.that(provider.isSettable(store, attribute)).isFalse();
   }
 
   @SuppressWarnings("EmptyCatchBlock")
-  protected void assertSetOnCreateFails(String attribute, Object value) {
-    try {
-      service.createRegularFile(new BasicFileAttribute<>(attribute, value));
-      fail();
-    } catch (UnsupportedOperationException expected) {
+  protected void assertSetFails(String attribute, Object value) {
+    // if the value is not one of the accepted types, we know the set will fail at a higher level
+    boolean accepted = false;
+    for (Class<?> type : provider.acceptedTypes(attribute)) {
+      if (type.isInstance(value)) {
+        accepted = true;
+      }
     }
+
+    if (accepted) {
+      // if the value was one of the accepted types, need to try setting it to see if there are any
+      // further checks that cause it to fail
+      try {
+        provider.set(store, attribute, value);
+        fail();
+      } catch (Exception expected) {
+      }
+    }
+
+  }
+
+  protected void assertCanSetOnCreate(String attribute) {
+    ASSERT.that(provider.isSettableOnCreate(attribute)).isTrue();
+  }
+
+  protected void assertCannotSetOnCreate(String attribute) {
+    ASSERT.that(provider.isSettableOnCreate(attribute)).isFalse();
   }
 }

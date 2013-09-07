@@ -22,6 +22,8 @@ import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
 import com.google.jimfs.attribute.AttributeStore;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -111,8 +113,8 @@ public final class File implements AttributeStore {
   }
 
   @Override
-  public Iterable<String> getAttributeKeys() {
-    return attributes.keySet();
+  public Set<String> getAttributeKeys() {
+    return Collections.unmodifiableSet(attributes.keySet());
   }
 
   @Override

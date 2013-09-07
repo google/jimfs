@@ -145,7 +145,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   /**
    * Returns the file tree to use for the given path.
    */
-  public static FileTree getFileTree(JimfsPath path) {
+  private static FileTree getFileTree(JimfsPath path) {
     return ((JimfsFileSystem) path.getFileSystem()).getFileTree(path);
   }
 

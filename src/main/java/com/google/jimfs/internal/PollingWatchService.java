@@ -55,7 +55,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  *
  * @author Colin Decker
  */
-public final class PollingWatchService extends AbstractWatchService {
+final class PollingWatchService extends AbstractWatchService {
 
   private final ScheduledExecutorService pollingService
       = Executors.newSingleThreadScheduledExecutor();

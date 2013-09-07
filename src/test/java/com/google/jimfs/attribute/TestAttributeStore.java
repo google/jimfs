@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Colin Decker
@@ -110,7 +111,7 @@ public class TestAttributeStore implements AttributeStore {
   }
 
   @Override
-  public Iterable<String> getAttributeKeys() {
+  public Set<String> getAttributeKeys() {
     return attributes.keySet();
   }
 

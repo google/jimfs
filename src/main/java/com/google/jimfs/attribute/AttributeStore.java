@@ -16,6 +16,8 @@
 
 package com.google.jimfs.attribute;
 
+import java.util.Set;
+
 /**
  * An object that stores the attributes of a file.
  *
@@ -86,7 +88,7 @@ public interface AttributeStore {
   /**
    * Returns the attribute keys contained in the attributes map for the file.
    */
-  Iterable<String> getAttributeKeys();
+  Set<String> getAttributeKeys();
 
   /**
    * Gets the value of the attribute with the given key.

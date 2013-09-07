@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-public final class JimfsFileStore extends FileStore {
+final class JimfsFileStore extends FileStore {
 
   private static final String ALL_ATTRIBUTES = "*";
 

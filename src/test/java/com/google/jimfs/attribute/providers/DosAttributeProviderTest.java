@@ -16,12 +16,10 @@
 
 package com.google.jimfs.attribute.providers;
 
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static junit.framework.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -35,39 +33,35 @@ import java.nio.file.attribute.FileTime;
  *
  * @author Colin Decker
  */
-public class DosAttributeProviderTest extends AttributeProviderTest {
+public class DosAttributeProviderTest extends AttributeProviderTest<DosAttributeProvider> {
 
   private static final ImmutableList<String> DOS_ATTRIBUTES =
       ImmutableList.of("hidden", "archive", "readonly", "system");
 
   @Override
-  protected Iterable<? extends AttributeProvider> createProviders() {
+  protected DosAttributeProvider createProvider() {
     BasicAttributeProvider basic = new BasicAttributeProvider();
-    OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal("user"));
-    DosAttributeProvider dos = new DosAttributeProvider(basic);
-    return ImmutableList.of(basic, owner, dos);
+    return new DosAttributeProvider(basic);
   }
 
   @Test
   public void testInitialAttributes() {
     for (String attribute : DOS_ATTRIBUTES) {
-      ASSERT.that(service.getAttribute(file, "dos:" + attribute)).is(false);
+      ASSERT.that(provider.get(store, attribute)).is(false);
     }
   }
 
   @Test
   public void testSet() {
     for (String attribute : DOS_ATTRIBUTES) {
-      assertSetAndGetSucceeds("dos:" + attribute, true);
-      assertSetAndGetSucceeds("dos:" + attribute, false);
-      assertSetOnCreateFails("dos:" + attribute, true);
+      assertSetAndGetSucceeds(attribute, true);
+      assertCannotSetOnCreate(attribute);
     }
   }
 
   @Test
   public void testView() throws IOException {
-    DosFileAttributeView view =
-        service.getFileAttributeView(fileSupplier(), DosFileAttributeView.class);
+    DosFileAttributeView view = provider.getView(attributeStoreSupplier());
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("dos");
@@ -100,15 +94,15 @@ public class DosAttributeProviderTest extends AttributeProviderTest {
 
   @Test
   public void testAttributes() {
-    DosFileAttributes attrs = service.readAttributes(file, DosFileAttributes.class);
+    DosFileAttributes attrs = provider.read(store);
     ASSERT.that(attrs.isHidden()).isFalse();
     ASSERT.that(attrs.isArchive()).isFalse();
     ASSERT.that(attrs.isReadOnly()).isFalse();
     ASSERT.that(attrs.isSystem()).isFalse();
 
-    service.setAttribute(file, "dos:hidden", true);
+    store.setAttribute("dos:hidden", true);
 
-    attrs = service.readAttributes(file, DosFileAttributes.class);
+    attrs = provider.read(store);
     ASSERT.that(attrs.isHidden()).isTrue();
     ASSERT.that(attrs.isArchive()).isFalse();
     ASSERT.that(attrs.isReadOnly()).isFalse();

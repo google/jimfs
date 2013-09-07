@@ -19,9 +19,6 @@ package com.google.jimfs.attribute.providers;
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
 
-import com.google.common.collect.ImmutableList;
-import com.google.jimfs.attribute.AttributeProvider;
-
 import org.junit.Test;
 
 import java.io.IOException;
@@ -32,35 +29,34 @@ import java.nio.file.attribute.FileOwnerAttributeView;
  *
  * @author Colin Decker
  */
-public class OwnerAttributeProviderTest extends AttributeProviderTest {
+public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttributeProvider> {
 
   @Override
-  protected Iterable<? extends AttributeProvider> createProviders() {
-    return ImmutableList.of(new OwnerAttributeProvider(createUserPrincipal("user")));
+  protected OwnerAttributeProvider createProvider() {
+    return new OwnerAttributeProvider(createUserPrincipal("user"));
   }
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(service.getAttribute(file, "owner:owner")).is(createUserPrincipal("user"));
+    ASSERT.that(provider.get(store, "owner")).isEqualTo(createUserPrincipal("user"));
   }
 
   @Test
   public void testSet() {
-    assertSetOnCreateSucceeds("owner:owner", createUserPrincipal("root"));
-    assertSetFails("owner:owner", "root");
+    assertCanSetOnCreate("owner");
+    assertSetFails("owner", "root");
   }
 
   @Test
   public void testView() throws IOException {
-    FileOwnerAttributeView view = service.getFileAttributeView(
-        fileSupplier(), FileOwnerAttributeView.class);
+    FileOwnerAttributeView view = provider.getView(attributeStoreSupplier());
     assert view != null;
 
     ASSERT.that(view.name()).is("owner");
-    ASSERT.that(view.getOwner()).is(createUserPrincipal("user"));
+    ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("user"));
 
     view.setOwner(createUserPrincipal("root"));
-    ASSERT.that(view.getOwner()).is(createUserPrincipal("root"));
-    ASSERT.that(file.getAttribute("owner:owner")).is(createUserPrincipal("root"));
+    ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("root"));
+    ASSERT.that(store.getAttribute("owner:owner")).isEqualTo(createUserPrincipal("root"));
   }
 }

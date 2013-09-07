@@ -84,7 +84,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-public final class FileTree {
+final class FileTree {
 
   private final File base;
   private final JimfsPath basePath;

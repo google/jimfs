@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * @author Colin Decker
  */
-public final class JimfsFileSystem extends FileSystem {
+final class JimfsFileSystem extends FileSystem {
 
   private final JimfsFileSystemProvider provider;
   private final URI uri;

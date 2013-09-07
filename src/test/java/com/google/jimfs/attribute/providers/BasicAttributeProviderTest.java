@@ -18,7 +18,6 @@ package com.google.jimfs.attribute.providers;
 
 import static org.truth0.Truth.ASSERT;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
 import org.junit.Test;
@@ -33,65 +32,49 @@ import java.nio.file.attribute.FileTime;
  *
  * @author Colin Decker
  */
-public class BasicAttributeProviderTest extends AttributeProviderTest {
+public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttributeProvider> {
 
   @Override
-  protected Iterable<BasicAttributeProvider> createProviders() {
-    return ImmutableList.of(new BasicAttributeProvider());
+  protected BasicAttributeProvider createProvider() {
+    return new BasicAttributeProvider();
   }
 
   @Test
   public void testInitialAttributes() {
-    long time = file.getCreationTime();
+    long time = store.getCreationTime();
     ASSERT.that(time).isNotEqualTo(0L);
-    ASSERT.that(time).isEqualTo(file.getLastAccessTime());
-    ASSERT.that(time).isEqualTo(file.getLastModifiedTime());
+    ASSERT.that(time).isEqualTo(store.getLastAccessTime());
+    ASSERT.that(time).isEqualTo(store.getLastModifiedTime());
 
-    assertContainsAll(file,
+    assertContainsAll(store,
         ImmutableMap.<String, Object>builder()
-            .put("basic:fileKey", 0L)
-            .put("basic:size", 0L)
-            .put("basic:isDirectory", false)
-            .put("basic:isRegularFile", true)
-            .put("basic:isSymbolicLink", false)
-            .put("basic:isOther", false)
-            .build());
-
-    time = dir.getCreationTime();
-    ASSERT.that(time).isNotEqualTo(0L);
-    ASSERT.that(time).isEqualTo(dir.getLastAccessTime());
-    ASSERT.that(time).isEqualTo(dir.getLastModifiedTime());
-
-    assertContainsAll(dir,
-        ImmutableMap.<String, Object>builder()
-            .put("basic:fileKey", 1L)
-            .put("basic:size", 0L)
-            .put("basic:isDirectory", true)
-            .put("basic:isRegularFile", false)
-            .put("basic:isSymbolicLink", false)
-            .put("basic:isOther", false)
+            .put("fileKey", 0L)
+            .put("size", 0L)
+            .put("isDirectory", true)
+            .put("isRegularFile", false)
+            .put("isSymbolicLink", false)
+            .put("isOther", false)
             .build());
   }
 
   @Test
   public void testSet() {
     FileTime time = FileTime.fromMillis(0L);
-    assertSetAndGetSucceeds("basic:creationTime", time);
-    assertSetAndGetSucceeds("basic:lastModifiedTime", time);
-    assertSetAndGetSucceeds("basic:lastAccessTime", time);
-    assertSetFails("basic:fileKey", 10L);
-    assertSetFails("basic:size", 10L);
-    assertSetFails("basic:isRegularFile", true);
-    assertSetFails("basic:isDirectory", true);
-    assertSetFails("basic:isSymbolicLink", true);
-    assertSetFails("basic:isOther", true);
-    assertSetFails("basic:creationTime", "foo");
+    assertSetAndGetSucceeds("creationTime", time);
+    assertSetAndGetSucceeds("lastModifiedTime", time);
+    assertSetAndGetSucceeds("lastAccessTime", time);
+    assertCannotSet("fileKey");
+    assertCannotSet("size");
+    assertCannotSet("isRegularFile");
+    assertCannotSet("isDirectory");
+    assertCannotSet("isSymbolicLink");
+    assertCannotSet("isOther");
+    assertSetFails("creationTime", "foo");
   }
 
   @Test
   public void testView() throws IOException {
-    BasicFileAttributeView view = service.getFileAttributeView(
-        fileSupplier(), BasicFileAttributeView.class);
+    BasicFileAttributeView view = provider.getView(attributeStoreSupplier());
     assert view != null;
     ASSERT.that(view.name()).is("basic");
 
@@ -119,10 +102,10 @@ public class BasicAttributeProviderTest extends AttributeProviderTest {
 
   @Test
   public void testAttributes() {
-    BasicFileAttributes attrs = service.readAttributes(file, BasicFileAttributes.class);
+    BasicFileAttributes attrs = provider.read(store);
     ASSERT.that(attrs.fileKey()).is(0L);
-
-    attrs = service.readAttributes(dir, BasicFileAttributes.class);
-    ASSERT.that(attrs.fileKey()).is(1L);
+    ASSERT.that(attrs.isDirectory()).isTrue();
+    ASSERT.that(attrs.isRegularFile()).isFalse();
+    ASSERT.that(attrs.creationTime()).isNotNull();
   }
 }

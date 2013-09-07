@@ -16,15 +16,14 @@
 
 package com.google.jimfs.attribute.providers;
 
+import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
+import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermissions;
 
 /**
  * Tests for {@link UnixAttributeProvider}.
@@ -32,52 +31,59 @@ import java.nio.file.attribute.FileTime;
  * @author Colin Decker
  */
 @SuppressWarnings("OctalInteger")
-public class UnixAttributeProviderTest extends AttributeProviderTest {
+public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttributeProvider> {
 
   @Override
-  protected Iterable<? extends AttributeProvider> createProviders() {
-    Iterable<? extends AttributeProvider> posixProviders = new PosixAttributeProviderTest()
-        .createProviders();
-    UnixAttributeProvider unix = new UnixAttributeProvider(
-        Iterables.getOnlyElement(Iterables.filter(posixProviders, PosixAttributeProvider.class)));
-    return Iterables.concat(posixProviders, ImmutableList.of(unix));
+  protected UnixAttributeProvider createProvider() {
+    PosixAttributeProvider posixProvider = new PosixAttributeProviderTest().createProvider();
+    return new UnixAttributeProvider(posixProvider);
   }
 
   @Test
   public void testInitialAttributes() {
+    // unix provider relies on other providers to set their initial attributes
+    BasicAttributeProvider basic = new BasicAttributeProvider();
+    basic.setInitial(store);
+
+    OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal("foo"));
+    owner.setInitial(store);
+
+    PosixAttributeProvider posix = new PosixAttributeProvider(createGroupPrincipal("bar"),
+        PosixFilePermissions.fromString("rw-r--r--"), basic, owner);
+    posix.setInitial(store);
+
     // these are pretty much meaningless here since they aren't properties this
     // file system actually has, so don't really care about the exact value of these
-    ASSERT.that(service.getAttribute(file, "unix:uid")).isA(Integer.class);
-    ASSERT.that(service.getAttribute(file, "unix:gid")).isA(Integer.class);
-    ASSERT.that(service.getAttribute(file, "unix:rdev")).is(0L);
-    ASSERT.that(service.getAttribute(file, "unix:dev")).is(1L);
+    ASSERT.that(provider.get(store, "uid")).isA(Integer.class);
+    ASSERT.that(provider.get(store, "gid")).isA(Integer.class);
+    ASSERT.that(provider.get(store, "rdev")).is(0L);
+    ASSERT.that(provider.get(store, "dev")).is(1L);
     // TODO(cgdecker): File objects are kind of like inodes; should their IDs be inode IDs here?
     // even though we're already using that ID as the fileKey, which unix doesn't do
-    ASSERT.that(service.getAttribute(file, "unix:ino")).isA(Integer.class);
+    ASSERT.that(provider.get(store, "ino")).isA(Integer.class);
 
     // these have logical origins in attributes from other views
-    ASSERT.that(service.getAttribute(file, "unix:mode")).is(0644); // rw-r--r--
-    ASSERT.that(service.getAttribute(file, "unix:ctime"))
-        .isEqualTo(service.getAttribute(file, "basic:creationTime"));
+    ASSERT.that(provider.get(store, "mode")).is(0644); // rw-r--r--
+    ASSERT.that(provider.get(store, "ctime"))
+        .isEqualTo(FileTime.fromMillis(store.getCreationTime()));
 
     // this is based on a property this file system does actually have
-    ASSERT.that(service.getAttribute(file, "unix:nlink")).is(0);
-    file.linked();
-    file.linked();
-    ASSERT.that(service.getAttribute(file, "unix:nlink")).is(2);
-    file.unlinked();
-    ASSERT.that(service.getAttribute(file, "unix:nlink")).is(1);
+    ASSERT.that(provider.get(store, "nlink")).is(0);
+    store.setLinks(2);
+    ASSERT.that(provider.get(store, "nlink")).is(2);
+    store.setLinks(1);
+    ASSERT.that(provider.get(store, "nlink")).is(1);
   }
 
   @Test
   public void testSet() {
-    assertSetFails("unix:uid", 1);
-    assertSetFails("unix:gid", 1);
-    assertSetFails("unix:rdev", 1L);
-    assertSetFails("unix:dev", 2L);
-    assertSetFails("unix:ino", 3);
-    assertSetFails("unix:mode", 0777);
-    assertSetFails("unix:ctime", FileTime.fromMillis(0L));
-    assertSetFails("unix:nlink", 2);
+    assertCannotSet("unix:uid");
+    assertCannotSet("unix:gid");
+    assertCannotSet("unix:rdev");
+    assertCannotSet("unix:dev");
+    assertCannotSet("unix:ino");
+    assertCannotSet("unix:mode");
+    assertCannotSet("unix:ctime");
+    assertCannotSet("unix:nlink");
   }
 }

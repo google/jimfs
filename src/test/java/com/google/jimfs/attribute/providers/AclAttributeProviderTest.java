@@ -26,7 +26,6 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -40,7 +39,7 @@ import java.nio.file.attribute.UserPrincipal;
  *
  * @author Colin Decker
  */
-public class AclAttributeProviderTest extends AttributeProviderTest {
+public class AclAttributeProviderTest extends AttributeProviderTest<AclAttributeProvider> {
 
   private static final UserPrincipal USER = createUserPrincipal("user");
   private static final UserPrincipal FOO = createUserPrincipal("foo");
@@ -48,7 +47,7 @@ public class AclAttributeProviderTest extends AttributeProviderTest {
   private ImmutableList<AclEntry> defaultAcl;
 
   @Override
-  protected Iterable<? extends AttributeProvider> createProviders() {
+  protected AclAttributeProvider createProvider() {
     AclEntry entry1 = AclEntry.newBuilder()
         .setType(ALLOW)
         .setFlags(DIRECTORY_INHERIT)
@@ -62,34 +61,30 @@ public class AclAttributeProviderTest extends AttributeProviderTest {
     defaultAcl = ImmutableList.of(entry1, entry2);
 
     OwnerAttributeProvider owner = new OwnerAttributeProvider(USER);
-    AclAttributeProvider acl = new AclAttributeProvider(owner, defaultAcl);
-    return ImmutableList.of(owner, acl);
+    return new AclAttributeProvider(owner, defaultAcl);
   }
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(service.getAttribute(file, "acl", "acl")).is(defaultAcl);
-    ASSERT.that(service.getAttribute(file, "acl:owner")).is(USER);
+    ASSERT.that(provider.get(store, "acl")).is(defaultAcl);
   }
 
   @Test
   public void testSet() {
-    assertSetAndGetSucceeds("acl:acl", ImmutableList.of());
-    assertSetOnCreateFails("acl:acl", defaultAcl);
-    assertSetFails("acl:acl", ImmutableSet.of());
-    assertSetFails("acl:acl", ImmutableList.of("hello"));
+    assertSetAndGetSucceeds("acl", ImmutableList.of());
+    assertCannotSetOnCreate("acl");
+    assertSetFails("acl", ImmutableSet.of());
+    assertSetFails("acl", ImmutableList.of("hello"));
   }
 
   @Test
   public void testView() throws IOException {
-    AclFileAttributeView view =
-        service.getFileAttributeView(fileSupplier(), AclFileAttributeView.class);
+    AclFileAttributeView view = provider.getView(attributeStoreSupplier());
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("acl");
 
     ASSERT.that(view.getAcl()).is(defaultAcl);
-    ASSERT.that(view.getOwner()).is(USER);
 
     view.setAcl(ImmutableList.<AclEntry>of());
     view.setOwner(FOO);
@@ -97,6 +92,6 @@ public class AclAttributeProviderTest extends AttributeProviderTest {
     ASSERT.that(view.getAcl()).is(ImmutableList.<AclEntry>of());
     ASSERT.that(view.getOwner()).is(FOO);
 
-    ASSERT.that(file.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
+    ASSERT.that(store.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
   }
 }

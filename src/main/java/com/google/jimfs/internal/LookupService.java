@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-public final class LookupService {
+final class LookupService {
 
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
 
