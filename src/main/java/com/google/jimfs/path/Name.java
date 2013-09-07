@@ -30,10 +30,9 @@ import java.text.Collator;
  * keys for directory entries.
  *
  * <p>A name's string representation (returned by {@code toString()} is always the original string
- * it was created from. All names also have a canonical form which is used for determining the
- * equality of two names but never displayed or used for anything else. A {@linkplain #simple}
- * name has the original name itself as the canonical form. Other implementations do some form of
- * normalization to produce the canonical form.
+ * it was created from. A {@linkplain #simple} name just contains the string itself. Other names
+ * also have a normalized (in some way) canonical form which is used for determining the equality
+ * of two names but never displayed or used for anything else.
  *
  * <p>Different types of names (with different canonical forms) may not equal one another even if
  * they effectively have the same canonical form, as the canonical form is not required to be a
@@ -112,7 +111,7 @@ public abstract class Name {
       case "..":
         return PARENT;
       default:
-        return new CaseInsensitiveAsciiName(name);
+        return new CanonicalFormName(name, Ascii.toLowerCase(name));
     }
   }
 
@@ -161,46 +160,6 @@ public abstract class Name {
     @Override
     public int hashCode() {
       return string.hashCode();
-    }
-  }
-
-  /**
-   * Name wrapping a single string that that uses ASCII case insensitive equality.
-   */
-  private static final class CaseInsensitiveAsciiName extends Name {
-
-    private CaseInsensitiveAsciiName(String string) {
-      super(string);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof CaseInsensitiveAsciiName) {
-        CaseInsensitiveAsciiName other = (CaseInsensitiveAsciiName) obj;
-        String otherString = other.string;
-        if (string.length() != otherString.length()) {
-          return false;
-        }
-
-        for (int i = 0; i < string.length(); i++) {
-          char c = string.charAt(i);
-          char oc = otherString.charAt(i);
-          if (Ascii.toLowerCase(c) != Ascii.toLowerCase(oc)) {
-            return false;
-          }
-        }
-        return true;
-      }
-      return false;
-    }
-
-    @Override
-    public int hashCode() {
-      int hash = 31;
-      for (int i = 0; i < string.length(); i++) {
-        hash = 31 * hash + Ascii.toLowerCase(string.charAt(i));
-      }
-      return hash;
     }
   }
 
