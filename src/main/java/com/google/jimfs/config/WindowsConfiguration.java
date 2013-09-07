@@ -17,16 +17,16 @@
 package com.google.jimfs.config;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.attribute.AclAttributeProvider;
-import com.google.jimfs.internal.attribute.AttributeProvider;
-import com.google.jimfs.internal.attribute.BasicAttributeProvider;
-import com.google.jimfs.internal.attribute.DosAttributeProvider;
-import com.google.jimfs.internal.attribute.OwnerAttributeProvider;
-import com.google.jimfs.internal.attribute.UserDefinedAttributeProvider;
+import com.google.jimfs.attribute.AttributeProvider;
+import com.google.jimfs.attribute.providers.AclAttributeProvider;
+import com.google.jimfs.attribute.providers.BasicAttributeProvider;
+import com.google.jimfs.attribute.providers.DosAttributeProvider;
+import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
+import com.google.jimfs.attribute.providers.UserDefinedAttributeProvider;
 import com.google.jimfs.path.PathType;
 
 import java.io.IOException;

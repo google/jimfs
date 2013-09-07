@@ -16,15 +16,15 @@
 
 package com.google.jimfs.config;
 
-import static com.google.jimfs.internal.attribute.UserLookupService.createGroupPrincipal;
-import static com.google.jimfs.internal.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
+import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.attribute.AttributeProvider;
-import com.google.jimfs.internal.attribute.BasicAttributeProvider;
-import com.google.jimfs.internal.attribute.OwnerAttributeProvider;
-import com.google.jimfs.internal.attribute.PosixAttributeProvider;
-import com.google.jimfs.internal.attribute.UnixAttributeProvider;
+import com.google.jimfs.attribute.AttributeProvider;
+import com.google.jimfs.attribute.providers.BasicAttributeProvider;
+import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
+import com.google.jimfs.attribute.providers.PosixAttributeProvider;
+import com.google.jimfs.attribute.providers.UnixAttributeProvider;
 import com.google.jimfs.path.PathType;
 
 import java.nio.file.Path;

@@ -19,7 +19,7 @@ package com.google.jimfs.config;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.attribute.AttributeProvider;
+import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.path.PathType;
 
 import java.io.IOException;
