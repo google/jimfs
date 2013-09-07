@@ -41,9 +41,18 @@ import java.util.Map;
 public final class UserDefinedAttributeProvider implements AttributeProvider,
     AttributeViewProvider<UserDefinedFileAttributeView> {
 
+  /**
+   * The singleton instance of {@link UserDefinedAttributeProvider}.
+   */
+  public static final UserDefinedAttributeProvider INSTANCE = new UserDefinedAttributeProvider();
+
+  public static final String VIEW = "user";
+
+  private UserDefinedAttributeProvider() {}
+
   @Override
   public String name() {
-    return "user";
+    return VIEW;
   }
 
   @Override

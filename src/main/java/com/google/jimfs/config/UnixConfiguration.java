@@ -21,7 +21,6 @@ import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.providers.BasicAttributeProvider;
 import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
 import com.google.jimfs.attribute.providers.PosixAttributeProvider;
 import com.google.jimfs.attribute.providers.UnixAttributeProvider;
@@ -79,13 +78,12 @@ public final class UnixConfiguration extends JimfsConfiguration {
 
   @Override
   public Iterable<AttributeProvider> getAttributeProviders() {
-    BasicAttributeProvider basic = new BasicAttributeProvider();
     OwnerAttributeProvider owner =
         new OwnerAttributeProvider(createUserPrincipal(defaultOwner));
     PosixAttributeProvider posix =
         new PosixAttributeProvider(createGroupPrincipal(defaultGroup),
-            PosixFilePermissions.fromString(defaultPermissions), basic, owner);
+            PosixFilePermissions.fromString(defaultPermissions), owner);
     UnixAttributeProvider unix = new UnixAttributeProvider(posix);
-    return ImmutableSet.<AttributeProvider>of(basic, owner, posix, unix);
+    return ImmutableSet.<AttributeProvider>of(owner, posix, unix);
   }
 }

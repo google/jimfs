@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.providers.AclAttributeProvider;
-import com.google.jimfs.attribute.providers.BasicAttributeProvider;
 import com.google.jimfs.attribute.providers.DosAttributeProvider;
 import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
 import com.google.jimfs.attribute.providers.UserDefinedAttributeProvider;
@@ -79,11 +78,12 @@ public final class WindowsConfiguration extends JimfsConfiguration {
 
   @Override
   public Iterable<AttributeProvider> getAttributeProviders() {
-    BasicAttributeProvider basic = new BasicAttributeProvider();
     OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal(defaultUser));
-    DosAttributeProvider dos = new DosAttributeProvider(basic);
     AclAttributeProvider acl = new AclAttributeProvider(owner, defaultAclEntries);
-    UserDefinedAttributeProvider user = new UserDefinedAttributeProvider();
-    return ImmutableList.<AttributeProvider>of(basic, owner, dos, acl, user);
+    return ImmutableList.<AttributeProvider>of(
+        owner,
+        DosAttributeProvider.INSTANCE,
+        acl,
+        UserDefinedAttributeProvider.INSTANCE);
   }
 }

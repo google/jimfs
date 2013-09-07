@@ -59,16 +59,15 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
   private final GroupPrincipal defaultGroup;
   private final ImmutableSet<PosixFilePermission> defaultPermissions;
 
-  final BasicAttributeProvider basic;
   final OwnerAttributeProvider owner;
 
   public PosixAttributeProvider(
-      GroupPrincipal defaultGroup, Iterable<PosixFilePermission> defaultPermissions,
-      BasicAttributeProvider basic, OwnerAttributeProvider owner) {
+      GroupPrincipal defaultGroup,
+      Iterable<PosixFilePermission> defaultPermissions,
+      OwnerAttributeProvider owner) {
     super(ATTRIBUTES);
     this.defaultGroup = checkNotNull(defaultGroup);
     this.defaultPermissions = ImmutableSet.copyOf(defaultPermissions);
-    this.basic = checkNotNull(basic);
     this.owner = checkNotNull(owner);
   }
 
@@ -143,7 +142,7 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
 
     protected View(PosixAttributeProvider provider, IoSupplier<? extends AttributeStore> supplier) {
       super(provider, supplier);
-      this.basicView = provider.basic.getView(supplier);
+      this.basicView = BasicAttributeProvider.INSTANCE.getView(supplier);
       this.ownerView = provider.owner.getView(supplier);
     }
 

@@ -40,8 +40,7 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
 
   @Override
   protected DosAttributeProvider createProvider() {
-    BasicAttributeProvider basic = new BasicAttributeProvider();
-    return new DosAttributeProvider(basic);
+    return DosAttributeProvider.INSTANCE;
   }
 
   @Test

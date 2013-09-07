@@ -36,7 +36,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Override
   protected BasicAttributeProvider createProvider() {
-    return new BasicAttributeProvider();
+    return BasicAttributeProvider.INSTANCE;
   }
 
   @Test

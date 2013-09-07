@@ -64,7 +64,12 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
       AttributeSpec.unsettable("isSymbolicLink", Boolean.class),
       AttributeSpec.unsettable("isOther", Boolean.class));
 
-  public BasicAttributeProvider() {
+  /**
+   * The singleton instance of {@link BasicAttributeProvider}.
+   */
+  public static final BasicAttributeProvider INSTANCE = new BasicAttributeProvider();
+
+  private BasicAttributeProvider() {
     super(ATTRIBUTES);
   }
 

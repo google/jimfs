@@ -42,7 +42,7 @@ public class UserDefinedAttributeProviderTest
 
   @Override
   protected UserDefinedAttributeProvider createProvider() {
-    return new UserDefinedAttributeProvider();
+    return UserDefinedAttributeProvider.INSTANCE;
   }
 
   @Test
@@ -53,7 +53,6 @@ public class UserDefinedAttributeProviderTest
 
   @Test
   public void testBasicProperties() {
-    UserDefinedAttributeProvider provider = new UserDefinedAttributeProvider();
     assertCannotSetOnCreate("anything");
     ASSERT.that(provider.isSettableOnCreate("anything")).isFalse();
     ASSERT.that(provider.isSettable(store, "anything")).isTrue();

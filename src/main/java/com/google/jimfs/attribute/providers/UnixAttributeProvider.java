@@ -69,13 +69,11 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
         }
       });
 
-  private final BasicAttributeProvider basic;
   private final OwnerAttributeProvider owner;
   private final PosixAttributeProvider posix;
 
   public UnixAttributeProvider(PosixAttributeProvider posix) {
     super(ATTRIBUTES);
-    this.basic = checkNotNull(posix.basic);
     this.owner = checkNotNull(posix.owner);
     this.posix = checkNotNull(posix);
   }
@@ -110,7 +108,7 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
             = (Set<PosixFilePermission>) posix.get(store, PosixAttributeProvider.PERMISSIONS);
         return toMode(permissions);
       case CTIME:
-        return basic.get(store, BasicAttributeProvider.CREATION_TIME);
+        return BasicAttributeProvider.INSTANCE.get(store, BasicAttributeProvider.CREATION_TIME);
       case RDEV:
         return 0L;
       case DEV:

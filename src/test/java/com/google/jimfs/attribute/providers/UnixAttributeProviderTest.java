@@ -42,14 +42,13 @@ public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttribu
   @Test
   public void testInitialAttributes() {
     // unix provider relies on other providers to set their initial attributes
-    BasicAttributeProvider basic = new BasicAttributeProvider();
-    basic.setInitial(store);
+    BasicAttributeProvider.INSTANCE.setInitial(store);
 
     OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal("foo"));
     owner.setInitial(store);
 
     PosixAttributeProvider posix = new PosixAttributeProvider(createGroupPrincipal("bar"),
-        PosixFilePermissions.fromString("rw-r--r--"), basic, owner);
+        PosixFilePermissions.fromString("rw-r--r--"), owner);
     posix.setInitial(store);
 
     // these are pretty much meaningless here since they aren't properties this

@@ -16,8 +16,6 @@
 
 package com.google.jimfs.attribute.providers;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
@@ -54,11 +52,13 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
       AttributeSpec.settable(ARCHIVE, Boolean.class),
       AttributeSpec.settable(SYSTEM, Boolean.class));
 
-  private final BasicAttributeProvider basic;
+  /**
+   * The singleton instance of {@link DosAttributeProvider}.
+   */
+  public static final DosAttributeProvider INSTANCE = new DosAttributeProvider();
 
-  public DosAttributeProvider(BasicAttributeProvider basic) {
+  private DosAttributeProvider() {
     super(ATTRIBUTES);
-    this.basic = checkNotNull(basic);
   }
 
   @Override
@@ -113,7 +113,7 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
     public View(
         DosAttributeProvider attributeProvider, IoSupplier<? extends AttributeStore> supplier) {
       super(attributeProvider, supplier);
-      this.basicView = attributeProvider.basic.getView(supplier);
+      this.basicView = BasicAttributeProvider.INSTANCE.getView(supplier);
     }
 
     @Override
