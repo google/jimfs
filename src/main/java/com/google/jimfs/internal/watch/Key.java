@@ -38,8 +38,10 @@ import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link WatchKey} linked to a {@link AbstractWatchService}.
+ *
+ * @author Colin Decker
  */
-final class Key implements WatchKey {
+public final class Key implements WatchKey {
 
   @VisibleForTesting
   static final int MAX_QUEUE_SIZE = 256;
@@ -84,7 +86,7 @@ final class Key implements WatchKey {
    * Posts the given event to this key. After posting one or more events, {@link #signal()} must be
    * called to cause the key to be enqueued with the watch service.
    */
-  void post(WatchEvent<?> event) {
+  public void post(WatchEvent<?> event) {
     if (!events.offer(event)) {
       overflow.incrementAndGet();
     }
@@ -94,7 +96,7 @@ final class Key implements WatchKey {
    * Sets the state to SIGNALLED and enqueues this key with the watcher if it was previously in the
    * READY state.
    */
-  void signal() {
+  public void signal() {
     if (state.getAndSet(State.SIGNALLED) == State.READY) {
       watcher.enqueue(this);
     }

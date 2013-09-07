@@ -27,8 +27,10 @@ import javax.annotation.Nullable;
 
 /**
  * A basic implementation of {@link WatchEvent}.
+ *
+ * @author Colin Decker
  */
-final class Event<T> implements WatchEvent<T> {
+public final class Event<T> implements WatchEvent<T> {
 
   private final Kind<T> kind;
   private final int count;

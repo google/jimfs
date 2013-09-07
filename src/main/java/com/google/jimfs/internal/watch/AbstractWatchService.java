@@ -62,7 +62,11 @@ public abstract class AbstractWatchService implements WatchService {
     return new Key(this, watchable, eventTypes);
   }
 
-  boolean isOpen() {
+  /**
+   * Returns whether or not this watch service is open.
+   */
+  @VisibleForTesting
+  public boolean isOpen() {
     return open.get();
   }
 
@@ -75,7 +79,7 @@ public abstract class AbstractWatchService implements WatchService {
   /**
    * Called when the given key is cancelled. Does nothing by default.
    */
-  void cancelled(Key key) {
+  public void cancelled(Key key) {
   }
 
   @VisibleForTesting

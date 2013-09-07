@@ -29,7 +29,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
-import com.google.jimfs.JimfsConfiguration;
+import com.google.jimfs.config.JimfsConfiguration;
 import com.google.jimfs.internal.file.File;
 import com.google.jimfs.internal.file.JimfsFileChannel;
 import com.google.jimfs.internal.file.TargetPath;
@@ -146,7 +146,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
    * Returns the file tree to use for the given path.
    */
   public static FileTree getFileTree(JimfsPath path) {
-    return path.getFileSystem().getFileTree(path);
+    return ((JimfsFileSystem) path.getFileSystem()).getFileTree(path);
   }
 
   private static LookupResult lookup(Path path, LinkHandling linkHandling) throws IOException {
@@ -314,7 +314,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public boolean isHidden(Path path) throws IOException {
-    return checkPath(path).getFileSystem().configuration()
+    return ((JimfsFileSystem) checkPath(path).getFileSystem()).configuration()
         .isHidden(path);
   }
 

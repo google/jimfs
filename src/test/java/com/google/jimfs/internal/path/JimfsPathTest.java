@@ -19,20 +19,15 @@ package com.google.jimfs.internal.path;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import com.google.common.collect.Iterables;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
-import com.google.jimfs.Jimfs;
-import com.google.jimfs.WindowsConfiguration;
-import com.google.jimfs.internal.JimfsFileSystem;
-import com.google.jimfs.internal.JimfsFileSystemProvider;
+import com.google.jimfs.path.Name;
 import com.google.jimfs.testing.PathTester;
+import com.google.jimfs.testing.TestPathService;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
 
 /**
@@ -40,12 +35,7 @@ import java.nio.file.Path;
  */
 public class JimfsPathTest {
 
-  private JimfsFileSystem fs;
-
-  @Before
-  public void setUp() throws IOException {
-    fs = (JimfsFileSystem) Jimfs.newUnixLikeFileSystem();
-  }
+  private final PathService pathService = TestPathService.UNIX;
 
   @Test
   public void testPathParsing() {
@@ -63,15 +53,6 @@ public class JimfsPathTest {
   }
 
   @Test
-  public void testPathParsing_withAlternateSeparator() {
-    // TODO(cgdecker): Unix-style paths don't recognize \ as a separator, right?
-    /*assertPathEquals("/foo/bar", "/foo\\bar");
-    assertPathEquals("foo/bar/baz", "foo/bar\\baz");
-    assertPathEquals("foo/bar/baz", "foo\\bar", "baz");
-    assertPathEquals("/foo/bar/baz", "/foo\\bar\\baz");*/
-  }
-
-  @Test
   public void testPathParsing_withExtraSeparators() {
     assertPathEquals("/foo/bar", "///foo/bar");
     assertPathEquals("/foo/bar", "/foo///bar//");
@@ -81,40 +62,48 @@ public class JimfsPathTest {
 
   @Test
   public void testPathParsing_windowsStylePaths() throws IOException {
-    URI uri = URI.create("jimfs://foo");
-    fs = new JimfsFileSystem(
-        new JimfsFileSystemProvider(), uri, new WindowsConfiguration(new String[0]));
-    assertEquals("C:", fs.getPath("C:").toString());
-    // TODO(cgdecker): the windows implementation keeps the root in whatever format you give it
-    // should try to support that while still having lookup work...
-    // assertEquals("C:\\", fs.getPath("C:\\").toString());
-    assertEquals("C:\\foo", fs.getPath("C:\\foo").toString());
-    assertEquals("C:\\foo", fs.getPath("C:\\", "foo").toString());
-    assertEquals("C:\\foo", fs.getPath("C:", "\\foo").toString());
-    assertEquals("C:\\foo", fs.getPath("C:", "foo").toString());
-    assertEquals("C:\\foo\\bar", fs.getPath("C:", "foo/bar").toString());
+    TestPathService windowsPathService = TestPathService.WINDOWS;
+    assertEquals("C:", windowsPathService.parsePath("C:").toString());
+    assertEquals("C:\\", pathService.parsePath("C:\\").toString());
+    assertEquals("C:\\foo", windowsPathService.parsePath("C:\\foo").toString());
+    assertEquals("C:\\foo", windowsPathService.parsePath("C:\\", "foo").toString());
+    assertEquals("C:\\foo", windowsPathService.parsePath("C:", "\\foo").toString());
+    assertEquals("C:\\foo", windowsPathService.parsePath("C:", "foo").toString());
+    assertEquals("C:\\foo\\bar", windowsPathService.parsePath("C:", "foo/bar").toString());
+  }
+
+  @Test
+  public void testPathParsing_withAlternateSeparator() {
+    // windows recognizes / as an alternate separator
+    TestPathService windowsPathService = TestPathService.WINDOWS;
+    assertEquals(windowsPathService.parsePath("foo\\bar\\baz"),
+        windowsPathService.parsePath("foo/bar/baz"));
+    assertEquals(windowsPathService.parsePath("C:\\foo\\bar"),
+        windowsPathService.parsePath("C:\\foo/bar"));
+    assertEquals(windowsPathService.parsePath("c:\\foo\\bar\\baz"),
+        windowsPathService.parsePath("c:", "foo/", "bar/baz"));
   }
 
   @Test
   public void testRootPath() {
-    new PathTester(fs, "/")
+    new PathTester(pathService, "/")
         .root("/")
         .test("/");
   }
 
   @Test
   public void testRelativePath_singleName() {
-    new PathTester(fs, "test")
+    new PathTester(pathService, "test")
         .names("test")
         .test("test");
 
-    Path path = fs.getPath("test");
+    Path path = pathService.parsePath("test");
     assertEquals(path, path.getFileName());
   }
 
   @Test
   public void testRelativePath_twoNames() {
-    PathTester tester = new PathTester(fs, "foo/bar")
+    PathTester tester = new PathTester(pathService, "foo/bar")
         .names("foo", "bar");
 
     tester.test("foo/bar");
@@ -122,42 +111,38 @@ public class JimfsPathTest {
 
   @Test
   public void testRelativePath_fourNames() {
-    PathTester tester = new PathTester(fs, "foo/bar/baz/test")
-        .names("foo", "bar", "baz", "test");
-
-    tester.test("foo/bar/baz/test");
+    new PathTester(pathService, "foo/bar/baz/test")
+        .names("foo", "bar", "baz", "test")
+        .test("foo/bar/baz/test");
   }
 
   @Test
   public void testAbsolutePath_singleName() {
-    PathTester tester = new PathTester(fs, "/foo")
+    new PathTester(pathService, "/foo")
         .root("/")
-        .names("foo");
-
-    tester.test("/foo");
+        .names("foo")
+        .test("/foo");
   }
 
   @Test
   public void testAbsolutePath_twoNames() {
-    PathTester tester = new PathTester(fs, "/foo/bar")
+    new PathTester(pathService, "/foo/bar")
         .root("/")
-        .names("foo", "bar");
-
-    tester.test("/foo/bar");
+        .names("foo", "bar")
+        .test("/foo/bar");
   }
 
   @Test
   public void testAbsoluteMultiNamePath_fourNames() {
-    PathTester tester = new PathTester(fs, "/foo/bar/baz/test")
+    new PathTester(pathService, "/foo/bar/baz/test")
         .root("/")
-        .names("foo", "bar", "baz", "test");
-
-    tester.test("/foo/bar/baz/test");
+        .names("foo", "bar", "baz", "test")
+        .test("/foo/bar/baz/test");
   }
 
   @Test
   public void testResolve_fromRoot() {
-    Path root = Iterables.getOnlyElement(fs.getRootDirectories());
+    Path root = pathService.parsePath("/");
 
     assertResolvedPathEquals("/foo", root, "foo");
     assertResolvedPathEquals("/foo/bar", root, "foo/bar");
@@ -168,7 +153,7 @@ public class JimfsPathTest {
 
   @Test
   public void testResolve_fromAbsolute() {
-    Path path = fs.getPath("/foo");
+    Path path = pathService.parsePath("/foo");
 
     assertResolvedPathEquals("/foo/bar", path, "bar");
     assertResolvedPathEquals("/foo/bar/baz/test", path, "bar/baz/test");
@@ -178,7 +163,7 @@ public class JimfsPathTest {
 
   @Test
   public void testResolve_fromRelative() {
-    Path path = fs.getPath("foo");
+    Path path = pathService.parsePath("foo");
 
     assertResolvedPathEquals("foo/bar", path, "bar");
     assertResolvedPathEquals("foo/bar/baz/test", path, "bar/baz/test");
@@ -188,7 +173,7 @@ public class JimfsPathTest {
 
   @Test
   public void testResolve_withThisAndParentDirNames() {
-    Path path = fs.getPath("/foo");
+    Path path = pathService.parsePath("/foo");
 
     assertResolvedPathEquals("/foo/bar/../baz", path, "bar/../baz");
     assertResolvedPathEquals("/foo/bar/../baz", path, "bar", "..", "baz");
@@ -198,40 +183,50 @@ public class JimfsPathTest {
 
   @Test
   public void testResolve_givenAbsolutePath() {
-    assertResolvedPathEquals("/test", fs.getPath("/foo"), "/test");
-    assertResolvedPathEquals("/test", fs.getPath("foo"), "/test");
+    assertResolvedPathEquals("/test", pathService.parsePath("/foo"), "/test");
+    assertResolvedPathEquals("/test", pathService.parsePath("foo"), "/test");
   }
 
   @Test
   public void testResolve_givenEmptyPath() {
-    assertResolvedPathEquals("/foo", fs.getPath("/foo"), "");
-    assertResolvedPathEquals("foo", fs.getPath("foo"), "");
+    assertResolvedPathEquals("/foo", pathService.parsePath("/foo"), "");
+    assertResolvedPathEquals("foo", pathService.parsePath("foo"), "");
+  }
+
+  @Test
+  public void testResolve_againstEmptyPath() {
+    assertResolvedPathEquals("foo/bar", pathService.emptyPath(), "foo/bar");
   }
 
   @Test
   public void testRelativize_bothAbsolute() {
     // TODO(cgdecker): When the paths have different roots, how should this work?
     // Should it work at all?
-    assertRelativizedPathEquals("b/c", fs.getPath("/a"), "/a/b/c");
-    assertRelativizedPathEquals("c/d", fs.getPath("/a/b"), "/a/b/c/d");
+    assertRelativizedPathEquals("b/c", pathService.parsePath("/a"), "/a/b/c");
+    assertRelativizedPathEquals("c/d", pathService.parsePath("/a/b"), "/a/b/c/d");
   }
 
   @Test
   public void testRelativize_bothRelative() {
-    assertRelativizedPathEquals("b/c", fs.getPath("a"), "a/b/c");
-    assertRelativizedPathEquals("d", fs.getPath("a/b/c"), "a/b/c/d");
+    assertRelativizedPathEquals("b/c", pathService.parsePath("a"), "a/b/c");
+    assertRelativizedPathEquals("d", pathService.parsePath("a/b/c"), "a/b/c/d");
+  }
+
+  @Test
+  public void testRelativize_againstEmptyPath() {
+    assertRelativizedPathEquals("foo/bar", pathService.emptyPath(), "foo/bar");
   }
 
   @Test
   public void testRelativize_oneAbsoluteOneRelative() {
     try {
-      fs.getPath("/foo/bar").relativize(fs.getPath("foo"));
+      pathService.parsePath("/foo/bar").relativize(pathService.parsePath("foo"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      fs.getPath("foo").relativize(fs.getPath("/foo/bar"));
+      pathService.parsePath("foo").relativize(pathService.parsePath("/foo/bar"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -274,9 +269,9 @@ public class JimfsPathTest {
 
   @Test
   public void testPathWithExtraSlashes() {
-    assertPathEquals("/foo/bar/baz", fs.getPath("/foo/bar/baz/"));
-    assertPathEquals("/foo/bar/baz", fs.getPath("/foo//bar///baz"));
-    assertPathEquals("/foo/bar/baz", fs.getPath("///foo/bar/baz"));
+    assertPathEquals("/foo/bar/baz", pathService.parsePath("/foo/bar/baz/"));
+    assertPathEquals("/foo/bar/baz", pathService.parsePath("/foo//bar///baz"));
+    assertPathEquals("/foo/bar/baz", pathService.parsePath("///foo/bar/baz"));
   }
 
   @Test
@@ -285,9 +280,9 @@ public class JimfsPathTest {
     Name a2 = Name.create("A", "a");
     Name a3 = Name.create("a", "A");
 
-    Path path1 = JimfsPath.name(fs, a1);
-    Path path2 = JimfsPath.name(fs, a2);
-    Path path3 = JimfsPath.name(fs, a3);
+    Path path1 = pathService.createFileName(a1);
+    Path path2 = pathService.createFileName(a2);
+    Path path3 = pathService.createFileName(a3);
 
     new EqualsTester()
         .addEqualityGroup(path1, path3)
@@ -298,15 +293,15 @@ public class JimfsPathTest {
   @Test
   public void testNullPointerExceptions() {
     NullPointerTester tester = new NullPointerTester();
-    tester.testAllPublicInstanceMethods(fs.getPath("/"));
-    tester.testAllPublicInstanceMethods(fs.getPath(""));
-    tester.testAllPublicInstanceMethods(fs.getPath("/foo"));
-    tester.testAllPublicInstanceMethods(fs.getPath("/foo/bar/baz"));
-    tester.testAllPublicInstanceMethods(fs.getPath("foo"));
-    tester.testAllPublicInstanceMethods(fs.getPath("foo/bar"));
-    tester.testAllPublicInstanceMethods(fs.getPath("foo/bar/baz"));
-    tester.testAllPublicInstanceMethods(fs.getPath("."));
-    tester.testAllPublicInstanceMethods(fs.getPath(".."));
+    tester.testAllPublicInstanceMethods(pathService.parsePath("/"));
+    tester.testAllPublicInstanceMethods(pathService.parsePath(""));
+    tester.testAllPublicInstanceMethods(pathService.parsePath("/foo"));
+    tester.testAllPublicInstanceMethods(pathService.parsePath("/foo/bar/baz"));
+    tester.testAllPublicInstanceMethods(pathService.parsePath("foo"));
+    tester.testAllPublicInstanceMethods(pathService.parsePath("foo/bar"));
+    tester.testAllPublicInstanceMethods(pathService.parsePath("foo/bar/baz"));
+    tester.testAllPublicInstanceMethods(pathService.parsePath("."));
+    tester.testAllPublicInstanceMethods(pathService.parsePath(".."));
   }
 
   private void assertResolvedPathEquals(String expected, Path path, String firstResolvePath,
@@ -317,7 +312,7 @@ public class JimfsPathTest {
     }
     assertPathEquals(expected, resolved);
 
-    Path relative = fs.getPath(firstResolvePath, moreResolvePaths);
+    Path relative = pathService.parsePath(firstResolvePath, moreResolvePaths);
     resolved = path.resolve(relative);
     assertPathEquals(expected, resolved);
 
@@ -329,19 +324,19 @@ public class JimfsPathTest {
   }
 
   private void assertRelativizedPathEquals(String expected, Path path, String relativizePath) {
-    Path relativized = path.relativize(fs.getPath(relativizePath));
+    Path relativized = path.relativize(pathService.parsePath(relativizePath));
     assertPathEquals(expected, relativized);
   }
 
   private void assertNormalizedPathEquals(String expected, String first, String... more) {
-    assertPathEquals(expected, fs.getPath(first, more).normalize());
+    assertPathEquals(expected, pathService.parsePath(first, more).normalize());
   }
 
   private void assertPathEquals(String expected, String first, String... more) {
-    assertPathEquals(expected, fs.getPath(first, more));
+    assertPathEquals(expected, pathService.parsePath(first, more));
   }
 
   private void assertPathEquals(String expected, Path path) {
-    assertEquals(fs.getPath(expected), path);
+    assertEquals(pathService.parsePath(expected), path);
   }
 }

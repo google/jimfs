@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal.watch;
+package com.google.jimfs.internal;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
@@ -26,8 +26,9 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.Jimfs;
-import com.google.jimfs.internal.JimfsFileSystem;
 import com.google.jimfs.internal.path.JimfsPath;
+import com.google.jimfs.internal.watch.Event;
+import com.google.jimfs.internal.watch.Key;
 
 import org.junit.After;
 import org.junit.Before;
