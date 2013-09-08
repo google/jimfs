@@ -66,7 +66,7 @@ public interface AttributeStore {
   long getLastAccessTime();
 
   /**
-   * Gets the last updateModifiedTime time of the file.
+   * Gets the last modified time of the file.
    */
   long getLastModifiedTime();
 
