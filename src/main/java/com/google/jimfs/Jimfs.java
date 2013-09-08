@@ -17,9 +17,6 @@
 package com.google.jimfs;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.jimfs.config.JimfsConfiguration;
-import com.google.jimfs.config.UnixConfiguration;
-import com.google.jimfs.config.WindowsConfiguration;
 
 import java.io.IOException;
 import java.net.URI;

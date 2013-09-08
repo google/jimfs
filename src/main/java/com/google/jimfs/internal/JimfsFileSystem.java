@@ -23,7 +23,7 @@ import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.jimfs.config.JimfsConfiguration;
+import com.google.jimfs.JimfsConfiguration;
 
 import java.io.Closeable;
 import java.io.IOException;

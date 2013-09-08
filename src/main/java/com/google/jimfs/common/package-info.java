@@ -15,10 +15,9 @@
  */
 
 /**
- * Base package containing the {@link Jimfs} class, the entry point for creating in-memory file
- * system instances. Also contains classes for file system configuration.
+ * Package containing common interfaces and classes that don't belong anywhere else.
  */
 @ParametersAreNonnullByDefault
-package com.google.jimfs;
+package com.google.jimfs.common;
 
 import javax.annotation.ParametersAreNonnullByDefault;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.config;
+package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;

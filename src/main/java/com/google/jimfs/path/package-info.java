@@ -15,10 +15,11 @@
  */
 
 /**
- * Base package containing the {@link Jimfs} class, the entry point for creating in-memory file
- * system instances. Also contains classes for file system configuration.
+ * This package contains classes used for configuring the representation and handling of file
+ * system paths. The central class is {@link PathType}, which defines a type of path such as
+ * Unix-style or Windows-style.
  */
 @ParametersAreNonnullByDefault
-package com.google.jimfs;
+package com.google.jimfs.path;
 
 import javax.annotation.ParametersAreNonnullByDefault;
