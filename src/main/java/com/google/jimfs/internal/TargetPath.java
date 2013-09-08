@@ -16,36 +16,34 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.jimfs.path.Name;
-import com.google.jimfs.path.PathType;
-
-import javax.annotation.Nullable;
-
 /**
- * Real implementation of {@link PathService}.
+ * The target path of a symbolic link.
  *
  * @author Colin Decker
  */
-final class RealJimfsPathService extends PathService {
+final class TargetPath implements FileContent {
 
-  private final JimfsFileSystem fileSystem;
+  private final JimfsPath path;
 
-  RealJimfsPathService(JimfsFileSystem fileSystem, PathType type) {
-    super(type);
-    this.fileSystem = checkNotNull(fileSystem);
+  public TargetPath(JimfsPath path) {
+    this.path = path;
   }
 
   /**
-   * Returns the file system this service is for.
+   * Returns the target path.
    */
-  public JimfsFileSystem getFileSystem() {
-    return fileSystem;
+  public JimfsPath path() {
+    return path;
   }
 
   @Override
-  public JimfsPath createPathInternal(@Nullable Name root, Iterable<Name> names) {
-    return new RealJimfsPath(this, root, names);
+  public TargetPath copy() {
+    // immutable
+    return this;
+  }
+
+  @Override
+  public int sizeInBytes() {
+    return 0;
   }
 }

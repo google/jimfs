@@ -30,11 +30,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.jimfs.common.IoSupplier;
-import com.google.jimfs.internal.file.ByteStore;
-import com.google.jimfs.internal.file.DirectoryTable;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.path.PathService;
 import com.google.jimfs.path.Name;
 
 import java.io.IOException;

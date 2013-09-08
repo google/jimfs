@@ -26,12 +26,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.common.IoSupplier;
-import com.google.jimfs.internal.file.ArrayByteStore;
-import com.google.jimfs.internal.file.DirectoryTable;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.FileContent;
-import com.google.jimfs.internal.file.TargetPath;
-import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;
 import java.nio.file.FileStore;

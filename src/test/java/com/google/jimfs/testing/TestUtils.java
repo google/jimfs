@@ -16,9 +16,6 @@
 
 package com.google.jimfs.testing;
 
-import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.path.PathType;
-
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,10 +27,6 @@ import java.util.List;
 public final class TestUtils {
 
   private TestUtils() {}
-
-  public static JimfsPath fakePath() {
-    return new TestPathService(PathType.unix()).emptyPath();
-  }
 
   public static byte[] bytes(int... bytes) {
     byte[] result = new byte[bytes.length];

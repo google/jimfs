@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Objects;
-import com.google.jimfs.internal.file.File;
 import com.google.jimfs.path.Name;
 
 import java.io.IOException;

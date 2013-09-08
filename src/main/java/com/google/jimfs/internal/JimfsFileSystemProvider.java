@@ -30,10 +30,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.jimfs.config.JimfsConfiguration;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.file.JimfsFileChannel;
-import com.google.jimfs.internal.file.TargetPath;
-import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;
 import java.io.InputStream;

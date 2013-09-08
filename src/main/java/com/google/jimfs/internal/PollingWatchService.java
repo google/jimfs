@@ -26,12 +26,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.google.jimfs.internal.file.DirectoryTable;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.watch.AbstractWatchService;
-import com.google.jimfs.internal.watch.Event;
-import com.google.jimfs.internal.watch.Key;
 import com.google.jimfs.path.Name;
 
 import java.io.IOException;

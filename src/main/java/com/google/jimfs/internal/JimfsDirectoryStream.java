@@ -19,7 +19,6 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.AbstractIterator;
-import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;
 import java.nio.file.DirectoryIteratorException;

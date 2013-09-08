@@ -20,8 +20,6 @@ import static com.google.jimfs.internal.FileTree.DeleteMode;
 import static com.google.jimfs.internal.JimfsFileSystemProvider.getOptionsForChannel;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.internal.file.JimfsFileChannel;
-import com.google.jimfs.internal.path.JimfsPath;
 
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;

@@ -17,7 +17,6 @@
 package com.google.jimfs.internal;
 
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
-import static com.google.jimfs.testing.TestUtils.fakePath;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
@@ -29,7 +28,7 @@ import com.google.jimfs.attribute.TestAttributeView;
 import com.google.jimfs.attribute.TestAttributes;
 import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
 import com.google.jimfs.common.IoSupplier;
-import com.google.jimfs.internal.file.File;
+import com.google.jimfs.path.PathType;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -461,5 +460,9 @@ public class JimfsFileStoreTest {
     } catch (IllegalArgumentException expected) {
       ASSERT.that(expected.getMessage()).contains("single attribute");
     }
+  }
+
+  private static JimfsPath fakePath() {
+    return new TestPathService(PathType.unix()).emptyPath();
   }
 }

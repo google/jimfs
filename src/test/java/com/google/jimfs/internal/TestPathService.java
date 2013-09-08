@@ -16,36 +16,27 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.jimfs.path.Name;
 import com.google.jimfs.path.PathType;
 
 import javax.annotation.Nullable;
 
 /**
- * Real implementation of {@link PathService}.
+ * Unix-style singleton {@link PathService} for creating {@link TestPath} instances.
  *
  * @author Colin Decker
  */
-final class RealJimfsPathService extends PathService {
+public final class TestPathService extends PathService {
 
-  private final JimfsFileSystem fileSystem;
+  public static final TestPathService UNIX = new TestPathService(PathType.unix());
+  public static final TestPathService WINDOWS = new TestPathService(PathType.windows());
 
-  RealJimfsPathService(JimfsFileSystem fileSystem, PathType type) {
+  public TestPathService(PathType type) {
     super(type);
-    this.fileSystem = checkNotNull(fileSystem);
-  }
-
-  /**
-   * Returns the file system this service is for.
-   */
-  public JimfsFileSystem getFileSystem() {
-    return fileSystem;
   }
 
   @Override
   public JimfsPath createPathInternal(@Nullable Name root, Iterable<Name> names) {
-    return new RealJimfsPath(this, root, names);
+    return new TestPath(this, root, names);
   }
 }

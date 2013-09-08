@@ -24,10 +24,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.jimfs.config.JimfsConfiguration;
-import com.google.jimfs.internal.file.DirectoryTable;
-import com.google.jimfs.internal.file.File;
-import com.google.jimfs.internal.path.JimfsPath;
-import com.google.jimfs.internal.path.PathService;
 
 import java.io.Closeable;
 import java.io.IOException;
