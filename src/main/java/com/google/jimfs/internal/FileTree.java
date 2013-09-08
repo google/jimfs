@@ -20,10 +20,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
+import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
@@ -404,7 +406,7 @@ final class FileTree {
   }
 
   private static File truncateIfNeeded(File regularFile, Set<? extends OpenOption> options) {
-    if (options.contains(TRUNCATE_EXISTING)) {
+    if (options.contains(TRUNCATE_EXISTING) && options.contains(WRITE)) {
       ByteStore store = regularFile.content();
       store.truncate(0);
     }
@@ -629,7 +631,8 @@ final class FileTree {
         }
       } else {
         // copy
-        File copy = destTree.store.copy(sourceFile);
+        boolean copyAttributes = options.contains(COPY_ATTRIBUTES) && !move;
+        File copy = destTree.store.copy(sourceFile, copyAttributes);
         destParentTable.link(destName, copy);
         destParent.updateModifiedTime();
 
@@ -638,7 +641,7 @@ final class FileTree {
         }
 
         if (move) {
-          copyBasicAttributes(sourceFile, destTree, copy);
+          store.copyBasicAttributes(sourceFile, copy);
           delete(sourceParent, sourceName, DeleteMode.ANY, source);
         }
       }
@@ -652,20 +655,6 @@ final class FileTree {
     if (file.isRootDirectory()) {
       throw new FileSystemException(path.toString(), null, "can't move root directory");
     }
-  }
-
-  private void copyBasicAttributes(File source, FileTree destTree, File dest) throws IOException {
-    BasicFileAttributes sourceAttributes =
-        store.readAttributes(source, BasicFileAttributes.class);
-    BasicFileAttributeView destAttributeView = destTree.store.getFileAttributeView(
-        IoSupplier.of(dest), BasicFileAttributeView.class);
-
-    assert destAttributeView != null;
-
-    destAttributeView.setTimes(
-        sourceAttributes.lastModifiedTime(),
-        sourceAttributes.lastAccessTime(),
-        sourceAttributes.creationTime());
   }
 
   /**

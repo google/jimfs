@@ -148,8 +148,31 @@ final class JimfsFileStore extends FileStore {
    * Creates copies of the given file metadata and content and stores them. Returns the key of the
    * new file.
    */
-  public File copy(File file) {
-    return createFile(nextFileId(), file.content().copy());
+  public File copy(File file, boolean copyAttributes) {
+    File copy = createFile(nextFileId(), file.content().copy());
+    if (copyAttributes) {
+      copyAttributes(file, copy);
+    }
+    return copy;
+  }
+
+  /**
+   * Copies the file times of the given file to the given copy file.
+   */
+  public void copyBasicAttributes(File file, File copy) {
+    copy.setCreationTime(file.getCreationTime());
+    copy.setLastAccessTime(file.getLastAccessTime());
+    copy.setLastModifiedTime(file.getLastModifiedTime());
+  }
+
+  /**
+   * Copies the attributes of the given file to the given copy file.
+   */
+  private void copyAttributes(File file, File copy) {
+    copyBasicAttributes(file, copy);
+    for (String attribute : file.getAttributeKeys()) {
+      copy.setAttribute(attribute, file.getAttribute(attribute));
+    }
   }
 
   /**

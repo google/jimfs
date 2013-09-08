@@ -19,10 +19,12 @@ package com.google.jimfs;
 import static com.google.common.primitives.Bytes.concat;
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static com.google.jimfs.testing.PathSubject.paths;
+import static com.google.jimfs.testing.TestUtils.bytes;
 import static com.google.jimfs.testing.TestUtils.preFilledBytes;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
+import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -46,6 +48,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterators;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.attribute.BasicFileAttribute;
 import com.google.jimfs.testing.PathSubject;
@@ -774,6 +777,20 @@ public class JimfsIntegrationTest {
   }
 
   @Test
+  public void testOpenFile_withReadAndTruncateExisting_doesNotTruncateFile() throws IOException {
+    byte[] bytes = bytes(1, 2, 3, 4);
+    Files.write(path("/test"), bytes);
+
+    try (FileChannel channel = FileChannel.open(path("/test"), READ, TRUNCATE_EXISTING)) {
+      // TRUNCATE_EXISTING ignored when opening for read
+      byte[] readBytes = new byte[4];
+      channel.read(ByteBuffer.wrap(readBytes));
+
+      ASSERT.that(Bytes.asList(readBytes)).isEqualTo(Bytes.asList(bytes));
+    }
+  }
+
+  @Test
   public void testRead_forFileAfterWriteLines_isLinesWritten() throws IOException {
     Files.write(path("/test.txt"), ImmutableList.of("hello", "world"), UTF_8);
 
@@ -1266,6 +1283,40 @@ public class JimfsIntegrationTest {
     } catch (NoSuchFileException expected) {
       assertEquals("/none", expected.getMessage());
     }
+  }
+
+  @Test
+  public void testCopy_withCopyAttributes() throws IOException {
+    Path foo = path("/foo");
+    Files.createFile(foo);
+
+    Files.getFileAttributeView(foo, BasicFileAttributeView.class).setTimes(
+        FileTime.fromMillis(100),
+        FileTime.fromMillis(1000),
+        FileTime.fromMillis(10000));
+
+    ASSERT.that(Files.getAttribute(foo, "lastModifiedTime")).is(FileTime.fromMillis(100));
+
+    Files.setAttribute(foo, "owner:owner", createUserPrincipal("zero"));
+
+    Path bar = path("/bar");
+    Files.copy(foo, bar, COPY_ATTRIBUTES);
+
+    BasicFileAttributes attributes = Files.readAttributes(bar, BasicFileAttributes.class);
+    ASSERT.that(attributes.lastModifiedTime()).is(FileTime.fromMillis(100));
+    ASSERT.that(attributes.lastAccessTime()).is(FileTime.fromMillis(1000));
+    ASSERT.that(attributes.creationTime()).is(FileTime.fromMillis(10000));
+    ASSERT.that(Files.getAttribute(bar, "owner:owner")).is(createUserPrincipal("zero"));
+
+    Path baz = path("/baz");
+    Files.copy(foo, baz);
+
+    // test that attributes are not copied when COPY_ATTRIBUTES is not specified
+    attributes = Files.readAttributes(baz, BasicFileAttributes.class);
+    ASSERT.that(attributes.lastModifiedTime()).isNotEqualTo(FileTime.fromMillis(100));
+    ASSERT.that(attributes.lastAccessTime()).isNotEqualTo(FileTime.fromMillis(1000));
+    ASSERT.that(attributes.creationTime()).isNotEqualTo(FileTime.fromMillis(10000));
+    ASSERT.that(Files.getAttribute(baz, "owner:owner")).isNotEqualTo(createUserPrincipal("zero"));
   }
 
   @Test
