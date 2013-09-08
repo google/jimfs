@@ -141,7 +141,7 @@ final class JimfsFileStore extends FileStore {
    * the new file.
    */
   public File createSymbolicLink(JimfsPath target, FileAttribute<?>... attrs) {
-    return createFile(nextFileId(), new TargetPath(target), attrs);
+    return createFile(nextFileId(), target, attrs);
   }
 
   /**

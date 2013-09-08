@@ -145,8 +145,8 @@ final class LookupService {
       throw new IOException("too many levels of symbolic links");
     }
 
-    TargetPath targetPath = link.content();
-    return lookup(superRoot, table.self(), targetPath.path(), FOLLOW_LINKS, linkDepth + 1);
+    JimfsPath targetPath = link.content();
+    return lookup(superRoot, table.self(), targetPath, FOLLOW_LINKS, linkDepth + 1);
   }
 
   @Nullable

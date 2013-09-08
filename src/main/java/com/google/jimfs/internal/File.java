@@ -69,7 +69,7 @@ final class File implements AttributeStore {
 
   @Override
   public boolean isSymbolicLink() {
-    return content instanceof TargetPath;
+    return content instanceof JimfsPath;
   }
 
   @Override

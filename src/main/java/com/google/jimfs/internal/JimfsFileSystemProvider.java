@@ -258,8 +258,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
         .requireSymbolicLink(link)
         .file();
 
-    TargetPath target = file.content();
-    return target.path();
+    return file.<JimfsPath>content();
   }
 
   @Override

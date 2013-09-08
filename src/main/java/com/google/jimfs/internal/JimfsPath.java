@@ -50,13 +50,24 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-abstract class JimfsPath extends SimplePath implements Path {
+abstract class JimfsPath extends SimplePath implements Path, FileContent {
 
   protected final PathService pathService;
 
   public JimfsPath(PathService pathService, @Nullable Name root, Iterable<Name> names) {
     super(root, names);
     this.pathService = checkNotNull(pathService);
+  }
+
+  @Override
+  public JimfsPath copy() {
+    // immutable
+    return this;
+  }
+
+  @Override
+  public int sizeInBytes() {
+    return 0;
   }
 
   /**

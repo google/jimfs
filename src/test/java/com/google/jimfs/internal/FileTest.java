@@ -60,11 +60,11 @@ public class FileTest {
 
   @Test
   public void testSymbolicLink() {
-    File file = new File(0L, new TargetPath(new TestPathService(PathType.unix()).emptyPath()));
+    File file = new File(0L, new TestPathService(PathType.unix()).emptyPath());
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isTrue();
-    ASSERT.that(file.content()).isA(TargetPath.class);
+    ASSERT.that(file.content()).isA(JimfsPath.class);
   }
 
   @Test
