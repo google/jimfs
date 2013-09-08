@@ -18,9 +18,6 @@ package com.google.jimfs.attribute.providers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AttributeSpec;
@@ -31,6 +28,8 @@ import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -59,15 +58,8 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
       AttributeSpec.unsettable(MODE, Integer.class),
       AttributeSpec.unsettable(GID, Integer.class));
 
-  private final LoadingCache<Object, Integer> idCache = CacheBuilder.newBuilder()
-      .build(new CacheLoader<Object, Integer>() {
-        AtomicInteger uidGenerator = new AtomicInteger();
-
-        @Override
-        public Integer load(Object key) throws Exception {
-          return uidGenerator.incrementAndGet();
-        }
-      });
+  private final AtomicInteger uidGenerator = new AtomicInteger();
+  private final ConcurrentMap<Object, Integer> idCache = new ConcurrentHashMap<>();
 
   private final OwnerAttributeProvider owner;
   private final PosixAttributeProvider posix;
@@ -93,16 +85,31 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
     // doesn't actually set anything in the attribute map
   }
 
+  /**
+   * Returns an ID that is guaranteed to be the same for any invocation with equal objects.
+   */
+  private Integer getUniqueId(Object object) {
+    Integer id = idCache.get(object);
+    if (id == null) {
+      id = uidGenerator.incrementAndGet();
+      Integer existing = idCache.putIfAbsent(object, id);
+      if (existing != null) {
+        return existing;
+      }
+    }
+    return id;
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public Object get(AttributeStore store, String attribute) {
     switch (attribute) {
       case UID:
         UserPrincipal user = (UserPrincipal) owner.get(store, OwnerAttributeProvider.OWNER);
-        return idCache.getUnchecked(user);
+        return getUniqueId(user);
       case GID:
         GroupPrincipal group = (GroupPrincipal) posix.get(store, PosixAttributeProvider.GROUP);
-        return idCache.getUnchecked(group);
+        return getUniqueId(group);
       case MODE:
         Set<PosixFilePermission> permissions
             = (Set<PosixFilePermission>) posix.get(store, PosixAttributeProvider.PERMISSIONS);
@@ -114,7 +121,7 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
       case DEV:
         return 1L;
       case INO:
-        return idCache.getUnchecked(store);
+        return getUniqueId(store);
       case NLINK:
         return store.links();
     }
