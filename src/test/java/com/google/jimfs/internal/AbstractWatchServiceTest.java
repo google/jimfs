@@ -16,8 +16,8 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.internal.Key.State.READY;
-import static com.google.jimfs.internal.Key.State.SIGNALLED;
+import static com.google.jimfs.internal.AbstractWatchService.Key.State.READY;
+import static com.google.jimfs.internal.AbstractWatchService.Key.State.SIGNALLED;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -68,7 +68,7 @@ public class AbstractWatchServiceTest {
   @Test
   public void testRegister() throws IOException {
     Watchable watchable = new StubWatchable();
-    Key key = watcher.register(watchable, ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(watchable, ImmutableSet.of(ENTRY_CREATE));
     ASSERT.that(key.isValid()).isTrue();
     ASSERT.that(key.pollEvents()).isEmpty();
     ASSERT.that(key.subscribesTo(ENTRY_CREATE)).isTrue();
@@ -79,9 +79,9 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testPostEvent() throws IOException {
-    Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
 
-    Event<Path> event = new Event<>(ENTRY_CREATE, 1, null);
+    AbstractWatchService.Event<Path> event = new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
     key.post(event);
     key.signal();
 
@@ -100,15 +100,15 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testKeyStates() throws IOException {
-    Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
 
-    Event<Path> event = new Event<>(ENTRY_CREATE, 1, null);
+    AbstractWatchService.Event<Path> event = new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
     ASSERT.that(key.state()).is(READY);
     key.post(event);
     key.signal();
     ASSERT.that(key.state()).is(SIGNALLED);
 
-    Event<Path> event2 = new Event<>(ENTRY_CREATE, 1, null);
+    AbstractWatchService.Event<Path> event2 = new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
     key.post(event2);
     ASSERT.that(key.state()).is(SIGNALLED);
 
@@ -136,16 +136,16 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testKeyRequeuedOnResetIfEventsArePending() throws IOException {
-    Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
-    key.post(new Event<>(ENTRY_CREATE, 1, null));
+    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
     key.signal();
 
-    key = (Key) watcher.poll();
+    key = (AbstractWatchService.Key) watcher.poll();
     ASSERT.that(watcher.queuedKeys()).isEmpty();
 
     ASSERT.that(key.pollEvents().size()).is(1);
 
-    key.post(new Event<>(ENTRY_CREATE, 1, null));
+    key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
     ASSERT.that(watcher.queuedKeys()).isEmpty();
 
     key.reset();
@@ -155,27 +155,27 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testOverflow() throws IOException {
-    Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
-    for (int i = 0; i < Key.MAX_QUEUE_SIZE + 10; i++) {
-      key.post(new Event<>(ENTRY_CREATE, 1, null));
+    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    for (int i = 0; i < AbstractWatchService.Key.MAX_QUEUE_SIZE + 10; i++) {
+      key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
     }
     key.signal();
 
     List<WatchEvent<?>> events = key.pollEvents();
 
-    ASSERT.that(events.size()).is(Key.MAX_QUEUE_SIZE + 1);
-    for (int i = 0; i < Key.MAX_QUEUE_SIZE; i++) {
+    ASSERT.that(events.size()).is(AbstractWatchService.Key.MAX_QUEUE_SIZE + 1);
+    for (int i = 0; i < AbstractWatchService.Key.MAX_QUEUE_SIZE; i++) {
       ASSERT.that(events.get(i).kind()).is(ENTRY_CREATE);
     }
 
-    WatchEvent<?> lastEvent = events.get(Key.MAX_QUEUE_SIZE);
+    WatchEvent<?> lastEvent = events.get(AbstractWatchService.Key.MAX_QUEUE_SIZE);
     ASSERT.that(lastEvent.kind()).is(OVERFLOW);
     ASSERT.that(lastEvent.count()).is(10);
   }
 
   @Test
   public void testResetAfterCancelReturnsFalse() throws IOException {
-    Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     key.signal();
     key.cancel();
     ASSERT.that(key.reset()).isFalse();
@@ -183,8 +183,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testClosedWatcher() throws IOException, InterruptedException {
-    Key key1 = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
-    Key key2 = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_MODIFY));
+    AbstractWatchService.Key key1 = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key2 = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_MODIFY));
 
     ASSERT.that(key1.isValid()).isTrue();
     ASSERT.that(key2.isValid()).isTrue();

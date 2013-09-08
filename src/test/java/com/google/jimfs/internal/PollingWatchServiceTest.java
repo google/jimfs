@@ -71,7 +71,7 @@ public class PollingWatchServiceTest {
 
   @Test
   public void testRegister() throws IOException {
-    Key key = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     ASSERT.that(key.isValid()).isTrue();
 
     ASSERT.that(watcher.isPolling()).isTrue();
@@ -99,14 +99,14 @@ public class PollingWatchServiceTest {
 
   @Test
   public void testCancellingLastKeyStopsPolling() throws IOException {
-    Key key = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     key.cancel();
     ASSERT.that(key.isValid()).isFalse();
 
     ASSERT.that(watcher.isPolling()).isFalse();
 
-    Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
-    Key key3 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
+    AbstractWatchService.Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
+    AbstractWatchService.Key key3 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
 
     ASSERT.that(watcher.isPolling()).isTrue();
 
@@ -121,8 +121,8 @@ public class PollingWatchServiceTest {
 
   @Test
   public void testCloseCancelsAllKeysAndStopsPolling() throws IOException {
-    Key key1 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
-    Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
+    AbstractWatchService.Key key1 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
+    AbstractWatchService.Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
 
     ASSERT.that(key1.isValid());
     ASSERT.that(key2.isValid());
@@ -142,14 +142,14 @@ public class PollingWatchServiceTest {
 
     Files.createFile(path.resolve("foo"));
 
-    assertWatcherHasEvents(watcher, new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")));
+    assertWatcherHasEvents(watcher, new AbstractWatchService.Event<>(ENTRY_CREATE, 1, fs.getPath("foo")));
 
     Files.createFile(path.resolve("bar"));
     Files.createFile(path.resolve("baz"));
 
     assertWatcherHasEvents(watcher,
-        new Event<>(ENTRY_CREATE, 1, fs.getPath("bar")),
-        new Event<>(ENTRY_CREATE, 1, fs.getPath("baz")));
+        new AbstractWatchService.Event<>(ENTRY_CREATE, 1, fs.getPath("bar")),
+        new AbstractWatchService.Event<>(ENTRY_CREATE, 1, fs.getPath("baz")));
   }
 
   @Test(timeout = 100)
@@ -161,40 +161,40 @@ public class PollingWatchServiceTest {
     Files.createFile(path.resolve("bar"));
 
     assertWatcherHasEvents(watcher,
-        new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")),
-        new Event<>(ENTRY_CREATE, 1, fs.getPath("bar")));
+        new AbstractWatchService.Event<>(ENTRY_CREATE, 1, fs.getPath("foo")),
+        new AbstractWatchService.Event<>(ENTRY_CREATE, 1, fs.getPath("bar")));
 
     Files.createFile(path.resolve("baz"));
     Files.delete(path.resolve("bar"));
     Files.createFile(path.resolve("foo/bar"));
 
     assertWatcherHasEvents(watcher,
-        new Event<>(ENTRY_CREATE, 1, fs.getPath("baz")),
-        new Event<>(ENTRY_DELETE, 1, fs.getPath("bar")),
-        new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")));
+        new AbstractWatchService.Event<>(ENTRY_CREATE, 1, fs.getPath("baz")),
+        new AbstractWatchService.Event<>(ENTRY_DELETE, 1, fs.getPath("bar")),
+        new AbstractWatchService.Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")));
 
     Files.delete(path.resolve("foo/bar"));
     ensureTimeToPoll(); // watcher polls, seeing modification, then polls again, seeing delete
     Files.delete(path.resolve("foo"));
 
     assertWatcherHasEvents(watcher,
-        new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
-        new Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
+        new AbstractWatchService.Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
+        new AbstractWatchService.Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
 
     Files.createDirectories(path.resolve("foo/bar"));
 
-    assertWatcherHasEvents(watcher, new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")));
+    assertWatcherHasEvents(watcher, new AbstractWatchService.Event<>(ENTRY_CREATE, 1, fs.getPath("foo")));
 
     Files.delete(path.resolve("foo/bar"));
     Files.delete(path.resolve("foo"));
 
     // foo should be deleted before polling detects its modification
     // this could be flaky; may need to increase time between polling if so (or just not test it)
-    assertWatcherHasEvents(watcher, new Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
+    assertWatcherHasEvents(watcher, new AbstractWatchService.Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
   }
 
   private static void assertWatcherHasEvents(
-      PollingWatchService watcher, Event<?>... events) throws InterruptedException {
+      PollingWatchService watcher, AbstractWatchService.Event<?>... events) throws InterruptedException {
     ensureTimeToPoll(); // otherwise we could read 1 event but not all the events we're expecting
     WatchKey key = watcher.take();
     List<WatchEvent<?>> keyEvents = key.pollEvents();
