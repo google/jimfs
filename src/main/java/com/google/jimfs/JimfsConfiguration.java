@@ -19,12 +19,15 @@ package com.google.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.jimfs.attribute.AttributeProvider;
+import com.google.jimfs.attribute.providers.BasicAttributeProvider;
 import com.google.jimfs.path.PathType;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
+import java.util.Set;
 
 /**
  * Provider of configuration options for a file system.
@@ -65,9 +68,21 @@ public abstract class JimfsConfiguration {
   public abstract boolean isHidden(Path path) throws IOException;
 
   /**
-   * Returns the names identifying the attribute views the file system supports.
+   * Returns the attribute providers the file system supports.
    */
-  public abstract Iterable<AttributeProvider> getAttributeProviders();
+  public final ImmutableSet<AttributeProvider> getAllAttributeProviders() {
+    BasicAttributeProvider basic = BasicAttributeProvider.INSTANCE;
+    Set<AttributeProvider> providers = Sets.newHashSet(getAttributeProviders());
+    providers.add(basic);
+    return ImmutableSet.copyOf(providers);
+  }
+
+  /**
+   * Returns the attribute providers the file system should support. The
+   * {@link BasicAttributeProvider}, which the file system is guaranteed to support, need not be
+   * included in the returned set of providers.
+   */
+  protected abstract Iterable<AttributeProvider> getAttributeProviders();
 
 
   /**

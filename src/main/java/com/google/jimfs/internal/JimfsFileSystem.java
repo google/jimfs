@@ -67,7 +67,7 @@ final class JimfsFileSystem extends FileSystem {
     this.uri = checkNotNull(uri);
     this.configuration = checkNotNull(config);
     this.pathService = new RealJimfsPathService(this, config.getPathType());
-    this.store = new JimfsFileStore("jimfs", config.getAttributeProviders());
+    this.store = new JimfsFileStore("jimfs", config.getAllAttributeProviders());
 
     Set<JimfsPath> rootPaths = new HashSet<>();
     for (String root : config.getRoots()) {

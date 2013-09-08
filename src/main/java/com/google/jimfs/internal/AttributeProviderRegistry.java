@@ -25,7 +25,6 @@ import com.google.common.collect.ListMultimap;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeReader;
 import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.attribute.providers.BasicAttributeProvider;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
@@ -45,10 +44,7 @@ final class AttributeProviderRegistry {
   private final ImmutableMap<Class<?>, AttributeReader<?>> readers;
 
   public AttributeProviderRegistry(Iterable<? extends AttributeProvider> providers) {
-    this.providers = new ImmutableSet.Builder<AttributeProvider>()
-        .add(BasicAttributeProvider.INSTANCE)
-        .addAll(providers)
-        .build();
+    this.providers = ImmutableSet.copyOf(providers);
 
     ListMultimap<String, AttributeProvider> allProvidersBuilder = ArrayListMultimap.create();
     Map<Class<?>, AttributeViewProvider<?>> viewProvidersBuilder = new HashMap<>();

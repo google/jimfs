@@ -26,6 +26,7 @@ import com.google.jimfs.attribute.BasicFileAttribute;
 import com.google.jimfs.attribute.TestAttributeProvider;
 import com.google.jimfs.attribute.TestAttributeView;
 import com.google.jimfs.attribute.TestAttributes;
+import com.google.jimfs.attribute.providers.BasicAttributeProvider;
 import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
 import com.google.jimfs.common.IoSupplier;
 import com.google.jimfs.path.PathType;
@@ -58,6 +59,7 @@ public class JimfsFileStoreTest {
   @Before
   public void setUp() {
     store = new JimfsFileStore("foo",
+        BasicAttributeProvider.INSTANCE,
         new TestAttributeProvider(),
         new OwnerAttributeProvider(USER));
   }
