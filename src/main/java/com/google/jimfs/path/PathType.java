@@ -23,9 +23,11 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
+import java.nio.file.InvalidPathException;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
@@ -228,16 +230,48 @@ public abstract class PathType {
     @Override
     public SimplePath parsePath(String first, String... more) {
       String joined = JOINER.join(Lists.asList(first, more));
+      boolean startsWithRoot = startsWithRoot(joined);
+
+      for (int i = 0; i < joined.length(); i++) {
+        char c = joined.charAt(i);
+        if (isReserved(c) && (i != 1 || !startsWithRoot)) {
+          throw new InvalidPathException(joined, "Illegal char <" + c + ">", i);
+        }
+      }
+
       Name root = null;
-      if (joined.length() >= 2
-          && isLetter(joined.charAt(0))
-          && joined.charAt(1) == ':') {
-        // TODO(cgdecker): If the full path is "C:\", should the root be "C:" or "C:\"?
+      if (joined.length() >= 2 && isLetter(joined.charAt(0)) && joined.charAt(1) == ':') {
         root = getRootName(joined.substring(0, 2));
         joined = joined.substring(2);
       }
 
       return new SimplePath(root, asNames(SPLITTER.split(joined)));
+    }
+
+    private static boolean startsWithRoot(String string) {
+      return string.length() >= 2
+          && isLetter(string.charAt(0))
+          && string.charAt(1) == ':';
+    }
+
+    /**
+     * Checks if c is one of the reserved characters that aren't allowed in Windows file names.
+     * See <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#naming_conventions">this article</a>.
+     */
+    // TODO(cgdecker): consider making this an overridable method in PathType itself?
+    private static boolean isReserved(char c) {
+      switch (c) {
+        case '<':
+        case '>':
+        case ':':
+        case '"':
+        case '|':
+        case '?':
+        case '*':
+          return true;
+        default:
+          return c <= 31;
+      }
     }
 
     private static boolean isLetter(char c) {
