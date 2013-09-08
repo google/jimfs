@@ -2,7 +2,8 @@ JIMFS
 =====
 
 JIMFS is an in-memory file system for Java 7 and above, implementing the
-[NIO.2 file system APIs](http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html).
+[java.nio.file](http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html)
+abstract file system APIs.
 
 Basic use
 ---------
