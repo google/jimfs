@@ -43,11 +43,10 @@
  * {@link LookupResult}, which contains not only the file that was located (if any) but its parent
  * directory as well.
  *
- * <p>File creation and most handling of attributes happens through {@link JimfsFileStore}, which
- * also implements {@link java.nio.file.FileStore}. The file store's handling of attributes is
- * controlled by the set of installed
- * {@link com.google.jimfs.attribute.AttributeProvider AttributeProvider} instances, which are
- * stored in an {@link AttributeProviderRegistry}.
+ * <p>{@link JimfsFileStore}, an implementation of {@link java.nio.file.FileStore}, handles file
+ * creation and file attributes. The file store's handling of attributes is controlled by the set
+ * of installed {@link com.google.jimfs.attribute.AttributeProvider AttributeProvider} instances,
+ * which are stored in an {@link AttributeProviderRegistry}.
  *
  * <h3>Paths</h3>
  *
@@ -74,17 +73,17 @@
  *   <li>{@link JimfsPath} - A file with a path as its content is a <i>symbolic link</i>.</li>
  * </ul>
  *
- * <p>All reading and writing of regular files happens through {@link JimfsFileChannel}, an
- * implementation of {@link java.nio.channels.FileChannel FileChannel} that uses the file's
- * {@code ByteStore}. The {@link java.io.InputStream InputStream} and
- * {@link java.io.OutputStream OutputStream} implementations for files are just standard wrappers
- * around a channel.
+ * <p>{@link JimfsFileChannel}, an implementation of
+ * {@link java.nio.channels.FileChannel FileChannel} that uses the file's {@code ByteStore},
+ * handles all reading and writing of regular files. The {@link java.io.InputStream InputStream}
+ * and {@link java.io.OutputStream OutputStream} implementations for files are just standard
+ * wrappers around a channel.
  *
- * <p>Reading the entries in a directory is done using {@link JimfsDirectoryStream} or
- * {@link JimfsSecureDirectoryStream}. The secure directory stream additionally contains a
- * {@code FileTree} for its directory, allowing for operations relative to the actual directory
- * file rather than just the path to the file. As with the working directory tree, this allows the
- * operations to continue to work as expected even if the directory is moved.
+ * <p>{@link JimfsDirectoryStream} and {@link JimfsSecureDirectoryStream} handle reading the
+ * entries of a directory. The secure directory stream additionally contains a {@code FileTree} for
+ * its directory, allowing for operations relative to the actual directory file rather than just
+ * the path to the file. As with the working directory tree, this allows the operations to continue
+ * to work as expected even if the directory is moved.
  *
  * <p>A directory can be watched for changes using the {@link java.nio.file.WatchService}
  * implementation, {@link PollingWatchService}.
@@ -109,10 +108,10 @@
  *
  * All file system operations should be safe in a multithreaded environment. The file hierarchy
  * itself is protected by a file system level read-write lock. This ensures safety of all
- * modifications to directory tables as well as atomicity of operations like file moves. The
- * contents of regular file are each protected by their own read-write lock which is obtained for
- * each read or write operation. File attributes are not protected by locks, but are stored in
- * thread-safe concurrent maps and atomic numbers.
+ * modifications to directory tables as well as atomicity of operations like file moves. Regular
+ * files are each protected by a read-write lock on their content which is obtained for each read
+ * or write operation. File attributes are not protected by locks, but are stored in thread-safe
+ * concurrent maps and atomic numbers.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs.internal;
