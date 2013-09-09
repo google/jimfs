@@ -16,14 +16,14 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkPositionIndexes;
+
 import com.google.common.primitives.UnsignedBytes;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-
-import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 /**
  * {@link ByteStore} implemented with a byte array that doubles in size when it needs to expand.

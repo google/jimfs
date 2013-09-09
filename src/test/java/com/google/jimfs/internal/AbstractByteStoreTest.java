@@ -16,8 +16,16 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.testing.TestUtils.buffer;
+import static com.google.jimfs.testing.TestUtils.buffers;
+import static com.google.jimfs.testing.TestUtils.bytes;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 import com.google.common.collect.ImmutableList;
 import com.google.jimfs.testing.ByteBufferChannel;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,13 +36,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-
-import static com.google.jimfs.testing.TestUtils.buffer;
-import static com.google.jimfs.testing.TestUtils.buffers;
-import static com.google.jimfs.testing.TestUtils.bytes;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Base tests for {@link ByteStore} implementations.

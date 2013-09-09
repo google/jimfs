@@ -16,10 +16,10 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkPositionIndexes;
+
 import java.io.IOException;
 import java.io.OutputStream;
-
-import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 /**
  * {@link OutputStream} for writing to a file's {@link ByteStore}.
