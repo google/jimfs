@@ -17,14 +17,15 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.path.PathType.ParseResult;
 
+import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.jimfs.path.Name;
 import com.google.jimfs.path.PathType;
-import com.google.jimfs.path.SimplePath;
 
 import java.nio.file.FileSystem;
 import java.nio.file.PathMatcher;
@@ -112,15 +113,20 @@ abstract class PathService {
   public final JimfsPath parsePath(String first, String... more) {
     String joined = type.joiner()
         .join(Iterables.filter(Lists.asList(first, more), NOT_EMPTY));
-    SimplePath path = type.parsePath(joined);
-    return createPath(path.root(), path.names());
+    ParseResult parsed = type.parsePath(joined);
+    Name root = parsed.root() == null ? null : type.getRootName(parsed.root());
+    Iterable<Name> names = type.asNames(parsed.names());
+    return createPath(root, names);
   }
 
   /**
    * Returns the string form of the given path.
    */
   public final String toString(JimfsPath path) {
-    return type.toString(path);
+    Name root = path.root();
+    String rootString = root == null ? null : root.toString();
+    Iterable<String> names = Iterables.transform(path.names(), Functions.toStringFunction());
+    return type.toString(rootString, names);
   }
 
   /**

@@ -162,19 +162,19 @@ public abstract class PathType {
   /**
    * Returns an empty path.
    */
-  protected final SimplePath emptyPath() {
-    return new SimplePath(null, ImmutableList.of(getName("")));
+  protected final ParseResult emptyPath() {
+    return new ParseResult(null, ImmutableList.of(""));
   }
 
   /**
    * Parses the given strings as a path.
    */
-  public abstract SimplePath parsePath(String path);
+  public abstract ParseResult parsePath(String path);
 
   /**
    * Returns the string form of the given path.
    */
-  public abstract String toString(SimplePath path);
+  public abstract String toString(String root, Iterable<String> names);
 
   /**
    * Unix-style path type.
@@ -191,27 +191,22 @@ public abstract class PathType {
     }
 
     @Override
-    public SimplePath parsePath(String path) {
+    public ParseResult parsePath(String path) {
       if (path.isEmpty()) {
         return emptyPath();
       }
 
-      Name root = null;
-      if (path.startsWith("/")) {
-        root = getRootName("/");
-        path = path.substring(1);
-      }
-
-      return new SimplePath(root, asNames(splitter().split(path)));
+      String root = path.startsWith("/") ? "/" : null;
+      return new ParseResult(root, splitter().split(path));
     }
 
     @Override
-    public String toString(SimplePath path) {
+    public String toString(@Nullable String root, Iterable<String> names) {
       StringBuilder builder = new StringBuilder();
-      if (path.root() != null) {
-        builder.append(path.root());
+      if (root != null) {
+        builder.append(root);
       }
-      joiner().appendTo(builder, path.names());
+      joiner().appendTo(builder, names);
       return builder.toString();
     }
   }
@@ -234,12 +229,12 @@ public abstract class PathType {
 
     @Override
     public Name getRootName(String name) {
-      Name canonical = getName(Ascii.toUpperCase(name) + "\\");
+      String canonical = Ascii.toUpperCase(name) + "\\";
       return Name.create(name, canonical);
     }
 
     @Override
-    public SimplePath parsePath(String path) {
+    public ParseResult parsePath(String path) {
       boolean startsWithRoot = startsWithRoot(path);
 
       for (int i = 0; i < path.length(); i++) {
@@ -249,13 +244,13 @@ public abstract class PathType {
         }
       }
 
-      Name root = null;
+      String root = null;
       if (path.length() >= 2 && isLetter(path.charAt(0)) && path.charAt(1) == ':') {
-        root = getRootName(path.substring(0, 2));
+        root = path.substring(0, 2);
         path = path.substring(2);
       }
 
-      return new SimplePath(root, asNames(splitter().split(path)));
+      return new ParseResult(root, splitter().split(path));
     }
 
     private static boolean startsWithRoot(String string) {
@@ -289,19 +284,53 @@ public abstract class PathType {
     }
 
     @Override
-    public String toString(SimplePath path) {
+    public String toString(@Nullable String root, Iterable<String> names) {
       StringBuilder builder = new StringBuilder();
-      Name root = path.root();
       if (root != null) {
-        String rootString = root.toString();
-        builder.append(rootString);
-        if (!rootString.endsWith("\\") && !path.names().isEmpty()) {
+        builder.append(root);
+        if (!root.endsWith("\\") && !Iterables.isEmpty(names)) {
           builder.append("\\");
         }
       }
-      joiner().appendTo(builder, path.names());
+      joiner().appendTo(builder, names);
       return builder.toString();
     }
   }
 
+  /**
+   * Simple result of parsing a path.
+   */
+  public static final class ParseResult {
+
+    @Nullable
+    private final String root;
+    private final Iterable<String> names;
+
+    public ParseResult(String root, Iterable<String> names) {
+      this.root = root;
+      this.names = names;
+    }
+
+    /**
+     * Returns whether or not this result is an absolute path.
+     */
+    public boolean isAbsolute() {
+      return root != null;
+    }
+
+    /**
+     * Returns the parsed root element, or null if there was no root.
+     */
+    @Nullable
+    public String root() {
+      return root;
+    }
+
+    /**
+     * Returns the parsed name elements.
+     */
+    public Iterable<String> names() {
+      return names;
+    }
+  }
 }

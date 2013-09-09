@@ -16,11 +16,14 @@
 
 package com.google.jimfs.path;
 
+import static com.google.jimfs.path.PathType.ParseResult;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 
 import org.junit.Test;
+
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link PathType}.
@@ -56,26 +59,23 @@ public class PathTypeTest {
 
   @Test
   public void testParsePath() {
-    SimplePath path = type.parsePath("foo/bar/baz/one\\two");
+    ParseResult path = type.parsePath("foo/bar/baz/one\\two");
     ASSERT.that(path.isAbsolute()).isFalse();
-    ASSERT.that(path.names()).iteratesAs(
-        Name.simple("foo"), Name.simple("bar"), Name.simple("baz"),
-        Name.simple("one"), Name.simple("two"));
+    ASSERT.that(path.names()).iteratesAs("foo", "bar", "baz", "one", "two");
 
-    SimplePath path2 = type.parsePath("$one//\\two");
+    ParseResult path2 = type.parsePath("$one//\\two");
     ASSERT.that(path2.isAbsolute()).isTrue();
-    ASSERT.that(path2.root()).is(Name.simple("$"));
-    ASSERT.that(path2.names())
-        .iteratesAs(Name.simple("one"), Name.simple("two"));
+    ASSERT.that(path2.root()).is("$");
+    ASSERT.that(path2.names()).iteratesAs("one", "two");
   }
 
   @Test
   public void testToString() {
-    SimplePath path = type.parsePath("foo/bar\\baz");
-    ASSERT.that(type.toString(path)).is("foo/bar/baz");
+    ParseResult path = type.parsePath("foo/bar\\baz");
+    ASSERT.that(type.toString(path.root(), path.names())).is("foo/bar/baz");
 
-    SimplePath path2 = type.parsePath("$/foo/bar");
-    ASSERT.that(type.toString(path2)).is("$foo/bar");
+    ParseResult path2 = type.parsePath("$/foo/bar");
+    ASSERT.that(type.toString(path2.root(), path2.names())).is("$foo/bar");
   }
 
   @Test
@@ -86,16 +86,16 @@ public class PathTypeTest {
     ASSERT.that(unix.getCaseSensitivity()).is(CaseSensitivity.CASE_SENSITIVE);
 
     // "//foo/bar" is what will be passed to parsePath if "/", "foo", "bar" is passed to getPath
-    SimplePath path = unix.parsePath("//foo/bar");
+    ParseResult path = unix.parsePath("//foo/bar");
     ASSERT.that(path.isAbsolute()).isTrue();
-    ASSERT.that(path.root()).is(Name.simple("/"));
-    ASSERT.that(path.names()).iteratesAs(Name.simple("foo"), Name.simple("bar"));
-    ASSERT.that(unix.toString(path)).is("/foo/bar");
+    ASSERT.that(path.root()).is("/");
+    ASSERT.that(path.names()).iteratesAs("foo", "bar");
+    ASSERT.that(unix.toString(path.root(), path.names())).is("/foo/bar");
 
-    SimplePath path2 = unix.parsePath("foo/bar/");
+    ParseResult path2 = unix.parsePath("foo/bar/");
     ASSERT.that(path2.isAbsolute()).isFalse();
-    ASSERT.that(path2.names()).iteratesAs(Name.simple("foo"), Name.simple("bar"));
-    ASSERT.that(unix.toString(path2)).is("foo/bar");
+    ASSERT.that(path2.names()).iteratesAs("foo", "bar");
+    ASSERT.that(unix.toString(path2.root(), path2.names())).is("foo/bar");
   }
 
   @Test
@@ -109,20 +109,17 @@ public class PathTypeTest {
     ASSERT.that(windows.getRootName("C:")).isEqualTo(windows.getRootName("c:"));
 
     // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
-    SimplePath path = windows.parsePath("C:\\\\foo\\bar");
+    ParseResult path = windows.parsePath("C:\\\\foo\\bar");
     ASSERT.that(path.isAbsolute()).isTrue();
-    ASSERT.that(String.valueOf(path.root())).is("C:");
-    ASSERT.that(path.root()).isEqualTo(windows.getRootName("C:"));
-    ASSERT.that(path.root()).isEqualTo(windows.getRootName("c:"));
-    ASSERT.that(path.names())
-        .iteratesAs(Name.caseInsensitiveAscii("foo"), Name.caseInsensitiveAscii("bar"));
-    ASSERT.that(windows.toString(path)).is("C:\\foo\\bar");
+    ASSERT.that(path.root()).is("C:");
+    ASSERT.that(path.names()).iteratesAs("foo", "bar");
+    ASSERT.that(windows.toString(path.root(), path.names())).is("C:\\foo\\bar");
 
-    SimplePath path2 = windows.parsePath("foo/bar/");
+    ParseResult path2 = windows.parsePath("foo/bar/");
     ASSERT.that(path2.isAbsolute()).isFalse();
     ASSERT.that(path2.names())
-        .iteratesAs(Name.caseInsensitiveAscii("foo"), Name.caseInsensitiveAscii("bar"));
-    ASSERT.that(windows.toString(path2)).is("foo\\bar");
+        .iteratesAs("foo", "bar");
+    ASSERT.that(windows.toString(path2.root(), path2.names())).is("foo\\bar");
   }
 
   /**
@@ -135,23 +132,23 @@ public class PathTypeTest {
     }
 
     @Override
-    public SimplePath parsePath(String path) {
-      Name root = null;
+    public ParseResult parsePath(String path) {
+      String root = null;
       if (path.startsWith("$")) {
-        root = getRootName("$");
+        root = "$";
         path = path.substring(1);
       }
 
-      return new SimplePath(root, asNames(splitter().split(path)));
+      return new ParseResult(root, splitter().split(path));
     }
 
     @Override
-    public String toString(SimplePath path) {
+    public String toString(@Nullable String root, Iterable<String> names) {
       StringBuilder builder = new StringBuilder();
-      if (path.isAbsolute()) {
-        builder.append(path.root());
+      if (root != null) {
+        builder.append(root);
       }
-      joiner().appendTo(builder, path.names());
+      joiner().appendTo(builder, names);
       return builder.toString();
     }
   }

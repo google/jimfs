@@ -28,7 +28,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 import com.google.jimfs.path.Name;
-import com.google.jimfs.path.SimplePath;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -50,13 +49,17 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-abstract class JimfsPath extends SimplePath implements Path, FileContent {
+abstract class JimfsPath implements Path, FileContent {
 
+  @Nullable
+  private final Name root;
+  private final ImmutableList<Name> names;
   protected final PathService pathService;
 
   public JimfsPath(PathService pathService, @Nullable Name root, Iterable<Name> names) {
-    super(root, names);
     this.pathService = checkNotNull(pathService);
+    this.root = root;
+    this.names = ImmutableList.copyOf(names);
   }
 
   @Override
@@ -68,6 +71,21 @@ abstract class JimfsPath extends SimplePath implements Path, FileContent {
   @Override
   public int sizeInBytes() {
     return 0;
+  }
+
+  /**
+   * Returns the root name, or null if there is no root.
+   */
+  @Nullable
+  public Name root() {
+    return root;
+  }
+
+  /**
+   * Returns the list of name elements.
+   */
+  public ImmutableList<Name> names() {
+    return names;
   }
 
   /**
@@ -113,6 +131,11 @@ abstract class JimfsPath extends SimplePath implements Path, FileContent {
    */
   public boolean isEmptyPath() {
     return root == null && names.size() == 1 && names.get(0).toString().equals("");
+  }
+
+  @Override
+  public boolean isAbsolute() {
+    return root != null;
   }
 
   @Override
@@ -274,7 +297,7 @@ abstract class JimfsPath extends SimplePath implements Path, FileContent {
       throw new ProviderMismatchException(other.toString());
     }
 
-    checkArgument(Objects.equal(root(), otherPath.root()), "Cannot relativize %s against %s--" +
+    checkArgument(Objects.equal(root, otherPath.root), "Cannot relativize %s against %s--" +
         "both paths must have no root or the same root.", other, this);
 
     if (equals(other)) {
