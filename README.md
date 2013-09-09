@@ -12,6 +12,9 @@ The simplest way to use JIMFS is to just get a new `FileSystem` instance from th
 start using it:
 
 ```java
+import com.google.jimfs.Jimfs;
+...
+
 // For a file system with Unix-style paths and attributes:
 FileSystem fs = Jimfs.newUnixLikeFileSystem();
 
@@ -23,6 +26,24 @@ Files.write(foo.resolve("hello.txt"), ImmutableList.of("hello"), StandardCharset
 // Or for Windows:
 FileSystem fs = Jimfs.newWindowsLikeFileSystem();
 ```
+
+What's supported?
+-----------------
+
+JIMFS supports almost all the APIs under `java.nio.file`. It supports:
+
+- Creating, deleting, moving and copying files and directories.
+- Reading and writing files with `FileChannel` or `SeekableByteChannel`, `InputStream`,
+  `OutputStream`, etc.
+- Symbolic links.
+- Hard links to regular files.
+- `SecureDirectoryStream`, for operations relative to an _open_ directory.
+- Glob and regex path filtering with `PathMatcher`.
+- Watching for changes to a directory with a `WatchService`.
+- File attributes. Built-in attribute views that can be supported include "basic", "owner",
+  "posix", "unix", "dos", "acl" and "user". Do note, however, that not all attribute views provide
+  _useful_ attributes. For example, while setting and reading POSIX file permissions is possible
+  with the "posix" view, those permissions will not actually affect the behavior of the file system.
 
 License
 -------
