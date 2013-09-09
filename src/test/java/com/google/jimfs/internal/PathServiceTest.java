@@ -78,6 +78,15 @@ public class PathServiceTest {
   }
 
   @Test
+  public void testPathCreation_parseIgnoresEmptyString() {
+    // if the empty string wasn't ignored, the resulting path would be "/foo" since the empty
+    // string would be joined with foo
+    ASSERT.about(paths()).that(service.parsePath("", "foo"))
+        .hasRootComponent(null).and()
+        .hasNameComponents("foo");
+  }
+
+  @Test
   public void testToString() {
     // not much to test for this since it just delegates to PathType anyway
     JimfsPath path = new TestPath(
