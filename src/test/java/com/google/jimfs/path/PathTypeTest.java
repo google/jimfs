@@ -18,10 +18,7 @@ package com.google.jimfs.path;
 
 import static org.truth0.Truth.ASSERT;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 import org.junit.Test;
 
@@ -59,13 +56,13 @@ public class PathTypeTest {
 
   @Test
   public void testParsePath() {
-    SimplePath path = type.parsePath("foo", "bar/baz", "one\\two");
+    SimplePath path = type.parsePath("foo/bar/baz/one\\two");
     ASSERT.that(path.isAbsolute()).isFalse();
     ASSERT.that(path.names()).iteratesAs(
         Name.simple("foo"), Name.simple("bar"), Name.simple("baz"),
         Name.simple("one"), Name.simple("two"));
 
-    SimplePath path2 = type.parsePath("$one/", "\\two");
+    SimplePath path2 = type.parsePath("$one//\\two");
     ASSERT.that(path2.isAbsolute()).isTrue();
     ASSERT.that(path2.root()).is(Name.simple("$"));
     ASSERT.that(path2.names())
@@ -77,7 +74,7 @@ public class PathTypeTest {
     SimplePath path = type.parsePath("foo/bar\\baz");
     ASSERT.that(type.toString(path)).is("foo/bar/baz");
 
-    SimplePath path2 = type.parsePath("$", "foo", "bar");
+    SimplePath path2 = type.parsePath("$/foo/bar");
     ASSERT.that(type.toString(path2)).is("$foo/bar");
   }
 
@@ -88,7 +85,8 @@ public class PathTypeTest {
     ASSERT.that(unix.getOtherSeparators()).is("");
     ASSERT.that(unix.getCaseSensitivity()).is(CaseSensitivity.CASE_SENSITIVE);
 
-    SimplePath path = unix.parsePath("/", "foo", "bar");
+    // "//foo/bar" is what will be passed to parsePath if "/", "foo", "bar" is passed to getPath
+    SimplePath path = unix.parsePath("//foo/bar");
     ASSERT.that(path.isAbsolute()).isTrue();
     ASSERT.that(path.root()).is(Name.simple("/"));
     ASSERT.that(path.names()).iteratesAs(Name.simple("foo"), Name.simple("bar"));
@@ -110,7 +108,8 @@ public class PathTypeTest {
     ASSERT.that(windows.getName("foo")).isEqualTo(Name.caseInsensitiveAscii("foo"));
     ASSERT.that(windows.getRootName("C:")).isEqualTo(windows.getRootName("c:"));
 
-    SimplePath path = windows.parsePath("C:\\", "foo", "bar");
+    // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
+    SimplePath path = windows.parsePath("C:\\\\foo\\bar");
     ASSERT.that(path.isAbsolute()).isTrue();
     ASSERT.that(String.valueOf(path.root())).is("C:");
     ASSERT.that(path.root()).isEqualTo(windows.getRootName("C:"));
@@ -136,16 +135,14 @@ public class PathTypeTest {
     }
 
     @Override
-    public SimplePath parsePath(String first, String... more) {
-      String joined = Joiner.on(getSeparator()).join(Lists.asList(first, more));
+    public SimplePath parsePath(String path) {
       Name root = null;
-      if (joined.startsWith("$")) {
+      if (path.startsWith("$")) {
         root = getRootName("$");
-        joined = joined.substring(1);
+        path = path.substring(1);
       }
 
-      Splitter splitter = Splitter.onPattern("[/\\\\]").omitEmptyStrings();
-      return new SimplePath(root, asNames(splitter.split(joined)));
+      return new SimplePath(root, asNames(splitter().split(path)));
     }
 
     @Override
@@ -154,7 +151,7 @@ public class PathTypeTest {
       if (path.isAbsolute()) {
         builder.append(path.root());
       }
-      Joiner.on("/").appendTo(builder, path.names());
+      joiner().appendTo(builder, path.names());
       return builder.toString();
     }
   }

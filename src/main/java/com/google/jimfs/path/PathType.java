@@ -19,16 +19,14 @@ package com.google.jimfs.path;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Ascii;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 
 import java.nio.file.InvalidPathException;
-import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -80,12 +78,19 @@ public abstract class PathType {
   private final CaseSensitivity caseSensitivity;
   private final String separator;
   private final String otherSeparators;
+  private final Joiner joiner;
+  private final Splitter splitter;
 
   protected PathType(
       CaseSensitivity caseSensitivity, char separator, char... otherSeparators) {
     this.caseSensitivity = checkNotNull(caseSensitivity);
     this.separator = String.valueOf(separator);
     this.otherSeparators = String.valueOf(otherSeparators);
+    this.joiner = Joiner.on(separator);
+    // TODO(cgdecker): This uses CharMatcher, which is @Beta... what to do
+    this.splitter = otherSeparators.length == 0
+        ? Splitter.on(separator).omitEmptyStrings()
+        : Splitter.on(CharMatcher.anyOf(this.separator + this.otherSeparators)).omitEmptyStrings();
   }
 
   /**
@@ -102,6 +107,20 @@ public abstract class PathType {
    */
   public String getOtherSeparators() {
     return otherSeparators;
+  }
+
+  /**
+   * Returns the path joiner for this path type.
+   */
+  public Joiner joiner() {
+    return joiner;
+  }
+
+  /**
+   * Returns the path splitter for this path type.
+   */
+  public Splitter splitter() {
+    return splitter;
   }
 
   /**
@@ -150,7 +169,7 @@ public abstract class PathType {
   /**
    * Parses the given strings as a path.
    */
-  public abstract SimplePath parsePath(String first, String... more);
+  public abstract SimplePath parsePath(String path);
 
   /**
    * Returns the string form of the given path.
@@ -167,27 +186,23 @@ public abstract class PathType {
      */
     private static final UnixPathType INSTANCE = new UnixPathType(CaseSensitivity.CASE_SENSITIVE);
 
-    private static final Joiner JOINER = Joiner.on('/');
-    private static final Splitter SPLITTER = Splitter.on('/').omitEmptyStrings();
-
     private UnixPathType(CaseSensitivity caseSensitivity) {
       super(caseSensitivity, '/');
     }
 
     @Override
-    public SimplePath parsePath(String first, String... more) {
-      if (first.isEmpty() && more.length == 0) {
+    public SimplePath parsePath(String path) {
+      if (path.isEmpty()) {
         return emptyPath();
       }
 
       Name root = null;
-      if (first.startsWith("/")) {
+      if (path.startsWith("/")) {
         root = getRootName("/");
-        first = first.substring(1);
+        path = path.substring(1);
       }
 
-      String joined = JOINER.join(Lists.asList(first, more));
-      return new SimplePath(root, asNames(SPLITTER.split(joined)));
+      return new SimplePath(root, asNames(splitter().split(path)));
     }
 
     @Override
@@ -196,7 +211,7 @@ public abstract class PathType {
       if (path.root() != null) {
         builder.append(path.root());
       }
-      JOINER.appendTo(builder, path.names());
+      joiner().appendTo(builder, path.names());
       return builder.toString();
     }
   }
@@ -213,10 +228,6 @@ public abstract class PathType {
     private static final WindowsPathType INSTANCE
         = new WindowsPathType(CaseSensitivity.CASE_INSENSITIVE_ASCII);
 
-    private static final Joiner JOINER = Joiner.on('\\');
-    private static final Splitter SPLITTER = Splitter.on(Pattern.compile("[/\\\\]"))
-        .omitEmptyStrings();
-
     private WindowsPathType(CaseSensitivity caseSensitivity) {
       super(caseSensitivity, '\\', '/');
     }
@@ -228,24 +239,23 @@ public abstract class PathType {
     }
 
     @Override
-    public SimplePath parsePath(String first, String... more) {
-      String joined = JOINER.join(Lists.asList(first, more));
-      boolean startsWithRoot = startsWithRoot(joined);
+    public SimplePath parsePath(String path) {
+      boolean startsWithRoot = startsWithRoot(path);
 
-      for (int i = 0; i < joined.length(); i++) {
-        char c = joined.charAt(i);
+      for (int i = 0; i < path.length(); i++) {
+        char c = path.charAt(i);
         if (isReserved(c) && (i != 1 || !startsWithRoot)) {
-          throw new InvalidPathException(joined, "Illegal char <" + c + ">", i);
+          throw new InvalidPathException(path, "Illegal char <" + c + ">", i);
         }
       }
 
       Name root = null;
-      if (joined.length() >= 2 && isLetter(joined.charAt(0)) && joined.charAt(1) == ':') {
-        root = getRootName(joined.substring(0, 2));
-        joined = joined.substring(2);
+      if (path.length() >= 2 && isLetter(path.charAt(0)) && path.charAt(1) == ':') {
+        root = getRootName(path.substring(0, 2));
+        path = path.substring(2);
       }
 
-      return new SimplePath(root, asNames(SPLITTER.split(joined)));
+      return new SimplePath(root, asNames(splitter().split(path)));
     }
 
     private static boolean startsWithRoot(String string) {
@@ -289,7 +299,7 @@ public abstract class PathType {
           builder.append("\\");
         }
       }
-      JOINER.appendTo(builder, path.names());
+      joiner().appendTo(builder, path.names());
       return builder.toString();
     }
   }
