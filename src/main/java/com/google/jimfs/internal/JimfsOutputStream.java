@@ -73,7 +73,7 @@ final class JimfsOutputStream extends OutputStream {
   }
 
   @Override
-  public synchronized void write(byte[] b, int off, int len) throws IOException {
+  public void write(byte[] b, int off, int len) throws IOException {
     checkPositionIndexes(off, off + len, b.length);
     synchronized (lock) {
       checkNotClosed();
