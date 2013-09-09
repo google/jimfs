@@ -110,7 +110,8 @@ abstract class PathService {
    * Parses the given strings as a path.
    */
   public final JimfsPath parsePath(String first, String... more) {
-    String joined = type.joiner().join(Lists.asList(first, more));
+    String joined = type.joiner()
+        .join(Iterables.filter(Lists.asList(first, more), NOT_EMPTY));
     SimplePath path = type.parsePath(joined);
     return createPath(path.root(), path.names());
   }
@@ -131,9 +132,9 @@ abstract class PathService {
         syntaxAndPattern, type.getSeparator() + type.getOtherSeparators());
   }
 
-  private static final Predicate<Name> NOT_EMPTY = new Predicate<Name>() {
+  private static final Predicate<Object> NOT_EMPTY = new Predicate<Object>() {
     @Override
-    public boolean apply(Name input) {
+    public boolean apply(Object input) {
       return !input.toString().isEmpty();
     }
   };
