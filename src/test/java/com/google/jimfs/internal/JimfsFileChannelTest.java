@@ -21,8 +21,10 @@ import static com.google.jimfs.testing.TestUtils.bytes;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -30,6 +32,7 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.testing.ByteBufferChannel;
 
 import org.junit.Test;
@@ -44,6 +47,7 @@ import java.nio.channels.NonWritableChannelException;
 import java.nio.file.OpenOption;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 
 /**
  * Most of the behavior of {@link JimfsFileChannel} is handled by the {@link ByteStore}
@@ -209,6 +213,81 @@ public class JimfsFileChannelTest {
     assertEquals(10, channel.position());
     channel.truncate(2);
     assertEquals(2, channel.position());
+  }
+
+  @Test
+  public void testFileTimeUpdates() throws IOException {
+    File file = new File(-1, new ArrayByteStore());
+    FileChannel channel = new JimfsFileChannel(file,
+        ImmutableSet.of(READ, WRITE));
+
+    // accessed
+    long accessTime = file.getLastAccessTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.read(ByteBuffer.allocate(10));
+    assertNotEquals(accessTime, file.getLastAccessTime());
+
+    accessTime = file.getLastAccessTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.read(ByteBuffer.allocate(10), 0);
+    assertNotEquals(accessTime, file.getLastAccessTime());
+
+    accessTime = file.getLastAccessTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.read(new ByteBuffer[]{ByteBuffer.allocate(10)});
+    assertNotEquals(accessTime, file.getLastAccessTime());
+
+    accessTime = file.getLastAccessTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.read(new ByteBuffer[]{ByteBuffer.allocate(10)}, 0, 1);
+    assertNotEquals(accessTime, file.getLastAccessTime());
+
+    accessTime = file.getLastAccessTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.transferTo(0, 10, new ByteBufferChannel(10));
+    assertNotEquals(accessTime, file.getLastAccessTime());
+
+    // modified
+    long modifiedTime = file.getLastModifiedTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.write(ByteBuffer.allocate(10));
+    assertNotEquals(modifiedTime, file.getLastModifiedTime());
+
+    modifiedTime = file.getLastModifiedTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.write(ByteBuffer.allocate(10), 0);
+    assertNotEquals(modifiedTime, file.getLastModifiedTime());
+
+    modifiedTime = file.getLastModifiedTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.write(new ByteBuffer[]{ByteBuffer.allocate(10)});
+    assertNotEquals(modifiedTime, file.getLastModifiedTime());
+
+    modifiedTime = file.getLastModifiedTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.write(new ByteBuffer[]{ByteBuffer.allocate(10)}, 0, 1);
+    assertNotEquals(modifiedTime, file.getLastModifiedTime());
+
+    modifiedTime = file.getLastModifiedTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.truncate(0);
+    assertNotEquals(modifiedTime, file.getLastModifiedTime());
+
+    modifiedTime = file.getLastModifiedTime();
+    Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
+
+    channel.transferFrom(new ByteBufferChannel(10), 0, 10);
+    assertNotEquals(modifiedTime, file.getLastModifiedTime());
   }
 
   @Test

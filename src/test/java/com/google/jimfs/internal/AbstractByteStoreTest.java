@@ -16,16 +16,8 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.testing.TestUtils.buffer;
-import static com.google.jimfs.testing.TestUtils.buffers;
-import static com.google.jimfs.testing.TestUtils.bytes;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.Bytes;
 import com.google.jimfs.testing.ByteBufferChannel;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,7 +29,16 @@ import java.nio.channels.FileLock;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
+import static com.google.jimfs.testing.TestUtils.buffer;
+import static com.google.jimfs.testing.TestUtils.buffers;
+import static com.google.jimfs.testing.TestUtils.bytes;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 /**
+ * Base tests for {@link ByteStore} implementations.
+ *
  * @author Colin Decker
  */
 public abstract class AbstractByteStoreTest {
@@ -62,6 +63,20 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
+  public void testEmpty_read_singleByte() {
+    assertEquals(-1, store.read(0));
+    assertEquals(-1, store.read(1));
+  }
+
+  @Test
+  public void testEmpty_read_byteArray() {
+    byte[] array = new byte[10];
+    assertEquals(-1, store.read(0, array));
+    assertEquals(-1, store.read(0, array, 0, array.length));
+    assertArrayEquals(bytes("0000000000"), array);
+  }
+
+  @Test
   public void testEmpty_read_singleBuffer() {
     ByteBuffer buffer = ByteBuffer.allocate(10);
     int read = store.read(0, buffer);
@@ -77,6 +92,46 @@ public abstract class AbstractByteStoreTest {
     assertEquals(-1, read);
     assertEquals(0, buf1.position());
     assertEquals(0, buf2.position());
+  }
+
+  @Test
+  public void testEmpty_write_singleByte_atStart() {
+    store.write(0, (byte) 1);
+    assertContentEquals("1", store);
+  }
+
+  @Test
+  public void testEmpty_append_singleByte() {
+    store.append((byte) 1);
+    assertContentEquals("1", store);
+  }
+
+  @Test
+  public void testEmpty_write_byteArray_atStart() {
+    byte[] bytes = bytes("111111");
+    store.write(0, bytes);
+    assertContentEquals(bytes, store);
+  }
+
+  @Test
+  public void testEmpty_append_byteArray() {
+    byte[] bytes = bytes("111111");
+    store.append(bytes);
+    assertContentEquals(bytes, store);
+  }
+
+  @Test
+  public void testEmpty_write_partialByteArray_atStart() {
+    byte[] bytes = bytes("2211111122");
+    store.write(0, bytes, 2, 6);
+    assertContentEquals("111111", store);
+  }
+
+  @Test
+  public void testEmpty_append_ByteArray() {
+    byte[] bytes = bytes("2211111122");
+    store.append(bytes, 2, 6);
+    assertContentEquals("111111", store);
   }
 
   @Test
@@ -101,6 +156,26 @@ public abstract class AbstractByteStoreTest {
   public void testEmpty_append_multipleBuffers() {
     store.append(buffers("111", "111"));
     assertContentEquals("111111", store);
+  }
+
+  @Test
+  public void testEmpty_write_singleByte_atNonZeroPosition() {
+    store.write(5, (byte) 1);
+    assertContentEquals("000001", store);
+  }
+
+  @Test
+  public void testEmpty_write_byteArray_atNonZeroPosition() {
+    byte[] bytes = bytes("111111");
+    store.write(5, bytes);
+    assertContentEquals("00000111111", store);
+  }
+
+  @Test
+  public void testEmpty_write_partialByteArray_atNonZeroPosition() {
+    byte[] bytes = bytes("2211111122");
+    store.write(5, bytes, 2, 6);
+    assertContentEquals("00000111111", store);
   }
 
   @Test
@@ -188,6 +263,24 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
+  public void testNonEmpty_read_singleByte() {
+    fillContent("123456");
+    assertEquals(1, store.read(0));
+    assertEquals(2, store.read(1));
+    assertEquals(6, store.read(5));
+    assertEquals(-1, store.read(6));
+    assertEquals(-1, store.read(100));
+  }
+
+  @Test
+  public void testNonEmpty_read_all_byteArray() {
+    fillContent("222222");
+    byte[] array = new byte[6];
+    assertEquals(6, store.read(0, array));
+    assertArrayEquals(bytes("222222"), array);
+  }
+
+  @Test
   public void testNonEmpty_read_all_singleBuffer() {
     fillContent("222222");
     ByteBuffer buffer = ByteBuffer.allocate(6);
@@ -203,6 +296,17 @@ public abstract class AbstractByteStoreTest {
     assertEquals(6, store.read(0, ImmutableList.of(buf1, buf2)));
     assertBufferEquals("223", 0, buf1);
     assertBufferEquals("334", 0, buf2);
+  }
+
+  @Test
+  public void testNonEmpty_read_all_byteArray_largerThanContent() {
+    fillContent("222222");
+    byte[] array = new byte[10];
+    assertEquals(6, store.read(0, array));
+    assertArrayEquals(bytes("2222220000"), array);
+    array = new byte[10];
+    assertEquals(6, store.read(0, array, 2, 6));
+    assertArrayEquals(bytes("0022222200"), array);
   }
 
   @Test
@@ -234,6 +338,39 @@ public abstract class AbstractByteStoreTest {
     assertBufferEquals("2222", 0, buf1);
     assertBufferEquals("22000000", 6, buf2);
     assertBufferEquals("0000", 4, buf3);
+  }
+
+  @Test
+  public void testNonEmpty_read_partial_fromStart_byteArray() {
+    fillContent("222222");
+    byte[] array = new byte[3];
+    assertEquals(3, store.read(0, array));
+    assertArrayEquals(bytes("222"), array);
+    array = new byte[10];
+    assertEquals(3, store.read(0, array, 1, 3));
+    assertArrayEquals(bytes("0222000000"), array);
+  }
+
+  @Test
+  public void testNonEmpty_read_partial_fromMiddle_byteArray() {
+    fillContent("22223333");
+    byte[] array = new byte[3];
+    assertEquals(3, store.read(3, array));
+    assertArrayEquals(bytes("233"), array);
+    array = new byte[10];
+    assertEquals(3, store.read(3, array, 1, 3));
+    assertArrayEquals(bytes("0233000000"), array);
+  }
+
+  @Test
+  public void testNonEmpty_read_partial_fromEnd_byteArray() {
+    fillContent("2222222222");
+    byte[] array = new byte[3];
+    assertEquals(2, store.read(8, array));
+    assertArrayEquals(bytes("220"), array);
+    array = new byte[10];
+    assertEquals(2, store.read(8, array, 1, 3));
+    assertArrayEquals(bytes("0220000000"), array);
   }
 
   @Test
@@ -291,6 +428,16 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
+  public void testNonEmpty_read_fromPastEnd_byteArray() {
+    fillContent("123");
+    byte[] array = new byte[3];
+    assertEquals(-1, store.read(3, array));
+    assertArrayEquals(bytes("000"), array);
+    assertEquals(-1, store.read(3, array, 0, 2));
+    assertArrayEquals(bytes("000"), array);
+  }
+
+  @Test
   public void testNonEmpty_read_fromPastEnd_singleBuffer() {
     fillContent("123");
     ByteBuffer buffer = ByteBuffer.allocate(3);
@@ -306,6 +453,88 @@ public abstract class AbstractByteStoreTest {
     assertEquals(-1, store.read(6, ImmutableList.of(buf1, buf2)));
     assertBufferEquals("00", 2, buf1);
     assertBufferEquals("00", 2, buf2);
+  }
+
+  @Test
+  public void testNonEmpty_write_partial_fromStart_singleByte() {
+    fillContent("222222");
+    assertEquals(1, store.write(0, (byte) 1));
+    assertContentEquals("122222", store);
+  }
+
+  @Test
+  public void testNonEmpty_write_partial_fromMiddle_singleByte() {
+    fillContent("222222");
+    assertEquals(1, store.write(3, (byte) 1));
+    assertContentEquals("222122", store);
+  }
+
+  @Test
+  public void testNonEmpty_write_partial_fromEnd_singleByte() {
+    fillContent("222222");
+    assertEquals(1, store.write(6, (byte) 1));
+    assertContentEquals("2222221", store);
+  }
+
+  @Test
+  public void testNonEmpty_append_singleByte() {
+    fillContent("222222");
+    assertEquals(1, store.append((byte) 1));
+    assertContentEquals("2222221", store);
+  }
+
+  @Test
+  public void testNonEmpty_write_partial_fromStart_byteArray() {
+    fillContent("222222");
+    assertEquals(3, store.write(0, bytes("111")));
+    assertContentEquals("111222", store);
+    assertEquals(2, store.write(0, bytes("333333"), 0, 2));
+    assertContentEquals("331222", store);
+  }
+
+  @Test
+  public void testNonEmpty_write_partial_fromMiddle_byteArray() {
+    fillContent("22222222");
+    assertEquals(3, store.write(3, buffer("111")));
+    assertContentEquals("22211122", store);
+    assertEquals(2, store.write(5, bytes("333333"), 1, 2));
+    assertContentEquals("22211332", store);
+  }
+
+  @Test
+  public void testNonEmpty_write_partial_fromBeforeEnd_byteArray() {
+    fillContent("22222222");
+    assertEquals(3, store.write(6, bytes("111")));
+    assertContentEquals("222222111", store);
+    assertEquals(2, store.write(8, bytes("333333"), 2, 2));
+    assertContentEquals("2222221133", store);
+  }
+
+  @Test
+  public void testNonEmpty_write_partial_fromEnd_byteArray() {
+    fillContent("222222");
+    assertEquals(3, store.write(6, bytes("111")));
+    assertContentEquals("222222111", store);
+    assertEquals(2, store.write(9, bytes("333333"), 3, 2));
+    assertContentEquals("22222211133", store);
+  }
+
+  @Test
+  public void testNonEmpty_append_byteArray() {
+    fillContent("222222");
+    assertEquals(3, store.append(bytes("111")));
+    assertContentEquals("222222111", store);
+    assertEquals(2, store.append(bytes("333333"), 3, 2));
+    assertContentEquals("22222211133", store);
+  }
+
+  @Test
+  public void testNonEmpty_write_partial_fromPastEnd_byteArray() {
+    fillContent("222222");
+    assertEquals(3, store.write(8, bytes("111")));
+    assertContentEquals("22222200111", store);
+    assertEquals(2, store.write(13, bytes("333333"), 4, 2));
+    assertContentEquals("222222001110033", store);
   }
 
   @Test
@@ -602,7 +831,7 @@ public abstract class AbstractByteStoreTest {
 
   private static void assertBufferEquals(String expected, ByteBuffer actual) {
     assertEquals(expected.length(), actual.capacity());
-    assertEquals(Bytes.asList(bytes(expected)), Bytes.asList(actual.array()));
+    assertArrayEquals(bytes(expected), actual.array());
   }
 
   private static void assertBufferEquals(String expected, int remaining, ByteBuffer actual) {
@@ -611,10 +840,14 @@ public abstract class AbstractByteStoreTest {
   }
 
   private static void assertContentEquals(String expected, ByteStore actual) {
-    assertEquals(expected.length(), actual.sizeInBytes());
+    assertContentEquals(bytes(expected), actual);
+  }
+
+  private static void assertContentEquals(byte[] expected, ByteStore actual) {
+    assertEquals(expected.length, actual.sizeInBytes());
     byte[] actualBytes = new byte[actual.sizeInBytes()];
     actual.read(0, ByteBuffer.wrap(actualBytes));
-    assertEquals(Bytes.asList(bytes(expected)), Bytes.asList(actualBytes));
+    assertArrayEquals(expected, actualBytes);
   }
 
   private static FileChannel fakeChannel() {

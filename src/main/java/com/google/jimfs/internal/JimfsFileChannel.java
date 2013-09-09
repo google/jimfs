@@ -16,20 +16,12 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkPositionIndexes;
-import static java.nio.file.StandardOpenOption.APPEND;
-import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.WRITE;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
-import java.nio.channels.Channels;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -42,6 +34,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 /**
  * A {@link FileChannel} implementation that reads and writes to a {@link ByteStore} object. The
@@ -78,7 +77,7 @@ final class JimfsFileChannel extends FileChannel {
    */
   public InputStream asInputStream() {
     checkReadable();
-    return Channels.newInputStream(this);
+    return new JimfsInputStream(file);
   }
 
   /**
@@ -86,7 +85,7 @@ final class JimfsFileChannel extends FileChannel {
    */
   public OutputStream asOutputStream() {
     checkWritable();
-    return Channels.newOutputStream(this);
+    return new JimfsOutputStream(file, append);
   }
 
   /**

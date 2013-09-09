@@ -74,6 +74,39 @@ abstract class ByteStore implements FileContent {
   public abstract boolean truncate(int size);
 
   /**
+   * Writes the given byte to this store at position {@code pos}. {@code pos} may be greater than
+   * the current size of this store, in which case this store is resized and all bytes between the
+   * current size and {@code pos} are set to 0. Returns the number of bytes written.
+   *
+   * @throws IllegalArgumentException if {@code pos} is negative.
+   */
+  public abstract int write(int pos, byte b);
+
+  /**
+   * Writes all bytes in the given byte array to this store starting at position {@code pos}.
+   * {@code pos} may be greater than the current size of this store, in which case this store is
+   * resized and all bytes between the current size and {@code pos} are set to 0. Returns the number
+   * of bytes written.
+   *
+   * @throws IllegalArgumentException if {@code pos} is negative.
+   */
+  public int write(int pos, byte[] b) {
+    return write(pos, b, 0, b.length);
+  }
+
+  /**
+   * Writes {@code len} bytes starting at offset {@code off} in the given byte array to this store
+   * starting at position {@code pos}. {@code pos} may be greater than the current size of this
+   * store, in which case this store is resized and all bytes between the current size and
+   * {@code pos} are set to 0. Returns the number of bytes written.
+   *
+   * @throws IllegalArgumentException if {@code pos} is negative.
+   * @throws IndexOutOfBoundsException if {@code off} or {@code len} is negative, or if
+   *     {@code off + len} is greater than {@code b.length}.
+   */
+  public abstract int write(int pos, byte[] b, int off, int len);
+
+  /**
    * Writes all available bytes from buffer {@code buf} to this store starting at position
    * {@code pos}. {@code pos} may be greater than the current size of this store, in which case
    * this store is resized and all bytes between the current size and {@code pos} are set to 0.
@@ -120,6 +153,46 @@ abstract class ByteStore implements FileContent {
   public abstract int transferFrom(ReadableByteChannel src, int pos, int count) throws IOException;
 
   /**
+   * Appends the given byte to this store. Returns the number of bytes written.
+   */
+  public int append(byte b) {
+    writeLock().lock();
+    try {
+      return write(sizeInBytes(), b);
+    } finally {
+      writeLock().unlock();
+    }
+  }
+
+  /**
+   * Appends all bytes in the given byte array to this store. Returns the number of bytes written.
+   */
+  public int append(byte[] b) {
+    writeLock().lock();
+    try {
+      return write(sizeInBytes(), b, 0, b.length);
+    } finally {
+      writeLock().unlock();
+    }
+  }
+
+  /**
+   * Appends {@code len} bytes starting at offset {@code off} in the given byte array to this store.
+   * Returns the number of bytes written.
+   *
+   * @throws IndexOutOfBoundsException if {@code off} or {@code len} is negative, or if
+   *     {@code off + len} is greater than {@code b.length}.
+   */
+  public int append(byte[] b, int off, int len) {
+    writeLock().lock();
+    try {
+      return write(sizeInBytes(), b, off, len);
+    } finally {
+      writeLock().unlock();
+    }
+  }
+
+  /**
    * Appends all available bytes from buffer {@code buf} to this store. Returns the number of bytes
    * written.
    */
@@ -159,6 +232,36 @@ abstract class ByteStore implements FileContent {
       writeLock().unlock();
     }
   }
+
+  /**
+   * Reads the byte at position {@code pos} in this store as an unsigned integer in the range 0-255.
+   * If {@code pos} is greater than or equal to the size of this store, returns -1 instead.
+   *
+   * @throws IllegalArgumentException if {@code pos} is negative.
+   */
+  public abstract int read(int pos);
+
+  /**
+   * Reads up to {@code b.length} bytes starting at position {@code pos} in this store to the given
+   * byte array. Returns the number of bytes actually read or -1 if {@code pos} is greater than or
+   * equal to the size of this store.
+   *
+   * @throws IllegalArgumentException if {@code pos} is negative.
+   */
+  public int read(int pos, byte[] b) {
+    return read(pos, b, 0, b.length);
+  }
+
+  /**
+   * Reads up to {@code len} bytes starting at position {@code pos} in this store to the given byte
+   * array starting at offset {@code off}. Returns the number of bytes actually read or -1 if
+   * {@code pos} is greater than or equal to the size of this store.
+   *
+   * @throws IllegalArgumentException if {@code pos} is negative.
+   * @throws IndexOutOfBoundsException if {@code off} or {@code len} is negative or if
+   *     {@code off + len} is greater than {@code b.length}.
+   */
+  public abstract int read(int pos, byte[] b, int off, int len);
 
   /**
    * Reads up to {@code buf.remaining()} bytes starting at position {@code pos} in this store to the
