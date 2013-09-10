@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.path;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -45,7 +45,7 @@ import java.text.Collator;
  *
  * @author Colin Decker
  */
-public abstract class Name {
+abstract class Name {
 
   /**
    * Returns the name to use for a link to the same directory.

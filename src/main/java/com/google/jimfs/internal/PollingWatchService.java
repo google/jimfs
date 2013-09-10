@@ -26,7 +26,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-import com.google.jimfs.path.Name;
 
 import java.io.IOException;
 import java.nio.file.NotDirectoryException;

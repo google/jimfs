@@ -32,7 +32,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.jimfs.common.IoSupplier;
-import com.google.jimfs.path.Name;
 
 import java.io.IOException;
 import java.nio.file.CopyOption;

@@ -21,7 +21,8 @@ FileSystem fs = Jimfs.newUnixLikeFileSystem();
 Path foo = fs.getPath("/foo");
 Files.createDirectory(foo);
 
-Files.write(foo.resolve("hello.txt"), ImmutableList.of("hello"), StandardCharsets.UTF_8);
+Path hello = foo.resolve("hello.txt");
+Files.write(hello, ImmutableList.of("hello"), StandardCharsets.UTF_8);
 
 // Or for Windows:
 FileSystem fs = Jimfs.newWindowsLikeFileSystem();

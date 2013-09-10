@@ -21,11 +21,11 @@ import static org.junit.Assert.fail;
 
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
-import com.google.jimfs.path.Name;
 
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 /**
@@ -61,13 +61,41 @@ public class JimfsPathTest {
   @Test
   public void testPathParsing_windowsStylePaths() throws IOException {
     TestPathService windowsPathService = TestPathService.WINDOWS;
-    assertEquals("C:", windowsPathService.parsePath("C:").toString());
     assertEquals("C:\\", pathService.parsePath("C:\\").toString());
     assertEquals("C:\\foo", windowsPathService.parsePath("C:\\foo").toString());
     assertEquals("C:\\foo", windowsPathService.parsePath("C:\\", "foo").toString());
     assertEquals("C:\\foo", windowsPathService.parsePath("C:", "\\foo").toString());
     assertEquals("C:\\foo", windowsPathService.parsePath("C:", "foo").toString());
     assertEquals("C:\\foo\\bar", windowsPathService.parsePath("C:", "foo/bar").toString());
+  }
+
+  @Test
+  public void testParsing_windowsStylePaths_invalidPaths() {
+    TestPathService windowsPathService = TestPathService.WINDOWS;
+
+    try {
+      // The actual windows implementation seems to allow "C:" but treat it as a *name*, not a root
+      // despite the fact that a : is illegal except in a root... a : at any position other than
+      // index 1 in the string will produce an exception.
+      // Here, I choose to be more strict
+      windowsPathService.parsePath("C:");
+      fail();
+    } catch (InvalidPathException expected) {
+    }
+
+    try {
+      // "1:\" isn't a root because 1 isn't a letter
+      windowsPathService.parsePath("1:\\foo");
+      fail();
+    } catch (InvalidPathException expected) {
+    }
+
+    try {
+      // < and > are reserved characters
+      windowsPathService.parsePath("foo<bar>");
+      fail();
+    } catch (InvalidPathException expected) {
+    }
   }
 
   @Test

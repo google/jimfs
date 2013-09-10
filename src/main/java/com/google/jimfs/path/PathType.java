@@ -18,13 +18,10 @@ package com.google.jimfs.path;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Ascii;
 import com.google.common.base.CharMatcher;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import java.nio.file.InvalidPathException;
 
@@ -97,7 +94,7 @@ public abstract class PathType {
    * Returns the canonical separator for this path type. The returned string always has a length of
    * one.
    */
-  public String getSeparator() {
+  public final String getSeparator() {
     return separator;
   }
 
@@ -105,58 +102,29 @@ public abstract class PathType {
    * Returns the other separators that are recognized when parsing a path. If no other separators
    * are recognized, the empty string is returned.
    */
-  public String getOtherSeparators() {
+  public final String getOtherSeparators() {
     return otherSeparators;
   }
 
   /**
    * Returns the path joiner for this path type.
    */
-  public Joiner joiner() {
+  public final Joiner joiner() {
     return joiner;
   }
 
   /**
    * Returns the path splitter for this path type.
    */
-  public Splitter splitter() {
+  public final Splitter splitter() {
     return splitter;
   }
 
   /**
    * Returns the case sensitivity setting of paths of this type.
    */
-  public CaseSensitivity getCaseSensitivity() {
+  public final CaseSensitivity getCaseSensitivity() {
     return caseSensitivity;
-  }
-
-  /**
-   * Returns the name for a root. By default, just calls {@link #getName(String)}. Override if
-   * something else is needed.
-   */
-  public Name getRootName(String name) {
-    return getName(name);
-  }
-
-  /**
-   * Returns a name object for the given string. By default, just returns a name for this type's
-   * case sensitivity. Override if something else is needed.
-   */
-  public Name getName(String name) {
-    return getCaseSensitivity().createName(name);
-  }
-
-  /**
-   * Returns a view of the given iterable of non-root name strings as name objects.
-   */
-  public final Iterable<Name> asNames(Iterable<String> names) {
-    return Iterables.transform(names, new Function<String, Name>() {
-      @Nullable
-      @Override
-      public Name apply(String input) {
-        return getName(input);
-      }
-    });
   }
 
   /**
@@ -227,36 +195,35 @@ public abstract class PathType {
       super(caseSensitivity, '\\', '/');
     }
 
-    @Override
-    public Name getRootName(String name) {
-      String canonical = Ascii.toUpperCase(name) + "\\";
-      return Name.create(name, canonical);
-    }
+    private static final int ROOT_LENGTH = 3;
 
     @Override
     public ParseResult parsePath(String path) {
-      boolean startsWithRoot = startsWithRoot(path);
+      String root = null;
+      if (startsWithRoot(path)) {
+        root = path.substring(0, ROOT_LENGTH);
+      }
 
-      for (int i = 0; i < path.length(); i++) {
+      int startIndex = root == null ? 0 : ROOT_LENGTH;
+      for (int i = startIndex; i < path.length(); i++) {
         char c = path.charAt(i);
-        if (isReserved(c) && (i != 1 || !startsWithRoot)) {
+        if (isReserved(c)) {
           throw new InvalidPathException(path, "Illegal char <" + c + ">", i);
         }
       }
 
-      String root = null;
-      if (path.length() >= 2 && isLetter(path.charAt(0)) && path.charAt(1) == ':') {
-        root = path.substring(0, 2);
-        path = path.substring(2);
+      if (root != null) {
+        path = path.substring(3);
       }
 
       return new ParseResult(root, splitter().split(path));
     }
 
     private static boolean startsWithRoot(String string) {
-      return string.length() >= 2
+      return string.length() >= ROOT_LENGTH
           && isLetter(string.charAt(0))
-          && string.charAt(1) == ':';
+          && string.charAt(1) == ':'
+          && string.charAt(2) == '\\';
     }
 
     /**
@@ -288,9 +255,6 @@ public abstract class PathType {
       StringBuilder builder = new StringBuilder();
       if (root != null) {
         builder.append(root);
-        if (!root.endsWith("\\") && !Iterables.isEmpty(names)) {
-          builder.append("\\");
-        }
       }
       joiner().appendTo(builder, names);
       return builder.toString();

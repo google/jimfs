@@ -16,8 +16,7 @@
 
 /**
  * This package contains classes used for configuring the representation and handling of file
- * system paths. The central class is {@link PathType}, which defines a type of path such as
- * Unix-style or Windows-style.
+ * system paths.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs.path;

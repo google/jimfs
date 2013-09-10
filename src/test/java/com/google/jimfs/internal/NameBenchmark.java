@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.path;
+package com.google.jimfs.internal;
 
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;

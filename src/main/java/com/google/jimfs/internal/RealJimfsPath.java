@@ -18,8 +18,6 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.jimfs.path.Name;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.LinkOption;

@@ -54,7 +54,7 @@
  * are created by a {@link PathService} with help from the file system's configured
  * {@link com.google.jimfs.path.PathType PathType}.
  *
- * <p>Paths are made up of {@link com.google.jimfs.path.Name Name} objects, which also serve as the
+ * <p>Paths are made up of {@link com.google.jimfs.internal.Name Name} objects, which also serve as the
  * file names in directories. Names are basically enhanced strings that may have different notions
  * of equality, such as case-insensitive equality.
  *

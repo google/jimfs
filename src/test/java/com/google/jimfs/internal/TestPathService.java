@@ -16,7 +16,6 @@
 
 package com.google.jimfs.internal;
 
-import com.google.jimfs.path.Name;
 import com.google.jimfs.path.PathType;
 
 import javax.annotation.Nullable;

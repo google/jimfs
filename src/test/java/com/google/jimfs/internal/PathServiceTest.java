@@ -20,7 +20,6 @@ import static com.google.jimfs.testing.PathSubject.paths;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
-import com.google.jimfs.path.Name;
 import com.google.jimfs.path.PathType;
 
 import org.junit.Test;
@@ -47,22 +46,22 @@ public class PathServiceTest {
         .hasRootComponent(null).and()
         .hasNameComponents("");
 
-    ASSERT.about(paths()).that(service.createRoot(type.getRootName("/")))
+    ASSERT.about(paths()).that(service.createRoot(service.name("/")))
         .isAbsolute().and()
         .hasRootComponent("/").and()
         .hasNoNameComponents();
 
-    ASSERT.about(paths()).that(service.createFileName(type.getName("foo")))
+    ASSERT.about(paths()).that(service.createFileName(service.name("foo")))
         .hasRootComponent(null).and()
         .hasNameComponents("foo");
 
-    JimfsPath relative = service.createRelativePath(type.asNames(ImmutableList.of("foo", "bar")));
+    JimfsPath relative = service.createRelativePath(service.names(ImmutableList.of("foo", "bar")));
     ASSERT.about(paths()).that(relative)
         .hasRootComponent(null).and()
         .hasNameComponents("foo", "bar");
 
     JimfsPath absolute = service.createPath(
-        type.getRootName("/"), type.asNames(ImmutableList.of("foo", "bar")));
+        service.name("/"), service.names(ImmutableList.of("foo", "bar")));
     ASSERT.about(paths()).that(absolute)
         .isAbsolute().and()
         .hasRootComponent("/").and()

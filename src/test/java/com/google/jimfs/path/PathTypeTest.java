@@ -19,8 +19,6 @@ package com.google.jimfs.path;
 import static com.google.jimfs.path.PathType.ParseResult;
 import static org.truth0.Truth.ASSERT;
 
-import com.google.common.collect.ImmutableList;
-
 import org.junit.Test;
 
 import javax.annotation.Nullable;
@@ -39,22 +37,6 @@ public class PathTypeTest {
     ASSERT.that(type.getSeparator()).is("/");
     ASSERT.that(type.getOtherSeparators()).is("\\");
     ASSERT.that(type.getCaseSensitivity()).is(CaseSensitivity.CASE_SENSITIVE);
-  }
-
-  @Test
-  public void testNames() {
-    ASSERT.that(type.getName("foo")).is(Name.simple("foo"));
-    ASSERT.that(type.asNames(ImmutableList.of("foo", "bar")))
-        .iteratesAs(Name.simple("foo"), Name.simple("bar"));
-  }
-
-  @Test
-  public void testNames_caseInsensitiveAscii() {
-    FakePathType type2 = new FakePathType(CaseSensitivity.CASE_INSENSITIVE_ASCII);
-    ASSERT.that(type2.getName("foo")).is(Name.caseInsensitiveAscii("foo"));
-    ASSERT.that(type2.getName("foo")).isEqualTo(type2.getName("FOO"));
-    ASSERT.that(type2.asNames(ImmutableList.of("foo", "bar")))
-        .iteratesAs(type2.asNames(ImmutableList.of("FOO", "bAr")));
   }
 
   @Test
@@ -105,13 +87,10 @@ public class PathTypeTest {
     ASSERT.that(windows.getOtherSeparators()).is("/");
     ASSERT.that(windows.getCaseSensitivity()).is(CaseSensitivity.CASE_INSENSITIVE_ASCII);
 
-    ASSERT.that(windows.getName("foo")).isEqualTo(Name.caseInsensitiveAscii("foo"));
-    ASSERT.that(windows.getRootName("C:")).isEqualTo(windows.getRootName("c:"));
-
     // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
     ParseResult path = windows.parsePath("C:\\\\foo\\bar");
     ASSERT.that(path.isAbsolute()).isTrue();
-    ASSERT.that(path.root()).is("C:");
+    ASSERT.that(path.root()).is("C:\\");
     ASSERT.that(path.names()).iteratesAs("foo", "bar");
     ASSERT.that(windows.toString(path.root(), path.names())).is("C:\\foo\\bar");
 

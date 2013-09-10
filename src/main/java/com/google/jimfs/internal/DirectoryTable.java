@@ -18,8 +18,8 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.path.Name.PARENT;
-import static com.google.jimfs.path.Name.SELF;
+import static com.google.jimfs.internal.Name.PARENT;
+import static com.google.jimfs.internal.Name.SELF;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Predicates;
@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
-import com.google.jimfs.path.Name;
 
 import java.util.HashMap;
 import java.util.Map;

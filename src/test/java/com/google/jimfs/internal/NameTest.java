@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.path;
+package com.google.jimfs.internal;
 
 import static org.truth0.Truth.ASSERT;
 
@@ -115,8 +115,7 @@ public class NameTest {
             Name.normalizing("Áá", NORMALIZER))
         .addEqualityGroup(
             Name.normalizing("aa", NORMALIZER),
-            Name.normalizing("AA", NORMALIZER)
-        )
+            Name.normalizing("AA", NORMALIZER))
         .testEquals();
   }
 
