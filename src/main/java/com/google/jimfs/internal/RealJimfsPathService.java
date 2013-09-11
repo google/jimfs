@@ -17,10 +17,9 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.jimfs.path.PathType;
-
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
@@ -31,10 +30,17 @@ import javax.annotation.Nullable;
  */
 final class RealJimfsPathService extends PathService {
 
-  private final AtomicReference<JimfsFileSystem> fileSystem;
+  private volatile JimfsFileSystem fileSystem;
 
-  RealJimfsPathService(AtomicReference<JimfsFileSystem> fileSystem, PathType type) {
+  RealJimfsPathService(PathType type) {
     super(type);
+  }
+
+  /**
+   * Allow the file system to be set after the path service is created.
+   */
+  void setFileSystem(JimfsFileSystem fileSystem) {
+    checkState(this.fileSystem == null, "may not set fileSystem twice");
     this.fileSystem = checkNotNull(fileSystem);
   }
 
@@ -42,7 +48,7 @@ final class RealJimfsPathService extends PathService {
    * Returns the file system this service is for.
    */
   public JimfsFileSystem getFileSystem() {
-    return fileSystem.get();
+    return fileSystem;
   }
 
   @Override

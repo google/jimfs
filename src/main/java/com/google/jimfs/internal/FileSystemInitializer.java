@@ -39,9 +39,7 @@ final class FileSystemInitializer {
    */
   public static JimfsFileSystem createFileSystem(
       JimfsFileSystemProvider provider, URI uri, JimfsConfiguration config) throws IOException {
-    AtomicReference<JimfsFileSystem> fileSystemReference = new AtomicReference<>();
-
-    PathService pathService = new RealJimfsPathService(fileSystemReference, config.getPathType());
+    RealJimfsPathService pathService = new RealJimfsPathService(config.getPathType());
     LookupService lookupService = new LookupService(pathService);
     JimfsFileStore store = new JimfsFileStore("jimfs", config.getAllAttributeProviders());
     ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -62,7 +60,7 @@ final class FileSystemInitializer {
 
     JimfsFileSystem fileSystem = new JimfsFileSystem(
         provider, uri, config, pathService, store, lock, superRootTree, workingDirTree);
-    fileSystemReference.set(fileSystem);
+    pathService.setFileSystem(fileSystem);
     return fileSystem;
   }
 
