@@ -32,7 +32,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileLock;
 import java.nio.file.OpenOption;
@@ -40,6 +42,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -83,6 +87,118 @@ public class JimfsAsynchronousFileChannelTest {
 
       channel.close();
       assertFalse(channel.isOpen());
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  @Test
+  public void testClosedChannel() throws IOException, InterruptedException {
+    StubByteStore store = store(15);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    try {
+      JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
+      channel.close();
+
+      assertClosed(channel.read(ByteBuffer.allocate(10), 0));
+      assertClosed(channel.write(ByteBuffer.allocate(10), 15));
+      assertClosed(channel.lock());
+      assertClosed(channel.lock(0, 10, true));
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  @Test
+  public void testAsyncClose_write() throws IOException, InterruptedException {
+    StubByteStore store = store(15);
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    try {
+      JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
+
+      store.writeLock().lock(); // cause another thread trying to write to block
+
+      Future<Integer> future = channel.write(ByteBuffer.allocate(10), 0);
+
+      final CountDownLatch handlerLatch = new CountDownLatch(1);
+      final AtomicBoolean gotAsyncCloseException = new AtomicBoolean(false);
+      channel.write(ByteBuffer.allocate(10), 0, null, new CompletionHandler<Integer, Object>() {
+        @Override
+        public void completed(Integer result, Object attachment) {
+          handlerLatch.countDown();
+        }
+
+        @Override
+        public void failed(Throwable exc, Object attachment) {
+          gotAsyncCloseException.set(exc instanceof AsynchronousCloseException);
+          handlerLatch.countDown();
+        }
+      });
+
+      assertTrue(channel.activeFutures.size() == 2);
+      assertTrue(channel.activeFutures.contains(future));
+
+      channel.close();
+
+      try {
+        future.get();
+        fail();
+      } catch (ExecutionException expected) {
+        assertTrue(expected.getCause() instanceof AsynchronousCloseException);
+      }
+
+      handlerLatch.await();
+
+      assertTrue(gotAsyncCloseException.get());
+    } finally {
+      executor.shutdown();
+    }
+  }
+
+  @Test
+  public void testAsyncClose_read() throws IOException, InterruptedException {
+    StubByteStore store = store(15);
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    try {
+      JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
+
+      store.writeLock().lock(); // cause another thread trying to read to block
+
+      Future<Integer> future = channel.read(ByteBuffer.allocate(10), 0);
+
+      final CountDownLatch handlerLatch = new CountDownLatch(1);
+      final AtomicBoolean gotAsyncCloseException = new AtomicBoolean(false);
+      channel.read(ByteBuffer.allocate(10), 0, null, new CompletionHandler<Integer, Object>() {
+        @Override
+        public void completed(Integer result, Object attachment) {
+          handlerLatch.countDown();
+        }
+
+        @Override
+        public void failed(Throwable exc, Object attachment) {
+          gotAsyncCloseException.set(exc instanceof AsynchronousCloseException);
+          handlerLatch.countDown();
+        }
+      });
+
+      assertTrue(channel.activeFutures.size() == 2);
+      assertTrue(channel.activeFutures.contains(future));
+
+      channel.close();
+
+      try {
+        future.get();
+        fail();
+      } catch (ExecutionException expected) {
+        assertTrue(expected.getCause() instanceof AsynchronousCloseException);
+      }
+
+      handlerLatch.await();
+
+      assertTrue(gotAsyncCloseException.get());
     } finally {
       executor.shutdown();
     }
@@ -217,6 +333,15 @@ public class JimfsAsynchronousFileChannelTest {
       throw exception;
     } else {
       assertNotNull(lockHolder.get());
+    }
+  }
+
+  private static void assertClosed(Future<?> future) throws InterruptedException {
+    try {
+      future.get();
+      fail();
+    } catch (ExecutionException expected) {
+      assertTrue(expected.getCause() instanceof ClosedChannelException);
     }
   }
 }

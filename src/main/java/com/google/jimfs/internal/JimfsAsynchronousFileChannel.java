@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.JimfsFileChannel.checkNotNegative;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -35,6 +36,7 @@ import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileLock;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -87,8 +89,8 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   }
 
   @Override
-  public ListenableFuture<FileLock> lock(final long position, final long size,
-      final boolean shared) {
+  public ListenableFuture<FileLock> lock(
+      final long position, final long size, final boolean shared) {
     checkNotNegative(position, "position");
     checkNotNegative(size, "size");
     if (!isOpen()) {
@@ -137,7 +139,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     return new AsynchronousChannelFuture<>(executor.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return channel.read(dst, position);
+        return channel.readInterruptibly(dst, position);
       }
     }));
   }
@@ -158,7 +160,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     return new AsynchronousChannelFuture<>(executor.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return channel.write(src, position);
+        return channel.writeInterruptibly(src, position);
       }
     }));
   }
@@ -170,10 +172,10 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
 
   @Override
   public void close() throws IOException {
-    channel.close();
     for (AsynchronousChannelFuture<?> future : activeFutures) {
       future.close();
     }
+    channel.close();
   }
 
   /**
@@ -233,7 +235,8 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   /**
    * Set of current futures that have not yet completed.
    */
-  private Set<AsynchronousChannelFuture<?>> activeFutures = Sets.newConcurrentHashSet();
+  @VisibleForTesting
+  final Set<AsynchronousChannelFuture<?>> activeFutures = Sets.newConcurrentHashSet();
 
   /**
    * A future that can be closed when this channel is closed. When the future is closed, it will
@@ -256,7 +259,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
           activeFutures.remove(AsynchronousChannelFuture.this);
           try {
             future.set(AsynchronousChannelFuture.this.delegate.get());
-          } catch (InterruptedException e) {
+          } catch (CancellationException | InterruptedException e) {
             future.cancel(true);
           } catch (ExecutionException e) {
             future.setException(e.getCause());
@@ -270,8 +273,9 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
      */
     private void close() {
       activeFutures.remove(this);
-      if (delegate.cancel(true)) {
+      if (!delegate.isDone()) {
         future.setException(new AsynchronousCloseException());
+        delegate.cancel(true);
       }
     }
 

@@ -22,7 +22,6 @@ import com.google.jimfs.JimfsConfiguration;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 

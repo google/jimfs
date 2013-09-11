@@ -41,6 +41,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A {@link FileChannel} implementation that reads and writes to a {@link ByteStore} object. The
@@ -53,7 +55,7 @@ import java.util.concurrent.ExecutorService;
  */
 final class JimfsFileChannel extends FileChannel {
 
-  private final Object lock = new Object();
+  private final Lock lock = new ReentrantLock();
 
   private File file;
   private ByteStore store;
@@ -116,7 +118,8 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   public int read(ByteBuffer dst) throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkReadable();
 
@@ -127,6 +130,8 @@ final class JimfsFileChannel extends FileChannel {
         position += read;
       }
       return read;
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -137,7 +142,8 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   private int read(List<ByteBuffer> buffers) throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkReadable();
 
@@ -148,12 +154,15 @@ final class JimfsFileChannel extends FileChannel {
         position += read;
       }
       return read;
+    } finally {
+      lock.unlock();
     }
   }
 
   @Override
   public int write(ByteBuffer src) throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkWritable();
 
@@ -169,6 +178,8 @@ final class JimfsFileChannel extends FileChannel {
       }
 
       return written;
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -179,7 +190,8 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   private int write(List<ByteBuffer> srcs) throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkWritable();
 
@@ -195,14 +207,19 @@ final class JimfsFileChannel extends FileChannel {
       }
 
       return written;
+    } finally {
+      lock.unlock();
     }
   }
 
   @Override
   public long position() throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       return position;
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -210,18 +227,24 @@ final class JimfsFileChannel extends FileChannel {
   public FileChannel position(long newPosition) throws IOException {
     checkNotNegative(newPosition, "newPosition");
 
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       this.position = (int) newPosition;
       return this;
+    } finally {
+      lock.unlock();
     }
   }
 
   @Override
   public long size() throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       return store.sizeInBytes();
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -229,7 +252,8 @@ final class JimfsFileChannel extends FileChannel {
   public FileChannel truncate(long size) throws IOException {
     checkNotNegative(size, "size");
 
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkWritable();
 
@@ -241,14 +265,19 @@ final class JimfsFileChannel extends FileChannel {
       }
 
       return this;
+    } finally {
+      lock.unlock();
     }
   }
 
   @Override
   public void force(boolean metaData) throws IOException {
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       // do nothing... writes are all synchronous anyway
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -258,13 +287,16 @@ final class JimfsFileChannel extends FileChannel {
     checkNotNegative(position, "position");
     checkNotNegative(count, "count");
 
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkReadable();
 
       file.updateAccessTime();
 
       return store.transferTo((int) position, (int) count, target);
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -274,7 +306,8 @@ final class JimfsFileChannel extends FileChannel {
     checkNotNegative(position, "position");
     checkNotNegative(count, "count");
 
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkWritable();
 
@@ -287,6 +320,8 @@ final class JimfsFileChannel extends FileChannel {
       } else {
         return store.transferFrom(src, (int) position, (int) count);
       }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -295,13 +330,43 @@ final class JimfsFileChannel extends FileChannel {
     checkNotNull(dst);
     checkNotNegative(position, "position");
 
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkReadable();
 
       file.updateAccessTime();
 
       return store.read((int) position, dst);
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  /**
+   * Equivalent of {@link #read(ByteBuffer, long)} that may be interrupted if blocked waiting for a
+   * lock.
+   */
+  public int readInterruptibly(
+      ByteBuffer dst, long position) throws IOException, InterruptedException {
+    checkNotNull(dst);
+    checkNotNegative(position, "position");
+
+    lock.lockInterruptibly();
+    try {
+      checkOpen();
+      checkReadable();
+
+      file.updateAccessTime();
+
+      store.readLock().lockInterruptibly();
+      try {
+        return store.read((int) position, dst);
+      } finally {
+        store.readLock().unlock();
+      }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -310,7 +375,8 @@ final class JimfsFileChannel extends FileChannel {
     checkNotNull(src);
     checkNotNegative(position, "position");
 
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       checkWritable();
 
@@ -325,10 +391,51 @@ final class JimfsFileChannel extends FileChannel {
       }
 
       return written;
+    } finally {
+      lock.unlock();
     }
   }
 
-  @Override
+  /**
+   * Equivalent of {@link #write(ByteBuffer, long)} that may be interrupted if blocked waiting for
+   * a lock.
+   */
+  public int writeInterruptibly(
+      ByteBuffer src, long position) throws ClosedChannelException, InterruptedException {
+    checkNotNull(src);
+    checkNotNegative(position, "position");
+
+    lock.lockInterruptibly();
+    try {
+      checkOpen();
+      checkWritable();
+
+      file.updateModifiedTime();
+
+      int written;
+      if (append) {
+        store.writeLock().lockInterruptibly();
+        try {
+          written = store.append(src);
+        } finally {
+          store.writeLock().unlock();
+        }
+        this.position = store.sizeInBytes();
+      } else {
+        store.writeLock().lockInterruptibly();
+        try {
+          written = store.write((int) position, src);
+        } finally {
+          store.writeLock().unlock();
+        }
+      }
+
+      return written;
+    } finally {
+      lock.unlock();
+    }
+  }
+
   public MappedByteBuffer map(MapMode mode, long position, long size) throws IOException {
     // would like this to pretend to work, but can't create an implementation of MappedByteBuffer
     throw new UnsupportedOperationException();
@@ -341,7 +448,8 @@ final class JimfsFileChannel extends FileChannel {
     checkNotNegative(position, "position");
     checkNotNegative(size, "size");
     
-    synchronized (lock) {
+    lock.lock();
+    try {
       checkOpen();
       if (shared) {
         // shared is for a read lock
@@ -351,6 +459,8 @@ final class JimfsFileChannel extends FileChannel {
         checkWritable();
       }
       return new FakeFileLock(this, position, size, shared);
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -364,9 +474,12 @@ final class JimfsFileChannel extends FileChannel {
   protected void implCloseChannel() throws IOException {
     // if the file has been deleted, allow it to be GCed even if a reference to this channel is
     // held after closing for some reason
-    synchronized (lock) {
+    lock.lock();
+    try {
       file = null;
       store = null;
+    } finally {
+      lock.unlock();
     }
   }
 

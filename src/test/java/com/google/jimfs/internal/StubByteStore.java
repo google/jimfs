@@ -82,10 +82,15 @@ public class StubByteStore extends ByteStore {
   @Override
   public int write(int pos, ByteBuffer buf) {
     checkThrowException();
-    int written = buf.remaining();
-    setSize(Math.max(size, pos + written));
-    buf.position(buf.position() + written);
-    return written;
+    writeLock().lock();
+    try {
+      int written = buf.remaining();
+      setSize(Math.max(size, pos + written));
+      buf.position(buf.position() + written);
+      return written;
+    } finally {
+      writeLock().unlock();
+    }
   }
 
   @Override
