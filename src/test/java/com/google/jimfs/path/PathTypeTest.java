@@ -21,9 +21,9 @@ import static com.google.jimfs.path.PathType.windows;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
-import java.nio.file.InvalidPathException;
-
 import org.junit.Test;
+
+import java.nio.file.InvalidPathException;
 
 import javax.annotation.Nullable;
 
