@@ -234,7 +234,7 @@ public abstract class PathType {
       path = path.replace('/', '\\');
 
       if (WORKING_DIR_WITH_DRIVE.matcher(path).matches()) {
-        throw new InvalidPathException(path,
+        throw new InvalidPathException(original,
             "JIMFS does not currently support the Windows \"relative path with drive\" syntax");
       }
 
@@ -256,7 +256,7 @@ public abstract class PathType {
 
       Matcher trailingSpaceMatcher = TRAILING_SPACES.matcher(path);
       if (trailingSpaceMatcher.find()) {
-        throw new InvalidPathException(path, "Trailing char < >", trailingSpaceMatcher.start());
+        throw new InvalidPathException(original, "Trailing char < >", trailingSpaceMatcher.start());
       }
 
       if (root != null) {
