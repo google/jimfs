@@ -18,7 +18,6 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -30,15 +29,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Colin Decker
@@ -51,70 +47,26 @@ final class JimfsFileSystem extends FileSystem {
   private final JimfsConfiguration configuration;
   private final PathService pathService;
   private final JimfsFileStore store;
-  private final ImmutableSet<JimfsPath> rootDirPaths;
+  private final ReadWriteLock lock;
 
-  private final JimfsPath workingDirPath;
-  private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-  private final FileTree superRootTree;
-  private final FileTree workingDirTree;
+  private final FileTree superRoot;
+  private final FileTree workingDir;
 
   /** Set of closeables that need to be closed when this file system is closed. */
   private final Set<Closeable> openCloseables = Sets.newConcurrentHashSet();
 
-  public JimfsFileSystem(JimfsFileSystemProvider provider, URI uri, JimfsConfiguration config) {
+  JimfsFileSystem(
+      JimfsFileSystemProvider provider, URI uri, JimfsConfiguration config,
+      PathService pathService, JimfsFileStore store, ReadWriteLock lock,
+      FileTree superRoot, FileTree workingDir) {
     this.provider = checkNotNull(provider);
     this.uri = checkNotNull(uri);
     this.configuration = checkNotNull(config);
-    this.pathService = new RealJimfsPathService(this, config.getPathType());
-    this.store = new JimfsFileStore("jimfs", config.getAllAttributeProviders());
-
-    Set<JimfsPath> rootPaths = new HashSet<>();
-    for (String root : config.getRoots()) {
-      JimfsPath rootPath = pathService.parsePath(root);
-      if (!rootPath.isAbsolute() && rootPath.getNameCount() == 0) {
-        throw new IllegalArgumentException("Invalid root path: " + root);
-      }
-      rootPaths.add(rootPath);
-    }
-    this.rootDirPaths = ImmutableSet.copyOf(rootPaths);
-    this.workingDirPath = getPath(config.getWorkingDirectory());
-
-    if (rootDirPaths.isEmpty()) {
-      this.superRootTree = null;
-      this.workingDirTree = null;
-    } else {
-      File superRoot = store.createDirectory();
-      DirectoryTable superRootTable = superRoot.content();
-      for (JimfsPath path : rootDirPaths) {
-        File dir = store.createDirectory();
-        superRootTable.link(path.root(), dir);
-
-        DirectoryTable dirTable = dir.content();
-        dirTable.linkSelf(dir);
-        dirTable.linkParent(dir);
-      }
-
-
-      LookupService lookupService = new LookupService(pathService);
-      this.superRootTree = new FileTree(
-          superRoot, pathService.emptyPath(), null, lock(), store, pathService, lookupService);
-
-      File workingDir = createWorkingDirectory(workingDirPath);
-      this.workingDirTree = new FileTree(
-          workingDir, workingDirPath, superRootTree, lock(), store, pathService, lookupService);
-    }
-  }
-
-  private File createWorkingDirectory(JimfsPath workingDir) {
-    try {
-      Files.createDirectories(workingDir);
-      return superRootTree.lookup(workingDir, NOFOLLOW_LINKS)
-          .requireDirectory(workingDir)
-          .file();
-    } catch (IOException e) {
-      throw new RuntimeException("failed to create working dir", e);
-    }
+    this.pathService = checkNotNull(pathService);
+    this.store = checkNotNull(store);
+    this.lock = checkNotNull(lock);
+    this.superRoot = checkNotNull(superRoot);
+    this.workingDir = checkNotNull(workingDir);
   }
 
   @Override
@@ -141,17 +93,21 @@ final class JimfsFileSystem extends FileSystem {
     return pathService.getSeparator();
   }
 
-  @SuppressWarnings("unchecked") // safe because set is immutable
   @Override
   public ImmutableSet<Path> getRootDirectories() {
-    return (ImmutableSet<Path>) (ImmutableSet) rootDirPaths;
+    ImmutableSet.Builder<Path> builder = ImmutableSet.builder();
+    DirectoryTable superRootTable = superRoot.base().content();
+    for (Name name : superRootTable.snapshot()) {
+      builder.add(pathService.createRoot(name));
+    }
+    return builder.build();
   }
 
   /**
    * Returns the working directory path for this file system.
    */
   public JimfsPath getWorkingDirectory() {
-    return workingDirPath;
+    return workingDir.getBasePath();
   }
 
   @Override
@@ -220,7 +176,7 @@ final class JimfsFileSystem extends FileSystem {
    * returned. Otherwise, the working directory is returned.
    */
   public FileTree getFileTree(JimfsPath path) {
-    return path.isAbsolute() ? superRootTree : workingDirTree;
+    return path.isAbsolute() ? superRoot : workingDir;
   }
 
   @Override

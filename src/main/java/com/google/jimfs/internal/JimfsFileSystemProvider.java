@@ -79,14 +79,14 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   private final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new ConcurrentHashMap<>();
 
   @Override
-  public JimfsFileSystem newFileSystem(URI uri, Map<String, ?> env) {
+  public JimfsFileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
     checkArgument(uri.getScheme().equalsIgnoreCase(SCHEME),
         "uri (%s) scheme must be '%s'", uri, SCHEME);
     checkArgument(env.get(CONFIG_KEY) instanceof JimfsConfiguration,
         "env map (%s) must contain key '%s' mapped to an instance of JimfsConfiguration",
         env, CONFIG_KEY);
     JimfsConfiguration config = (JimfsConfiguration) env.get(CONFIG_KEY);
-    JimfsFileSystem fileSystem = new JimfsFileSystem(this, uri, config);
+    JimfsFileSystem fileSystem = FileSystemInitializer.createFileSystem(this, uri, config);
     if (fileSystems.putIfAbsent(uri, fileSystem) != null) {
       throw new FileSystemAlreadyExistsException(uri.toString());
     }

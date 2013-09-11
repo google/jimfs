@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.jimfs.path.PathType;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import javax.annotation.Nullable;
 
 /**
@@ -29,9 +31,9 @@ import javax.annotation.Nullable;
  */
 final class RealJimfsPathService extends PathService {
 
-  private final JimfsFileSystem fileSystem;
+  private final AtomicReference<JimfsFileSystem> fileSystem;
 
-  RealJimfsPathService(JimfsFileSystem fileSystem, PathType type) {
+  RealJimfsPathService(AtomicReference<JimfsFileSystem> fileSystem, PathType type) {
     super(type);
     this.fileSystem = checkNotNull(fileSystem);
   }
@@ -40,7 +42,7 @@ final class RealJimfsPathService extends PathService {
    * Returns the file system this service is for.
    */
   public JimfsFileSystem getFileSystem() {
-    return fileSystem;
+    return fileSystem.get();
   }
 
   @Override
