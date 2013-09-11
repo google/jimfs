@@ -47,24 +47,16 @@ final class ArrayByteStore extends ByteStore {
     this.size = size;
   }
 
+  // need to lock in these methods since they're defined by an interface
+
   @Override
-  public int sizeInBytes() {
-    readLock().lock();
-    try {
-      return size;
-    } finally {
-      readLock().unlock();
-    }
+  public int size() {
+    return size;
   }
 
   @Override
-  public ByteStore copy() {
-    readLock().lock();
-    try {
-      return new ArrayByteStore(copyArray(size), size);
-    } finally {
-      readLock().unlock();
-    }
+  public ByteStore createCopy() {
+    return new ArrayByteStore(copyArray(size), size);
   }
 
   /**
@@ -109,17 +101,12 @@ final class ArrayByteStore extends ByteStore {
   public boolean truncate(int size) {
     checkNotNegative(size, "size");
 
-    writeLock().lock();
-    try {
-      if (size >= this.size) {
-        return false;
-      }
-
-      this.size = size;
-      return true;
-    } finally {
-      writeLock().unlock();
+    if (size >= this.size) {
+      return false;
     }
+
+    this.size = size;
+    return true;
   }
 
   private void resizeArray(int minSize) {
@@ -140,15 +127,10 @@ final class ArrayByteStore extends ByteStore {
   public int write(int pos, byte b) {
     checkNotNegative(pos, "pos");
 
-    writeLock().lock();
-    try {
-      resizeForWrite(pos + 1);
+    resizeForWrite(pos + 1);
 
-      bytes[pos] = b;
-      return 1;
-    } finally {
-      writeLock().unlock();
-    }
+    bytes[pos] = b;
+    return 1;
   }
 
   @Override
@@ -156,31 +138,21 @@ final class ArrayByteStore extends ByteStore {
     checkNotNegative(pos, "pos");
     checkPositionIndexes(off, off + len, b.length);
 
-    writeLock().lock();
-    try {
-      resizeForWrite(pos + len);
+    resizeForWrite(pos + len);
 
-      System.arraycopy(b, off, bytes, pos, len);
-      return len;
-    } finally {
-      writeLock().unlock();
-    }
+    System.arraycopy(b, off, bytes, pos, len);
+    return len;
   }
 
   @Override
   public int write(int pos, ByteBuffer buf) {
     checkNotNegative(pos, "pos");
 
-    writeLock().lock();
-    try {
-      int len = buf.remaining();
-      resizeForWrite(pos + len);
+    int len = buf.remaining();
+    resizeForWrite(pos + len);
 
-      buf.get(bytes, pos, len);
-      return len;
-    } finally {
-      writeLock().unlock();
-    }
+    buf.get(bytes, pos, len);
+    return len;
   }
 
   @Override
@@ -192,48 +164,38 @@ final class ArrayByteStore extends ByteStore {
       return 0;
     }
 
-    writeLock().lock();
+    int originalSize = size;
+    resizeForWrite(pos + count);
     try {
-      int originalSize = size;
-      resizeForWrite(pos + count);
-      try {
-        // transfer directly into array
-        ByteBuffer buffer = ByteBuffer.wrap(bytes, pos, count);
+      // transfer directly into array
+      ByteBuffer buffer = ByteBuffer.wrap(bytes, pos, count);
 
-        int read = 0;
-        while (read >= 0 && buffer.hasRemaining()) {
-          read = src.read(buffer);
-        }
-
-        int bytesTransferred = buffer.position() - pos;
-
-        // reset size to the correct size, since fewer than count bytes may have been transferred
-        size = Math.max(originalSize, pos + bytesTransferred);
-
-        return bytesTransferred;
-      } catch (Throwable e) {
-        // if there was an exception copying from src into the array, set the size back to the
-        // original size... the array may be corrupted in the area that was being copied to
-        truncate(originalSize);
-        throw e;
+      int read = 0;
+      while (read >= 0 && buffer.hasRemaining()) {
+        read = src.read(buffer);
       }
-    } finally {
-      writeLock().unlock();
+
+      int bytesTransferred = buffer.position() - pos;
+
+      // reset size to the correct size, since fewer than count bytes may have been transferred
+      size = Math.max(originalSize, pos + bytesTransferred);
+
+      return bytesTransferred;
+    } catch (Throwable e) {
+      // if there was an exception copying from src into the array, set the size back to the
+      // original size... the array may be corrupted in the area that was being copied to
+      truncate(originalSize);
+      throw e;
     }
   }
 
   @Override
   public int read(int pos) {
-    readLock().lock();
-    try {
-      if (pos >= size) {
-        return -1;
-      }
-
-      return UnsignedBytes.toInt(bytes[pos]);
-    } finally {
-      readLock().unlock();
+    if (pos >= size) {
+      return -1;
     }
+
+    return UnsignedBytes.toInt(bytes[pos]);
   }
 
   @Override
@@ -241,32 +203,22 @@ final class ArrayByteStore extends ByteStore {
     checkNotNegative(pos, "pos");
     checkPositionIndexes(off, off + len, b.length);
 
-    readLock().lock();
-    try {
-      int bytesToRead = bytesToRead(pos, len);
-      if (bytesToRead > 0) {
-        System.arraycopy(bytes, pos, b, off, bytesToRead);
-      }
-      return bytesToRead;
-    } finally {
-      readLock().unlock();
+    int bytesToRead = bytesToRead(pos, len);
+    if (bytesToRead > 0) {
+      System.arraycopy(bytes, pos, b, off, bytesToRead);
     }
+    return bytesToRead;
   }
 
   @Override
   public int read(int pos, ByteBuffer buf) {
     checkNotNegative(pos, "pos");
 
-    readLock().lock();
-    try {
-      int bytesToRead = bytesToRead(pos, buf.remaining());
-      if (bytesToRead > 0) {
-        buf.put(bytes, pos, bytesToRead);
-      }
-      return bytesToRead;
-    } finally {
-      readLock().unlock();
+    int bytesToRead = bytesToRead(pos, buf.remaining());
+    if (bytesToRead > 0) {
+      buf.put(bytes, pos, bytesToRead);
     }
+    return bytesToRead;
   }
 
   @Override
@@ -278,19 +230,14 @@ final class ArrayByteStore extends ByteStore {
       return 0;
     }
 
-    readLock().lock();
-    try {
-      int bytesToRead = bytesToRead(pos, count);
-      if (bytesToRead > 0) {
-        ByteBuffer buffer = ByteBuffer.wrap(bytes, pos, bytesToRead);
-        while (buffer.hasRemaining()) {
-          dest.write(buffer);
-        }
+    int bytesToRead = bytesToRead(pos, count);
+    if (bytesToRead > 0) {
+      ByteBuffer buffer = ByteBuffer.wrap(bytes, pos, bytesToRead);
+      while (buffer.hasRemaining()) {
+        dest.write(buffer);
       }
-      return Math.max(bytesToRead, 0); // don't return -1 for this method
-    } finally {
-      readLock().unlock();
     }
+    return Math.max(bytesToRead, 0); // don't return -1 for this method
   }
 
   /**

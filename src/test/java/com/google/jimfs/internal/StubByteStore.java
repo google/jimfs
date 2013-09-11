@@ -42,12 +42,12 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int sizeInBytes() {
+  public int size() {
     return size;
   }
 
   @Override
-  public ByteStore copy() {
+  public ByteStore createCopy() {
     return new StubByteStore(this);
   }
 
@@ -82,15 +82,10 @@ public class StubByteStore extends ByteStore {
   @Override
   public int write(int pos, ByteBuffer buf) {
     checkThrowException();
-    writeLock().lock();
-    try {
-      int written = buf.remaining();
-      setSize(Math.max(size, pos + written));
-      buf.position(buf.position() + written);
-      return written;
-    } finally {
-      writeLock().unlock();
-    }
+    int written = buf.remaining();
+    setSize(Math.max(size, pos + written));
+    buf.position(buf.position() + written);
+    return written;
   }
 
   @Override

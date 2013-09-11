@@ -28,8 +28,9 @@ final class JimfsInputStream extends InputStream {
 
   private final Object lock = new Object();
 
-  private volatile File file;
-  private volatile ByteStore store;
+  private File file;
+  private ByteStore store;
+  private boolean finished;
 
   private int pos;
 
@@ -42,9 +43,23 @@ final class JimfsInputStream extends InputStream {
   public int read() throws IOException {
     synchronized (lock) {
       checkNotClosed();
+      if (finished) {
+        return 0;
+      }
 
-      file.updateAccessTime();
-      return store.read(pos++); // it's ok for pos to go beyond size()
+      store.readLock().lock();
+      try {
+
+        int b = store.read(pos++); // it's ok for pos to go beyond size()
+        if (b == -1) {
+          finished = true;
+        } else {
+          file.updateAccessTime();
+        }
+        return b;
+      } finally {
+        store.readLock().unlock();
+      }
     }
   }
 
@@ -52,13 +67,25 @@ final class JimfsInputStream extends InputStream {
   public int read(byte[] b, int off, int len) throws IOException {
     synchronized (lock) {
       checkNotClosed();
-      int read = store.read(pos, b, off, len);
-      if (read != -1) {
-        pos += read;
+      if (finished) {
+        return 0;
       }
 
-      file.updateAccessTime();
-      return read;
+      store.readLock().lock();
+      try {
+
+        int read = store.read(pos, b, off, len);
+        if (read == -1) {
+          finished = true;
+        } else {
+          pos += read;
+        }
+
+        file.updateAccessTime();
+        return read;
+      } finally {
+        store.readLock().unlock();
+      }
     }
   }
 
@@ -69,6 +96,10 @@ final class JimfsInputStream extends InputStream {
     }
 
     synchronized (lock) {
+      if (finished) {
+        return 0;
+      }
+
       // available() must be an int, so the min must be also
       int skip = (int) Math.min(Math.max(store.sizeInBytes() - pos, 0), n);
       pos += skip;
@@ -79,6 +110,9 @@ final class JimfsInputStream extends InputStream {
   @Override
   public int available() throws IOException {
     synchronized (lock) {
+      if (finished) {
+        return 0;
+      }
       return Math.max(store.sizeInBytes() - pos, 0);
     }
   }

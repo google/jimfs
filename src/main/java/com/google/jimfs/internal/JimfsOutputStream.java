@@ -47,13 +47,18 @@ final class JimfsOutputStream extends OutputStream {
     synchronized (lock) {
       checkNotClosed();
 
-      if (append) {
-        store.append((byte) b);
-      } else {
-        store.write(pos++, (byte) b);
-      }
+      store.writeLock().lock();
+      try {
+        if (append) {
+          store.append((byte) b);
+        } else {
+          store.write(pos++, (byte) b);
+        }
 
-      file.updateModifiedTime();
+        file.updateModifiedTime();
+      } finally {
+        store.writeLock().unlock();
+      }
     }
   }
 
@@ -62,13 +67,18 @@ final class JimfsOutputStream extends OutputStream {
     synchronized (lock) {
       checkNotClosed();
 
-      if (append) {
-        store.append(b);
-      } else {
-        pos += store.write(pos, b);
-      }
+      store.writeLock().lock();
+      try {
+        if (append) {
+          store.append(b);
+        } else {
+          pos += store.write(pos, b);
+        }
 
-      file.updateModifiedTime();
+        file.updateModifiedTime();
+      } finally {
+        store.writeLock().unlock();
+      }
     }
   }
 
@@ -78,13 +88,18 @@ final class JimfsOutputStream extends OutputStream {
     synchronized (lock) {
       checkNotClosed();
 
-      if (append) {
-        store.append(b, off, len);
-      } else {
-        pos += store.write(pos, b, off, len);
-      }
+      store.writeLock().lock();
+      try {
+        if (append) {
+          store.append(b, off, len);
+        } else {
+          pos += store.write(pos, b, off, len);
+        }
 
-      file.updateModifiedTime();
+        file.updateModifiedTime();
+      } finally {
+        store.writeLock().unlock();
+      }
     }
   }
 

@@ -47,7 +47,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * A {@link FileChannel} implementation that reads and writes to a {@link ByteStore} object. The
  * read and write methods and other methods that read or change the position of the channel are
- * synchronized because the {@link ReadableByteChannel} and {@link WritableByteChannel} interfaces
+ * locked because the {@link ReadableByteChannel} and {@link WritableByteChannel} interfaces
  * specify that the read and write methods block when another thread is currently doing a read or
  * write operation.
  *
@@ -123,13 +123,18 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkReadable();
 
-      file.updateAccessTime();
+      store.readLock().lock();
+      try {
+        int read = store.read(position, dst);
+        if (read != -1) {
+          position += read;
+        }
 
-      int read = store.read(position, dst);
-      if (read != -1) {
-        position += read;
+        file.updateAccessTime();
+        return read;
+      } finally {
+        store.readLock().unlock();
       }
-      return read;
     } finally {
       lock.unlock();
     }
@@ -147,13 +152,18 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkReadable();
 
-      file.updateAccessTime();
+      store.readLock().lock();
+      try {
+        int read = store.read(position, buffers);
+        if (read != -1) {
+          position += read;
+        }
 
-      int read = store.read(position, buffers);
-      if (read != -1) {
-        position += read;
+        file.updateAccessTime();
+        return read;
+      } finally {
+        store.readLock().unlock();
       }
-      return read;
     } finally {
       lock.unlock();
     }
@@ -166,18 +176,22 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkWritable();
 
-      file.updateModifiedTime();
+      store.writeLock().lock();
+      try {
+        int written;
+        if (append) {
+          written = store.append(src);
+          position = store.sizeInBytes();
+        } else {
+          written = store.write(position, src);
+          position += written;
+        }
 
-      int written;
-      if (append) {
-        written = store.append(src);
-        position = store.sizeInBytes();
-      } else {
-        written = store.write(position, src);
-        position += written;
+        file.updateModifiedTime();
+        return written;
+      } finally {
+        store.writeLock().unlock();
       }
-
-      return written;
     } finally {
       lock.unlock();
     }
@@ -195,18 +209,22 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkWritable();
 
-      file.updateModifiedTime();
+      store.writeLock().lock();
+      try {
+        int written;
+        if (append) {
+          written = store.append(srcs);
+          position = store.sizeInBytes();
+        } else {
+          written = store.write(position, srcs);
+          position += written;
+        }
 
-      int written;
-      if (append) {
-        written = store.append(srcs);
-        position = store.sizeInBytes();
-      } else {
-        written = store.write(position, srcs);
-        position += written;
+        file.updateModifiedTime();
+        return written;
+      } finally {
+        store.writeLock().unlock();
       }
-
-      return written;
     } finally {
       lock.unlock();
     }
@@ -257,14 +275,18 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkWritable();
 
-      file.updateModifiedTime();
+      store.writeLock().lock();
+      try {
+        store.truncate((int) size);
+        if (position > size) {
+          position = (int) size;
+        }
 
-      store.truncate((int) size);
-      if (position > size) {
-        position = (int) size;
+        file.updateModifiedTime();
+        return this;
+      } finally {
+        store.writeLock().unlock();
       }
-
-      return this;
     } finally {
       lock.unlock();
     }
@@ -292,9 +314,14 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkReadable();
 
-      file.updateAccessTime();
-
-      return store.transferTo((int) position, (int) count, target);
+      store.readLock().lock();
+      try {
+        long transferred = store.transferTo((int) position, (int) count, target);
+        file.updateAccessTime();
+        return transferred;
+      } finally {
+        store.readLock().unlock();
+      }
     } finally {
       lock.unlock();
     }
@@ -311,14 +338,19 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkWritable();
 
-      file.updateModifiedTime();
-
-      if (append) {
-        long appended = store.appendFrom(src, (int) count);
-        this.position = store.sizeInBytes();
-        return appended;
-      } else {
-        return store.transferFrom(src, (int) position, (int) count);
+      store.writeLock().lock();
+      try {
+        if (append) {
+          long appended = store.appendFrom(src, (int) count);
+          this.position = store.sizeInBytes();
+          file.updateModifiedTime();
+          return appended;
+        } else {
+          file.updateModifiedTime();
+          return store.transferFrom(src, (int) position, (int) count);
+        }
+      } finally {
+        store.writeLock().unlock();
       }
     } finally {
       lock.unlock();
@@ -335,9 +367,14 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkReadable();
 
-      file.updateAccessTime();
-
-      return store.read((int) position, dst);
+      store.readLock().lock();
+      try {
+        int read = store.read((int) position, dst);
+        file.updateAccessTime();
+        return read;
+      } finally {
+        store.readLock().unlock();
+      }
     } finally {
       lock.unlock();
     }
@@ -380,17 +417,21 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkWritable();
 
-      file.updateModifiedTime();
+      store.writeLock().lock();
+      try {
+        int written;
+        if (append) {
+          written = store.append(src);
+          this.position = store.sizeInBytes();
+        } else {
+          written = store.write((int) position, src);
+        }
 
-      int written;
-      if (append) {
-        written = store.append(src);
-        this.position = store.sizeInBytes();
-      } else {
-        written = store.write((int) position, src);
+        file.updateModifiedTime();
+        return written;
+      } finally {
+        store.writeLock().unlock();
       }
-
-      return written;
     } finally {
       lock.unlock();
     }
@@ -410,27 +451,21 @@ final class JimfsFileChannel extends FileChannel {
       checkOpen();
       checkWritable();
 
-      file.updateModifiedTime();
-
-      int written;
-      if (append) {
-        store.writeLock().lockInterruptibly();
-        try {
+      store.writeLock().lockInterruptibly();
+      try {
+        int written;
+        if (append) {
           written = store.append(src);
-        } finally {
-          store.writeLock().unlock();
-        }
-        this.position = store.sizeInBytes();
-      } else {
-        store.writeLock().lockInterruptibly();
-        try {
+          this.position = store.size();
+        } else {
           written = store.write((int) position, src);
-        } finally {
-          store.writeLock().unlock();
         }
-      }
 
-      return written;
+        file.updateModifiedTime();
+        return written;
+      } finally {
+        store.writeLock().unlock();
+      }
     } finally {
       lock.unlock();
     }

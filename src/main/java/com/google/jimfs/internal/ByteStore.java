@@ -50,17 +50,34 @@ abstract class ByteStore implements FileContent {
   }
 
   /**
-   * Gets the current size of this store in bytes. The size is the total number of bytes that
-   * can be read from the store.
+   * Gets the current size of this store in bytes.
    */
-  @Override
-  public abstract int sizeInBytes();
+  public abstract int size();
 
   /**
    * Creates a copy of this byte store.
    */
+  protected abstract ByteStore createCopy();
+
   @Override
-  public abstract ByteStore copy();
+  public final int sizeInBytes() {
+    readLock().lock();
+    try {
+      return size();
+    } finally {
+      readLock().unlock();
+    }
+  }
+
+  @Override
+  public final ByteStore copy() {
+    readLock().lock();
+    try {
+      return createCopy();
+    } finally {
+      readLock().unlock();
+    }
+  }
 
   /**
    * Truncates this store to the given {@code size}. If the given size is less than the current
@@ -131,16 +148,11 @@ abstract class ByteStore implements FileContent {
       checkNotNull(buf);
     }
 
-    writeLock().lock();
-    try {
-      int start = pos;
-      for (ByteBuffer buf : bufs) {
-        pos += write(pos, buf);
-      }
-      return pos - start;
-    } finally {
-      writeLock().unlock();
+    int start = pos;
+    for (ByteBuffer buf : bufs) {
+      pos += write(pos, buf);
     }
+    return pos - start;
   }
 
   /**
@@ -156,24 +168,14 @@ abstract class ByteStore implements FileContent {
    * Appends the given byte to this store. Returns the number of bytes written.
    */
   public int append(byte b) {
-    writeLock().lock();
-    try {
-      return write(sizeInBytes(), b);
-    } finally {
-      writeLock().unlock();
-    }
+    return write(sizeInBytes(), b);
   }
 
   /**
    * Appends all bytes in the given byte array to this store. Returns the number of bytes written.
    */
   public int append(byte[] b) {
-    writeLock().lock();
-    try {
-      return write(sizeInBytes(), b, 0, b.length);
-    } finally {
-      writeLock().unlock();
-    }
+    return write(sizeInBytes(), b, 0, b.length);
   }
 
   /**
@@ -184,12 +186,7 @@ abstract class ByteStore implements FileContent {
    *     {@code off + len} is greater than {@code b.length}.
    */
   public int append(byte[] b, int off, int len) {
-    writeLock().lock();
-    try {
-      return write(sizeInBytes(), b, off, len);
-    } finally {
-      writeLock().unlock();
-    }
+    return write(sizeInBytes(), b, off, len);
   }
 
   /**
@@ -197,12 +194,7 @@ abstract class ByteStore implements FileContent {
    * written.
    */
   public int append(ByteBuffer buf) {
-    writeLock().lock();
-    try {
-      return write(sizeInBytes(), buf);
-    } finally {
-      writeLock().unlock();
-    }
+    return write(sizeInBytes(), buf);
   }
 
   /**
@@ -212,12 +204,7 @@ abstract class ByteStore implements FileContent {
    * @throws NullPointerException if any element of {@code bufs} is {@code null}.
    */
   public int append(Iterable<ByteBuffer> bufs) {
-    writeLock().lock();
-    try {
-      return write(sizeInBytes(), bufs);
-    } finally {
-      writeLock().unlock();
-    }
+    return write(sizeInBytes(), bufs);
   }
 
   /**
@@ -225,12 +212,7 @@ abstract class ByteStore implements FileContent {
    * bytes transferred.
    */
   public int appendFrom(ReadableByteChannel src, int count) throws IOException {
-    writeLock().lock();
-    try {
-      return transferFrom(src, sizeInBytes(), count);
-    } finally {
-      writeLock().unlock();
-    }
+    return transferFrom(src, sizeInBytes(), count);
   }
 
   /**
@@ -286,26 +268,21 @@ abstract class ByteStore implements FileContent {
       checkNotNull(buf);
     }
 
-    readLock().lock();
-    try {
-      if (pos >= sizeInBytes()) {
-        return -1;
-      }
-
-      int start = pos;
-      for (ByteBuffer buf : bufs) {
-        int read = read(pos, buf);
-        if (read == -1) {
-          break;
-        } else {
-          pos += read;
-        }
-      }
-
-      return pos - start;
-    } finally {
-      readLock().unlock();
+    if (pos >= sizeInBytes()) {
+      return -1;
     }
+
+    int start = pos;
+    for (ByteBuffer buf : bufs) {
+      int read = read(pos, buf);
+      if (read == -1) {
+        break;
+      } else {
+        pos += read;
+      }
+    }
+
+    return pos - start;
   }
 
   /**
