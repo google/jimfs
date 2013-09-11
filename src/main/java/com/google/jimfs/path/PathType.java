@@ -216,6 +216,15 @@ public abstract class PathType {
      * a path relative to the working directory on that drive. Currently can't support that format
      * as it requires behavior that differs completely from Unix.
      */
+    // TODO(cgdecker): Can probably support this at some point
+    // It would require:
+    // - A method like PathType.isAbsolute(Path) or something to that effect; this would allow
+    //   WindowsPathType to distinguish between an absolute root path (C:\) and a relative root
+    //   path (C:)
+    // - Special handling for relative paths that have a root. This handling would determine the
+    //   root directory and then determine the working directory from there. The file system would
+    //   still have one working directory; for the root that working directory is under, it is the
+    //   working directory. For every other root, the root itself is the working directory.
     private static final Pattern WORKING_DIR_WITH_DRIVE = Pattern.compile(
         "^[a-zA-Z]:([^\\\\].*)?$");
 
