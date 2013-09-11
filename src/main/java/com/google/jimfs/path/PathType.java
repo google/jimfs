@@ -24,6 +24,8 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 import java.nio.file.InvalidPathException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -191,39 +193,109 @@ public abstract class PathType {
     private static final WindowsPathType INSTANCE
         = new WindowsPathType(CaseSensitivity.CASE_INSENSITIVE_ASCII);
 
+    /**
+     * Matches the C:foo\bar path format, which has a root (C:) and names (foo\bar) and matches
+     * a path relative to the working directory on that drive. Currently can't support that format
+     * as it requires behavior that differs completely from Unix.
+     */
+    private static final Pattern WORKING_DIR_WITH_DRIVE = Pattern.compile(
+        "^[a-zA-Z]:([^\\\\].*)?$");
+
+    /**
+     * Pattern for matching trailing spaces in file names.
+     */
+    private static final Pattern TRAILING_SPACES = Pattern.compile("[ ]+(\\\\|$)");
+
     private WindowsPathType(CaseSensitivity caseSensitivity) {
       super(caseSensitivity, '\\', '/');
     }
 
-    private static final int ROOT_LENGTH = 3;
-
     @Override
     public ParseResult parsePath(String path) {
-      String root = null;
-      if (startsWithRoot(path)) {
-        root = path.substring(0, ROOT_LENGTH);
+      String original = path;
+      path = path.replace('/', '\\');
+
+      if (WORKING_DIR_WITH_DRIVE.matcher(path).matches()) {
+        throw new InvalidPathException(path,
+            "JIMFS does not currently support the Windows \"relative path with drive\" syntax");
       }
 
-      int startIndex = root == null ? 0 : ROOT_LENGTH;
+      String root;
+      if (path.startsWith("\\\\")) {
+        root = parseUncRoot(path, original);
+      } else {
+        root = parseDriveRoot(path);
+      }
+
+      // check for root.length() > 3 because only "C:\" type roots are allowed to have :
+      int startIndex = root == null || root.length() > 3 ? 0 : root.length();
       for (int i = startIndex; i < path.length(); i++) {
         char c = path.charAt(i);
         if (isReserved(c)) {
-          throw new InvalidPathException(path, "Illegal char <" + c + ">", i);
+          throw new InvalidPathException(original, "Illegal char <" + c + ">", i);
         }
       }
 
+      Matcher trailingSpaceMatcher = TRAILING_SPACES.matcher(path);
+      if (trailingSpaceMatcher.find()) {
+        throw new InvalidPathException(path, "Trailing char < >", trailingSpaceMatcher.start());
+      }
+
       if (root != null) {
-        path = path.substring(3);
+        path = path.substring(root.length());
+
+        if (!root.endsWith("\\")) {
+          root = root + "\\";
+        }
       }
 
       return new ParseResult(root, splitter().split(path));
     }
 
-    private static boolean startsWithRoot(String string) {
-      return string.length() >= ROOT_LENGTH
-          && isLetter(string.charAt(0))
-          && string.charAt(1) == ':'
-          && string.charAt(2) == '\\';
+    /**
+     * Pattern for matching UNC \\host\share root syntax.
+     */
+    private static final Pattern UNC_ROOT = Pattern.compile(
+        "^(\\\\\\\\)([^\\\\]+)?(\\\\[^\\\\]+)?");
+
+    /**
+     * Parse the root of a UNC-style path, throwing an exception if the path does not start with
+     * a valid UNC root.
+     */
+    private String parseUncRoot(String path, String original) {
+      Matcher uncMatcher = UNC_ROOT.matcher(path);
+      if (uncMatcher.find()) {
+        String host = uncMatcher.group(2);
+        if (host == null) {
+          throw new InvalidPathException(original, "UNC path is missing hostname");
+        }
+        String share = uncMatcher.group(3);
+        if (share == null) {
+          throw new InvalidPathException(original, "UNC path is missing sharename");
+        }
+
+        return path.substring(uncMatcher.start(), uncMatcher.end());
+      } else {
+        // probably shouldn't ever reach this
+        throw new InvalidPathException(original, "Invalid UNC path");
+      }
+    }
+
+    /**
+     * Pattern for matching normal C:\ drive letter root syntax.
+     */
+    private static final Pattern DRIVE_LETTER_ROOT = Pattern.compile("^[a-zA-Z]:\\\\");
+
+    /**
+     * Parses a normal drive-letter root, e.g. "C:\".
+     */
+    @Nullable
+    private String parseDriveRoot(String path) {
+      Matcher drivePathMatcher = DRIVE_LETTER_ROOT.matcher(path);
+      if (drivePathMatcher.find()) {
+        return path.substring(drivePathMatcher.start(), drivePathMatcher.end());
+      }
+      return null;
     }
 
     /**
@@ -270,9 +342,9 @@ public abstract class PathType {
     private final String root;
     private final Iterable<String> names;
 
-    public ParseResult(String root, Iterable<String> names) {
+    public ParseResult(@Nullable String root, Iterable<String> names) {
       this.root = root;
-      this.names = names;
+      this.names = checkNotNull(names);
     }
 
     /**

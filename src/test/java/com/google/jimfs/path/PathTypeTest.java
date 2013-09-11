@@ -17,7 +17,11 @@
 package com.google.jimfs.path;
 
 import static com.google.jimfs.path.PathType.ParseResult;
+import static com.google.jimfs.path.PathType.windows;
+import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
+
+import java.nio.file.InvalidPathException;
 
 import org.junit.Test;
 
@@ -42,13 +46,10 @@ public class PathTypeTest {
   @Test
   public void testParsePath() {
     ParseResult path = type.parsePath("foo/bar/baz/one\\two");
-    ASSERT.that(path.isAbsolute()).isFalse();
-    ASSERT.that(path.names()).iteratesAs("foo", "bar", "baz", "one", "two");
+    assertParseResult(path, null, "foo", "bar", "baz", "one", "two");
 
     ParseResult path2 = type.parsePath("$one//\\two");
-    ASSERT.that(path2.isAbsolute()).isTrue();
-    ASSERT.that(path2.root()).is("$");
-    ASSERT.that(path2.names()).iteratesAs("one", "two");
+    assertParseResult(path2, "$", "one", "two");
   }
 
   @Test
@@ -69,14 +70,11 @@ public class PathTypeTest {
 
     // "//foo/bar" is what will be passed to parsePath if "/", "foo", "bar" is passed to getPath
     ParseResult path = unix.parsePath("//foo/bar");
-    ASSERT.that(path.isAbsolute()).isTrue();
-    ASSERT.that(path.root()).is("/");
-    ASSERT.that(path.names()).iteratesAs("foo", "bar");
+    assertParseResult(path, "/", "foo", "bar");
     ASSERT.that(unix.toString(path.root(), path.names())).is("/foo/bar");
 
     ParseResult path2 = unix.parsePath("foo/bar/");
-    ASSERT.that(path2.isAbsolute()).isFalse();
-    ASSERT.that(path2.names()).iteratesAs("foo", "bar");
+    assertParseResult(path2, null, "foo", "bar");
     ASSERT.that(unix.toString(path2.root(), path2.names())).is("foo/bar");
   }
 
@@ -89,16 +87,87 @@ public class PathTypeTest {
 
     // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
     ParseResult path = windows.parsePath("C:\\\\foo\\bar");
-    ASSERT.that(path.isAbsolute()).isTrue();
-    ASSERT.that(path.root()).is("C:\\");
-    ASSERT.that(path.names()).iteratesAs("foo", "bar");
+    assertParseResult(path, "C:\\", "foo", "bar");
     ASSERT.that(windows.toString(path.root(), path.names())).is("C:\\foo\\bar");
 
     ParseResult path2 = windows.parsePath("foo/bar/");
-    ASSERT.that(path2.isAbsolute()).isFalse();
-    ASSERT.that(path2.names())
-        .iteratesAs("foo", "bar");
+    assertParseResult(path2, null, "foo", "bar");
     ASSERT.that(windows.toString(path2.root(), path2.names())).is("foo\\bar");
+
+    ParseResult path3 = windows.parsePath("hello world/foo/bar");
+    assertParseResult(path3, null, "hello world", "foo", "bar");
+    ASSERT.that(windows.toString(null, path3.names())).is("hello world\\foo\\bar");
+  }
+
+  @Test
+  public void testWindows_uncPaths() {
+    PathType windows = PathType.windows();
+    ParseResult path = windows.parsePath("\\\\host\\share");
+    assertParseResult(path, "\\\\host\\share\\");
+
+    path = windows.parsePath("\\\\HOST\\share\\foo\\bar");
+    assertParseResult(path, "\\\\HOST\\share\\", "foo", "bar");
+
+    try {
+      windows.parsePath("\\\\");
+      fail();
+    } catch (InvalidPathException expected) {
+      ASSERT.that(expected.getInput()).is("\\\\");
+      ASSERT.that(expected.getReason()).is("UNC path is missing hostname");
+    }
+
+    try {
+      windows.parsePath("\\\\host");
+      fail();
+    } catch (InvalidPathException expected) {
+      ASSERT.that(expected.getInput()).is("\\\\host");
+      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
+    }
+
+    try {
+      windows.parsePath("\\\\host\\");
+      fail();
+    } catch (InvalidPathException expected) {
+      ASSERT.that(expected.getInput()).is("\\\\host\\");
+      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
+    }
+
+    try {
+      windows.parsePath("//host");
+      fail();
+    } catch (InvalidPathException expected) {
+      ASSERT.that(expected.getInput()).is("//host");
+      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
+    }
+  }
+
+  @Test
+  public void testWindows_illegalNames() {
+    try {
+      windows().parsePath("foo<bar");
+      fail();
+    } catch (InvalidPathException expected) {}
+
+    try {
+      windows().parsePath("foo?");
+      fail();
+    } catch (InvalidPathException expected) {}
+
+    try {
+      windows().parsePath("foo ");
+      fail();
+    } catch (InvalidPathException expected) {}
+
+    try {
+      windows().parsePath("foo \\bar");
+      fail();
+    } catch (InvalidPathException expected) {}
+  }
+
+  private static void assertParseResult(
+      ParseResult result, @Nullable String root, String... names) {
+    ASSERT.that(result.root()).is(root);
+    ASSERT.that(result.names()).iteratesAs(names);
   }
 
   /**
