@@ -100,6 +100,19 @@ public class PathTypeTest {
   }
 
   @Test
+  public void testWindows_relativePathsWithDriveRoot_unsupported() {
+    try {
+      windows().parsePath("C:");
+      fail();
+    } catch (InvalidPathException expected) {}
+
+    try {
+      windows().parsePath("C:foo\\bar");
+      fail();
+    } catch (InvalidPathException expected) {}
+  }
+
+  @Test
   public void testWindows_uncPaths() {
     PathType windows = PathType.windows();
     ParseResult path = windows.parsePath("\\\\host\\share");

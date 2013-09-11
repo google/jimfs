@@ -56,9 +56,18 @@ public abstract class PathType {
 
   /**
    * Returns a Windows-style path type. The canonical separator character is "\". "/" is also
-   * treated as a separator when parsing paths. Any initial name in the path consisting of a single
-   * alphabet letter followed by ":" is considered to be a root. Paths are case insensitive for
-   * ASCII characters.
+   * treated as a separator when parsing paths. Paths are case insensitive for ASCII characters.
+   *
+   * <p>As much as possible, this implementation follows the information provided in
+   * <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx">
+   * this article</a>. Paths with drive-letter roots (e.g. "C:\") and paths with UNC roots (e.g.
+   * "\\host\share\") are supported.
+   *
+   * <p>One thing in particular is not currently supported: relative paths containing a drive-letter
+   * root, for example "C:" or "C:foo\bar". Such paths have a root component and optionally have
+   * names, but are <i>relative</i> paths, relative to the working directory of the drive identified
+   * by the root. This has some fundamental conflicts with how JIMFS handles paths and file lookups,
+   * and so is not currently supported.
    */
   public static PathType windows() {
     return WindowsPathType.INSTANCE;
@@ -66,9 +75,18 @@ public abstract class PathType {
 
   /**
    * Returns a Windows-style path type. The canonical separator character is "\". "/" is also
-   * treated as a separator when parsing paths. Any initial name in the path consisting of a single
-   * alphabet letter followed by ":" is considered to be a root. Paths use the given case
-   * sensitivity setting.
+   * treated as a separator when parsing paths. Paths use the given case sensitivity setting.
+   *
+   * <p>As much as possible, this implementation follows the information provided in
+   * <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx">
+   * this article</a>. Paths with drive-letter roots (e.g. "C:\") and paths with UNC roots (e.g.
+   * "\\host\share\") are supported.
+   *
+   * <p>One thing in particular is not currently supported: relative paths containing a drive-letter
+   * root, for example "C:" or "C:foo\bar". Such paths have a root component and optionally have
+   * names, but are <i>relative</i> paths, relative to the working directory of the drive identified
+   * by the root. This has some fundamental conflicts with how JIMFS handles paths and file lookups,
+   * and so is not currently supported.
    */
   public static PathType windows(CaseSensitivity caseSensitivity) {
     return new WindowsPathType(caseSensitivity);
@@ -300,9 +318,7 @@ public abstract class PathType {
 
     /**
      * Checks if c is one of the reserved characters that aren't allowed in Windows file names.
-     * See <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx#naming_conventions">this article</a>.
      */
-    // TODO(cgdecker): consider making this an overridable method in PathType itself?
     private static boolean isReserved(char c) {
       switch (c) {
         case '<':
@@ -316,10 +332,6 @@ public abstract class PathType {
         default:
           return c <= 31;
       }
-    }
-
-    private static boolean isLetter(char c) {
-      return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
     }
 
     @Override
