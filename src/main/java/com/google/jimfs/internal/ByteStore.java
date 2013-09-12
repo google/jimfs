@@ -168,14 +168,14 @@ abstract class ByteStore implements FileContent {
    * Appends the given byte to this store. Returns the number of bytes written.
    */
   public int append(byte b) {
-    return write(sizeInBytes(), b);
+    return write(size(), b);
   }
 
   /**
    * Appends all bytes in the given byte array to this store. Returns the number of bytes written.
    */
   public int append(byte[] b) {
-    return write(sizeInBytes(), b, 0, b.length);
+    return write(size(), b, 0, b.length);
   }
 
   /**
@@ -186,7 +186,7 @@ abstract class ByteStore implements FileContent {
    *     {@code off + len} is greater than {@code b.length}.
    */
   public int append(byte[] b, int off, int len) {
-    return write(sizeInBytes(), b, off, len);
+    return write(size(), b, off, len);
   }
 
   /**
@@ -194,7 +194,7 @@ abstract class ByteStore implements FileContent {
    * written.
    */
   public int append(ByteBuffer buf) {
-    return write(sizeInBytes(), buf);
+    return write(size(), buf);
   }
 
   /**
@@ -204,7 +204,7 @@ abstract class ByteStore implements FileContent {
    * @throws NullPointerException if any element of {@code bufs} is {@code null}.
    */
   public int append(Iterable<ByteBuffer> bufs) {
-    return write(sizeInBytes(), bufs);
+    return write(size(), bufs);
   }
 
   /**
@@ -212,7 +212,7 @@ abstract class ByteStore implements FileContent {
    * bytes transferred.
    */
   public int appendFrom(ReadableByteChannel src, int count) throws IOException {
-    return transferFrom(src, sizeInBytes(), count);
+    return transferFrom(src, size(), count);
   }
 
   /**

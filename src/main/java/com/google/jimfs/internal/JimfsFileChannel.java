@@ -422,7 +422,7 @@ final class JimfsFileChannel extends FileChannel {
         int written;
         if (append) {
           written = store.append(src);
-          this.position = store.sizeInBytes();
+          this.position = store.size();
         } else {
           written = store.write((int) position, src);
         }

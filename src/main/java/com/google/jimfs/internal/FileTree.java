@@ -406,7 +406,12 @@ final class FileTree {
   private static File truncateIfNeeded(File regularFile, Set<? extends OpenOption> options) {
     if (options.contains(TRUNCATE_EXISTING) && options.contains(WRITE)) {
       ByteStore store = regularFile.content();
-      store.truncate(0);
+      store.writeLock().lock();
+      try {
+        store.truncate(0);
+      } finally {
+        store.writeLock().unlock();
+      }
     }
 
     return regularFile;
