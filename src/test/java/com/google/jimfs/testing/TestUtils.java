@@ -16,10 +16,22 @@
 
 package com.google.jimfs.testing;
 
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+
+import com.google.common.collect.ImmutableList;
+
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Colin Decker
@@ -83,5 +95,54 @@ public final class TestUtils {
       result.add(buffer(b));
     }
     return result;
+  }
+
+  /**
+   * Returns a number of permutations of the given path that should all locate the same file.
+   */
+  public static Iterable<Path> permutations(Path path) throws IOException {
+    Path workingDir = path.getFileSystem().getPath("").toRealPath();
+    boolean directory = Files.isDirectory(path);
+
+    Set<Path> results = new HashSet<>();
+    results.add(path);
+    if (path.isAbsolute()) {
+      results.add(workingDir.relativize(path));
+    } else {
+      results.add(workingDir.resolve(path));
+    }
+    if (directory) {
+      for (Path p : ImmutableList.copyOf(results)) {
+        results.add(p.resolve("."));
+        results.add(p.resolve(".").resolve("."));
+        Path fileName = p.getFileName();
+        if (fileName != null
+            && !fileName.toString().equals(".")
+            && !fileName.toString().equals("..")) {
+          results.add(p.resolve("..").resolve(fileName));
+          results.add(p.resolve("..").resolve(".").resolve(fileName));
+          results.add(p.resolve("..").resolve(".").resolve(fileName).resolve("."));
+          results.add(p.resolve(".").resolve("..").resolve(".").resolve(fileName));
+        }
+      }
+
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+        for (Path child : stream) {
+          if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
+            Path childName = child.getFileName();
+            for (Path p : ImmutableList.copyOf(results)) {
+              results.add(p.resolve(childName).resolve(".."));
+              results.add(p.resolve(childName).resolve(".").resolve(".").resolve(".."));
+              results.add(p.resolve(childName).resolve("..").resolve("."));
+              results.add(p.resolve(childName).resolve("..")
+                  .resolve(childName).resolve(".").resolve(".."));
+            }
+            break; // no need to add more than one child
+          }
+        }
+      }
+    }
+    System.out.println(results);
+    return results;
   }
 }

@@ -20,6 +20,7 @@ import static com.google.common.primitives.Bytes.concat;
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static com.google.jimfs.testing.PathSubject.paths;
 import static com.google.jimfs.testing.TestUtils.bytes;
+import static com.google.jimfs.testing.TestUtils.permutations;
 import static com.google.jimfs.testing.TestUtils.preFilledBytes;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -208,6 +209,7 @@ public class JimfsIntegrationTest {
     ASSERT.that(path("..").toRealPath()).isEqualTo(path("/"));
     ASSERT.that(path("../..").toRealPath()).isEqualTo(path("/"));
     ASSERT.that(path("./.././..").toRealPath()).isEqualTo(path("/"));
+    ASSERT.that(path("./.././../.").toRealPath()).isEqualTo(path("/"));
   }
 
   @Test
@@ -908,6 +910,30 @@ public class JimfsIntegrationTest {
 
     assertTrue(Files.deleteIfExists(path("/foo")));
     assertThat("/foo").doesNotExist();
+  }
+
+  @Test
+  public void testDelete_pathPermutations() throws IOException {
+    Path bar = path("/work/foo/bar");
+    Files.createDirectories(bar);
+    for (Path path : permutations(bar)) {
+      Files.createDirectories(bar);
+      assertThat(path).isSameFileAs(bar);
+      Files.delete(path);
+      assertThat(bar).doesNotExist();
+      assertThat(path).doesNotExist();
+    }
+
+    Path baz = path("/test/baz");
+    Files.createDirectories(baz);
+    Path hello = baz.resolve("hello.txt");
+    for (Path path : permutations(hello)) {
+      Files.createFile(hello);
+      assertThat(path).isSameFileAs(hello);
+      Files.delete(path);
+      assertThat(hello).doesNotExist();
+      assertThat(path).doesNotExist();
+    }
   }
 
   @Test

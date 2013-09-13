@@ -273,7 +273,14 @@ public final class PathSubject extends Subject<PathSubject, Path> {
    * Asserts that the path resolves to the same file as the given path.
    */
   public PathSubject isSameFileAs(String path) throws IOException {
-    if (!Files.isSameFile(getSubject(), toPath(path))) {
+    return isSameFileAs(toPath(path));
+  }
+
+  /**
+   * Asserts that the path resolves to the same file as the given path.
+   */
+  public PathSubject isSameFileAs(Path path) throws IOException {
+    if (!Files.isSameFile(getSubject(), path)) {
       fail("is same file as", path);
     }
     return this;
