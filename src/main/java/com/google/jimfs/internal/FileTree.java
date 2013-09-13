@@ -471,14 +471,13 @@ final class FileTree {
    * Deletes the file at the given absolute path.
    */
   public void deleteFile(JimfsPath path, DeleteMode deleteMode) throws IOException {
-    Name name = path.name();
-
     writeLock().lock();
     try {
-      File parent = lookup(path, NOFOLLOW_LINKS)
-          .requireFound(path)
-          .parent();
+      LookupResult result = lookup(path, NOFOLLOW_LINKS)
+          .requireFound(path);
 
+      File parent = result.parent();
+      Name name = result.name();
       delete(parent, name, deleteMode, path);
     } finally {
       writeLock().unlock();

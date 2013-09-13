@@ -203,9 +203,11 @@ public class JimfsIntegrationTest {
 
     ASSERT.that(path("/link/foo/bar").toRealPath()).isEqualTo(path("/foo/bar"));
 
-    // case insensitivity tests: move to another test
-    //ASSERT.that(path("/FOO/BAR").toRealPath()).isEqualTo(path("/foo/bar"));
-    //ASSERT.that(path("/Link/FOO/bAR").toRealPath()).isEqualTo(path("/foo/bar"));
+    ASSERT.that(path("").toRealPath()).isEqualTo(path("/work"));
+    ASSERT.that(path(".").toRealPath()).isEqualTo(path("/work"));
+    ASSERT.that(path("..").toRealPath()).isEqualTo(path("/"));
+    ASSERT.that(path("../..").toRealPath()).isEqualTo(path("/"));
+    ASSERT.that(path("./.././..").toRealPath()).isEqualTo(path("/"));
   }
 
   @Test

@@ -134,7 +134,7 @@ final class LookupService {
       return followSymbolicLink(superRoot, table, file, linkDepth);
     }
 
-    return LookupResult.found(dir, file, table.canonicalize(name));
+    return createFoundResult(superRoot, dir, name, file);
   }
 
   private LookupResult followSymbolicLink(
@@ -145,6 +145,32 @@ final class LookupService {
 
     JimfsPath targetPath = link.content();
     return lookup(superRoot, table.self(), targetPath, FOLLOW_LINKS, linkDepth + 1);
+  }
+
+  /**
+   * Creates a result indicating the file was found. Accounts for cases where the name used to
+   * lookup the file was "." or "..", meaning that the directory the last lookup was done in is not
+   * actually the parent directory of the file.
+   */
+  private LookupResult createFoundResult(FileTree superRoot, File parent, Name name, File file) {
+    DirectoryTable table = parent.content();
+    if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
+      // the parent dir is not the directory we did the lookup in
+      // also, the file itself must be a directory
+      DirectoryTable fileTable = file.content();
+      parent = fileTable.parent();
+      if (parent == file) {
+        // root dir
+        parent = superRoot.base();
+        DirectoryTable superRootTable = parent.content();
+        name = superRootTable.getName(file);
+      } else {
+        name = fileTable.name();
+      }
+    } else {
+      name = table.canonicalize(name);
+    }
+    return LookupResult.found(parent, file, name);
   }
 
   @Nullable
