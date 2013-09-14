@@ -142,7 +142,6 @@ public final class TestUtils {
         }
       }
     }
-    System.out.println(results);
     return results;
   }
 }

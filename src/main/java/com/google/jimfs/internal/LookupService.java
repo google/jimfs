@@ -19,6 +19,8 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.IOException;
 import java.util.Iterator;
 
@@ -33,12 +35,6 @@ final class LookupService {
 
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
 
-  private final PathService pathService;
-
-  public LookupService(PathService pathService) {
-    this.pathService = checkNotNull(pathService);
-  }
-
   /**
    * Looks up the file key for the given absolute path.
    */
@@ -48,19 +44,20 @@ final class LookupService {
     checkNotNull(linkHandling);
 
     File base;
+    Iterable<Name> names = path.path();
     if (path.isAbsolute()) {
       base = tree.getSuperRoot().base();
     } else {
       base = tree.base();
       if (isEmpty(path)) {
         // empty path is equivalent to "." in a lookup
-        path = pathService.createFileName(Name.SELF);
+        names = ImmutableList.of(Name.SELF);
       }
     }
 
     tree.readLock().lock();
     try {
-      return lookup(tree.getSuperRoot(), base, path.path(), linkHandling, 0);
+      return lookup(tree.getSuperRoot(), base, names, linkHandling, 0);
     } finally {
       tree.readLock().unlock();
     }
@@ -72,15 +69,16 @@ final class LookupService {
   private LookupResult lookup(
       FileTree superRoot, File dir, JimfsPath path, LinkHandling linkHandling, int linkDepth)
       throws IOException {
+    Iterable<Name> names = path.path();
     if (path.isAbsolute()) {
       dir = superRoot.base();
     } else if (isEmpty(path)) {
       // empty path is equivalent to "." in a lookup
-      path = pathService.createFileName(Name.SELF);
+      names = ImmutableList.of(Name.SELF);
     }
 
     checkNotNull(linkHandling);
-    return lookup(superRoot, dir, path.path(), linkHandling, linkDepth);
+    return lookup(superRoot, dir, names, linkHandling, linkDepth);
   }
 
   /**

@@ -162,7 +162,7 @@ public abstract class PathType {
   /**
    * Returns the string form of the given path.
    */
-  public abstract String toString(String root, Iterable<String> names);
+  public abstract String toString(@Nullable String root, Iterable<String> names);
 
   /**
    * Unix-style path type.

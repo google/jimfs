@@ -39,7 +39,7 @@ final class FileSystemInitializer {
   public static JimfsFileSystem createFileSystem(
       JimfsFileSystemProvider provider, URI uri, JimfsConfiguration config) throws IOException {
     RealJimfsPathService pathService = new RealJimfsPathService(config.getPathType());
-    LookupService lookupService = new LookupService(pathService);
+    LookupService lookupService = new LookupService();
     JimfsFileStore store = new JimfsFileStore("jimfs", config.getAllAttributeProviders());
     ReadWriteLock lock = new ReentrantReadWriteLock();
 
