@@ -26,7 +26,6 @@ import com.google.jimfs.attribute.providers.PosixAttributeProvider;
 import com.google.jimfs.attribute.providers.UnixAttributeProvider;
 import com.google.jimfs.path.PathType;
 
-import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 
 /**
@@ -62,12 +61,6 @@ public final class UnixConfiguration extends JimfsConfiguration {
   @Override
   public String getWorkingDirectory() {
     return workingDirectory;
-  }
-
-  @Override
-  public boolean isHidden(Path path) {
-    Path fileName = path.getFileName();
-    return fileName != null && fileName.toString().startsWith(".");
   }
 
   @Override

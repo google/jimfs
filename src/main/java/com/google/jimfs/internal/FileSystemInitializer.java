@@ -16,14 +16,10 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
-
 import com.google.jimfs.JimfsConfiguration;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Initializes and configures new file system instances.
@@ -39,26 +35,22 @@ final class FileSystemInitializer {
   public static JimfsFileSystem createFileSystem(
       JimfsFileSystemProvider provider, URI uri, JimfsConfiguration config) throws IOException {
     RealPathService pathService = new RealPathService(config.getPathType());
-    LookupService lookupService = new LookupService();
-    JimfsFileStore store = new JimfsFileStore("jimfs", config.getAllAttributeProviders());
-    ReadWriteLock lock = new ReentrantReadWriteLock();
+    JimfsFileStore fileStore = new JimfsFileStore("jimfs", config.getAllAttributeProviders());
 
-    FileTree superRootTree = new FileTree(store.createDirectory(), pathService.emptyPath(),
-        null, lock, store, pathService, lookupService);
-    DirectoryTable superRootTable = superRootTree.base().content();
+    File superRoot = fileStore.createDirectory();
+    DirectoryTable superRootTable = superRoot.content();
 
     for (String root : config.getRoots()) {
-      createRootDir(root, pathService, store, superRootTable);
+      createRootDir(root, pathService, fileStore, superRootTable);
     }
 
     JimfsPath workingDirPath = pathService.parsePath(config.getWorkingDirectory());
 
-    File workingDir = createWorkingDirectory(workingDirPath, store, superRootTree);
-    FileTree workingDirTree = new FileTree(
-        workingDir, workingDirPath, superRootTree, lock, store, pathService, lookupService);
+    File workingDir = createWorkingDirectory(workingDirPath, fileStore, superRootTable);
+    FileSystemService service = new FileSystemService(
+        superRoot, workingDir, workingDirPath, fileStore, pathService);
 
-    JimfsFileSystem fileSystem = new JimfsFileSystem(
-        provider, uri, config, pathService, store, lock, superRootTree, workingDirTree);
+    JimfsFileSystem fileSystem = new JimfsFileSystem(provider, uri, service);
     pathService.setFileSystem(fileSystem);
     return fileSystem;
   }
@@ -80,9 +72,8 @@ final class FileSystemInitializer {
   }
 
   private static File createWorkingDirectory(JimfsPath workingDirPath,
-      JimfsFileStore fileStore, FileTree superRoot) throws IOException {
-    File dir = superRoot.lookup(workingDirPath.getRoot(), NOFOLLOW_LINKS)
-        .orNull();
+      JimfsFileStore fileStore, DirectoryTable superRootTable) throws IOException {
+    File dir = superRootTable.get(workingDirPath.root());
     if (dir == null) {
       throw new IllegalArgumentException("Invalid working dir path: " + workingDirPath);
     }

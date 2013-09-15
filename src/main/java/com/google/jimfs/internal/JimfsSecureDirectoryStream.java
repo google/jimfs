@@ -16,7 +16,7 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.internal.FileTree.DeleteMode;
+import static com.google.jimfs.internal.FileSystemService.DeleteMode;
 import static com.google.jimfs.internal.JimfsFileSystemProvider.getOptionsForChannel;
 
 import com.google.common.collect.ImmutableSet;
@@ -34,40 +34,33 @@ import java.nio.file.attribute.FileAttributeView;
 import java.util.Set;
 
 /**
- * Secure directory stream implementation that uses a {@link FileTree} as its base.
+ * Secure directory stream implementation that uses a {@link FileSystemService} with the stream's
+ * directory as its working directory.
  *
  * @author Colin Decker
  */
 final class JimfsSecureDirectoryStream
     extends JimfsDirectoryStream implements SecureDirectoryStream<Path> {
 
-  private final FileTree tree;
+  private final FileSystemService service;
 
-  public JimfsSecureDirectoryStream(FileTree tree, Filter<? super Path> filter) {
-    super(tree.getBasePath(), filter);
-    this.tree = tree;
-  }
-
-  /**
-   * Gets the appropriate file tree to use for the given path, which is this stream's base tree
-   * if the path is relative and the super root tree if it's absolute.
-   */
-  private FileTree tree(JimfsPath path) {
-    return path.isAbsolute() ? tree.getSuperRoot() : tree;
+  public JimfsSecureDirectoryStream(FileSystemService service, Filter<? super Path> filter) {
+    super(service.getWorkingDirectoryPath(), filter);
+    this.service = service;
   }
 
   @Override
   protected Iterable<String> snapshotEntryNames() throws IOException {
-    return tree.snapshotBaseEntries();
+    return service.snapshotBaseEntries();
   }
 
   @Override
   public SecureDirectoryStream<Path> newDirectoryStream(Path path, LinkOption... options)
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    return tree(checkedPath).newSecureDirectoryStream(
+    return service.newSecureDirectoryStream(
         checkedPath, ALWAYS_TRUE_FILTER, LinkHandling.fromOptions(options),
-        tree.getBasePath().resolve(checkedPath));
+        service.getWorkingDirectoryPath().resolve(checkedPath));
   }
 
   @Override
@@ -75,19 +68,19 @@ final class JimfsSecureDirectoryStream
       FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     options = getOptionsForChannel(options);
-    return new JimfsFileChannel(tree(checkedPath).getRegularFile(checkedPath, options), options);
+    return new JimfsFileChannel(service.getRegularFile(checkedPath, options), options);
   }
 
   @Override
   public void deleteFile(Path path) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    tree(checkedPath).deleteFile(checkedPath, DeleteMode.NON_DIRECTORY_ONLY);
+    service.deleteFile(checkedPath, DeleteMode.NON_DIRECTORY_ONLY);
   }
 
   @Override
   public void deleteDirectory(Path path) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    tree(checkedPath).deleteFile(checkedPath, DeleteMode.DIRECTORY_ONLY);
+    service.deleteFile(checkedPath, DeleteMode.DIRECTORY_ONLY);
   }
 
   @Override
@@ -102,22 +95,21 @@ final class JimfsSecureDirectoryStream
     }
 
     JimfsSecureDirectoryStream checkedTargetDir = (JimfsSecureDirectoryStream) targetDir;
-    FileTree targetDirTree = checkedTargetDir.tree(checkedTargetPath);
 
-    tree(checkedSrcPath).moveFile(
-        checkedSrcPath, targetDirTree, checkedTargetPath, ImmutableSet.<CopyOption>of());
+    service.moveFile(
+        checkedSrcPath, checkedTargetDir.service, checkedTargetPath, ImmutableSet.<CopyOption>of());
   }
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Class<V> type) {
-    return getFileAttributeView(tree.getBasePath().getFileSystem().getPath("."), type);
+    return getFileAttributeView(service.getWorkingDirectoryPath().getFileSystem().getPath("."), type);
   }
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
       LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
-    return tree.getFileAttributeView(checkedPath, type, LinkHandling.fromOptions(options));
+    return service.getFileAttributeView(checkedPath, type, LinkHandling.fromOptions(options));
   }
 
   private static JimfsPath checkPath(Path path) {

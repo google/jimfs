@@ -51,6 +51,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
@@ -139,16 +140,16 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   /**
-   * Returns the file tree to use for the given path.
+   * Returns the file system service for the given path's file system.
    */
-  private static FileTree getFileTree(JimfsPath path) {
-    return ((JimfsFileSystem) path.getFileSystem()).getFileTree(path);
+  private static FileSystemService getService(JimfsPath path) {
+    return ((JimfsFileSystem) path.getFileSystem()).service();
   }
 
   private static LookupResult lookup(Path path, LinkHandling linkHandling) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    FileTree tree = getFileTree(checkedPath);
-    return tree.lookup(checkedPath, linkHandling);
+    FileSystemService service = getService(checkedPath);
+    return service.lookup(checkedPath, linkHandling);
   }
 
   @Override
@@ -156,7 +157,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     options = getOptionsForChannel(options);
-    File file = getFileTree(checkedPath).getRegularFile(checkedPath, options, attrs);
+    File file = getService(checkedPath).getRegularFile(checkedPath, options, attrs);
     return new JimfsFileChannel(file, options);
   }
 
@@ -220,15 +221,15 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public DirectoryStream<Path> newDirectoryStream(Path dir,
       DirectoryStream.Filter<? super Path> filter) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
-    return getFileTree(checkedPath)
+    return getService(checkedPath)
         .newSecureDirectoryStream(checkedPath, filter, LinkHandling.FOLLOW_LINKS, checkedPath);
   }
 
   @Override
   public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
-    FileTree tree = getFileTree(checkedPath);
-    tree.createDirectory(checkedPath, attrs);
+    FileSystemService service = getService(checkedPath);
+    service.createDirectory(checkedPath, attrs);
   }
 
   @Override
@@ -237,8 +238,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     JimfsPath existingPath = checkPath(existing);
     checkArgument(linkPath.getFileSystem().equals(existingPath.getFileSystem()),
         "link and existing paths must belong to the same file system instance");
-    FileTree tree = getFileTree(linkPath);
-    tree.link(linkPath, getFileTree(existingPath), existingPath);
+    FileSystemService service = getService(linkPath);
+    service.link(linkPath, getService(existingPath), existingPath);
   }
 
   @Override
@@ -248,8 +249,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     JimfsPath targetPath = checkPath(target);
     checkArgument(linkPath.getFileSystem().equals(targetPath.getFileSystem()),
         "link and target paths must belong to the same file system instance");
-    FileTree tree = getFileTree(linkPath);
-    tree.createSymbolicLink(linkPath, targetPath, attrs);
+    FileSystemService service = getService(linkPath);
+    service.createSymbolicLink(linkPath, targetPath, attrs);
   }
 
   @Override
@@ -264,8 +265,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   @Override
   public void delete(Path path) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    FileTree tree = getFileTree(checkedPath);
-    tree.deleteFile(checkedPath);
+    FileSystemService service = getService(checkedPath);
+    service.deleteFile(checkedPath);
   }
 
   @Override
@@ -273,9 +274,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     JimfsPath sourcePath = checkPath(source);
     JimfsPath targetPath = checkPath(target);
 
-    FileTree sourceTree = getFileTree(sourcePath);
-    FileTree targetTree = getFileTree(targetPath);
-    sourceTree.copyFile(sourcePath, targetTree, targetPath, ImmutableSet.copyOf(options));
+    FileSystemService sourceService = getService(sourcePath);
+    FileSystemService targetService = getService(targetPath);
+    sourceService.copyFile(sourcePath, targetService, targetPath, ImmutableSet.copyOf(options));
   }
 
   @Override
@@ -283,9 +284,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     JimfsPath sourcePath = checkPath(source);
     JimfsPath targetPath = checkPath(target);
 
-    FileTree sourceTree = getFileTree(sourcePath);
-    FileTree targetTree = getFileTree(targetPath);
-    sourceTree.moveFile(sourcePath, targetTree, targetPath, ImmutableSet.copyOf(options));
+    FileSystemService sourceService = getService(sourcePath);
+    FileSystemService targetService = getService(targetPath);
+    sourceService.moveFile(sourcePath, targetService, targetPath, ImmutableSet.copyOf(options));
   }
 
   @Override
@@ -301,16 +302,28 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     JimfsPath checkedPath = (JimfsPath) path;
     JimfsPath checkedPath2 = (JimfsPath) path2;
 
-    FileTree tree = getFileTree(checkedPath);
-    FileTree tree2 = getFileTree(checkedPath2);
+    FileSystemService service = getService(checkedPath);
+    FileSystemService service2 = getService(checkedPath2);
 
-    return tree.isSameFile(checkedPath, tree2, checkedPath2);
+    return service.isSameFile(checkedPath, service2, checkedPath2);
   }
 
   @Override
   public boolean isHidden(Path path) throws IOException {
-    return ((JimfsFileSystem) checkPath(path).getFileSystem()).configuration()
-        .isHidden(path);
+    // TODO(cgdecker): This should probably be configurable, but this seems fine for now
+    /*
+     * If the DOS view is supported, use the Windows isHidden method (check the dos:hidden
+     * attribute). Otherwise, use the Unix isHidden method (just check if the file name starts with
+     * ".").
+     */
+    JimfsPath checkedPath = checkPath(path);
+    FileSystemService service = getService(checkedPath);
+    JimfsFileStore store = service.fileStore();
+    if (store.supportsFileAttributeView("dos")) {
+      return service.readAttributes(checkedPath, DosFileAttributes.class, NOFOLLOW_LINKS)
+          .isHidden();
+    }
+    return path.getNameCount() > 0 && path.getFileName().toString().startsWith(".");
   }
 
   @Override
@@ -329,7 +342,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
       LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
-    return getFileTree(checkedPath)
+    return getService(checkedPath)
         .getFileAttributeView(checkedPath, type, LinkHandling.fromOptions(options));
   }
 
@@ -337,7 +350,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type,
       LinkOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    return getFileTree(checkedPath)
+    return getService(checkedPath)
         .readAttributes(checkedPath, type, LinkHandling.fromOptions(options));
   }
 
@@ -345,7 +358,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options)
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    return getFileTree(checkedPath)
+    return getService(checkedPath)
         .readAttributes(checkedPath, attributes, LinkHandling.fromOptions(options));
   }
 
@@ -353,7 +366,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public void setAttribute(Path path, String attribute, Object value, LinkOption... options)
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    getFileTree(checkedPath)
+    getService(checkedPath)
         .setAttribute(checkedPath, attribute, value, LinkHandling.fromOptions(options));
   }
 }

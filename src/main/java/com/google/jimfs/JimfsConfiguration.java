@@ -24,8 +24,6 @@ import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.providers.BasicAttributeProvider;
 import com.google.jimfs.path.PathType;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 import java.util.Set;
 
@@ -61,11 +59,6 @@ public abstract class JimfsConfiguration {
    * file system.
    */
   public abstract String getWorkingDirectory();
-
-  /**
-   * Implements the file-system specific method for determining if a file is considered hidden.
-   */
-  public abstract boolean isHidden(Path path) throws IOException;
 
   /**
    * Returns the attribute providers the file system supports.

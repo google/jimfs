@@ -34,8 +34,6 @@ import java.nio.file.LinkOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.annotation.Nullable;
 
@@ -85,17 +83,16 @@ public class LookupServiceTest {
           return root + Joiner.on('/').join(names);
         }
       });
-  private final LookupService lookupService = new LookupService();
-  private FileTree superRoot;
-  private FileTree workingDir;
+
+  private FileSystemService fileSystemService;
   private final Map<String, File> files = new HashMap<>();
 
   @Before
   public void setUp() {
     DirectoryTable superRootTable = new DirectoryTable();
-    File superRootFile = new File(-1, superRootTable);
+    File superRoot = new File(-1, superRootTable);
 
-    files.put("SUPER_ROOT", superRootFile);
+    files.put("SUPER_ROOT", superRoot);
 
     DirectoryTable rootTable = new DirectoryTable();
     File root = new File(0, rootTable);
@@ -115,15 +112,10 @@ public class LookupServiceTest {
 
     File working = createDirectory("/", "work");
 
-    ReadWriteLock lock = new ReentrantReadWriteLock();
     JimfsFileStore store = new JimfsFileStore("foo");
 
-    superRoot = new FileTree(
-        superRootFile, pathService.emptyPath(), null, lock, store,
-        new TestPathService(PathType.unix()), lookupService);
-    workingDir = new FileTree(
-        working, pathService.parsePath("/work"), superRoot, lock, store,
-        pathService, lookupService);
+    fileSystemService = new FileSystemService(
+        superRoot, working, pathService.parsePath("/work"), store, pathService);
 
     createDirectory("work", "one");
     createDirectory("one", "two");
@@ -353,8 +345,7 @@ public class LookupServiceTest {
 
   private LookupResult lookup(String path, LinkOption... options) throws IOException {
     JimfsPath pathObj = pathService.parsePath(path);
-    FileTree tree = pathObj.isAbsolute() ? superRoot : workingDir;
-    return lookupService.lookup(tree, pathObj, LinkHandling.fromOptions(options));
+    return fileSystemService.lookup(pathObj, LinkHandling.fromOptions(options));
   }
 
   private void assertFound(LookupResult result, String parent, String file) {
