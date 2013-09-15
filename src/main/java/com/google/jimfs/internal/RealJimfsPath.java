@@ -36,13 +36,13 @@ import javax.annotation.Nullable;
  */
 final class RealJimfsPath extends JimfsPath {
 
-  RealJimfsPath(RealJimfsPathService pathService, @Nullable Name root, Iterable<Name> names) {
+  RealJimfsPath(RealPathService pathService, @Nullable Name root, Iterable<Name> names) {
     super(pathService, root, names);
   }
 
   @Override
   public JimfsFileSystem getFileSystem() {
-    return ((RealJimfsPathService) pathService).getFileSystem();
+    return ((RealPathService) pathService).getFileSystem();
   }
 
   @Override

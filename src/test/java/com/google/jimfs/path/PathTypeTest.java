@@ -16,6 +16,9 @@
 
 package com.google.jimfs.path;
 
+import static com.google.jimfs.path.CaseSensitivity.CASE_INSENSITIVE_ASCII;
+import static com.google.jimfs.path.CaseSensitivity.CASE_INSENSITIVE_UNICODE;
+import static com.google.jimfs.path.CaseSensitivity.CASE_SENSITIVE;
 import static com.google.jimfs.path.PathType.ParseResult;
 import static com.google.jimfs.path.PathType.windows;
 import static org.junit.Assert.fail;
@@ -34,13 +37,21 @@ import javax.annotation.Nullable;
  */
 public class PathTypeTest {
 
-  private final FakePathType type = new FakePathType(CaseSensitivity.CASE_SENSITIVE);
+  private final FakePathType type = new FakePathType(CASE_SENSITIVE);
 
   @Test
   public void testBasicProperties() {
     ASSERT.that(type.getSeparator()).is("/");
     ASSERT.that(type.getOtherSeparators()).is("\\");
-    ASSERT.that(type.getCaseSensitivity()).is(CaseSensitivity.CASE_SENSITIVE);
+    ASSERT.that(type.getCaseSensitivity()).is(CASE_SENSITIVE);
+
+    ASSERT.that(PathType.unix().getCaseSensitivity()).is(CASE_SENSITIVE);
+    ASSERT.that(PathType.windows().getCaseSensitivity()).is(CASE_INSENSITIVE_ASCII);
+
+    ASSERT.that(PathType.unix(CASE_INSENSITIVE_ASCII).getCaseSensitivity())
+        .is(CASE_INSENSITIVE_ASCII);
+    ASSERT.that(PathType.windows(CASE_INSENSITIVE_UNICODE).getCaseSensitivity())
+        .is(CASE_INSENSITIVE_UNICODE);
   }
 
   @Test
@@ -66,7 +77,7 @@ public class PathTypeTest {
     PathType unix = PathType.unix();
     ASSERT.that(unix.getSeparator()).is("/");
     ASSERT.that(unix.getOtherSeparators()).is("");
-    ASSERT.that(unix.getCaseSensitivity()).is(CaseSensitivity.CASE_SENSITIVE);
+    ASSERT.that(unix.getCaseSensitivity()).is(CASE_SENSITIVE);
 
     // "//foo/bar" is what will be passed to parsePath if "/", "foo", "bar" is passed to getPath
     ParseResult path = unix.parsePath("//foo/bar");
@@ -83,7 +94,7 @@ public class PathTypeTest {
     PathType windows = PathType.windows();
     ASSERT.that(windows.getSeparator()).is("\\");
     ASSERT.that(windows.getOtherSeparators()).is("/");
-    ASSERT.that(windows.getCaseSensitivity()).is(CaseSensitivity.CASE_INSENSITIVE_ASCII);
+    ASSERT.that(windows.getCaseSensitivity()).is(CASE_INSENSITIVE_ASCII);
 
     // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
     ParseResult path = windows.parsePath("C:\\\\foo\\bar");

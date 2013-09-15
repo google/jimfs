@@ -16,8 +16,6 @@
 
 package com.google.jimfs.internal;
 
-import com.google.jimfs.path.PathType;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileStore;
@@ -43,10 +41,6 @@ import javax.annotation.Nullable;
  * @author Colin Decker
  */
 public class TestPath extends JimfsPath {
-
-  public TestPath(@Nullable Name root, Iterable<Name> names) {
-    this(new TestPathService(PathType.unix()), root, names);
-  }
 
   public TestPath(TestPathService pathService, @Nullable Name root, Iterable<Name> names) {
     super(pathService, root, names);

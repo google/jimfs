@@ -189,6 +189,12 @@ public class LookupServiceTest {
   }
 
   @Test
+  public void testLookup_absolute_intermediateSymlink_parentFound() throws IOException {
+    assertParentFound(lookup("/work/four/five/baz"), "foo");
+    assertParentFound(lookup("/work/four/six/baz"), "one");
+  }
+
+  @Test
   public void testLookup_absolute_finalSymlink() throws IOException {
     assertFound(lookup("/work/four/five"), "/", "foo");
     assertFound(lookup("/work/four/six"), "work", "one");
@@ -276,6 +282,12 @@ public class LookupServiceTest {
     // NOFOLLOW_LINKS doesn't affect intermediate symlinks
     assertFound(lookup("four/five/bar", NOFOLLOW_LINKS), "foo", "bar");
     assertFound(lookup("four/six/two/three", NOFOLLOW_LINKS), "two", "three");
+  }
+
+  @Test
+  public void testLookup_relative_intermediateSymlink_parentFound() throws IOException {
+    assertParentFound(lookup("four/five/baz"), "foo");
+    assertParentFound(lookup("four/six/baz"), "one");
   }
 
   @Test

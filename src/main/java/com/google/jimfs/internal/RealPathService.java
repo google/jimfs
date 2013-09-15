@@ -28,11 +28,11 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class RealJimfsPathService extends PathService {
+final class RealPathService extends PathService {
 
   private volatile JimfsFileSystem fileSystem;
 
-  RealJimfsPathService(PathType type) {
+  RealPathService(PathType type) {
     super(type);
   }
 
