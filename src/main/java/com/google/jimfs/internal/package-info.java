@@ -26,20 +26,18 @@
  * file system uses to do its work.
  *
  * <p>Most of the details of the implementation of file system operations are found in the
- * {@link FileTree} class. It represents a tree of files starting at some root directory.
- * Conceptually, the file system has two file trees by default. The first, called the super root,
- * is the very root of the whole file hierarchy. It is a special root directory that links path
- * root names (such as "/" or "C:\") to the actual root directory. The super root is the base for
- * <i>absolute path</i> lookups.
+ * {@link FileSystemService} class. The file system service contains two root directories. The
+ * first, called the super root, is the root of the whole file hierarchy. It is a special directory
+ * that links path root names (such as "/" or "C:\") to the actual root directory. It acts as the
+ * base for <i>absolute path</i> operations. The second root directory is the <i>working
+ * directory</i>. Located somewhere in the hierarchy under the super root, the working directory
+ * acts the base for <i>relative path</i> operations. The file system can have additional
+ * file system services for each {@link java.nio.file.SecureDirectoryStream} that is opened. Those
+ * services may use a different working directory than the file system's default working directory.
  *
- * <p>The second file tree is the working directory. Located somewhere in the hierarchy under the
- * super root, the working directory is the base directory for <i>relative path</i> lookups. As the
- * working directory file tree contains a reference to the working directory file itself, even if
- * the working directory is moved, relative lookups will continue to happen relative to it.
- *
- * <p>While the {@code FileTree} handles most of the work for implementing file system operations,
- * lookups are done using the {@link LookupService}. It simply handles resolving paths to files,
- * including following symbolic links if necessary. Lookup results are returned as a
+ * <p>While the {@code FileSystemService} handles most of the work for implementing file system
+ * operations, lookups are done using the {@link LookupService}. It simply handles resolving paths
+ * to files, including following symbolic links if necessary. Lookup results are returned as a
  * {@link LookupResult}, which contains not only the file that was located (if any) but its parent
  * directory as well.
  *
@@ -80,10 +78,10 @@
  * wrappers around a channel.
  *
  * <p>{@link JimfsDirectoryStream} and {@link JimfsSecureDirectoryStream} handle reading the
- * entries of a directory. The secure directory stream additionally contains a {@code FileTree} for
- * its directory, allowing for operations relative to the actual directory file rather than just
- * the path to the file. As with the working directory tree, this allows the operations to continue
- * to work as expected even if the directory is moved.
+ * entries of a directory. The secure directory stream additionally contains a
+ * {@code FileSystemService} with its directory as the working directory, allowing for operations
+ * relative to the actual directory file rather than just the path to the file. This allows the
+ * operations to continue to work as expected even if the directory is moved.
  *
  * <p>A directory can be watched for changes using the {@link java.nio.file.WatchService}
  * implementation, {@link PollingWatchService}.

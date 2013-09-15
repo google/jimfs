@@ -29,10 +29,10 @@ import com.google.common.collect.Sets;
 
 import java.io.IOException;
 import java.nio.file.NotDirectoryException;
+import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchService;
 import java.nio.file.Watchable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,7 +41,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
+
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link WatchService} that polls for changes to directories at registered paths.
@@ -58,36 +59,33 @@ final class PollingWatchService extends AbstractWatchService {
    */
   private final ConcurrentMap<Key, Snapshot> snapshots = new ConcurrentHashMap<>();
 
-  private final JimfsFileSystem fs;
-  private final ReadWriteLock lock;
+  private final FileSystemService service;
 
   private final long pollingTime;
   private final TimeUnit timeUnit;
 
   private ScheduledFuture<?> pollingFuture;
 
-  public PollingWatchService(JimfsFileSystem fs) {
-    this(fs, 5, SECONDS);
+  public PollingWatchService(FileSystemService service) {
+    this(service, 5, SECONDS);
   }
 
   // TODO(cgdecker): make user configurable somehow? meh
   @VisibleForTesting
-  PollingWatchService(JimfsFileSystem fs, long pollingTime, TimeUnit timeUnit) {
-    this.fs = fs;
-    this.lock = fs.lock();
+  PollingWatchService(FileSystemService service, long pollingTime, TimeUnit timeUnit) {
+    this.service = checkNotNull(service);
 
     checkArgument(pollingTime >= 0, "polling time (%s) may not be negative", pollingTime);
     this.pollingTime = pollingTime;
     this.timeUnit = checkNotNull(timeUnit);
+
+    service.getResourceManager().register(this);
   }
 
   @Override
   public Key register(Watchable watchable,
       Iterable<? extends WatchEvent.Kind<?>> eventTypes) throws IOException {
-    checkWatchable(watchable instanceof JimfsPath, watchable);
-
-    JimfsPath path = (JimfsPath) watchable;
-    checkWatchable(fs.equals(path.getFileSystem()), path);
+    JimfsPath path = checkWatchable(watchable);
 
     Key key = super.register(path, eventTypes);
 
@@ -107,11 +105,17 @@ final class PollingWatchService extends AbstractWatchService {
     return key;
   }
 
-  private static void checkWatchable(boolean check, Watchable watchable) {
-    if (!check) {
+  private JimfsPath checkWatchable(Watchable watchable) {
+    if (!(watchable instanceof JimfsPath) || !isSameFileSystem((Path) watchable)) {
       throw new IllegalArgumentException("watchable (" + watchable + ") must be a Path " +
           "associated with the same file system as this watch service");
     }
+
+    return (JimfsPath) watchable;
+  }
+
+  private boolean isSameFileSystem(Path path) {
+    return ((JimfsFileSystem) path.getFileSystem()).getFileSystemService() == service;
   }
 
   @VisibleForTesting
@@ -138,7 +142,7 @@ final class PollingWatchService extends AbstractWatchService {
       }
 
       pollingService.shutdown();
-      fs.closed(this);
+      service.getResourceManager().unregister(this);
     }
   }
 
@@ -178,30 +182,9 @@ final class PollingWatchService extends AbstractWatchService {
     }
   };
 
+  @Nullable
   private Snapshot takeSnapshot(JimfsPath path) throws IOException {
-    FileTree tree = fs.getFileTree(path);
-
-    Map<Name, Long> modifiedTimes = new HashMap<>();
-
-    lock.readLock().lock();
-    try {
-      File dir = tree.lookup(path, LinkHandling.NOFOLLOW_LINKS)
-          .requireDirectory(path)
-          .file();
-
-      DirectoryTable table = dir.content();
-      for (Map.Entry<Name, File> entry : table.asMap().entrySet()) {
-        Name name = entry.getKey();
-        File file = entry.getValue();
-
-        long modifiedTime = file.getLastModifiedTime();
-        modifiedTimes.put(name, modifiedTime);
-      }
-    } finally {
-      lock.readLock().unlock();
-    }
-
-    return new Snapshot(modifiedTimes);
+    return new Snapshot(service.snapshotModifiedTimes(path));
   }
 
   /**
@@ -214,8 +197,8 @@ final class PollingWatchService extends AbstractWatchService {
      */
     private final ImmutableMap<Name, Long> modifiedTimes;
 
-    Snapshot(Map<Name, Long> modifiedTimes) {
-      this.modifiedTimes = ImmutableMap.copyOf(modifiedTimes);
+    Snapshot(ImmutableMap<Name, Long> modifiedTimes) {
+      this.modifiedTimes = checkNotNull(modifiedTimes);
     }
 
     /**
@@ -231,7 +214,7 @@ final class PollingWatchService extends AbstractWatchService {
             modifiedTimes.keySet());
 
         for (Name name : created) {
-          key.post(new Event<>(ENTRY_CREATE, 1, fs.getPathService().createFileName(name)));
+          key.post(new Event<>(ENTRY_CREATE, 1, service.getPathService().createFileName(name)));
           changesPosted = true;
         }
       }
@@ -242,7 +225,7 @@ final class PollingWatchService extends AbstractWatchService {
             newState.modifiedTimes.keySet());
 
         for (Name name : deleted) {
-          key.post(new Event<>(ENTRY_DELETE, 1, fs.getPathService().createFileName(name)));
+          key.post(new Event<>(ENTRY_DELETE, 1, service.getPathService().createFileName(name)));
           changesPosted = true;
         }
       }
@@ -254,7 +237,7 @@ final class PollingWatchService extends AbstractWatchService {
 
           Long newModifiedTime = newState.modifiedTimes.get(name);
           if (newModifiedTime != null && !modifiedTime.equals(newModifiedTime)) {
-            key.post(new Event<>(ENTRY_MODIFY, 1, fs.getPathService().createFileName(name)));
+            key.post(new Event<>(ENTRY_MODIFY, 1, service.getPathService().createFileName(name)));
             changesPosted = true;
           }
         }

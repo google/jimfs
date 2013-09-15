@@ -27,7 +27,7 @@ import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
- * Service handling file lookup for a {@link FileTree}.
+ * Service handling file lookup for a {@link FileSystemService}.
  *
  * @author Colin Decker
  */
@@ -36,42 +36,34 @@ final class LookupService {
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
 
   /**
-   * Looks up the file key for the given absolute path.
+   * Returns the result of the file lookup for the given path.
    */
   public LookupResult lookup(
-      FileTree tree, JimfsPath path, LinkHandling linkHandling) throws IOException {
+      FileSystemService service, JimfsPath path, LinkHandling linkHandling) throws IOException {
     checkNotNull(path);
     checkNotNull(linkHandling);
 
     File base;
     Iterable<Name> names = path.path();
     if (path.isAbsolute()) {
-      base = tree.getSuperRoot().base();
+      base = service.getSuperRoot();
     } else {
-      base = tree.base();
+      base = service.getWorkingDirectory();
       if (isEmpty(path)) {
         // empty path is equivalent to "." in a lookup
         names = ImmutableList.of(Name.SELF);
       }
     }
 
-    tree.readLock().lock();
-    try {
-      return lookup(tree.getSuperRoot(), base, names, linkHandling, 0);
-    } finally {
-      tree.readLock().unlock();
-    }
+    return lookup(service.getSuperRoot(), base, names, linkHandling, 0);
   }
 
-  /**
-   * Looks up the file key for the given path.
-   */
   private LookupResult lookup(
-      FileTree superRoot, File dir, JimfsPath path, LinkHandling linkHandling, int linkDepth)
+      File superRoot, File dir, JimfsPath path, LinkHandling linkHandling, int linkDepth)
       throws IOException {
     Iterable<Name> names = path.path();
     if (path.isAbsolute()) {
-      dir = superRoot.base();
+      dir = superRoot;
     } else if (isEmpty(path)) {
       // empty path is equivalent to "." in a lookup
       names = ImmutableList.of(Name.SELF);
@@ -82,10 +74,10 @@ final class LookupService {
   }
 
   /**
-   * Looks up the given names against the given base file. If the file is not a directory, the
-   * lookup fails.
+   * Looks up the given names against the given base file. If the file does not exist ({@code dir}
+   * is null) or is not a directory, the lookup fails.
    */
-  private LookupResult lookup(FileTree superRoot, @Nullable File dir,
+  private LookupResult lookup(File superRoot, @Nullable File dir,
       Iterable<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
@@ -114,7 +106,7 @@ final class LookupService {
   /**
    * Looks up the last element of a path.
    */
-  private LookupResult lookupLast(FileTree superRoot, File dir,
+  private LookupResult lookupLast(File superRoot, File dir,
       Name name, LinkHandling linkHandling, int linkDepth) throws IOException {
     DirectoryTable table = getDirectoryTable(dir);
     if (table == null) {
@@ -136,7 +128,7 @@ final class LookupService {
   }
 
   private LookupResult followSymbolicLink(
-      FileTree superRoot, DirectoryTable table, File link, int linkDepth) throws IOException {
+      File superRoot, DirectoryTable table, File link, int linkDepth) throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");
     }
@@ -150,7 +142,7 @@ final class LookupService {
    * lookup the file was "." or "..", meaning that the directory the last lookup was done in is not
    * actually the parent directory of the file.
    */
-  private LookupResult createFoundResult(FileTree superRoot, File parent, Name name, File file) {
+  private LookupResult createFoundResult(File superRoot, File parent, Name name, File file) {
     DirectoryTable table = parent.content();
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
       // the parent dir is not the directory we did the lookup in
@@ -159,7 +151,7 @@ final class LookupService {
       parent = fileTable.parent();
       if (parent == file) {
         // root dir
-        parent = superRoot.base();
+        parent = superRoot;
         DirectoryTable superRootTable = parent.content();
         name = superRootTable.getName(file);
       } else {

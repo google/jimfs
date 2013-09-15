@@ -1058,9 +1058,9 @@ public class JimfsIntegrationTest {
 
   @Test
   public void testSymbolicLinks_lookupOfAbsoluteSymlinkPathFromRelativePath() throws IOException {
-    // relative path lookups are in the FileTree for the working directory
+    // relative path lookups are in the FileSystemService for the working directory
     // this tests that when an absolute path is encountered, the lookup switches to the super root
-    // FileTree
+    // FileSystemService
 
     Files.createDirectories(path("/foo/bar/baz"));
     Files.createFile(path("/foo/bar/baz/file"));
