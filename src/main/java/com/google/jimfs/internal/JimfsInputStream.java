@@ -16,6 +16,8 @@
 
 package com.google.jimfs.internal;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,7 +30,7 @@ final class JimfsInputStream extends InputStream {
 
   private final Object lock = new Object();
 
-  private File file;
+  @VisibleForTesting File file;
   private ByteStore store;
   private boolean finished;
 
@@ -44,7 +46,7 @@ final class JimfsInputStream extends InputStream {
     synchronized (lock) {
       checkNotClosed();
       if (finished) {
-        return 0;
+        return -1;
       }
 
       store.readLock().lock();
@@ -68,7 +70,7 @@ final class JimfsInputStream extends InputStream {
     synchronized (lock) {
       checkNotClosed();
       if (finished) {
-        return 0;
+        return -1;
       }
 
       store.readLock().lock();
