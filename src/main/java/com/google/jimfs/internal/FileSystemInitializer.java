@@ -35,7 +35,6 @@ final class FileSystemInitializer {
   public static JimfsFileSystem createFileSystem(
       JimfsFileSystemProvider provider, URI uri, JimfsConfiguration config) throws IOException {
     RealPathService pathService = new RealPathService(config.getPathType());
-    LookupService lookupService = new LookupService();
     JimfsFileStore fileStore = new JimfsFileStore("jimfs", config.getAllAttributeProviders());
 
     File superRoot = fileStore.createDirectory();
@@ -49,9 +48,9 @@ final class FileSystemInitializer {
 
     File workingDir = createWorkingDirectory(workingDirPath, fileStore, superRootTable);
     FileSystemService service = new FileSystemService(
-        superRoot, workingDir, workingDirPath, fileStore, pathService, lookupService);
+        superRoot, workingDir, workingDirPath, fileStore, pathService);
 
-    JimfsFileSystem fileSystem = new JimfsFileSystem(provider, config, uri, service);
+    JimfsFileSystem fileSystem = new JimfsFileSystem(provider, uri, service);
     pathService.setFileSystem(fileSystem);
     return fileSystem;
   }

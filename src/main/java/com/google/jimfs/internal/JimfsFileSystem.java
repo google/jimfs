@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.JimfsConfiguration;
 
 import java.io.IOException;
 import java.net.URI;
@@ -37,21 +36,14 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 final class JimfsFileSystem extends FileSystem {
 
   private final JimfsFileSystemProvider provider;
-  private final JimfsConfiguration configuration;
   private final URI uri;
 
-  private final FileSystemService fileSystemService;
-  private final PathService pathService;
+  private final FileSystemService service;
 
-
-
-  JimfsFileSystem(JimfsFileSystemProvider provider, JimfsConfiguration config, URI uri,
-      FileSystemService fileSystemService) {
+  JimfsFileSystem(JimfsFileSystemProvider provider, URI uri, FileSystemService service) {
     this.provider = checkNotNull(provider);
     this.uri = checkNotNull(uri);
-    this.configuration = checkNotNull(config);
-    this.fileSystemService = checkNotNull(fileSystemService);
-    this.pathService = fileSystemService.getPathService();
+    this.service = checkNotNull(service);
   }
 
   @Override
@@ -60,30 +52,23 @@ final class JimfsFileSystem extends FileSystem {
   }
 
   /**
-   * Returns the configuration for this file system.
-   */
-  public JimfsConfiguration configuration() {
-    return configuration;
-  }
-
-  /**
    * Returns the file system service.
    */
-  public FileSystemService getFileSystemService() {
-    return fileSystemService;
+  public FileSystemService service() {
+    return service;
   }
 
   @Override
   public String getSeparator() {
-    return pathService.getSeparator();
+    return service.paths().getSeparator();
   }
 
   @Override
   public ImmutableSet<Path> getRootDirectories() {
     ImmutableSet.Builder<Path> builder = ImmutableSet.builder();
-    DirectoryTable superRootTable = fileSystemService.getSuperRoot().content();
+    DirectoryTable superRootTable = service.getSuperRoot().content();
     for (Name name : superRootTable.snapshot()) {
-      builder.add(pathService.createRoot(name));
+      builder.add(service.paths().createRoot(name));
     }
     return builder.build();
   }
@@ -92,22 +77,22 @@ final class JimfsFileSystem extends FileSystem {
    * Returns the working directory path for this file system.
    */
   public JimfsPath getWorkingDirectory() {
-    return fileSystemService.getWorkingDirectoryPath();
+    return service.getWorkingDirectoryPath();
   }
 
   @Override
   public ImmutableSet<FileStore> getFileStores() {
-    return ImmutableSet.<FileStore>of(fileSystemService.getFileStore());
+    return ImmutableSet.<FileStore>of(service.fileStore());
   }
 
   @Override
   public ImmutableSet<String> supportedFileAttributeViews() {
-    return fileSystemService.getFileStore().supportedFileAttributeViews();
+    return service.fileStore().supportedFileAttributeViews();
   }
 
   @Override
   public JimfsPath getPath(String first, String... more) {
-    return pathService.parsePath(first, more);
+    return service.paths().parsePath(first, more);
   }
 
   /**
@@ -116,7 +101,7 @@ final class JimfsFileSystem extends FileSystem {
   public URI getUri(JimfsPath path) {
     checkArgument(path.getFileSystem() == this);
 
-    String pathString = path.toString();
+    String pathString = path.toAbsolutePath().toString();
     if (!pathString.startsWith("/")) {
       pathString = "/" + pathString;
     }
@@ -126,7 +111,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public PathMatcher getPathMatcher(String syntaxAndPattern) {
-    return pathService.createPathMatcher(syntaxAndPattern);
+    return service.paths().createPathMatcher(syntaxAndPattern);
   }
 
   @Override
@@ -136,7 +121,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public WatchService newWatchService() throws IOException {
-    return new PollingWatchService(fileSystemService);
+    return new PollingWatchService(service);
   }
 
   /**
@@ -156,6 +141,6 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public void close() throws IOException {
-    fileSystemService.getResourceManager().close();
+    service.resourceManager().close();
   }
 }

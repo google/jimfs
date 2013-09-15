@@ -28,9 +28,6 @@ import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
 import com.google.jimfs.attribute.providers.UserDefinedAttributeProvider;
 import com.google.jimfs.path.PathType;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.attribute.AclEntry;
 import java.util.List;
 
@@ -69,11 +66,6 @@ public final class WindowsConfiguration extends JimfsConfiguration {
   @Override
   public String getWorkingDirectory() {
     return workingDirectory;
-  }
-
-  @Override
-  public boolean isHidden(Path path) throws IOException {
-    return (boolean) Files.getAttribute(path, "dos:hidden");
   }
 
   @Override

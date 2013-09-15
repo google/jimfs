@@ -79,7 +79,7 @@ final class PollingWatchService extends AbstractWatchService {
     this.pollingTime = pollingTime;
     this.timeUnit = checkNotNull(timeUnit);
 
-    service.getResourceManager().register(this);
+    service.resourceManager().register(this);
   }
 
   @Override
@@ -115,7 +115,7 @@ final class PollingWatchService extends AbstractWatchService {
   }
 
   private boolean isSameFileSystem(Path path) {
-    return ((JimfsFileSystem) path.getFileSystem()).getFileSystemService() == service;
+    return ((JimfsFileSystem) path.getFileSystem()).service() == service;
   }
 
   @VisibleForTesting
@@ -142,7 +142,7 @@ final class PollingWatchService extends AbstractWatchService {
       }
 
       pollingService.shutdown();
-      service.getResourceManager().unregister(this);
+      service.resourceManager().unregister(this);
     }
   }
 
@@ -214,7 +214,7 @@ final class PollingWatchService extends AbstractWatchService {
             modifiedTimes.keySet());
 
         for (Name name : created) {
-          key.post(new Event<>(ENTRY_CREATE, 1, service.getPathService().createFileName(name)));
+          key.post(new Event<>(ENTRY_CREATE, 1, service.paths().createFileName(name)));
           changesPosted = true;
         }
       }
@@ -225,7 +225,7 @@ final class PollingWatchService extends AbstractWatchService {
             newState.modifiedTimes.keySet());
 
         for (Name name : deleted) {
-          key.post(new Event<>(ENTRY_DELETE, 1, service.getPathService().createFileName(name)));
+          key.post(new Event<>(ENTRY_DELETE, 1, service.paths().createFileName(name)));
           changesPosted = true;
         }
       }
@@ -237,7 +237,7 @@ final class PollingWatchService extends AbstractWatchService {
 
           Long newModifiedTime = newState.modifiedTimes.get(name);
           if (newModifiedTime != null && !modifiedTime.equals(newModifiedTime)) {
-            key.post(new Event<>(ENTRY_MODIFY, 1, service.getPathService().createFileName(name)));
+            key.post(new Event<>(ENTRY_MODIFY, 1, service.paths().createFileName(name)));
             changesPosted = true;
           }
         }

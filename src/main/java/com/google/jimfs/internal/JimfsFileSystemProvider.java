@@ -51,6 +51,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
@@ -142,7 +143,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
    * Returns the file system service for the given path's file system.
    */
   private static FileSystemService getService(JimfsPath path) {
-    return ((JimfsFileSystem) path.getFileSystem()).getFileSystemService();
+    return ((JimfsFileSystem) path.getFileSystem()).service();
   }
 
   private static LookupResult lookup(Path path, LinkHandling linkHandling) throws IOException {
@@ -309,8 +310,20 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public boolean isHidden(Path path) throws IOException {
-    return ((JimfsFileSystem) checkPath(path).getFileSystem()).configuration()
-        .isHidden(path);
+    // TODO(cgdecker): This should probably be configurable, but this seems fine for now
+    /*
+     * If the DOS view is supported, use the Windows isHidden method (check the dos:hidden
+     * attribute). Otherwise, use the Unix isHidden method (just check if the file name starts with
+     * ".").
+     */
+    JimfsPath checkedPath = checkPath(path);
+    FileSystemService service = getService(checkedPath);
+    JimfsFileStore store = service.fileStore();
+    if (store.supportsFileAttributeView("dos")) {
+      return service.readAttributes(checkedPath, DosFileAttributes.class, NOFOLLOW_LINKS)
+          .isHidden();
+    }
+    return path.getNameCount() > 0 && path.getFileName().toString().startsWith(".");
   }
 
   @Override

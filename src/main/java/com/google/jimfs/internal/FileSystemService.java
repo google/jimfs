@@ -78,6 +78,7 @@ final class FileSystemService {
 
   private final JimfsFileStore fileStore;
   private final PathService pathService;
+
   private final LookupService lookupService;
   private final ResourceManager resourceManager;
 
@@ -87,9 +88,9 @@ final class FileSystemService {
    * Creates a new file system service using the given services.
    */
   public FileSystemService(File superRoot, File workingDirectory, JimfsPath workingDirectoryPath,
-      JimfsFileStore fileStore, PathService pathService, LookupService lookupService) {
-    this(superRoot, workingDirectory, workingDirectoryPath, fileStore, pathService, lookupService,
-        new ResourceManager(), new ReentrantReadWriteLock());
+      JimfsFileStore fileStore, PathService pathService) {
+    this(superRoot, workingDirectory, workingDirectoryPath, fileStore, pathService,
+        new LookupService(), new ResourceManager(), new ReentrantReadWriteLock());
   }
 
   /**
@@ -158,21 +159,21 @@ final class FileSystemService {
   /**
    * Returns the path service for the file system.
    */
-  public PathService getPathService() {
+  public PathService paths() {
     return pathService;
   }
 
   /**
    * Returns the file store for the file system.
    */
-  public JimfsFileStore getFileStore() {
+  public JimfsFileStore fileStore() {
     return fileStore;
   }
 
   /**
    * Returns the resource manager for the file system.
    */
-  public ResourceManager getResourceManager() {
+  public ResourceManager resourceManager() {
     return resourceManager;
   }
 
