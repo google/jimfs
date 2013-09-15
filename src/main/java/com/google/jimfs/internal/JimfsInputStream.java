@@ -98,6 +98,7 @@ final class JimfsInputStream extends InputStream {
     }
 
     synchronized (lock) {
+      checkNotClosed();
       if (finished) {
         return 0;
       }
@@ -112,6 +113,7 @@ final class JimfsInputStream extends InputStream {
   @Override
   public int available() throws IOException {
     synchronized (lock) {
+      checkNotClosed();
       if (finished) {
         return 0;
       }

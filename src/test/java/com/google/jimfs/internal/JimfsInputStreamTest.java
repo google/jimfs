@@ -83,6 +83,29 @@ public class JimfsInputStreamTest {
   }
 
   @Test
+  public void testRead_partialArray_invalidInput() throws IOException {
+    JimfsInputStream in = newInputStream(1, 2, 3, 4, 5);
+
+    try {
+      in.read(new byte[3], -1, 1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      in.read(new byte[3], 0, 4);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+
+    try {
+      in.read(new byte[3], 1, 3);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+  }
+
+  @Test
   public void testAvailable() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     ASSERT.that(in.available()).is(8);
@@ -94,6 +117,21 @@ public class JimfsInputStreamTest {
     ASSERT.that(in.available()).is(2);
     ASSERT.that(in.read(new byte[10])).is(2);
     ASSERT.that(in.available()).is(0);
+  }
+
+  @Test
+  public void testSkip() throws IOException {
+    JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
+    ASSERT.that(in.skip(0)).is(0);
+    ASSERT.that(in.skip(-10)).is(0);
+    ASSERT.that(in.skip(2)).is(2);
+    ASSERT.that(in.read()).is(3);
+    ASSERT.that(in.skip(3)).is(3);
+    ASSERT.that(in.read()).is(7);
+    ASSERT.that(in.skip(10)).is(1);
+    assertEmpty(in);
+    ASSERT.that(in.skip(10)).is(0);
+    assertEmpty(in);
   }
 
   @Test
@@ -121,6 +159,44 @@ public class JimfsInputStreamTest {
       fail();
     } catch (IOException expected) {
     }
+  }
+
+  @Test
+  public void testClosedInputStream_throwsException() throws IOException {
+    JimfsInputStream in = newInputStream(1, 2, 3);
+    in.close();
+
+    try {
+      in.read();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      in.read(new byte[3]);
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      in.read(new byte[10], 0, 2);
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      in.skip(10);
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      in.available();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    in.close(); // does nothing
   }
 
   private static JimfsInputStream newInputStream(int... bytes) {

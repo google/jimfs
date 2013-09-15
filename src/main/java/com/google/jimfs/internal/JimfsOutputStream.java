@@ -18,6 +18,8 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -30,7 +32,7 @@ final class JimfsOutputStream extends OutputStream {
 
   private final Object lock = new Object();
 
-  private File file;
+  @VisibleForTesting File file;
   private ByteStore store;
   private final boolean append;
 
@@ -100,6 +102,14 @@ final class JimfsOutputStream extends OutputStream {
       } finally {
         store.writeLock().unlock();
       }
+    }
+  }
+
+  @Override
+  public void flush() throws IOException {
+    synchronized (lock) {
+      checkNotClosed();
+      // writes are synchronous to the store, so flush does nothing
     }
   }
 
