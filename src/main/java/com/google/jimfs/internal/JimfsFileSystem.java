@@ -16,7 +16,6 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
@@ -98,15 +97,15 @@ final class JimfsFileSystem extends FileSystem {
   /**
    * Gets the URI of the given path in this file system.
    */
-  public URI getUri(JimfsPath path) {
-    checkArgument(path.getFileSystem() == this);
+  public URI toUri(JimfsPath path) {
+    return service.paths().toUri(uri, path.toAbsolutePath());
+  }
 
-    String pathString = path.toAbsolutePath().toString();
-    if (!pathString.startsWith("/")) {
-      pathString = "/" + pathString;
-    }
-
-    return URI.create(uri.toString() + pathString);
+  /**
+   * Converts the given URI into a path in this file system.
+   */
+  public JimfsPath toPath(URI uri) {
+    return service.paths().fromUri(uri);
   }
 
   @Override

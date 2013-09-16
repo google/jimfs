@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.LinkOption;
-import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -47,7 +46,7 @@ final class RealJimfsPath extends JimfsPath {
 
   @Override
   public URI toUri() {
-    return getFileSystem().getUri(this);
+    return getFileSystem().toUri(this);
   }
 
   @Override
@@ -56,7 +55,7 @@ final class RealJimfsPath extends JimfsPath {
   }
 
   @Override
-  public Path toRealPath(LinkOption... options) throws IOException {
+  public JimfsPath toRealPath(LinkOption... options) throws IOException {
     return getFileSystem().service().toRealPath(this, LinkHandling.fromOptions(options));
   }
 

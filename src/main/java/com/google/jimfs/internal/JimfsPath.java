@@ -29,6 +29,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Ordering;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
 import java.util.AbstractList;
@@ -332,6 +334,12 @@ abstract class JimfsPath implements Path, FileContent {
 
     return pathService.createRelativePath(parts);
   }
+
+  @Override
+  public abstract JimfsPath toAbsolutePath();
+
+  @Override
+  public abstract JimfsPath toRealPath(LinkOption... options) throws IOException;
 
   @Override
   public File toFile() {

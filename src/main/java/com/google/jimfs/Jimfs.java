@@ -72,6 +72,6 @@ public final class Jimfs {
   }
 
   private static URI newRandomUri() {
-    return URI.create("jimfs://" + UUID.randomUUID());
+    return URI.create("jimfs://" + UUID.randomUUID().toString().replace("-", ""));
   }
 }

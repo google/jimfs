@@ -18,6 +18,7 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -83,6 +84,12 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public JimfsFileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
     checkArgument(uri.getScheme().equalsIgnoreCase(SCHEME),
         "uri (%s) scheme must be '%s'", uri, SCHEME);
+    // would like to just check null, but fragment appears to be the empty string when not present
+    checkArgument(
+        isNullOrEmpty(uri.getPath())
+        && isNullOrEmpty(uri.getQuery())
+        && isNullOrEmpty(uri.getFragment()),
+        "uri (%s) may not have a path, query or fragment", uri);
     checkArgument(env.get(CONFIG_KEY) instanceof JimfsConfiguration,
         "env map (%s) must contain key '%s' mapped to an instance of JimfsConfiguration",
         env, CONFIG_KEY);
@@ -123,9 +130,21 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public Path getPath(URI uri) {
+    checkArgument(SCHEME.equals(uri.getScheme()),
+        "uri scheme does not match this provider: %s", uri);
+    checkArgument(!isNullOrEmpty(uri.getPath()),
+        "uri must have a path: %s", uri);
     try {
-      URI withoutPath = new URI(uri.getScheme(), uri.getHost(), null, null);
-      return getFileSystem(withoutPath).getPath(uri.getPath());
+      URI withoutPath = new URI(
+          uri.getScheme(),
+          uri.getUserInfo(),
+          uri.getHost(),
+          uri.getPort(),
+          null,
+          null,
+          null);
+
+      return getFileSystem(withoutPath).toPath(uri);
     } catch (URISyntaxException e) {
       throw new AssertionError();
     }

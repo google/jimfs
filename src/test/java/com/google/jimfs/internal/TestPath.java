@@ -57,12 +57,12 @@ public class TestPath extends JimfsPath {
   }
 
   @Override
-  public Path toAbsolutePath() {
+  public JimfsPath toAbsolutePath() {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Path toRealPath(LinkOption... options) throws IOException {
+  public JimfsPath toRealPath(LinkOption... options) throws IOException {
     throw new UnsupportedOperationException();
   }
 

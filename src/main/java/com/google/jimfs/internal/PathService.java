@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.path.PathType.ParseResult;
 
@@ -30,6 +31,7 @@ import com.google.jimfs.path.PathType;
 
 import com.ibm.icu.text.Normalizer2;
 
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.PathMatcher;
 
@@ -144,7 +146,10 @@ abstract class PathService {
   public final JimfsPath parsePath(String first, String... more) {
     String joined = type.joiner()
         .join(Iterables.filter(Lists.asList(first, more), NOT_EMPTY));
-    ParseResult parsed = type.parsePath(joined);
+    return toPath(type.parsePath(joined));
+  }
+
+  private JimfsPath toPath(ParseResult parsed) {
     Name root = parsed.root() == null ? null : nameFactory.name(parsed.root());
     Iterable<Name> names = nameFactory.names(parsed.names());
     return createPath(root, names);
@@ -158,6 +163,24 @@ abstract class PathService {
     String rootString = root == null ? null : root.toString();
     Iterable<String> names = Iterables.transform(path.names(), Functions.toStringFunction());
     return type.toString(rootString, names);
+  }
+
+  /**
+   * Returns the URI for the given path. The given file system URI is the base against which the
+   * path is resolved to create the returned URI.
+   */
+  public final URI toUri(URI fileSystemUri, JimfsPath path) {
+    checkArgument(path.isAbsolute(), "path (%s) must be absolute", path);
+    String root = String.valueOf(path.root());
+    Iterable<String> names = Iterables.transform(path.names(), Functions.toStringFunction());
+    return type.toUri(fileSystemUri, root, names);
+  }
+
+  /**
+   * Converts the path of the given URI into a path for this file system.
+   */
+  public final JimfsPath fromUri(URI uri) {
+    return toPath(type.fromUri(uri));
   }
 
   /**

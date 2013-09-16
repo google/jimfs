@@ -16,17 +16,18 @@
 
 package com.google.jimfs.path;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.jimfs.path.CaseSensitivity.CASE_INSENSITIVE_ASCII;
 import static com.google.jimfs.path.CaseSensitivity.CASE_INSENSITIVE_UNICODE;
 import static com.google.jimfs.path.CaseSensitivity.CASE_SENSITIVE;
 import static com.google.jimfs.path.PathType.ParseResult;
-import static com.google.jimfs.path.PathType.windows;
-import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
+
+import com.google.common.collect.ImmutableList;
 
 import org.junit.Test;
 
-import java.nio.file.InvalidPathException;
+import java.net.URI;
 
 import javax.annotation.Nullable;
 
@@ -37,7 +38,8 @@ import javax.annotation.Nullable;
  */
 public class PathTypeTest {
 
-  private final FakePathType type = new FakePathType(CASE_SENSITIVE);
+  private static final FakePathType type = new FakePathType(CASE_SENSITIVE);
+  static final URI fileSystemUri = URI.create("jimfs://foo");
 
   @Test
   public void testBasicProperties() {
@@ -73,125 +75,45 @@ public class PathTypeTest {
   }
 
   @Test
-  public void testUnix() {
-    PathType unix = PathType.unix();
-    ASSERT.that(unix.getSeparator()).is("/");
-    ASSERT.that(unix.getOtherSeparators()).is("");
-    ASSERT.that(unix.getCaseSensitivity()).is(CASE_SENSITIVE);
+  public void testToUri() {
+    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"));
+    ASSERT.that(fileUri.toString()).is("jimfs://foo/$/foo/bar");
+    ASSERT.that(fileUri.getPath()).is("/$/foo/bar");
 
-    // "//foo/bar" is what will be passed to parsePath if "/", "foo", "bar" is passed to getPath
-    ParseResult path = unix.parsePath("//foo/bar");
-    assertParseResult(path, "/", "foo", "bar");
-    ASSERT.that(unix.toString(path.root(), path.names())).is("/foo/bar");
-
-    ParseResult path2 = unix.parsePath("foo/bar/");
-    assertParseResult(path2, null, "foo", "bar");
-    ASSERT.that(unix.toString(path2.root(), path2.names())).is("foo/bar");
+    URI rootUri = type.toUri(fileSystemUri, "$", ImmutableList.<String>of());
+    ASSERT.that(rootUri.toString()).is("jimfs://foo/$");
+    ASSERT.that(rootUri.getPath()).is("/$");
   }
 
   @Test
-  public void testWindows() {
-    PathType windows = PathType.windows();
-    ASSERT.that(windows.getSeparator()).is("\\");
-    ASSERT.that(windows.getOtherSeparators()).is("/");
-    ASSERT.that(windows.getCaseSensitivity()).is(CASE_INSENSITIVE_ASCII);
-
-    // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
-    ParseResult path = windows.parsePath("C:\\\\foo\\bar");
-    assertParseResult(path, "C:\\", "foo", "bar");
-    ASSERT.that(windows.toString(path.root(), path.names())).is("C:\\foo\\bar");
-
-    ParseResult path2 = windows.parsePath("foo/bar/");
-    assertParseResult(path2, null, "foo", "bar");
-    ASSERT.that(windows.toString(path2.root(), path2.names())).is("foo\\bar");
-
-    ParseResult path3 = windows.parsePath("hello world/foo/bar");
-    assertParseResult(path3, null, "hello world", "foo", "bar");
-    ASSERT.that(windows.toString(null, path3.names())).is("hello world\\foo\\bar");
+  public void testToUri_escaping() {
+    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar baz"));
+    ASSERT.that(fileUri.toString()).is("jimfs://foo/$/foo/bar%20baz");
+    ASSERT.that(fileUri.getRawPath()).is("/$/foo/bar%20baz");
+    ASSERT.that(fileUri.getPath()).is("/$/foo/bar baz");
   }
 
   @Test
-  public void testWindows_relativePathsWithDriveRoot_unsupported() {
-    try {
-      windows().parsePath("C:");
-      fail();
-    } catch (InvalidPathException expected) {}
-
-    try {
-      windows().parsePath("C:foo\\bar");
-      fail();
-    } catch (InvalidPathException expected) {}
+  public void testUriRoundTrips() {
+    assertUriRoundTripsCorrectly(type, "$");
+    assertUriRoundTripsCorrectly(type, "$foo");
+    assertUriRoundTripsCorrectly(type, "$foo/bar/baz");
+    assertUriRoundTripsCorrectly(type, "$foo bar");
+    assertUriRoundTripsCorrectly(type, "$foo/bar baz");
   }
 
-  @Test
-  public void testWindows_uncPaths() {
-    PathType windows = PathType.windows();
-    ParseResult path = windows.parsePath("\\\\host\\share");
-    assertParseResult(path, "\\\\host\\share\\");
-
-    path = windows.parsePath("\\\\HOST\\share\\foo\\bar");
-    assertParseResult(path, "\\\\HOST\\share\\", "foo", "bar");
-
-    try {
-      windows.parsePath("\\\\");
-      fail();
-    } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).is("\\\\");
-      ASSERT.that(expected.getReason()).is("UNC path is missing hostname");
-    }
-
-    try {
-      windows.parsePath("\\\\host");
-      fail();
-    } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).is("\\\\host");
-      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
-    }
-
-    try {
-      windows.parsePath("\\\\host\\");
-      fail();
-    } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).is("\\\\host\\");
-      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
-    }
-
-    try {
-      windows.parsePath("//host");
-      fail();
-    } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).is("//host");
-      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
-    }
-  }
-
-  @Test
-  public void testWindows_illegalNames() {
-    try {
-      windows().parsePath("foo<bar");
-      fail();
-    } catch (InvalidPathException expected) {}
-
-    try {
-      windows().parsePath("foo?");
-      fail();
-    } catch (InvalidPathException expected) {}
-
-    try {
-      windows().parsePath("foo ");
-      fail();
-    } catch (InvalidPathException expected) {}
-
-    try {
-      windows().parsePath("foo \\bar");
-      fail();
-    } catch (InvalidPathException expected) {}
-  }
-
-  private static void assertParseResult(
+  static void assertParseResult(
       ParseResult result, @Nullable String root, String... names) {
     ASSERT.that(result.root()).is(root);
     ASSERT.that(result.names()).iteratesAs(names);
+  }
+
+  static void assertUriRoundTripsCorrectly(PathType type, String path) {
+    ParseResult result = type.parsePath(path);
+    URI uri = type.toUri(fileSystemUri, result.root(), result.names());
+    ParseResult parsedUri = type.fromUri(uri);
+    ASSERT.that(parsedUri.root()).isEqualTo(result.root());
+    ASSERT.that(parsedUri.names()).iteratesAs(result.names());
   }
 
   /**
@@ -222,6 +144,22 @@ public class PathTypeTest {
       }
       joiner().appendTo(builder, names);
       return builder.toString();
+    }
+
+    @Override
+    public String toUriPath(String root, Iterable<String> names) {
+      StringBuilder builder = new StringBuilder();
+      builder.append('/').append(root);
+      for (String name : names) {
+        builder.append('/').append(name);
+      }
+      return builder.toString();
+    }
+
+    @Override
+    public ParseResult parseUriPath(String uriPath) {
+      checkArgument(uriPath.startsWith("/$"), "uriPath (%s) must start with /$", uriPath);
+      return parsePath(uriPath.substring(1));
     }
   }
 }

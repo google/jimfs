@@ -23,9 +23,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
-import java.nio.file.InvalidPathException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.annotation.Nullable;
 
@@ -165,193 +164,43 @@ public abstract class PathType {
   public abstract String toString(@Nullable String root, Iterable<String> names);
 
   /**
-   * Unix-style path type.
+   * Returns the string form of the given path for use in the path part of a URI. The root element
+   * is not nullable as the path must be absolute. The elements of the returned path <i>do not</i>
+   * need to be escaped.
    */
-  private static final class UnixPathType extends PathType {
+  protected abstract String toUriPath(String root, Iterable<String> names);
 
-    /**
-     * Default Unix path type, with case sensitive names as in Linux.
-     */
-    private static final UnixPathType INSTANCE = new UnixPathType(CaseSensitivity.CASE_SENSITIVE);
+  /**
+   * Parses a path from the given URI path.
+   */
+  protected abstract ParseResult parseUriPath(String uriPath);
 
-    private UnixPathType(CaseSensitivity caseSensitivity) {
-      super(caseSensitivity, '/');
-    }
-
-    @Override
-    public ParseResult parsePath(String path) {
-      if (path.isEmpty()) {
-        return emptyPath();
-      }
-
-      String root = path.startsWith("/") ? "/" : null;
-      return new ParseResult(root, splitter().split(path));
-    }
-
-    @Override
-    public String toString(@Nullable String root, Iterable<String> names) {
-      StringBuilder builder = new StringBuilder();
-      if (root != null) {
-        builder.append(root);
-      }
-      joiner().appendTo(builder, names);
-      return builder.toString();
+  /**
+   * Creates a URI for the path with the given root and names in the file system with the given URI.
+   */
+  public final URI toUri(URI fileSystemUri, String root, Iterable<String> names) {
+    String path = toUriPath(root, names);
+    try {
+      // it should not suck this much to create a new URI that's the same except with a path set =(
+      // need to do it this way for automatic path escaping
+      return new URI(
+          fileSystemUri.getScheme(),
+          fileSystemUri.getUserInfo(),
+          fileSystemUri.getHost(),
+          fileSystemUri.getPort(),
+          path,
+          null,
+          null);
+    } catch (URISyntaxException e) {
+      throw new AssertionError(e);
     }
   }
 
   /**
-   * Windows-style path type.
+   * Parses a path from the given URI.
    */
-  private static final class WindowsPathType extends PathType {
-
-    /**
-     * Default Windows path type, with ASCII case insensitive names, as Windows is case insensitive
-     * by default and ASCII case insensitivity should be fine for most usages.
-     */
-    private static final WindowsPathType INSTANCE
-        = new WindowsPathType(CaseSensitivity.CASE_INSENSITIVE_ASCII);
-
-    /**
-     * Matches the C:foo\bar path format, which has a root (C:) and names (foo\bar) and matches
-     * a path relative to the working directory on that drive. Currently can't support that format
-     * as it requires behavior that differs completely from Unix.
-     */
-    // TODO(cgdecker): Can probably support this at some point
-    // It would require:
-    // - A method like PathType.isAbsolute(Path) or something to that effect; this would allow
-    //   WindowsPathType to distinguish between an absolute root path (C:\) and a relative root
-    //   path (C:)
-    // - Special handling for relative paths that have a root. This handling would determine the
-    //   root directory and then determine the working directory from there. The file system would
-    //   still have one working directory; for the root that working directory is under, it is the
-    //   working directory. For every other root, the root itself is the working directory.
-    private static final Pattern WORKING_DIR_WITH_DRIVE = Pattern.compile(
-        "^[a-zA-Z]:([^\\\\].*)?$");
-
-    /**
-     * Pattern for matching trailing spaces in file names.
-     */
-    private static final Pattern TRAILING_SPACES = Pattern.compile("[ ]+(\\\\|$)");
-
-    private WindowsPathType(CaseSensitivity caseSensitivity) {
-      super(caseSensitivity, '\\', '/');
-    }
-
-    @Override
-    public ParseResult parsePath(String path) {
-      String original = path;
-      path = path.replace('/', '\\');
-
-      if (WORKING_DIR_WITH_DRIVE.matcher(path).matches()) {
-        throw new InvalidPathException(original,
-            "JIMFS does not currently support the Windows \"relative path with drive\" syntax");
-      }
-
-      String root;
-      if (path.startsWith("\\\\")) {
-        root = parseUncRoot(path, original);
-      } else {
-        root = parseDriveRoot(path);
-      }
-
-      // check for root.length() > 3 because only "C:\" type roots are allowed to have :
-      int startIndex = root == null || root.length() > 3 ? 0 : root.length();
-      for (int i = startIndex; i < path.length(); i++) {
-        char c = path.charAt(i);
-        if (isReserved(c)) {
-          throw new InvalidPathException(original, "Illegal char <" + c + ">", i);
-        }
-      }
-
-      Matcher trailingSpaceMatcher = TRAILING_SPACES.matcher(path);
-      if (trailingSpaceMatcher.find()) {
-        throw new InvalidPathException(original, "Trailing char < >", trailingSpaceMatcher.start());
-      }
-
-      if (root != null) {
-        path = path.substring(root.length());
-
-        if (!root.endsWith("\\")) {
-          root = root + "\\";
-        }
-      }
-
-      return new ParseResult(root, splitter().split(path));
-    }
-
-    /**
-     * Pattern for matching UNC \\host\share root syntax.
-     */
-    private static final Pattern UNC_ROOT = Pattern.compile(
-        "^(\\\\\\\\)([^\\\\]+)?(\\\\[^\\\\]+)?");
-
-    /**
-     * Parse the root of a UNC-style path, throwing an exception if the path does not start with
-     * a valid UNC root.
-     */
-    private String parseUncRoot(String path, String original) {
-      Matcher uncMatcher = UNC_ROOT.matcher(path);
-      if (uncMatcher.find()) {
-        String host = uncMatcher.group(2);
-        if (host == null) {
-          throw new InvalidPathException(original, "UNC path is missing hostname");
-        }
-        String share = uncMatcher.group(3);
-        if (share == null) {
-          throw new InvalidPathException(original, "UNC path is missing sharename");
-        }
-
-        return path.substring(uncMatcher.start(), uncMatcher.end());
-      } else {
-        // probably shouldn't ever reach this
-        throw new InvalidPathException(original, "Invalid UNC path");
-      }
-    }
-
-    /**
-     * Pattern for matching normal C:\ drive letter root syntax.
-     */
-    private static final Pattern DRIVE_LETTER_ROOT = Pattern.compile("^[a-zA-Z]:\\\\");
-
-    /**
-     * Parses a normal drive-letter root, e.g. "C:\".
-     */
-    @Nullable
-    private String parseDriveRoot(String path) {
-      Matcher drivePathMatcher = DRIVE_LETTER_ROOT.matcher(path);
-      if (drivePathMatcher.find()) {
-        return path.substring(drivePathMatcher.start(), drivePathMatcher.end());
-      }
-      return null;
-    }
-
-    /**
-     * Checks if c is one of the reserved characters that aren't allowed in Windows file names.
-     */
-    private static boolean isReserved(char c) {
-      switch (c) {
-        case '<':
-        case '>':
-        case ':':
-        case '"':
-        case '|':
-        case '?':
-        case '*':
-          return true;
-        default:
-          return c <= 31;
-      }
-    }
-
-    @Override
-    public String toString(@Nullable String root, Iterable<String> names) {
-      StringBuilder builder = new StringBuilder();
-      if (root != null) {
-        builder.append(root);
-      }
-      joiner().appendTo(builder, names);
-      return builder.toString();
-    }
+  public final ParseResult fromUri(URI uri) {
+    return parseUriPath(uri.getPath());
   }
 
   /**

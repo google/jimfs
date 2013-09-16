@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
@@ -65,6 +66,10 @@ public class LookupServiceTest {
    *       c/
    */
 
+  /**
+   * This path service is for unix-like paths, with the exception that it recognizes $ as a root in
+   * addition to /, allowing for two roots.
+   */
   private final PathService pathService = new TestPathService(
       new PathType(CaseSensitivity.CASE_SENSITIVE, '/') {
         @Override
@@ -81,6 +86,19 @@ public class LookupServiceTest {
         public String toString(@Nullable String root, Iterable<String> names) {
           root = Strings.nullToEmpty(root);
           return root + Joiner.on('/').join(names);
+        }
+
+        @Override
+        public String toUriPath(String root, Iterable<String> names) {
+          // need to add extra / to differentiate between paths "/$foo/bar" and "$foo/bar".
+          return "/" + toString(root, names);
+        }
+
+        @Override
+        public ParseResult parseUriPath(String uriPath) {
+          checkArgument(uriPath.startsWith("//") || uriPath.startsWith("/$"),
+              "uriPath (%s) must start with // or /$");
+          return parsePath(uriPath.substring(1)); // skip leading /
         }
       });
 
