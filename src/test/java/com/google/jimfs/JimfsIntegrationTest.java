@@ -93,7 +93,9 @@ import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Tests an in-memory file system through the public APIs in {@link Files}, etc.
+ * Tests an in-memory file system through the public APIs in {@link Files}, etc. This also acts as
+ * the tests for {@code FileSystemService}, as each public API method is (mostly) implemented by a
+ * method in {@code FileSystemService}.
  *
  * @author Colin Decker
  */
