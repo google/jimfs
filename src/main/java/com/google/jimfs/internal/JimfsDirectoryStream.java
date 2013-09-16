@@ -46,8 +46,7 @@ abstract class JimfsDirectoryStream implements DirectoryStream<Path> {
   }
 
   /**
-   *
-   * @return
+   * Returns the path to the directory.
    */
   protected JimfsPath path() {
     return dirPath;

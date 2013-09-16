@@ -84,7 +84,8 @@ public class LookupServiceTest {
         }
       });
 
-  private FileSystemService fileSystemService;
+  private LookupService lookupService;
+  private File workingDirectory;
   private final Map<String, File> files = new HashMap<>();
 
   @Before
@@ -93,6 +94,8 @@ public class LookupServiceTest {
     File superRoot = new File(-1, superRootTable);
 
     files.put("SUPER_ROOT", superRoot);
+
+    lookupService = new LookupService(superRoot);
 
     DirectoryTable rootTable = new DirectoryTable();
     File root = new File(0, rootTable);
@@ -110,12 +113,7 @@ public class LookupServiceTest {
 
     files.put("$", otherRoot);
 
-    File working = createDirectory("/", "work");
-
-    JimfsFileStore store = new JimfsFileStore("foo");
-
-    fileSystemService = new FileSystemService(
-        superRoot, working, pathService.parsePath("/work"), store, pathService);
+    workingDirectory = createDirectory("/", "work");
 
     createDirectory("work", "one");
     createDirectory("one", "two");
@@ -345,7 +343,7 @@ public class LookupServiceTest {
 
   private LookupResult lookup(String path, LinkOption... options) throws IOException {
     JimfsPath pathObj = pathService.parsePath(path);
-    return fileSystemService.lookup(pathObj, LinkHandling.fromOptions(options));
+    return lookupService.lookup(workingDirectory, pathObj, LinkHandling.fromOptions(options));
   }
 
   private void assertFound(LookupResult result, String parent, String file) {

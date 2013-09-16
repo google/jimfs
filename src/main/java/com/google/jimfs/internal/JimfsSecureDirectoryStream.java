@@ -60,7 +60,7 @@ final class JimfsSecureDirectoryStream
     JimfsPath checkedPath = checkPath(path);
     return service.newSecureDirectoryStream(
         checkedPath, ALWAYS_TRUE_FILTER, LinkHandling.fromOptions(options),
-        service.getWorkingDirectoryPath().resolve(checkedPath));
+        path().resolve(checkedPath));
   }
 
   @Override
@@ -102,7 +102,7 @@ final class JimfsSecureDirectoryStream
 
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Class<V> type) {
-    return getFileAttributeView(service.getWorkingDirectoryPath().getFileSystem().getPath("."), type);
+    return getFileAttributeView(path().getFileSystem().getPath("."), type);
   }
 
   @Override

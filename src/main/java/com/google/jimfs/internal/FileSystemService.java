@@ -90,7 +90,7 @@ final class FileSystemService {
   public FileSystemService(File superRoot, File workingDirectory, JimfsPath workingDirectoryPath,
       JimfsFileStore fileStore, PathService pathService) {
     this(superRoot, workingDirectory, workingDirectoryPath, fileStore, pathService,
-        new LookupService(), new ResourceManager(), new ReentrantReadWriteLock());
+        new LookupService(superRoot), new ResourceManager(), new ReentrantReadWriteLock());
   }
 
   /**
@@ -142,13 +142,6 @@ final class FileSystemService {
   }
 
   /**
-   * Returns the working directory for this service.
-   */
-  public File getWorkingDirectory() {
-    return workingDirectory;
-  }
-
-  /**
    * Returns the path of the working directory at the time this service was created. Does not
    * reflect changes to the path caused by the directory being moved.
    */
@@ -194,7 +187,7 @@ final class FileSystemService {
    */
   private LookupResult lookupInternal(
       JimfsPath path, LinkHandling linkHandling) throws IOException {
-    return lookupService.lookup(this, path, linkHandling);
+    return lookupService.lookup(workingDirectory, path, linkHandling);
   }
 
   /**

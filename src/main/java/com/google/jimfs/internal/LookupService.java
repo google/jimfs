@@ -35,32 +35,37 @@ final class LookupService {
 
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
 
+  private final File superRoot;
+
+  LookupService(File superRoot) {
+    this.superRoot = checkNotNull(superRoot);
+  }
+
   /**
    * Returns the result of the file lookup for the given path.
    */
   public LookupResult lookup(
-      FileSystemService service, JimfsPath path, LinkHandling linkHandling) throws IOException {
+      File workingDirectory, JimfsPath path, LinkHandling linkHandling) throws IOException {
     checkNotNull(path);
     checkNotNull(linkHandling);
 
     File base;
     Iterable<Name> names = path.path();
     if (path.isAbsolute()) {
-      base = service.getSuperRoot();
+      base = superRoot;
     } else {
-      base = service.getWorkingDirectory();
+      base = workingDirectory;
       if (isEmpty(path)) {
         // empty path is equivalent to "." in a lookup
         names = ImmutableList.of(Name.SELF);
       }
     }
 
-    return lookup(service.getSuperRoot(), base, names, linkHandling, 0);
+    return lookup(base, names, linkHandling, 0);
   }
 
   private LookupResult lookup(
-      File superRoot, File dir, JimfsPath path, LinkHandling linkHandling, int linkDepth)
-      throws IOException {
+      File dir, JimfsPath path, LinkHandling linkHandling, int linkDepth) throws IOException {
     Iterable<Name> names = path.path();
     if (path.isAbsolute()) {
       dir = superRoot;
@@ -70,14 +75,14 @@ final class LookupService {
     }
 
     checkNotNull(linkHandling);
-    return lookup(superRoot, dir, names, linkHandling, linkDepth);
+    return lookup(dir, names, linkHandling, linkDepth);
   }
 
   /**
    * Looks up the given names against the given base file. If the file does not exist ({@code dir}
    * is null) or is not a directory, the lookup fails.
    */
-  private LookupResult lookup(File superRoot, @Nullable File dir,
+  private LookupResult lookup(@Nullable File dir,
       Iterable<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
@@ -86,7 +91,7 @@ final class LookupService {
       File file = table == null ? null : table.get(name);
 
       if (file != null && file.isSymbolicLink()) {
-        LookupResult linkResult = followSymbolicLink(superRoot, table, file, linkDepth);
+        LookupResult linkResult = followSymbolicLink(table, file, linkDepth);
 
         if (!linkResult.found()) {
           return LookupResult.notFound();
@@ -100,13 +105,13 @@ final class LookupService {
       name = nameIterator.next();
     }
 
-    return lookupLast(superRoot, dir, name, linkHandling, linkDepth);
+    return lookupLast(dir, name, linkHandling, linkDepth);
   }
 
   /**
    * Looks up the last element of a path.
    */
-  private LookupResult lookupLast(File superRoot, File dir,
+  private LookupResult lookupLast(@Nullable File dir,
       Name name, LinkHandling linkHandling, int linkDepth) throws IOException {
     DirectoryTable table = getDirectoryTable(dir);
     if (table == null) {
@@ -121,20 +126,20 @@ final class LookupService {
     if (linkHandling == FOLLOW_LINKS && file.isSymbolicLink()) {
       // TODO(cgdecker): can add info on the symbolic link and its parent here if needed
       // for now it doesn't seem like it's needed though
-      return followSymbolicLink(superRoot, table, file, linkDepth);
+      return followSymbolicLink(table, file, linkDepth);
     }
 
-    return createFoundResult(superRoot, dir, name, file);
+    return createFoundResult(dir, name, file);
   }
 
   private LookupResult followSymbolicLink(
-      File superRoot, DirectoryTable table, File link, int linkDepth) throws IOException {
+      DirectoryTable table, File link, int linkDepth) throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");
     }
 
     JimfsPath targetPath = link.content();
-    return lookup(superRoot, table.self(), targetPath, FOLLOW_LINKS, linkDepth + 1);
+    return lookup(table.self(), targetPath, FOLLOW_LINKS, linkDepth + 1);
   }
 
   /**
@@ -142,7 +147,7 @@ final class LookupService {
    * lookup the file was "." or "..", meaning that the directory the last lookup was done in is not
    * actually the parent directory of the file.
    */
-  private LookupResult createFoundResult(File superRoot, File parent, Name name, File file) {
+  private LookupResult createFoundResult(File parent, Name name, File file) {
     DirectoryTable table = parent.content();
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
       // the parent dir is not the directory we did the lookup in
