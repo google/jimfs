@@ -19,6 +19,7 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.attribute.UserLookupService;
 
 import java.io.IOException;
 import java.net.URI;
@@ -37,6 +38,9 @@ final class JimfsFileSystem extends FileSystem {
   private final JimfsFileSystemProvider provider;
   private final URI uri;
 
+  /**
+   * Service providing actual file system operations.
+   */
   private final FileSystemService service;
 
   JimfsFileSystem(JimfsFileSystemProvider provider, URI uri, FileSystemService service) {
@@ -51,7 +55,7 @@ final class JimfsFileSystem extends FileSystem {
   }
 
   /**
-   * Returns the file system service.
+   * Returns the service providing operations on this file system.
    */
   public FileSystemService service() {
     return service;
@@ -115,7 +119,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService() {
-    return null;
+    return new UserLookupService(true);
   }
 
   @Override
