@@ -33,7 +33,7 @@ import java.nio.file.attribute.PosixFilePermissions;
  *
  * @author Colin Decker
  */
-public final class UnixConfiguration extends JimfsConfiguration {
+final class UnixConfiguration extends JimfsConfiguration {
 
   private final String workingDirectory;
   private final String defaultOwner;
@@ -61,12 +61,6 @@ public final class UnixConfiguration extends JimfsConfiguration {
   @Override
   public String getWorkingDirectory() {
     return workingDirectory;
-  }
-
-  @Override
-  protected Iterable<Feature> getSupportedFeatures() {
-    return ImmutableSet.of(Feature.SYMBOLIC_LINKS, Feature.LINKS, Feature.GROUPS,
-        Feature.SECURE_DIRECTORY_STREAMS);
   }
 
   @Override

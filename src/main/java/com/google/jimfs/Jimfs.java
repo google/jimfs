@@ -17,6 +17,7 @@
 package com.google.jimfs;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import java.io.IOException;
 import java.net.URI;
@@ -72,6 +73,6 @@ public final class Jimfs {
   }
 
   private static URI newRandomUri() {
-    return URI.create("jimfs://" + UUID.randomUUID().toString().replace("-", ""));
+    return URI.create(JimfsFileSystemProvider.SCHEME + "://" + UUID.randomUUID());
   }
 }

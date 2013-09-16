@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Colin Decker
  */
-public final class WindowsConfiguration extends JimfsConfiguration {
+final class WindowsConfiguration extends JimfsConfiguration {
 
   private final String workingDirectory;
   private final String defaultUser;

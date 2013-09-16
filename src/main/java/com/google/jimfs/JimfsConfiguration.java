@@ -35,7 +35,6 @@ import java.util.Set;
 public abstract class JimfsConfiguration {
 
   private final PathType pathType;
-  private volatile ImmutableSet<Feature> supportedFeatures;
 
   protected JimfsConfiguration(PathType pathType) {
     this.pathType = checkNotNull(pathType);
@@ -76,41 +75,4 @@ public abstract class JimfsConfiguration {
    * included in the returned set of providers.
    */
   protected abstract Iterable<AttributeProvider> getAttributeProviders();
-
-
-  /**
-   * Returns the optional features the file system supports. By default, this returns
-   * {@link Feature#SYMBOLIC_LINKS SYMBOLIC_LINKS} and {@link Feature#LINKS LINKS}.
-   */
-  protected Iterable<Feature> getSupportedFeatures() {
-    return ImmutableSet.of(Feature.SYMBOLIC_LINKS, Feature.LINKS);
-  }
-
-  /**
-   * Returns whether or not this configuration supports the given feature.
-   */
-  public boolean supportsFeature(Feature feature) {
-    if (supportedFeatures == null) {
-      ImmutableSet<Feature> featureSet = ImmutableSet.copyOf(getSupportedFeatures());
-      supportedFeatures = featureSet;
-      return featureSet.contains(feature);
-    }
-
-    return supportedFeatures.contains(feature);
-  }
-
-  /**
-   * Features that a file system may or may not support.
-   */
-  public enum Feature {
-    /** Symbolic links are supported. */
-    SYMBOLIC_LINKS,
-    /** Hard links are supported. */
-    LINKS,
-    /** Supports the lookup of group principals. */
-    GROUPS,
-    /** {@link SecureDirectoryStream} is supported. */
-    SECURE_DIRECTORY_STREAMS
-  }
-
 }

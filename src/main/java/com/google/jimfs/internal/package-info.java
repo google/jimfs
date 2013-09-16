@@ -21,9 +21,7 @@
  *
  * <h3>Overview of the file system design:</h3>
  *
- * {@link JimfsFileSystem} is both the concrete implementation of
- * {@link java.nio.file.FileSystem} and the class containing references to the other objects the
- * file system uses to do its work.
+ * {@link JimfsFileSystem} is the concrete implementation of {@link java.nio.file.FileSystem}.
  *
  * <p>Most of the details of the implementation of file system operations are found in the
  * {@link FileSystemService} class. The file system service contains two root directories. The

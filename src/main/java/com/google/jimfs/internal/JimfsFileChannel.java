@@ -442,7 +442,7 @@ final class JimfsFileChannel extends FileChannel {
    * a lock.
    */
   public int writeInterruptibly(
-      ByteBuffer src, long position) throws ClosedChannelException, InterruptedException {
+      ByteBuffer src, long position) throws IOException, InterruptedException {
     checkNotNull(src);
     checkNotNegative(position, "position");
 
