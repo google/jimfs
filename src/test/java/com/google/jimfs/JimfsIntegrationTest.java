@@ -54,6 +54,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.attribute.BasicFileAttribute;
 import com.google.jimfs.testing.PathSubject;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -64,6 +65,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.NonReadableChannelException;
@@ -81,6 +83,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -101,11 +104,22 @@ import java.util.regex.PatternSyntaxException;
  */
 public class JimfsIntegrationTest {
 
-  private FileSystem fs;
+  private FileSystem unix;
+  private FileSystem win;
 
   @Before
   public void setUp() throws IOException {
-    fs = Jimfs.newUnixLikeFileSystem();
+    unix = Jimfs.newFileSystem(URI.create("jimfs://unix"), new UnixConfiguration());
+    win = Jimfs.newFileSystem(URI.create("jimfs://win"), new WindowsConfiguration());
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    try {
+      unix.close();
+    } finally {
+      win.close();
+    }
   }
 
   @Test
@@ -215,6 +229,80 @@ public class JimfsIntegrationTest {
   }
 
   @Test
+  public void testPaths_toUri_unix() {
+    ASSERT.that(unix.getPath("/").toUri()).is(URI.create("jimfs://unix/"));
+    ASSERT.that(unix.getPath("/foo").toUri()).is(URI.create("jimfs://unix/foo"));
+    ASSERT.that(unix.getPath("/foo/bar").toUri()).is(URI.create("jimfs://unix/foo/bar"));
+    ASSERT.that(unix.getPath("foo").toUri()).is(URI.create("jimfs://unix/work/foo"));
+    ASSERT.that(unix.getPath("foo/bar").toUri()).is(URI.create("jimfs://unix/work/foo/bar"));
+    ASSERT.that(unix.getPath("").toUri()).is(URI.create("jimfs://unix/work"));
+    ASSERT.that(unix.getPath("./../.").toUri()).is(URI.create("jimfs://unix/work/./../."));
+  }
+
+  @Test
+  public void testPaths_toUri_windows() {
+    ASSERT.that(win.getPath("C:\\").toUri()).is(URI.create("jimfs://win/C:/"));
+    ASSERT.that(win.getPath("C:\\foo").toUri()).is(URI.create("jimfs://win/C:/foo"));
+    ASSERT.that(win.getPath("C:\\foo\\bar").toUri()).is(URI.create("jimfs://win/C:/foo/bar"));
+    ASSERT.that(win.getPath("foo").toUri()).is(URI.create("jimfs://win/C:/work/foo"));
+    ASSERT.that(win.getPath("foo\\bar").toUri()).is(URI.create("jimfs://win/C:/work/foo/bar"));
+    ASSERT.that(win.getPath("").toUri()).is(URI.create("jimfs://win/C:/work"));
+    ASSERT.that(win.getPath(".\\..\\.").toUri()).is(URI.create("jimfs://win/C:/work/./../."));
+  }
+
+  @Test
+  public void testPaths_toUri_windows_unc() {
+    ASSERT.that(win.getPath("\\\\host\\share\\").toUri())
+        .is(URI.create("jimfs://win//host/share/"));
+    ASSERT.that(win.getPath("\\\\host\\share\\foo").toUri())
+        .is(URI.create("jimfs://win//host/share/foo"));
+    ASSERT.that(win.getPath("\\\\host\\share\\foo\\bar").toUri())
+        .is(URI.create("jimfs://win//host/share/foo/bar"));
+  }
+
+  @Test
+  public void testPaths_getFromUri_unix() {
+    ASSERT.that(Paths.get(URI.create("jimfs://unix/")))
+        .isEqualTo(unix.getPath("/"));
+    ASSERT.that(Paths.get(URI.create("jimfs://unix/foo")))
+        .isEqualTo(unix.getPath("/foo"));
+    ASSERT.that(Paths.get(URI.create("jimfs://unix/foo%20bar")))
+        .isEqualTo(unix.getPath("/foo bar"));
+    ASSERT.that(Paths.get(URI.create("jimfs://unix/foo/./bar")))
+        .isEqualTo(unix.getPath("/foo/./bar"));
+    ASSERT.that(Paths.get(URI.create("jimfs://unix/foo/bar/")))
+        .isEqualTo(unix.getPath("/foo/bar"));
+  }
+
+  @Test
+  public void testPaths_getFromUri_windows() {
+    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/")))
+        .isEqualTo(win.getPath("C:\\"));
+    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo")))
+        .isEqualTo(win.getPath("C:\\foo"));
+    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo%20bar")))
+        .isEqualTo(win.getPath("C:\\foo bar"));
+    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo/./bar")))
+        .isEqualTo(win.getPath("C:\\foo\\.\\bar"));
+    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo/bar/")))
+        .isEqualTo(win.getPath("C:\\foo\\bar"));
+  }
+
+  @Test
+  public void testPaths_getFromUri_windows_unc() {
+    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/")))
+        .isEqualTo(win.getPath("\\\\host\\share\\"));
+    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo")))
+        .isEqualTo(win.getPath("\\\\host\\share\\foo"));
+    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo%20bar")))
+        .isEqualTo(win.getPath("\\\\host\\share\\foo bar"));
+    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo/./bar")))
+        .isEqualTo(win.getPath("\\\\host\\share\\foo\\.\\bar"));
+    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo/bar/")))
+        .isEqualTo(win.getPath("\\\\host\\share\\foo\\bar"));
+  }
+
+  @Test
   public void testPathMatchers_regex() {
     assertThat("bar").matches("regex:.*");
     assertThat("bar").matches("regex:bar");
@@ -242,7 +330,7 @@ public class JimfsIntegrationTest {
     assertThat("/foo/bar/baz/Stuff.java").matches("glob:**/*.*");
 
     try {
-      fs.getPathMatcher("glob:**/*.{java,class");
+      unix.getPathMatcher("glob:**/*.{java,class");
       fail();
     } catch (PatternSyntaxException expected) {
     }
@@ -251,13 +339,13 @@ public class JimfsIntegrationTest {
   @Test
   public void testPathMatchers_invalid() {
     try {
-      fs.getPathMatcher("glob");
+      unix.getPathMatcher("glob");
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      fs.getPathMatcher("foo:foo");
+      unix.getPathMatcher("foo:foo");
       fail();
     } catch (UnsupportedOperationException expected) {
       ASSERT.that(expected.getMessage()).contains("syntax");
@@ -1874,7 +1962,7 @@ public class JimfsIntegrationTest {
   // helpers
 
   private Path path(String first, String... more) {
-    return fs.getPath(first, more);
+    return unix.getPath(first, more);
   }
 
   private Object getFileKey(String path, LinkOption... options) throws IOException {

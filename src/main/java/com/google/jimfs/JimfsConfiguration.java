@@ -24,7 +24,6 @@ import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.providers.BasicAttributeProvider;
 import com.google.jimfs.path.PathType;
 
-import java.nio.file.SecureDirectoryStream;
 import java.util.Set;
 
 /**

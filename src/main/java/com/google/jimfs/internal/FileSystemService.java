@@ -44,6 +44,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -168,6 +169,13 @@ final class FileSystemService {
    */
   public ResourceManager resourceManager() {
     return resourceManager;
+  }
+
+  /**
+   * Returns a new watch service for this file system.
+   */
+  public WatchService newWatchService() {
+    return new PollingWatchService(this);
   }
 
   /**

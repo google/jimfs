@@ -16,8 +16,10 @@
 
 package com.google.jimfs;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import java.io.IOException;
 import java.net.URI;
@@ -31,6 +33,17 @@ import java.util.UUID;
  * @author Colin Decker
  */
 public final class Jimfs {
+
+  /**
+   * The URI scheme for the JIMFS file system ("jimfs").
+   */
+  public static final String URI_SCHEME = "jimfs";
+
+  /**
+   * The key used for mapping to the {@link JimfsConfiguration} in the env map when creating a new
+   * JIMFS file system instance.
+   */
+  public static final String CONFIG_KEY = "config";
 
   private Jimfs() {}
 
@@ -62,17 +75,25 @@ public final class Jimfs {
   }
 
   private static FileSystem newFileSystem(JimfsConfiguration config) {
-    ImmutableMap<String, ?> env = ImmutableMap.of("config", config);
+    return newFileSystem(newRandomUri(), config);
+  }
+
+  @VisibleForTesting
+  static FileSystem newFileSystem(URI uri, JimfsConfiguration config) {
+    checkArgument(URI_SCHEME.equals(uri.getScheme()),
+        "uri (%s) must have scheme %s", uri, URI_SCHEME);
+
+    ImmutableMap<String, ?> env = ImmutableMap.of(CONFIG_KEY, config);
     try {
       // Need to use Jimfs.class.getClassLoader() to ensure the class that loaded the jar is used
       // to locate the FileSystemProvider
-      return FileSystems.newFileSystem(newRandomUri(), env, Jimfs.class.getClassLoader());
+      return FileSystems.newFileSystem(uri, env, Jimfs.class.getClassLoader());
     } catch (IOException e) {
       throw new AssertionError(e);
     }
   }
 
   private static URI newRandomUri() {
-    return URI.create(JimfsFileSystemProvider.SCHEME + "://" + UUID.randomUUID());
+    return URI.create(URI_SCHEME + "://" + UUID.randomUUID());
   }
 }

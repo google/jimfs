@@ -19,6 +19,8 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.jimfs.Jimfs.CONFIG_KEY;
+import static com.google.jimfs.Jimfs.URI_SCHEME;
 import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
 import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -30,6 +32,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.jimfs.Jimfs;
 import com.google.jimfs.JimfsConfiguration;
 
 import java.io.IOException;
@@ -65,34 +68,31 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
 /**
+ * {@link FileSystemProvider} implementation for JIMFS. Should not be used directly. To create a
+ * new file system instance, see {@link Jimfs}. For other operations, use the public APIs in
+ * {@code java.nio.file}.
+ *
  * @author Colin Decker
  */
 public final class JimfsFileSystemProvider extends FileSystemProvider {
 
-  public static final String SCHEME = "jimfs";
-
-  public static final String CONFIG_KEY = "config";
-
   @Override
   public String getScheme() {
-    return SCHEME;
+    return URI_SCHEME;
   }
 
   private final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new ConcurrentHashMap<>();
 
   @Override
   public JimfsFileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-    checkArgument(uri.getScheme().equalsIgnoreCase(SCHEME),
-        "uri (%s) scheme must be '%s'", uri, SCHEME);
-    // would like to just check null, but fragment appears to be the empty string when not present
-    checkArgument(
-        isNullOrEmpty(uri.getPath())
-        && isNullOrEmpty(uri.getQuery())
-        && isNullOrEmpty(uri.getFragment()),
+    checkArgument(uri.getScheme().equalsIgnoreCase(URI_SCHEME),
+        "uri (%s) scheme must be '%s'", uri, URI_SCHEME);
+    checkArgument(isValidFileSystemUri(uri),
         "uri (%s) may not have a path, query or fragment", uri);
     checkArgument(env.get(CONFIG_KEY) instanceof JimfsConfiguration,
         "env map (%s) must contain key '%s' mapped to an instance of JimfsConfiguration",
         env, CONFIG_KEY);
+
     JimfsConfiguration config = (JimfsConfiguration) env.get(CONFIG_KEY);
     JimfsFileSystem fileSystem = FileSystemInitializer.createFileSystem(this, uri, config);
     if (fileSystems.putIfAbsent(uri, fileSystem) != null) {
@@ -128,25 +128,43 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * Called when the given file system is closed to remove it from this provider.
+   */
+  void fileSystemClosed(JimfsFileSystem fileSystem) {
+    fileSystems.remove(fileSystem.uri());
+  }
+
   @Override
   public Path getPath(URI uri) {
-    checkArgument(SCHEME.equals(uri.getScheme()),
+    checkArgument(URI_SCHEME.equalsIgnoreCase(uri.getScheme()),
         "uri scheme does not match this provider: %s", uri);
-    checkArgument(!isNullOrEmpty(uri.getPath()),
-        "uri must have a path: %s", uri);
-    try {
-      URI withoutPath = new URI(
-          uri.getScheme(),
-          uri.getUserInfo(),
-          uri.getHost(),
-          uri.getPort(),
-          null,
-          null,
-          null);
+    checkArgument(!isNullOrEmpty(uri.getPath()), "uri must have a path: %s", uri);
 
-      return getFileSystem(withoutPath).toPath(uri);
+    return getFileSystem(toFileSystemUri(uri)).toPath(uri);
+  }
+
+  /**
+   * Returns whether or not the given URI is valid as a base file system URI. It must not have a
+   * path, query or fragment.
+   */
+  private boolean isValidFileSystemUri(URI uri) {
+    // would like to just check null, but fragment appears to be the empty string when not present
+    return isNullOrEmpty(uri.getPath())
+        && isNullOrEmpty(uri.getQuery())
+        && isNullOrEmpty(uri.getFragment());
+  }
+
+  /**
+   * Returns the given URI with any path, query or fragment stripped off.
+   */
+  private URI toFileSystemUri(URI uri) {
+    try {
+      return new URI(
+          uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(),
+          null, null, null);
     } catch (URISyntaxException e) {
-      throw new AssertionError();
+      throw new AssertionError(e);
     }
   }
 

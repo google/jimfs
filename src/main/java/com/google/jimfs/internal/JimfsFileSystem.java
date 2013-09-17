@@ -31,6 +31,9 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 
 /**
+ * {@link FileSystem} implementation for JIMFS. Mostly a thin wrapper around a
+ * {@link FileSystemService} that implements the required public file system methods.
+ *
  * @author Colin Decker
  */
 final class JimfsFileSystem extends FileSystem {
@@ -52,6 +55,13 @@ final class JimfsFileSystem extends FileSystem {
   @Override
   public JimfsFileSystemProvider provider() {
     return provider;
+  }
+
+  /**
+   * Returns the URI for this file system.
+   */
+  public URI uri() {
+    return uri;
   }
 
   /**
@@ -124,7 +134,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public WatchService newWatchService() throws IOException {
-    return new PollingWatchService(service);
+    return service.newWatchService();
   }
 
   /**
@@ -144,6 +154,10 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public void close() throws IOException {
-    service.resourceManager().close();
+    try {
+      service.resourceManager().close();
+    } finally {
+      provider.fileSystemClosed(this);
+    }
   }
 }
