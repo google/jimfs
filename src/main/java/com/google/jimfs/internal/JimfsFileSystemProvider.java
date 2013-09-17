@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.jimfs.Jimfs.CONFIG_KEY;
 import static com.google.jimfs.Jimfs.URI_SCHEME;
-import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
-import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkOptions.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.READ;
@@ -183,7 +183,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     return ((JimfsFileSystem) path.getFileSystem()).service();
   }
 
-  private static LookupResult lookup(Path path, LinkHandling linkHandling) throws IOException {
+  private static LookupResult lookup(Path path, LinkOptions linkHandling) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     FileSystemService service = getService(checkedPath);
     return service.lookup(checkedPath, linkHandling);
@@ -193,9 +193,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public JimfsFileChannel newFileChannel(Path path, Set<? extends OpenOption> options,
       FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    options = getOptionsForChannel(options);
-    File file = getService(checkedPath).getRegularFile(checkedPath, options, attrs);
-    return new JimfsFileChannel(file, options);
+    OpenOptions opts = OpenOptions.from(getOptionsForChannel(options));
+    File file = getService(checkedPath).getRegularFile(checkedPath, opts, attrs);
+    return new JimfsFileChannel(file, opts);
   }
 
   @Override
@@ -221,7 +221,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     return newFileChannel(checkPath(path), getOptionsForWrite(options)).asOutputStream();
   }
 
-  public static Set<? extends OpenOption> getOptionsForChannel(Set<? extends OpenOption> options) {
+  static Set<? extends OpenOption> getOptionsForChannel(Set<? extends OpenOption> options) {
     if (!options.contains(READ) && !options.contains(WRITE)) {
       OpenOption optionToAdd = options.contains(APPEND) ? WRITE : READ;
       return ImmutableSet.<OpenOption>builder()
@@ -232,7 +232,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     return options;
   }
 
-  static Set<OpenOption> getOptionsForRead(OpenOption... options) {
+  private static Set<OpenOption> getOptionsForRead(OpenOption... options) {
     Set<OpenOption> optionsSet = new HashSet<>(Arrays.asList(options));
     if (optionsSet.contains(WRITE)) {
       throw new UnsupportedOperationException("WRITE");
@@ -242,7 +242,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     return optionsSet;
   }
 
-  static Set<OpenOption> getOptionsForWrite(OpenOption... options) {
+  private static Set<OpenOption> getOptionsForWrite(OpenOption... options) {
     Set<OpenOption> optionsSet = Sets.newHashSet(options);
     if (optionsSet.contains(READ)) {
       throw new UnsupportedOperationException("READ");
@@ -259,7 +259,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       DirectoryStream.Filter<? super Path> filter) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
     return getService(checkedPath)
-        .newSecureDirectoryStream(checkedPath, filter, LinkHandling.FOLLOW_LINKS, checkedPath);
+        .newSecureDirectoryStream(checkedPath, filter, LinkOptions.FOLLOW_LINKS, checkedPath);
   }
 
   @Override
@@ -308,22 +308,21 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public void copy(Path source, Path target, CopyOption... options) throws IOException {
-    JimfsPath sourcePath = checkPath(source);
-    JimfsPath targetPath = checkPath(target);
-
-    FileSystemService sourceService = getService(sourcePath);
-    FileSystemService targetService = getService(targetPath);
-    sourceService.copyFile(sourcePath, targetService, targetPath, ImmutableSet.copyOf(options));
+    copy(source, target, CopyOptions.copy(options));
   }
 
   @Override
   public void move(Path source, Path target, CopyOption... options) throws IOException {
+    copy(source, target, CopyOptions.move(options));
+  }
+
+  private void copy(Path source, Path target, CopyOptions options) throws IOException {
     JimfsPath sourcePath = checkPath(source);
     JimfsPath targetPath = checkPath(target);
 
     FileSystemService sourceService = getService(sourcePath);
     FileSystemService targetService = getService(targetPath);
-    sourceService.moveFile(sourcePath, targetService, targetPath, ImmutableSet.copyOf(options));
+    sourceService.copy(sourcePath, targetService, targetPath, options);
   }
 
   @Override
@@ -380,7 +379,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
     return getService(checkedPath)
-        .getFileAttributeView(checkedPath, type, LinkHandling.fromOptions(options));
+        .getFileAttributeView(checkedPath, type, LinkOptions.from(options));
   }
 
   @Override
@@ -388,7 +387,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       LinkOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     return getService(checkedPath)
-        .readAttributes(checkedPath, type, LinkHandling.fromOptions(options));
+        .readAttributes(checkedPath, type, LinkOptions.from(options));
   }
 
   @Override
@@ -396,7 +395,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
     return getService(checkedPath)
-        .readAttributes(checkedPath, attributes, LinkHandling.fromOptions(options));
+        .readAttributes(checkedPath, attributes, LinkOptions.from(options));
   }
 
   @Override
@@ -404,6 +403,6 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
     getService(checkedPath)
-        .setAttribute(checkedPath, attribute, value, LinkHandling.fromOptions(options));
+        .setAttribute(checkedPath, attribute, value, LinkOptions.from(options));
   }
 }

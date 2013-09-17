@@ -17,7 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
 
 import com.google.common.collect.ImmutableList;
 
@@ -45,9 +45,9 @@ final class LookupService {
    * Returns the result of the file lookup for the given path.
    */
   public LookupResult lookup(
-      File workingDirectory, JimfsPath path, LinkHandling linkHandling) throws IOException {
+      File workingDirectory, JimfsPath path, LinkOptions options) throws IOException {
     checkNotNull(path);
-    checkNotNull(linkHandling);
+    checkNotNull(options);
 
     File base;
     Iterable<Name> names = path.path();
@@ -61,11 +61,11 @@ final class LookupService {
       }
     }
 
-    return lookup(base, names, linkHandling, 0);
+    return lookup(base, names, options, 0);
   }
 
   private LookupResult lookup(
-      File dir, JimfsPath path, LinkHandling linkHandling, int linkDepth) throws IOException {
+      File dir, JimfsPath path, LinkOptions options, int linkDepth) throws IOException {
     Iterable<Name> names = path.path();
     if (path.isAbsolute()) {
       dir = superRoot;
@@ -74,8 +74,7 @@ final class LookupService {
       names = ImmutableList.of(Name.SELF);
     }
 
-    checkNotNull(linkHandling);
-    return lookup(dir, names, linkHandling, linkDepth);
+    return lookup(dir, names, options, linkDepth);
   }
 
   /**
@@ -83,7 +82,7 @@ final class LookupService {
    * is null) or is not a directory, the lookup fails.
    */
   private LookupResult lookup(@Nullable File dir,
-      Iterable<Name> names, LinkHandling linkHandling, int linkDepth) throws IOException {
+      Iterable<Name> names, LinkOptions options, int linkDepth) throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
@@ -105,14 +104,14 @@ final class LookupService {
       name = nameIterator.next();
     }
 
-    return lookupLast(dir, name, linkHandling, linkDepth);
+    return lookupLast(dir, name, options, linkDepth);
   }
 
   /**
    * Looks up the last element of a path.
    */
   private LookupResult lookupLast(@Nullable File dir,
-      Name name, LinkHandling linkHandling, int linkDepth) throws IOException {
+      Name name, LinkOptions options, int linkDepth) throws IOException {
     DirectoryTable table = getDirectoryTable(dir);
     if (table == null) {
       return LookupResult.notFound();
@@ -123,7 +122,7 @@ final class LookupService {
       return LookupResult.parentFound(dir);
     }
 
-    if (linkHandling == FOLLOW_LINKS && file.isSymbolicLink()) {
+    if (options.isFollowLinks() && file.isSymbolicLink()) {
       // TODO(cgdecker): can add info on the symbolic link and its parent here if needed
       // for now it doesn't seem like it's needed though
       return followSymbolicLink(table, file, linkDepth);

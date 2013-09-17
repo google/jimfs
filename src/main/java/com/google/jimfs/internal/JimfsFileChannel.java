@@ -19,9 +19,6 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
-import static java.nio.file.StandardOpenOption.APPEND;
-import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,10 +33,8 @@ import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.OpenOption;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,18 +55,14 @@ final class JimfsFileChannel extends FileChannel {
   private File file;
   private ByteStore store;
 
-  private final boolean readable;
-  private final boolean writable;
-  private final boolean append;
+  private final OpenOptions options;
 
   private int position;
 
-  public JimfsFileChannel(File file, Set<? extends OpenOption> options) {
+  public JimfsFileChannel(File file, OpenOptions options) {
     this.file = file;
     this.store = file.content();
-    this.readable = options.contains(READ);
-    this.writable = options.contains(WRITE);
-    this.append = options.contains(APPEND);
+    this.options = checkNotNull(options);
   }
 
   /**
@@ -87,7 +78,7 @@ final class JimfsFileChannel extends FileChannel {
    */
   public OutputStream asOutputStream() {
     checkWritable();
-    return new JimfsOutputStream(file, append);
+    return new JimfsOutputStream(file, options.isAppend());
   }
 
   /**
@@ -99,13 +90,13 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   void checkReadable() {
-    if (!readable) {
+    if (!options.isRead()) {
       throw new NonReadableChannelException();
     }
   }
 
   void checkWritable() {
-    if (!writable) {
+    if (!options.isWrite()) {
       throw new NonWritableChannelException();
     }
   }
@@ -179,7 +170,7 @@ final class JimfsFileChannel extends FileChannel {
       store.writeLock().lock();
       try {
         int written;
-        if (append) {
+        if (options.isAppend()) {
           written = store.append(src);
           position = store.sizeInBytes();
         } else {
@@ -212,7 +203,7 @@ final class JimfsFileChannel extends FileChannel {
       store.writeLock().lock();
       try {
         int written;
-        if (append) {
+        if (options.isAppend()) {
           written = store.append(srcs);
           position = store.sizeInBytes();
         } else {
@@ -340,7 +331,7 @@ final class JimfsFileChannel extends FileChannel {
 
       store.writeLock().lock();
       try {
-        if (append) {
+        if (options.isAppend()) {
           long appended = store.appendFrom(src, (int) count);
           this.position = store.sizeInBytes();
           file.updateModifiedTime();
@@ -420,7 +411,7 @@ final class JimfsFileChannel extends FileChannel {
       store.writeLock().lock();
       try {
         int written;
-        if (append) {
+        if (options.isAppend()) {
           written = store.append(src);
           this.position = store.size();
         } else {
@@ -454,7 +445,7 @@ final class JimfsFileChannel extends FileChannel {
       store.writeLock().lockInterruptibly();
       try {
         int written;
-        if (append) {
+        if (options.isAppend()) {
           written = store.append(src);
           this.position = store.size();
         } else {

@@ -26,8 +26,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.common.collect.ImmutableSet;
-
 import org.junit.Test;
 
 import java.io.IOException;
@@ -54,9 +52,8 @@ public class JimfsAsynchronousFileChannelTest {
 
   private static JimfsAsynchronousFileChannel channel(
       ByteStore store, ExecutorService executor, OpenOption... options) throws IOException {
-    ImmutableSet<OpenOption> opts = ImmutableSet.copyOf(options);
     return new JimfsAsynchronousFileChannel(
-        new JimfsFileChannel(new File(-1, store), opts), executor);
+        new JimfsFileChannel(new File(-1, store), OpenOptions.from(options)), executor);
   }
 
   private static StubByteStore store(int size) throws IOException {

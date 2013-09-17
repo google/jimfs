@@ -17,15 +17,8 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.LinkHandling.FOLLOW_LINKS;
-import static com.google.jimfs.internal.LinkHandling.NOFOLLOW_LINKS;
-import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
-import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.CREATE_NEW;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
+import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
+import static com.google.jimfs.internal.LinkOptions.NOFOLLOW_LINKS;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
@@ -35,13 +28,11 @@ import com.google.common.collect.Lists;
 import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
-import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.WatchService;
@@ -52,7 +43,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -181,10 +171,10 @@ final class FileSystemService {
   /**
    * Attempt to lookup the file at the given path.
    */
-  public LookupResult lookup(JimfsPath path, LinkHandling linkHandling) throws IOException {
+  public LookupResult lookup(JimfsPath path, LinkOptions options) throws IOException {
     readLock().lock();
     try {
-      return lookupInternal(path, linkHandling);
+      return lookupInternal(path, options);
     } finally {
       readLock().unlock();
     }
@@ -193,23 +183,21 @@ final class FileSystemService {
   /**
    * Looks up the file at the given path without locking.
    */
-  private LookupResult lookupInternal(
-      JimfsPath path, LinkHandling linkHandling) throws IOException {
-    return lookupService.lookup(workingDirectory, path, linkHandling);
+  private LookupResult lookupInternal(JimfsPath path, LinkOptions options) throws IOException {
+    return lookupService.lookup(workingDirectory, path, options);
   }
 
   /**
    * Returns a supplier that suppliers a file by looking up the given path in this service, using
    * the given link handling option.
    */
-  public IoSupplier<File> lookupFileSupplier(
-      final JimfsPath path, final LinkHandling linkHandling) {
+  public IoSupplier<File> lookupFileSupplier(final JimfsPath path, final LinkOptions options) {
     checkNotNull(path);
-    checkNotNull(linkHandling);
+    checkNotNull(options);
     return new IoSupplier<File>() {
       @Override
       public File get() throws IOException {
-        return lookup(path, linkHandling)
+        return lookup(path, options)
             .requireFound(path)
             .file();
       }
@@ -221,8 +209,8 @@ final class FileSystemService {
    * file. If the CREATE or CREATE_NEW option is specified, the file will be created if it does not
    * exist.
    */
-  public File getRegularFile(JimfsPath path,
-      Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+  public File getRegularFile(
+      JimfsPath path, OpenOptions options, FileAttribute<?>... attrs) throws IOException {
     File file = getOrCreateRegularFile(path, options, attrs);
     if (!file.isRegularFile()) {
       throw new FileSystemException(path.toString(), null, "not a regular file");
@@ -237,9 +225,9 @@ final class FileSystemService {
    * same as {@code dir} except for streams created relative to another secure stream.
    */
   public JimfsSecureDirectoryStream newSecureDirectoryStream(JimfsPath dir,
-      DirectoryStream.Filter<? super Path> filter, LinkHandling linkHandling,
+      DirectoryStream.Filter<? super Path> filter, LinkOptions options,
       JimfsPath basePathForStream) throws IOException {
-    File file = lookup(dir, linkHandling)
+    File file = lookup(dir, options)
         .requireDirectory(dir)
         .file();
 
@@ -277,7 +265,7 @@ final class FileSystemService {
 
     lock.readLock().lock();
     try {
-      File dir = lookupInternal(path, LinkHandling.NOFOLLOW_LINKS)
+      File dir = lookupInternal(path, LinkOptions.NOFOLLOW_LINKS)
           .requireDirectory(path)
           .file();
 
@@ -319,13 +307,13 @@ final class FileSystemService {
   /**
    * Gets the real path to the file located by the given path.
    */
-  public JimfsPath toRealPath(JimfsPath path, LinkHandling linkHandling) throws IOException {
+  public JimfsPath toRealPath(JimfsPath path, LinkOptions options) throws IOException {
     checkNotNull(path);
-    checkNotNull(linkHandling);
+    checkNotNull(options);
 
     readLock().lock();
     try {
-      LookupResult lookupResult = lookupInternal(path, linkHandling)
+      LookupResult lookupResult = lookupInternal(path, options)
           .requireFound(path);
 
       List<Name> names = new ArrayList<>();
@@ -424,12 +412,11 @@ final class FileSystemService {
    * Gets the regular file at the given path, creating it if it doesn't exist and the given options
    * specify that it should be created.
    */
-  public File getOrCreateRegularFile(JimfsPath path,
-      Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+  public File getOrCreateRegularFile(
+      JimfsPath path, OpenOptions options, FileAttribute<?>... attrs) throws IOException {
     checkNotNull(path);
-    LinkHandling linkHandling = LinkHandling.fromOptions(options);
-    boolean createNew = options.contains(CREATE_NEW);
-    boolean create = createNew || options.contains(CREATE);
+    boolean createNew = options.isCreateNew();
+    boolean create = createNew || options.isCreate();
 
     // assume no file exists at the path if CREATE_NEW was specified
     if (!createNew) {
@@ -439,7 +426,7 @@ final class FileSystemService {
       // that don't provide any options are automatically in CREATE mode make me not want to
       readLock().lock();
       try {
-        LookupResult result = lookupInternal(path, linkHandling);
+        LookupResult result = lookupInternal(path, options);
         if (result.found()) {
           File file = result.file();
           if (!file.isRegularFile()) {
@@ -472,8 +459,8 @@ final class FileSystemService {
     }
   }
 
-  private static File truncateIfNeeded(File regularFile, Set<? extends OpenOption> options) {
-    if (options.contains(TRUNCATE_EXISTING) && options.contains(WRITE)) {
+  private static File truncateIfNeeded(File regularFile, OpenOptions options) {
+    if (options.isTruncateExisting() && options.isWrite()) {
       ByteStore store = regularFile.content();
       store.writeLock().lock();
       try {
@@ -622,45 +609,27 @@ final class FileSystemService {
   }
 
   /**
-   * Moves the file at the given source path in this service to the given dest path in the given
-   * service.
-   */
-  public void moveFile(JimfsPath source, FileSystemService destService, JimfsPath dest,
-      Set<CopyOption> options) throws IOException {
-    copy(source, destService, dest, true, options);
-  }
-
-  /**
-   * Copies the file at the given source path to the given dest path.
-   */
-  public void copyFile(JimfsPath source, FileSystemService destService, JimfsPath dest,
-      Set<CopyOption> options) throws IOException {
-    if (options.contains(ATOMIC_MOVE)) {
-      throw new UnsupportedOperationException("ATOMIC_MOVE");
-    }
-    copy(source, destService, dest, false, options);
-  }
-
-  /**
    * Copies or moves the file at the given source path to the given dest path.
    */
-  private void copy(JimfsPath source, FileSystemService destService, JimfsPath dest, boolean move,
-      Set<CopyOption> options) throws IOException {
+  public void copy(JimfsPath source, FileSystemService destService, JimfsPath dest,
+      CopyOptions options) throws IOException {
     checkNotNull(source);
     checkNotNull(destService);
     checkNotNull(dest);
     checkNotNull(options);
 
-    boolean sameFileSystem = isSameFileSystem(destService);
+    if (options.isCopy() && options.isAtomicMove()) {
+      throw new UnsupportedOperationException("ATOMIC_MOVE");
+    }
 
-    LinkHandling linkHandling = move ? NOFOLLOW_LINKS : LinkHandling.fromOptions(options);
+    boolean sameFileSystem = isSameFileSystem(destService);
 
     Name sourceName = source.name();
     Name destName = dest.name();
 
     lockBoth(writeLock(), destService.writeLock());
     try {
-      LookupResult sourceLookup = lookupInternal(source, linkHandling)
+      LookupResult sourceLookup = lookupInternal(source, options)
           .requireFound(source);
       LookupResult destLookup = destService.lookupInternal(dest, NOFOLLOW_LINKS)
           .requireParentFound(dest);
@@ -672,7 +641,7 @@ final class FileSystemService {
       File destParent = destLookup.parent();
       DirectoryTable destParentTable = destParent.content();
 
-      if (move && sourceFile.isDirectory()) {
+      if (options.isMove() && sourceFile.isDirectory()) {
         if (sameFileSystem) {
           checkMovable(sourceFile, source);
           checkNotAncestor(sourceFile, destParent, destService);
@@ -688,7 +657,7 @@ final class FileSystemService {
         // TODO(cgdecker): consider changing this to make the IDs unique per VM
         if (destLookup.file() == sourceFile) {
           return;
-        } else if (options.contains(REPLACE_EXISTING)) {
+        } else if (options.isReplaceExisting()) {
           destService.delete(destParent, destName, DeleteMode.ANY, dest);
         } else {
           throw new FileAlreadyExistsException(dest.toString());
@@ -697,7 +666,7 @@ final class FileSystemService {
 
       // can only do an actual move within one file system instance
       // otherwise we have to copy and delete
-      if (move && sameFileSystem) {
+      if (options.isMove() && sameFileSystem) {
         sourceParentTable.unlink(sourceName);
         sourceParent.updateModifiedTime();
 
@@ -710,7 +679,7 @@ final class FileSystemService {
         }
       } else {
         // copy
-        boolean copyAttributes = options.contains(COPY_ATTRIBUTES) && !move;
+        boolean copyAttributes = options.isCopyAttributes() && !options.isMove();
         File copy = destService.fileStore.copy(sourceFile, copyAttributes);
         destParentTable.link(destName, copy);
         destParent.updateModifiedTime();
@@ -719,7 +688,7 @@ final class FileSystemService {
           linkSelfAndParent(copy, destParent);
         }
 
-        if (move) {
+        if (options.isMove()) {
           fileStore.copyBasicAttributes(sourceFile, copy);
           delete(sourceParent, sourceName, DeleteMode.ANY, source);
         }
@@ -781,16 +750,16 @@ final class FileSystemService {
    * Returns a file attribute view for the given path in this service.
    */
   public <V extends FileAttributeView> V getFileAttributeView(
-      JimfsPath path, Class<V> type, LinkHandling linkHandling) {
-    return fileStore.getFileAttributeView(lookupFileSupplier(path, linkHandling), type);
+      JimfsPath path, Class<V> type, LinkOptions options) {
+    return fileStore.getFileAttributeView(lookupFileSupplier(path, options), type);
   }
 
   /**
    * Reads attributes of the file located by the given path in this service as an object.
    */
   public <A extends BasicFileAttributes> A readAttributes(
-      JimfsPath path, Class<A> type, LinkHandling linkHandling) throws IOException {
-    File file = lookup(path, linkHandling)
+      JimfsPath path, Class<A> type, LinkOptions options) throws IOException {
+    File file = lookup(path, options)
         .requireFound(path)
         .file();
     return fileStore.readAttributes(file, type);
@@ -800,8 +769,8 @@ final class FileSystemService {
    * Reads attributes of the file located by the given path in this service as a map.
    */
   public Map<String, Object> readAttributes(
-      JimfsPath path, String attributes, LinkHandling linkHandling) throws IOException {
-    File file = lookup(path, linkHandling)
+      JimfsPath path, String attributes, LinkOptions options) throws IOException {
+    File file = lookup(path, options)
         .requireFound(path)
         .file();
     return fileStore.readAttributes(file, attributes);
@@ -812,8 +781,8 @@ final class FileSystemService {
    * service.
    */
   public void setAttribute(JimfsPath path, String attribute, Object value,
-      LinkHandling linkHandling) throws IOException {
-    File file = lookup(path, linkHandling)
+      LinkOptions options) throws IOException {
+    File file = lookup(path, options)
         .requireFound(path)
         .file();
     fileStore.setAttribute(file, attribute, value);

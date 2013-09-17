@@ -56,7 +56,7 @@ final class RealJimfsPath extends JimfsPath {
 
   @Override
   public JimfsPath toRealPath(LinkOption... options) throws IOException {
-    return getFileSystem().service().toRealPath(this, LinkHandling.fromOptions(options));
+    return getFileSystem().service().toRealPath(this, LinkOptions.from(options));
   }
 
   @Override

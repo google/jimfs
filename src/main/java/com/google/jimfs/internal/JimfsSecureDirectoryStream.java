@@ -19,11 +19,8 @@ package com.google.jimfs.internal;
 import static com.google.jimfs.internal.FileSystemService.DeleteMode;
 import static com.google.jimfs.internal.JimfsFileSystemProvider.getOptionsForChannel;
 
-import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.CopyOption;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -59,7 +56,7 @@ final class JimfsSecureDirectoryStream
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
     return service.newSecureDirectoryStream(
-        checkedPath, ALWAYS_TRUE_FILTER, LinkHandling.fromOptions(options),
+        checkedPath, ALWAYS_TRUE_FILTER, LinkOptions.from(options),
         path().resolve(checkedPath));
   }
 
@@ -67,8 +64,8 @@ final class JimfsSecureDirectoryStream
   public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options,
       FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    options = getOptionsForChannel(options);
-    return new JimfsFileChannel(service.getRegularFile(checkedPath, options), options);
+    OpenOptions opts = OpenOptions.from(getOptionsForChannel(options));
+    return new JimfsFileChannel(service.getRegularFile(checkedPath, opts), opts);
   }
 
   @Override
@@ -96,8 +93,8 @@ final class JimfsSecureDirectoryStream
 
     JimfsSecureDirectoryStream checkedTargetDir = (JimfsSecureDirectoryStream) targetDir;
 
-    service.moveFile(
-        checkedSrcPath, checkedTargetDir.service, checkedTargetPath, ImmutableSet.<CopyOption>of());
+    service.copy(
+        checkedSrcPath, checkedTargetDir.service, checkedTargetPath, CopyOptions.move());
   }
 
   @Override
@@ -109,7 +106,7 @@ final class JimfsSecureDirectoryStream
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
       LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
-    return service.getFileAttributeView(checkedPath, type, LinkHandling.fromOptions(options));
+    return service.getFileAttributeView(checkedPath, type, LinkOptions.from(options));
   }
 
   private static JimfsPath checkPath(Path path) {

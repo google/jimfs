@@ -361,7 +361,7 @@ public class LookupServiceTest {
 
   private LookupResult lookup(String path, LinkOption... options) throws IOException {
     JimfsPath pathObj = pathService.parsePath(path);
-    return lookupService.lookup(workingDirectory, pathObj, LinkHandling.fromOptions(options));
+    return lookupService.lookup(workingDirectory, pathObj, LinkOptions.from(options));
   }
 
   private void assertFound(LookupResult result, String parent, String file) {
