@@ -32,22 +32,20 @@ import java.nio.channels.WritableByteChannel;
  */
 final class ArrayByteStore extends ByteStore {
 
-  private static final int MIN_ARRAY_SIZE = 128;
+  private static final int INITIAL_ARRAY_SIZE = 128;
   private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 10;
 
   private int size;
   private byte[] bytes;
 
   public ArrayByteStore() {
-    this(new byte[MIN_ARRAY_SIZE], 0);
+    this(new byte[INITIAL_ARRAY_SIZE], 0);
   }
 
   private ArrayByteStore(byte[] bytes, int size) {
     this.bytes = bytes;
     this.size = size;
   }
-
-  // need to lock in these methods since they're defined by an interface
 
   @Override
   public int size() {
@@ -77,7 +75,7 @@ final class ArrayByteStore extends ByteStore {
     }
 
     // don't create an array smaller than the default initial array size
-    return new byte[Math.max(newSize, MIN_ARRAY_SIZE)];
+    return new byte[Math.max(newSize, INITIAL_ARRAY_SIZE)];
   }
 
   /**

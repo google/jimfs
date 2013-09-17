@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@link FileSystem} implementation for JIMFS. Mostly a thin wrapper around a
@@ -40,6 +41,8 @@ final class JimfsFileSystem extends FileSystem {
 
   private final JimfsFileSystemProvider provider;
   private final URI uri;
+
+  private final AtomicBoolean open = new AtomicBoolean(true);
 
   /**
    * Service providing actual file system operations.
@@ -149,15 +152,17 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public boolean isOpen() {
-    return true;
+    return open.get();
   }
 
   @Override
   public void close() throws IOException {
-    try {
-      service.resourceManager().close();
-    } finally {
-      provider.fileSystemClosed(this);
+    if (open.compareAndSet(true, false)) {
+      try {
+        service.resourceManager().close();
+      } finally {
+        provider.fileSystemClosed(this);
+      }
     }
   }
 }
