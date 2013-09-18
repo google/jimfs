@@ -130,9 +130,11 @@ abstract class Name {
   }
 
   protected final String string;
+  private final int hashCode;
 
-  private Name(String string) {
+  private Name(String string, int hashCode) {
     this.string = checkNotNull(string);
+    this.hashCode = hashCode;
   }
 
   /**
@@ -143,23 +145,23 @@ abstract class Name {
     return string;
   }
 
+  @Override
+  public final int hashCode() {
+    return hashCode;
+  }
+
   /**
    * Simple name wrapping a string.
    */
   private static final class SimpleName extends Name {
 
     private SimpleName(String string) {
-      super(string);
+      super(string, string.hashCode());
     }
 
     @Override
     public boolean equals(Object obj) {
       return obj instanceof SimpleName && ((SimpleName) obj).string.equals(string);
-    }
-
-    @Override
-    public int hashCode() {
-      return string.hashCode();
     }
   }
 
@@ -171,7 +173,7 @@ abstract class Name {
     private final Object canonical;
 
     private CanonicalFormName(String string, Object canonical) {
-      super(string);
+      super(string, canonical.hashCode());
       this.canonical = canonical;
     }
 
@@ -182,11 +184,6 @@ abstract class Name {
         return canonical.equals(other.canonical);
       }
       return false;
-    }
-
-    @Override
-    public int hashCode() {
-      return canonical.hashCode();
     }
   }
 }
