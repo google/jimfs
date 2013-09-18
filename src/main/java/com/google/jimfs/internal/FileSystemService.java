@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.internal.DirectoryTable.DirEntry;
 import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
 import static com.google.jimfs.internal.LinkOptions.NOFOLLOW_LINKS;
 
@@ -270,12 +271,9 @@ final class FileSystemService {
           .file();
 
       DirectoryTable table = dir.content();
-      for (Map.Entry<Name, File> entry : table.asMap().entrySet()) {
-        Name name = entry.getKey();
-        File file = entry.getValue();
-
-        long modifiedTime = file.getLastModifiedTime();
-        modifiedTimes.put(name, modifiedTime);
+      for (DirEntry entry : table.entries()) {
+        long modifiedTime = entry.file().getLastModifiedTime();
+        modifiedTimes.put(entry.name(), modifiedTime);
       }
 
       return ImmutableMap.copyOf(modifiedTimes);

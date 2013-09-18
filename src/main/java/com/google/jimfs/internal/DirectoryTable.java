@@ -21,13 +21,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
 
-import com.google.common.base.Functions;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -40,17 +40,9 @@ import javax.annotation.Nullable;
  */
 final class DirectoryTable implements FileContent {
 
-  /**
-   * Ordering for ordering {@code Name} objects by their actual string values rather than their
-   * collation keys (if applicable). Even if names are case insensitive, we want to order them in
-   * a case sensitive way.
-   */
-  private static final Ordering<Object> STRING_ORDERING = Ordering.natural()
-      .onResultOf(Functions.toStringFunction());
-
   private static final ImmutableSet<Name> RESERVED_NAMES = ImmutableSet.of(SELF, PARENT);
 
-  private final Map<Name, File> entries = new HashMap<>();
+  private final Map<Name, DirEntry> entries = new HashMap<>();
 
   /**
    * Creates a copy of this table. The copy does <i>not</i> contain a copy of the entries in this
@@ -84,7 +76,7 @@ final class DirectoryTable implements FileContent {
    * Returns the directory table for the parent directory.
    */
   public DirectoryTable parentTable() {
-    return entries.get(PARENT).content();
+    return entries.get(PARENT).file.content();
   }
 
   /**
@@ -148,7 +140,7 @@ final class DirectoryTable implements FileContent {
 
   private void linkInternal(Name name, File file) {
     checkArgument(!entries.containsKey(name), "entry '%s' already exists", name);
-    entries.put(name, file);
+    entries.put(name, new DirEntry(name, file));
     file.linked();
   }
 
@@ -163,11 +155,20 @@ final class DirectoryTable implements FileContent {
   }
 
   private void unlinkInternal(Name name) {
-    File file = entries.remove(name);
-    if (file == null) {
+    DirEntry entry = entries.remove(name);
+    if (entry == null) {
       throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
     }
-    file.unlinked();
+    entry.file.unlinked();
+  }
+
+  /**
+   * Returns the entry for the file linked by the given name in this directory or {@code null} if
+   * no such file exists.
+   */
+  @Nullable
+  public DirEntry getEntry(Name name) {
+    return entries.get(name);
   }
 
   /**
@@ -176,7 +177,8 @@ final class DirectoryTable implements FileContent {
    */
   @Nullable
   public File get(Name name) {
-    return entries.get(name);
+    DirEntry entry = entries.get(name);
+    return entry == null ? null : entry.file;
   }
 
   /**
@@ -185,12 +187,11 @@ final class DirectoryTable implements FileContent {
    * @throws IllegalArgumentException if the table does not contain an entry with the given name
    */
   public Name canonicalize(Name name) {
-    for (Map.Entry<Name, File> entry : entries.entrySet()) {
-      if (entry.getKey().equals(name)) {
-        return entry.getKey();
-      }
+    DirEntry entry = entries.get(name);
+    if (entry == null) {
+      throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
     }
-    throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
+    return entry.name;
   }
 
   /**
@@ -200,10 +201,10 @@ final class DirectoryTable implements FileContent {
    */
   public Name getName(File file) {
     Name result = null;
-    for (Map.Entry<Name, File> entry : entries.entrySet()) {
+    for (Map.Entry<Name, DirEntry> entry : entries.entrySet()) {
       Name name = entry.getKey();
-      File i = entry.getValue();
-      if (i.equals(file)) {
+      DirEntry dirEntry = entry.getValue();
+      if (dirEntry.file.equals(file)) {
         if (result == null) {
           result = name;
         } else {
@@ -227,15 +228,47 @@ final class DirectoryTable implements FileContent {
     return ImmutableSortedSet.copyOf(Ordering.usingToString(), asMap().keySet());
   }
 
-  /**
-   * Returns a view of the entries in this table, excluding entries for "." and "..", as a map.
-   */
-  public Map<Name, File> asMap() {
+  private Map<Name, DirEntry> asMap() {
     return Maps.filterKeys(entries, Predicates.not(Predicates.in(RESERVED_NAMES)));
+  }
+
+  /**
+   * Returns a view of the entries in this table, excluding entries for "." and "..".
+   */
+  public Collection<DirEntry> entries() {
+    return asMap().values();
   }
 
   private static Name checkValidName(Name name, String action) {
     checkArgument(!RESERVED_NAMES.contains(name), "cannot %s: %s", action, name);
     return name;
+  }
+
+  /**
+   * Directory entry containing a file and a name linking to that file.
+   */
+  public static final class DirEntry {
+
+    private final Name name;
+    private final File file;
+
+    private DirEntry(Name name, File file) {
+      this.name = name;
+      this.file = file;
+    }
+
+    /**
+     * Returns the name of this entry.
+     */
+    public Name name() {
+      return name;
+    }
+
+    /**
+     * Returns the file this entry links to.
+     */
+    public File file() {
+      return file;
+    }
   }
 }

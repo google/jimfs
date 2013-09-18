@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.internal.DirectoryTable.DirEntry;
 import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
 
 import com.google.common.collect.ImmutableList;
@@ -117,18 +118,20 @@ final class LookupService {
       return LookupResult.notFound();
     }
 
-    File file = table.get(name);
-    if (file == null) {
+    DirEntry entry = table.getEntry(name);
+    if (entry == null) {
       return LookupResult.parentFound(dir);
     }
 
+    File file = entry.file();
     if (options.isFollowLinks() && file.isSymbolicLink()) {
       // TODO(cgdecker): can add info on the symbolic link and its parent here if needed
       // for now it doesn't seem like it's needed though
       return followSymbolicLink(table, file, linkDepth);
     }
 
-    return createFoundResult(dir, name, file);
+    Name canonicalName = entry.name();
+    return createFoundResult(dir, canonicalName, file);
   }
 
   private LookupResult followSymbolicLink(
@@ -147,7 +150,6 @@ final class LookupService {
    * actually the parent directory of the file.
    */
   private LookupResult createFoundResult(File parent, Name name, File file) {
-    DirectoryTable table = parent.content();
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
       // the parent dir is not the directory we did the lookup in
       // also, the file itself must be a directory
@@ -161,8 +163,6 @@ final class LookupService {
       } else {
         name = fileTable.name();
       }
-    } else {
-      name = table.canonicalize(name);
     }
     return LookupResult.found(parent, file, name);
   }
