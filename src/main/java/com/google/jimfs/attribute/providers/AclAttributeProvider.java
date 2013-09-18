@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.AttributeSpec;
+import com.google.jimfs.attribute.Attribute;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
 import com.google.jimfs.common.IoSupplier;
@@ -42,10 +42,12 @@ import java.util.List;
 public class AclAttributeProvider extends AbstractAttributeProvider
     implements AttributeViewProvider<AclFileAttributeView> {
 
+  public static final String VIEW = "acl";
+
   public static final String ACL = "acl";
 
-  private static final ImmutableSet<AttributeSpec> ATTRIBUTES = ImmutableSet.of(
-      AttributeSpec.settable(ACL, List.class));
+  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
+      Attribute.settable(VIEW, ACL, List.class));
 
   private final OwnerAttributeProvider owner;
 
@@ -59,7 +61,7 @@ public class AclAttributeProvider extends AbstractAttributeProvider
 
   @Override
   public String name() {
-    return "acl";
+    return VIEW;
   }
 
   @Override

@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
+import com.google.jimfs.attribute.Attribute;
 import com.google.jimfs.attribute.AttributeReader;
-import com.google.jimfs.attribute.AttributeSpec;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
 import com.google.jimfs.common.IoSupplier;
@@ -52,9 +52,9 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
   public static final String GROUP = "group";
   public static final String PERMISSIONS = "permissions";
 
-  private static final ImmutableSet<AttributeSpec> ATTRIBUTES = ImmutableSet.of(
-      AttributeSpec.settable(GROUP, GroupPrincipal.class),
-      AttributeSpec.settableOnCreate(PERMISSIONS, Set.class));
+  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
+      Attribute.settable(VIEW, GROUP, GroupPrincipal.class),
+      Attribute.settableOnCreate(VIEW, PERMISSIONS, Set.class));
 
   private final GroupPrincipal defaultGroup;
   private final ImmutableSet<PosixFilePermission> defaultPermissions;

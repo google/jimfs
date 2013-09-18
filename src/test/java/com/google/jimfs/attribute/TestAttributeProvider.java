@@ -28,9 +28,11 @@ import java.nio.file.attribute.FileTime;
 public class TestAttributeProvider extends AbstractAttributeProvider
     implements AttributeViewProvider<TestAttributeView>, AttributeReader<TestAttributes> {
 
-  private static final AttributeSpec FOO = AttributeSpec.unsettable("foo", String.class);
-  private static final AttributeSpec BAR = AttributeSpec.settable("bar", Long.class);
-  private static final AttributeSpec BAZ = AttributeSpec.settableOnCreate("baz", Integer.class);
+  private static final String VIEW = "test";
+
+  private static final Attribute FOO = Attribute.unsettable(VIEW, "foo", String.class);
+  private static final Attribute BAR = Attribute.settable(VIEW, "bar", Long.class);
+  private static final Attribute BAZ = Attribute.settableOnCreate(VIEW, "baz", Integer.class);
 
   public TestAttributeProvider() {
     super(ImmutableSet.of(FOO, BAR, BAZ));
@@ -38,7 +40,7 @@ public class TestAttributeProvider extends AbstractAttributeProvider
 
   @Override
   public String name() {
-    return "test";
+    return VIEW;
   }
 
   @Override
@@ -57,7 +59,7 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   @Override
   public void set(AttributeStore store, String attribute, Object value) {
     if (attribute.equals("bar")) {
-      store.setAttribute("test:bar", ((Number) value).longValue());
+      store.setAttribute(BAR.key(), ((Number) value).longValue());
     } else {
       super.set(store, attribute, value);
     }
@@ -65,8 +67,8 @@ public class TestAttributeProvider extends AbstractAttributeProvider
 
   @Override
   public void setInitial(AttributeStore store) {
-    store.setAttribute("test:bar", 0L);
-    store.setAttribute("test:baz", 1);
+    store.setAttribute(BAR.key(), 0L);
+    store.setAttribute(BAZ.key(), 1);
   }
 
   @Override

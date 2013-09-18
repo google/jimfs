@@ -23,22 +23,23 @@ import org.junit.Test;
 /**
  * @author Colin Decker
  */
-public class AttributeSpecTest {
+public class AttributeTest {
 
   @Test
   public void testAttributeSpecs() {
-    AttributeSpec foo = AttributeSpec.unsettable("foo", String.class);
-    AttributeSpec bar = AttributeSpec.settable("bar", Long.class);
-    AttributeSpec baz = AttributeSpec.settableOnCreate("baz", Integer.class);
+    Attribute foo = Attribute.unsettable("test", "foo", String.class);
+    Attribute bar = Attribute.settable("test", "bar", Long.class);
+    Attribute baz = Attribute.settableOnCreate("test", "baz", Integer.class);
 
     checkAttributeSpec(foo, "foo", String.class, false, false);
     checkAttributeSpec(bar, "bar", Long.class, true, false);
     checkAttributeSpec(baz, "baz", Integer.class, true, true);
   }
 
-  private static void checkAttributeSpec(AttributeSpec attribute,
+  private static void checkAttributeSpec(Attribute attribute,
       String name, Class<?> type, boolean settable, boolean settableOnCreate) {
     ASSERT.that(attribute.name()).isEqualTo(name);
+    ASSERT.that(attribute.key()).isEqualTo("test:" + name);
     ASSERT.that(attribute.type()).isEqualTo(type);
     ASSERT.that(attribute.isUserSettable()).isEqualTo(settable);
     ASSERT.that(attribute.isSettableOnCreate()).isEqualTo(settableOnCreate);

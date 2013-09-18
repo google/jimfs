@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.AttributeSpec;
+import com.google.jimfs.attribute.Attribute;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
 import com.google.jimfs.common.IoSupplier;
@@ -42,8 +42,8 @@ public final class OwnerAttributeProvider extends AbstractAttributeProvider
 
   public static final String OWNER = "owner";
 
-  private static final ImmutableSet<AttributeSpec> ATTRIBUTES = ImmutableSet.of(
-      AttributeSpec.settableOnCreate(OWNER, UserPrincipal.class)
+  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
+      Attribute.settableOnCreate(VIEW, OWNER, UserPrincipal.class)
   );
 
   private final UserPrincipal defaultOwner;

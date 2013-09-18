@@ -25,39 +25,41 @@ import java.nio.file.Files;
  *
  * @author Colin Decker
  */
-public final class AttributeSpec {
+public final class Attribute {
 
   /**
    * Creates a new attribute that cannot be set directly through the {@link Files} API.
    */
-  public static AttributeSpec unsettable(String name, Class<?> type) {
-    return new AttributeSpec(name, type, false, false);
+  public static Attribute unsettable(String view, String name, Class<?> type) {
+    return new Attribute(view, name, type, false, false);
   }
 
   /**
    * Creates a new attribute that can be set directly through the {@link Files} API but cannot be
    * set upon initial creation of a file.
    */
-  public static AttributeSpec settable(String name, Class<?> type) {
-    return new AttributeSpec(name, type, true, false);
+  public static Attribute settable(String view, String name, Class<?> type) {
+    return new Attribute(view, name, type, true, false);
   }
 
   /**
    * Creates a new attribute that can be set directly through the {@link Files} API and can be set
    * on initial creation of a file.
    */
-  public static AttributeSpec settableOnCreate(String name, Class<?> type) {
-    return new AttributeSpec(name, type, true, true);
+  public static Attribute settableOnCreate(String view, String name, Class<?> type) {
+    return new Attribute(view, name, type, true, true);
   }
 
   private final String name;
+  private final String key;
   private final Class<?> type;
   private final boolean userSettable;
   private final boolean initiallySettable;
 
-  private AttributeSpec(
-      String name, Class<?> type, boolean userSettable, boolean initiallySettable) {
+  private Attribute(
+      String view, String name, Class<?> type, boolean userSettable, boolean initiallySettable) {
     this.name = checkNotNull(name);
+    this.key = checkNotNull(view) + ":" + name;
     this.type = checkNotNull(type);
     this.userSettable = userSettable;
     this.initiallySettable = initiallySettable;
@@ -68,6 +70,13 @@ public final class AttributeSpec {
    */
   public String name() {
     return name;
+  }
+
+  /**
+   * Returns the full key for this attribute in the form "view:attribute".
+   */
+  public String key() {
+    return key;
   }
 
   /**

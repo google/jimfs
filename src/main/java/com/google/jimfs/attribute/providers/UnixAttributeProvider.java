@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
-import com.google.jimfs.attribute.AttributeSpec;
+import com.google.jimfs.attribute.Attribute;
 import com.google.jimfs.attribute.AttributeStore;
 
 import java.nio.file.attribute.FileTime;
@@ -39,6 +39,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class UnixAttributeProvider extends AbstractAttributeProvider {
 
+  public static final String VIEW = "unix";
+
   public static final String UID = "uid";
   public static final String INO = "ino";
   public static final String DEV = "dev";
@@ -48,15 +50,15 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
   public static final String MODE = "mode";
   public static final String GID = "gid";
 
-  private static final ImmutableSet<AttributeSpec> ATTRIBUTES = ImmutableSet.of(
-      AttributeSpec.unsettable(UID, Integer.class),
-      AttributeSpec.unsettable(INO, Long.class),
-      AttributeSpec.unsettable(DEV, Long.class),
-      AttributeSpec.unsettable(NLINK, Integer.class),
-      AttributeSpec.unsettable(RDEV, Long.class),
-      AttributeSpec.unsettable(CTIME, FileTime.class),
-      AttributeSpec.unsettable(MODE, Integer.class),
-      AttributeSpec.unsettable(GID, Integer.class));
+  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
+      Attribute.unsettable(VIEW, UID, Integer.class),
+      Attribute.unsettable(VIEW, INO, Long.class),
+      Attribute.unsettable(VIEW, DEV, Long.class),
+      Attribute.unsettable(VIEW, NLINK, Integer.class),
+      Attribute.unsettable(VIEW, RDEV, Long.class),
+      Attribute.unsettable(VIEW, CTIME, FileTime.class),
+      Attribute.unsettable(VIEW, MODE, Integer.class),
+      Attribute.unsettable(VIEW, GID, Integer.class));
 
   private final AtomicInteger uidGenerator = new AtomicInteger();
   private final ConcurrentMap<Object, Integer> idCache = new ConcurrentHashMap<>();
@@ -72,7 +74,7 @@ public class UnixAttributeProvider extends AbstractAttributeProvider {
 
   @Override
   public String name() {
-    return "unix";
+    return VIEW;
   }
 
   @Override

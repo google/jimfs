@@ -19,8 +19,8 @@ package com.google.jimfs.attribute.providers;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
+import com.google.jimfs.attribute.Attribute;
 import com.google.jimfs.attribute.AttributeReader;
-import com.google.jimfs.attribute.AttributeSpec;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
 import com.google.jimfs.common.IoSupplier;
@@ -41,16 +41,18 @@ import java.nio.file.attribute.FileTime;
 public final class DosAttributeProvider extends AbstractAttributeProvider implements
     AttributeViewProvider<DosFileAttributeView>, AttributeReader<DosFileAttributes> {
 
+  public static final String VIEW = "dos";
+
   public static final String READ_ONLY = "readonly";
   public static final String HIDDEN = "hidden";
   public static final String ARCHIVE = "archive";
   public static final String SYSTEM = "system";
 
-  private static final ImmutableSet<AttributeSpec> ATTRIBUTES = ImmutableSet.of(
-      AttributeSpec.settable(READ_ONLY, Boolean.class),
-      AttributeSpec.settable(HIDDEN, Boolean.class),
-      AttributeSpec.settable(ARCHIVE, Boolean.class),
-      AttributeSpec.settable(SYSTEM, Boolean.class));
+  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
+      Attribute.settable(VIEW, READ_ONLY, Boolean.class),
+      Attribute.settable(VIEW, HIDDEN, Boolean.class),
+      Attribute.settable(VIEW, ARCHIVE, Boolean.class),
+      Attribute.settable(VIEW, SYSTEM, Boolean.class));
 
   /**
    * The singleton instance of {@link DosAttributeProvider}.
@@ -63,7 +65,7 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
 
   @Override
   public String name() {
-    return "dos";
+    return VIEW;
   }
 
   @Override

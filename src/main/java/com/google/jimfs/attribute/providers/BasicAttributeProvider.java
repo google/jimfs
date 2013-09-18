@@ -19,9 +19,9 @@ package com.google.jimfs.attribute.providers;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
+import com.google.jimfs.attribute.Attribute;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeReader;
-import com.google.jimfs.attribute.AttributeSpec;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
 import com.google.jimfs.common.IoSupplier;
@@ -53,16 +53,16 @@ public class BasicAttributeProvider extends AbstractAttributeProvider implements
   public static final String IS_SYMBOLIC_LINK = "isSymbolicLink";
   public static final String IS_OTHER = "isOther";
 
-  private static final ImmutableSet<AttributeSpec> ATTRIBUTES = ImmutableSet.of(
-      AttributeSpec.unsettable("size", Long.class),
-      AttributeSpec.settable("lastModifiedTime", FileTime.class),
-      AttributeSpec.settable("lastAccessTime", FileTime.class),
-      AttributeSpec.settable("creationTime", FileTime.class),
-      AttributeSpec.unsettable("fileKey", Object.class),
-      AttributeSpec.unsettable("isDirectory", Boolean.class),
-      AttributeSpec.unsettable("isRegularFile", Boolean.class),
-      AttributeSpec.unsettable("isSymbolicLink", Boolean.class),
-      AttributeSpec.unsettable("isOther", Boolean.class));
+  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
+      Attribute.unsettable(VIEW, SIZE, Long.class),
+      Attribute.settable(VIEW, LAST_MODIFIED_TIME, FileTime.class),
+      Attribute.settable(VIEW, LAST_ACCESS_TIME, FileTime.class),
+      Attribute.settable(VIEW, CREATION_TIME, FileTime.class),
+      Attribute.unsettable(VIEW, FILE_KEY, Object.class),
+      Attribute.unsettable(VIEW, IS_DIRECTORY, Boolean.class),
+      Attribute.unsettable(VIEW, IS_REGULAR_FILE, Boolean.class),
+      Attribute.unsettable(VIEW, IS_SYMBOLIC_LINK, Boolean.class),
+      Attribute.unsettable(VIEW, IS_OTHER, Boolean.class));
 
   /**
    * The singleton instance of {@link BasicAttributeProvider}.

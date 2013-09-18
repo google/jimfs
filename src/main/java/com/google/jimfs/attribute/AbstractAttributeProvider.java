@@ -28,11 +28,11 @@ import java.util.Map;
  */
 public abstract class AbstractAttributeProvider implements AttributeProvider {
 
-  private final ImmutableMap<String, AttributeSpec> attributes;
+  private final ImmutableMap<String, Attribute> attributes;
 
-  public AbstractAttributeProvider(Iterable<AttributeSpec> attributes) {
-    ImmutableMap.Builder<String, AttributeSpec> builder = ImmutableMap.builder();
-    for (AttributeSpec attribute : attributes) {
+  public AbstractAttributeProvider(Iterable<Attribute> attributes) {
+    ImmutableMap.Builder<String, Attribute> builder = ImmutableMap.builder();
+    for (Attribute attribute : attributes) {
       builder.put(attribute.name(), attribute);
     }
     this.attributes = builder.build();
@@ -52,7 +52,7 @@ public abstract class AbstractAttributeProvider implements AttributeProvider {
 
   @Override
   public Object get(AttributeStore store, String attribute) {
-    return store.getAttribute(name() + ":" + attribute);
+    return store.getAttribute(attributes.get(attribute).key());
   }
 
   @Override
@@ -73,6 +73,6 @@ public abstract class AbstractAttributeProvider implements AttributeProvider {
 
   @Override
   public void set(AttributeStore store, String attribute, Object value) {
-    store.setAttribute(name() + ":" + attribute, value);
+    store.setAttribute(attributes.get(attribute).key(), value);
   }
 }
