@@ -26,6 +26,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.io.IOException;
 import java.nio.file.NotDirectoryException;
@@ -40,6 +41,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
@@ -51,8 +53,17 @@ import javax.annotation.Nullable;
  */
 final class PollingWatchService extends AbstractWatchService {
 
+  /**
+   * Thread factory for polling threads, which should be daemon threads so as not to keep the VM
+   * running if the user doesn't close the watch service or the file system.
+   */
+  private static final ThreadFactory THREAD_FACTORY = new ThreadFactoryBuilder()
+      .setNameFormat("com.google.jimfs.internal.PollingWatchService-thread-%d")
+      .setDaemon(true)
+      .build();
+
   private final ScheduledExecutorService pollingService
-      = Executors.newSingleThreadScheduledExecutor();
+      = Executors.newSingleThreadScheduledExecutor(THREAD_FACTORY);
 
   /**
    * Map of keys to the most recent directory snapshot for each key.
