@@ -32,7 +32,7 @@ import java.nio.channels.WritableByteChannel;
  */
 final class ArrayByteStore extends ByteStore {
 
-  private static final int INITIAL_ARRAY_SIZE = 128;
+  private static final int INITIAL_ARRAY_SIZE = 4096;
   private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 10;
 
   private int size;
