@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.DirectoryTable.DirEntry;
 import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
 import static org.junit.Assert.fail;
@@ -194,16 +195,14 @@ public class DirectoryTableTest {
   }
 
   @Test
-  public void testCanonicalize() {
+  public void testGetEntry() {
     table.link(caseInsensitive("bar"), new File(2L, new DirectoryTable()));
 
-    ASSERT.that(table.canonicalize(caseInsensitive("BAR")).toString()).is("bar");
+    DirEntry entry = table.getEntry(caseInsensitive("BAR"));
+    ASSERT.that(entry.file().id()).is(2L);
+    ASSERT.that(entry.name().toString()).is("bar");
 
-    try {
-      table.canonicalize(caseInsensitive("none"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    ASSERT.that(table.getEntry(caseInsensitive("none"))).isNull();
   }
 
   @Test

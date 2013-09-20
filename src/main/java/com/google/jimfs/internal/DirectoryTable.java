@@ -186,19 +186,6 @@ final class DirectoryTable implements FileContent {
   }
 
   /**
-   * Returns the canonical form of the given name in this directory.
-   *
-   * @throws IllegalArgumentException if the table does not contain an entry with the given name
-   */
-  public Name canonicalize(Name name) {
-    DirEntry entry = entries.get(name);
-    if (entry == null) {
-      throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
-    }
-    return entry.name;
-  }
-
-  /**
    * Returns the name that links to the given file key in this directory, throwing an exception if
    * zero names or more than one name links to the key. Should only be used for getting the name of
    * a directory, as directories cannot have more than one link.
