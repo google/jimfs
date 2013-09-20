@@ -23,7 +23,11 @@ package com.google.jimfs.internal;
  */
 public class SingleArrayDiskTest extends AbstractByteStoreTest {
 
-  private final Disk disk = new SingleArrayDisk();
+  /**
+   * Use small blocks and initial array size so tests don't all just work in one block and do
+   * require the array to resize.
+   */
+  private final Disk disk = new SingleArrayDisk(4, 4);
 
   @Override
   protected ByteStore createByteStore() {

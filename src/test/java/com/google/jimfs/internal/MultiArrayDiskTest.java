@@ -23,7 +23,10 @@ package com.google.jimfs.internal;
  */
 public class MultiArrayDiskTest extends AbstractByteStoreTest {
 
-  private final MultiArrayDisk disk = new MultiArrayDisk();
+  /**
+   * Use small blocks and arrays so tests don't all just work in one block or one array.
+   */
+  private final MultiArrayDisk disk = new MultiArrayDisk(4, 2);
 
   @Override
   protected ByteStore createByteStore() {
