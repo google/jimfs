@@ -17,24 +17,24 @@
 package com.google.jimfs.internal;
 
 /**
- * Marker interface for implementations of content for different types of files.
+ * Factory for array byte stores.
  *
  * @author Colin Decker
  */
-interface FileContent {
+final class ArrayByteStoreFactory implements RegularFileStorage {
 
-  /**
-   * Creates a copy of this content.
-   */
-  FileContent copy();
+  @Override
+  public ByteStore createByteStore() {
+    return new ArrayByteStore();
+  }
 
-  /**
-   * Returns the size, in bytes, of this content.
-   */
-  long sizeInBytes();
+  @Override
+  public long getTotalSpace() {
+    return Integer.MAX_VALUE;
+  }
 
-  /**
-   * Called when the file is deleted.
-   */
-  void delete();
+  @Override
+  public long getUnallocatedSpace() {
+    return Integer.MAX_VALUE;
+  }
 }

@@ -57,7 +57,7 @@ final class JimfsFileChannel extends FileChannel {
 
   private final OpenOptions options;
 
-  private int position;
+  private long position;
 
   public JimfsFileChannel(File file, OpenOptions options) {
     this.file = file;
@@ -137,7 +137,7 @@ final class JimfsFileChannel extends FileChannel {
     return read(Arrays.asList(dsts).subList(offset, offset + length));
   }
 
-  private int read(List<ByteBuffer> buffers) throws IOException {
+  private long read(List<ByteBuffer> buffers) throws IOException {
     lock.lock();
     try {
       checkOpen();
@@ -145,7 +145,7 @@ final class JimfsFileChannel extends FileChannel {
 
       store.readLock().lock();
       try {
-        int read = store.read(position, buffers);
+        long read = store.read(position, buffers);
         if (read != -1) {
           position += read;
         }
@@ -194,7 +194,7 @@ final class JimfsFileChannel extends FileChannel {
     return write(Arrays.asList(srcs).subList(offset, offset + length));
   }
 
-  private int write(List<ByteBuffer> srcs) throws IOException {
+  private long write(List<ByteBuffer> srcs) throws IOException {
     lock.lock();
     try {
       checkOpen();
@@ -202,7 +202,7 @@ final class JimfsFileChannel extends FileChannel {
 
       store.writeLock().lock();
       try {
-        int written;
+        long written;
         if (options.isAppend()) {
           written = store.append(srcs);
           position = store.sizeInBytes();

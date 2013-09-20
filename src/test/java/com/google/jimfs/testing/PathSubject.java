@@ -369,7 +369,10 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     isRegularFile();
     hasSize(bytes.length);
 
-    if (!Arrays.equals(bytes, Files.readAllBytes(getSubject()))) {
+    byte[] actual = Files.readAllBytes(getSubject());
+    if (!Arrays.equals(bytes, actual)) {
+      System.out.println(BaseEncoding.base16().encode(actual));
+      System.out.println(BaseEncoding.base16().encode(bytes));
       fail("contains bytes", BaseEncoding.base16().encode(bytes));
     }
     return this;

@@ -17,24 +17,16 @@
 package com.google.jimfs.internal;
 
 /**
- * Marker interface for implementations of content for different types of files.
+ * Tests for byte stores created by {@link SingleArrayDisk}.
  *
  * @author Colin Decker
  */
-interface FileContent {
+public class SingleArrayDiskTest extends AbstractByteStoreTest {
 
-  /**
-   * Creates a copy of this content.
-   */
-  FileContent copy();
+  private final Disk disk = new SingleArrayDisk();
 
-  /**
-   * Returns the size, in bytes, of this content.
-   */
-  long sizeInBytes();
-
-  /**
-   * Called when the file is deleted.
-   */
-  void delete();
+  @Override
+  protected ByteStore createByteStore() {
+    return disk.createByteStore();
+  }
 }

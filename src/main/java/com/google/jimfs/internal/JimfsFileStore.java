@@ -59,6 +59,8 @@ final class JimfsFileStore extends FileStore {
   private final String name;
   private final AttributeProviderRegistry attributeProviders;
 
+  private final RegularFileStorage storage = new MultiArrayDisk();
+
   /** Directory supplier with no extra file attributes. */
   private final Supplier<File> defaultDirectorySupplier = new DirectorySupplier();
   /** Regular file supplier with no extra file attributes. */
@@ -96,17 +98,17 @@ final class JimfsFileStore extends FileStore {
 
   @Override
   public long getTotalSpace() throws IOException {
-    return Integer.MAX_VALUE;
+    return storage.getTotalSpace();
   }
 
   @Override
   public long getUsableSpace() throws IOException {
-    return Integer.MAX_VALUE;
+    return getTotalSpace();
   }
 
   @Override
   public long getUnallocatedSpace() throws IOException {
-    return Integer.MAX_VALUE;
+    return storage.getUnallocatedSpace();
   }
 
   private long nextFileId() {
@@ -133,7 +135,7 @@ final class JimfsFileStore extends FileStore {
    * Creates a new regular file and stores it. Returns the key of the new file.
    */
   public File createRegularFile(FileAttribute<?>... attrs) {
-    return createFile(nextFileId(), new ArrayByteStore(), attrs);
+    return createFile(nextFileId(), storage.createByteStore(), attrs);
   }
 
   /**

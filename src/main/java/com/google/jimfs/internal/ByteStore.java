@@ -53,7 +53,7 @@ abstract class ByteStore implements FileContent {
   /**
    * Gets the current size of this store in bytes.
    */
-  public abstract int size();
+  public abstract long size();
 
   /**
    * Creates a copy of this byte store.
@@ -63,7 +63,7 @@ abstract class ByteStore implements FileContent {
   // need to lock in these methods since they're defined by an interface
 
   @Override
-  public final int sizeInBytes() {
+  public final long sizeInBytes() {
     readLock().lock();
     try {
       return size();
@@ -91,7 +91,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code size} is negative.
    */
-  public abstract boolean truncate(int size);
+  public abstract boolean truncate(long size);
 
   /**
    * Writes the given byte to this store at position {@code pos}. {@code pos} may be greater than
@@ -100,7 +100,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public abstract int write(int pos, byte b);
+  public abstract int write(long pos, byte b);
 
   /**
    * Writes all bytes in the given byte array to this store starting at position {@code pos}. {@code
@@ -110,7 +110,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public int write(int pos, byte[] b) {
+  public int write(long pos, byte[] b) {
     return write(pos, b, 0, b.length);
   }
 
@@ -124,7 +124,7 @@ abstract class ByteStore implements FileContent {
    * @throws IndexOutOfBoundsException if {@code off} or {@code len} is negative, or if {@code off +
    *     len} is greater than {@code b.length}.
    */
-  public abstract int write(int pos, byte[] b, int off, int len);
+  public abstract int write(long pos, byte[] b, int off, int len);
 
   /**
    * Writes all available bytes from buffer {@code buf} to this store starting at position {@code
@@ -134,7 +134,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public abstract int write(int pos, ByteBuffer buf);
+  public abstract int write(long pos, ByteBuffer buf);
 
   /**
    * Writes all available bytes from each buffer in {@code bufs}, in order, to this store starting
@@ -145,13 +145,13 @@ abstract class ByteStore implements FileContent {
    * @throws IllegalArgumentException if {@code pos} is negative.
    * @throws NullPointerException if any element of {@code bufs} is {@code null}.
    */
-  public int write(int pos, Iterable<ByteBuffer> bufs) {
+  public long write(long pos, Iterable<ByteBuffer> bufs) {
     checkNotNegative(pos, "pos");
     for (ByteBuffer buf : bufs) {
       checkNotNull(buf);
     }
 
-    int start = pos;
+    long start = pos;
     for (ByteBuffer buf : bufs) {
       pos += write(pos, buf);
     }
@@ -165,7 +165,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public abstract int transferFrom(ReadableByteChannel src, int pos, int count) throws IOException;
+  public abstract long transferFrom(ReadableByteChannel src, long pos, long count) throws IOException;
 
   /**
    * Appends the given byte to this store. Returns the number of bytes written.
@@ -206,7 +206,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws NullPointerException if any element of {@code bufs} is {@code null}.
    */
-  public int append(Iterable<ByteBuffer> bufs) {
+  public long append(Iterable<ByteBuffer> bufs) {
     return write(size(), bufs);
   }
 
@@ -214,7 +214,7 @@ abstract class ByteStore implements FileContent {
    * Appends up to {@code count} bytes from the given channel to this store. Returns the number of
    * bytes transferred.
    */
-  public int appendFrom(ReadableByteChannel src, int count) throws IOException {
+  public long appendFrom(ReadableByteChannel src, long count) throws IOException {
     return transferFrom(src, size(), count);
   }
 
@@ -224,7 +224,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public abstract int read(int pos);
+  public abstract int read(long pos);
 
   /**
    * Reads up to {@code b.length} bytes starting at position {@code pos} in this store to the given
@@ -233,7 +233,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public int read(int pos, byte[] b) {
+  public int read(long pos, byte[] b) {
     return read(pos, b, 0, b.length);
   }
 
@@ -246,7 +246,7 @@ abstract class ByteStore implements FileContent {
    * @throws IndexOutOfBoundsException if {@code off} or {@code len} is negative or if {@code off +
    *     len} is greater than {@code b.length}.
    */
-  public abstract int read(int pos, byte[] b, int off, int len);
+  public abstract int read(long pos, byte[] b, int off, int len);
 
   /**
    * Reads up to {@code buf.remaining()} bytes starting at position {@code pos} in this store to the
@@ -255,7 +255,7 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public abstract int read(int pos, ByteBuffer buf);
+  public abstract int read(long pos, ByteBuffer buf);
 
   /**
    * Reads up to the total {@code remaining()} number of bytes in each of {@code bufs} starting at
@@ -265,7 +265,7 @@ abstract class ByteStore implements FileContent {
    * @throws IllegalArgumentException if {@code pos} is negative.
    * @throws NullPointerException if any element of {@code bufs} is {@code null}.
    */
-  public int read(int pos, Iterable<ByteBuffer> bufs) {
+  public long read(long pos, Iterable<ByteBuffer> bufs) {
     checkNotNegative(pos, "pos");
     for (ByteBuffer buf : bufs) {
       checkNotNull(buf);
@@ -275,7 +275,7 @@ abstract class ByteStore implements FileContent {
       return -1;
     }
 
-    int start = pos;
+    long start = pos;
     for (ByteBuffer buf : bufs) {
       int read = read(pos, buf);
       if (read == -1) {
@@ -298,13 +298,13 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public abstract int transferTo(int pos, int count, WritableByteChannel dest) throws IOException;
+  public abstract long transferTo(long pos, long count, WritableByteChannel dest) throws IOException;
 
   /**
    * Check that the given value is not negative, throwing an {@code IllegalArgumentException} if it
    * is.
    */
-  protected static void checkNotNegative(int n, String description) {
+  protected static void checkNotNegative(long n, String description) {
     if (n < 0) {
       throw new IllegalArgumentException(description + " (" + n + ") may not be negative");
     }

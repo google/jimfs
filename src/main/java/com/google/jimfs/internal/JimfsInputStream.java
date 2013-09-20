@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.primitives.Ints;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,7 @@ final class JimfsInputStream extends InputStream {
   private ByteStore store;
   private boolean finished;
 
-  private int pos;
+  private long pos;
 
   public JimfsInputStream(File file) {
     this.file = file;
@@ -117,7 +118,8 @@ final class JimfsInputStream extends InputStream {
       if (finished) {
         return 0;
       }
-      return Math.max(store.sizeInBytes() - pos, 0);
+      long available = Math.max(store.sizeInBytes() - pos, 0);
+      return Ints.saturatedCast(available);
     }
   }
 

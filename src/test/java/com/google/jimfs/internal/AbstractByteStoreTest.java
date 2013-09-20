@@ -89,7 +89,7 @@ public abstract class AbstractByteStoreTest {
   public void testEmpty_read_multipleBuffers() {
     ByteBuffer buf1 = ByteBuffer.allocate(5);
     ByteBuffer buf2 = ByteBuffer.allocate(5);
-    int read = store.read(0, ImmutableList.of(buf1, buf2));
+    long read = store.read(0, ImmutableList.of(buf1, buf2));
     assertEquals(-1, read);
     assertEquals(0, buf1.position());
     assertEquals(0, buf2.position());
@@ -845,8 +845,8 @@ public abstract class AbstractByteStoreTest {
   }
 
   private static void assertContentEquals(byte[] expected, ByteStore actual) {
-    assertEquals(expected.length, actual.sizeInBytes());
-    byte[] actualBytes = new byte[actual.sizeInBytes()];
+    assertEquals(expected.length, actual.size());
+    byte[] actualBytes = new byte[(int) actual.size()];
     actual.read(0, ByteBuffer.wrap(actualBytes));
     assertArrayEquals(expected, actualBytes);
   }

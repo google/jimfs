@@ -553,6 +553,10 @@ final class FileSystemService {
     if (file.isDirectory()) {
       unlinkSelfAndParent(file);
     }
+
+    if (file.links() == 0) {
+      file.content().delete();
+    }
   }
 
   /**

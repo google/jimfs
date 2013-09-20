@@ -48,13 +48,17 @@ final class ArrayByteStore extends ByteStore {
   }
 
   @Override
-  public int size() {
+  public long size() {
     return size;
   }
 
   @Override
   public ByteStore createCopy() {
     return new ArrayByteStore(copyArray(size), size);
+  }
+
+  @Override
+  public void delete() {
   }
 
   /**
@@ -96,14 +100,15 @@ final class ArrayByteStore extends ByteStore {
   }
 
   @Override
-  public boolean truncate(int size) {
+  public boolean truncate(long size) {
     checkNotNegative(size, "size");
 
     if (size >= this.size) {
       return false;
     }
 
-    this.size = size;
+    // the new size isn't larger than the current size, so it must be an int
+    this.size = (int) size;
     return true;
   }
 
@@ -111,50 +116,51 @@ final class ArrayByteStore extends ByteStore {
     bytes = copyArray(minSize);
   }
 
-  private void resizeForWrite(int minSize) {
-    if (minSize > size) {
-      if (minSize > bytes.length) {
-        resizeArray(minSize);
+  private void resizeForWrite(long minSize) {
+    int intMinSize = checkNotTooLarge(minSize);
+    if (intMinSize > size) {
+      if (intMinSize > bytes.length) {
+        resizeArray(intMinSize);
       }
 
-      this.size = minSize;
+      this.size = intMinSize;
     }
   }
 
   @Override
-  public int write(int pos, byte b) {
+  public int write(long pos, byte b) {
     checkNotNegative(pos, "pos");
 
     resizeForWrite(pos + 1);
 
-    bytes[pos] = b;
+    bytes[(int) pos] = b;
     return 1;
   }
 
   @Override
-  public int write(int pos, byte[] b, int off, int len) {
+  public int write(long pos, byte[] b, int off, int len) {
     checkNotNegative(pos, "pos");
     checkPositionIndexes(off, off + len, b.length);
 
     resizeForWrite(pos + len);
 
-    System.arraycopy(b, off, bytes, pos, len);
+    System.arraycopy(b, off, bytes, (int) pos, len);
     return len;
   }
 
   @Override
-  public int write(int pos, ByteBuffer buf) {
+  public int write(long pos, ByteBuffer buf) {
     checkNotNegative(pos, "pos");
 
     int len = buf.remaining();
     resizeForWrite(pos + len);
 
-    buf.get(bytes, pos, len);
+    buf.get(bytes, (int) pos, len);
     return len;
   }
 
   @Override
-  public int transferFrom(ReadableByteChannel src, int pos, int count) throws IOException {
+  public long transferFrom(ReadableByteChannel src, long pos, long count) throws IOException {
     checkNotNegative(pos, "pos");
     checkNotNegative(count, "count");
 
@@ -166,17 +172,17 @@ final class ArrayByteStore extends ByteStore {
     resizeForWrite(pos + count);
     try {
       // transfer directly into array
-      ByteBuffer buffer = ByteBuffer.wrap(bytes, pos, count);
+      ByteBuffer buffer = ByteBuffer.wrap(bytes, (int) pos, (int) count);
 
       int read = 0;
       while (read >= 0 && buffer.hasRemaining()) {
         read = src.read(buffer);
       }
 
-      int bytesTransferred = buffer.position() - pos;
+      int bytesTransferred = buffer.position() - (int) pos;
 
       // reset size to the correct size, since fewer than count bytes may have been transferred
-      size = Math.max(originalSize, pos + bytesTransferred);
+      size = Math.max(originalSize, (int) pos + bytesTransferred);
 
       return bytesTransferred;
     } catch (Throwable e) {
@@ -188,39 +194,39 @@ final class ArrayByteStore extends ByteStore {
   }
 
   @Override
-  public int read(int pos) {
+  public int read(long pos) {
     if (pos >= size) {
       return -1;
     }
 
-    return UnsignedBytes.toInt(bytes[pos]);
+    return UnsignedBytes.toInt(bytes[(int) pos]);
   }
 
   @Override
-  public int read(int pos, byte[] b, int off, int len) {
+  public int read(long pos, byte[] b, int off, int len) {
     checkNotNegative(pos, "pos");
     checkPositionIndexes(off, off + len, b.length);
 
     int bytesToRead = bytesToRead(pos, len);
     if (bytesToRead > 0) {
-      System.arraycopy(bytes, pos, b, off, bytesToRead);
+      System.arraycopy(bytes, (int) pos, b, off, bytesToRead);
     }
     return bytesToRead;
   }
 
   @Override
-  public int read(int pos, ByteBuffer buf) {
+  public int read(long pos, ByteBuffer buf) {
     checkNotNegative(pos, "pos");
 
     int bytesToRead = bytesToRead(pos, buf.remaining());
     if (bytesToRead > 0) {
-      buf.put(bytes, pos, bytesToRead);
+      buf.put(bytes, (int) pos, bytesToRead);
     }
     return bytesToRead;
   }
 
   @Override
-  public int transferTo(int pos, int count, WritableByteChannel dest) throws IOException {
+  public long transferTo(long pos, long count, WritableByteChannel dest) throws IOException {
     checkNotNegative(pos, "pos");
     checkNotNegative(count, "count");
 
@@ -230,7 +236,7 @@ final class ArrayByteStore extends ByteStore {
 
     int bytesToRead = bytesToRead(pos, count);
     if (bytesToRead > 0) {
-      ByteBuffer buffer = ByteBuffer.wrap(bytes, pos, bytesToRead);
+      ByteBuffer buffer = ByteBuffer.wrap(bytes, (int) pos, bytesToRead);
       while (buffer.hasRemaining()) {
         dest.write(buffer);
       }
@@ -242,11 +248,19 @@ final class ArrayByteStore extends ByteStore {
    * Returns the number of bytes that can be read starting at position {@code pos} (up to a maximum
    * of {@code max}) or -1 if {@code pos} is greater than or equal to the current size.
    */
-  private int bytesToRead(int pos, int max) {
-    int available = size - pos;
+  private int bytesToRead(long pos, long max) {
+    long available = (long) size - pos;
     if (available <= 0) {
       return -1;
     }
-    return Math.min(available, max);
+    return (int) Math.min(available, max);
+  }
+
+  private static int checkNotTooLarge(long size) {
+    if (size > MAX_ARRAY_SIZE) {
+      throw new IllegalArgumentException("size " + size + " is too large to store in an array");
+    }
+
+    return (int) size;
   }
 }

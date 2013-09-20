@@ -54,8 +54,12 @@ final class DirectoryTable implements FileContent {
   }
 
   @Override
-  public int sizeInBytes() {
+  public long sizeInBytes() {
     return 0;
+  }
+
+  @Override
+  public void delete() {
   }
 
   /**

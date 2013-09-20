@@ -36,7 +36,7 @@ final class JimfsOutputStream extends OutputStream {
   private ByteStore store;
   private final boolean append;
 
-  private int pos;
+  private long pos;
 
   JimfsOutputStream(File file, boolean append) {
     this.file = file;

@@ -30,7 +30,7 @@ import java.nio.channels.WritableByteChannel;
  */
 public class StubByteStore extends ByteStore {
 
-  private int size;
+  private long size;
   private boolean throwException;
 
   StubByteStore(int initialSize) {
@@ -42,7 +42,7 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int size() {
+  public long size() {
     return size;
   }
 
@@ -51,7 +51,11 @@ public class StubByteStore extends ByteStore {
     return new StubByteStore(this);
   }
 
-  public void setSize(int size) {
+  @Override
+  public void delete() {
+  }
+
+  public void setSize(long size) {
     this.size = size;
   }
 
@@ -60,7 +64,7 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public boolean truncate(int size) {
+  public boolean truncate(long size) {
     checkThrowException();
     if (size < this.size) {
       setSize(size);
@@ -70,17 +74,17 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int write(int pos, byte b) {
+  public int write(long pos, byte b) {
     return write(pos, new byte[]{b});
   }
 
   @Override
-  public int write(int pos, byte[] b, int off, int len) {
+  public int write(long pos, byte[] b, int off, int len) {
     return write(pos, ByteBuffer.wrap(b, off, len));
   }
 
   @Override
-  public int write(int pos, ByteBuffer buf) {
+  public int write(long pos, ByteBuffer buf) {
     checkThrowException();
     int written = buf.remaining();
     setSize(Math.max(size, pos + written));
@@ -89,17 +93,17 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int transferFrom(ReadableByteChannel src, int position, int count)
+  public long transferFrom(ReadableByteChannel src, long position, long count)
       throws IOException {
     checkThrowException();
-    ByteBuffer buffer = ByteBuffer.allocate(count);
+    ByteBuffer buffer = ByteBuffer.allocate((int) count);
     int read = src.read(buffer);
     setSize(Math.max(size, position + read));
     return read;
   }
 
   @Override
-  public int read(int pos) {
+  public int read(long pos) {
     byte[] b = new byte[1];
     if (read(pos, b) != -1) {
       return UnsignedBytes.toInt(b[0]);
@@ -108,14 +112,14 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int read(int pos, byte[] b, int off, int len) {
+  public int read(long pos, byte[] b, int off, int len) {
     return read(pos, ByteBuffer.wrap(b, off, len));
   }
 
   @Override
-  public int read(int pos, ByteBuffer buf) {
+  public int read(long pos, ByteBuffer buf) {
     checkThrowException();
-    int toRead = Math.min(buf.remaining(), size - pos);
+    int toRead = (int) Math.min(buf.remaining(), size - pos);
     if (toRead <= 0) {
       return -1;
     }
@@ -124,9 +128,9 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int transferTo(int position, int count, WritableByteChannel target)
+  public long transferTo(long position, long count, WritableByteChannel target)
       throws IOException {
-    int toTransfer = size - position;
+    int toTransfer = (int) (size - position);
     if (toTransfer > 0) {
       target.write(ByteBuffer.allocate(toTransfer));
     }
@@ -134,9 +138,9 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public int read(int position, Iterable<ByteBuffer> buffers) {
+  public long read(long position, Iterable<ByteBuffer> buffers) {
     checkThrowException();
-    int toRead = size - position;
+    long toRead = size - position;
     if (toRead == 0) {
       return -1;
     }

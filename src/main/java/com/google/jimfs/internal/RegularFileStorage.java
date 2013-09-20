@@ -17,24 +17,24 @@
 package com.google.jimfs.internal;
 
 /**
- * Marker interface for implementations of content for different types of files.
+ * Factory for creating new byte stores for regular files.
  *
  * @author Colin Decker
  */
-interface FileContent {
+interface RegularFileStorage {
 
   /**
-   * Creates a copy of this content.
+   * Creates a new, empty byte store.
    */
-  FileContent copy();
+  ByteStore createByteStore();
 
   /**
-   * Returns the size, in bytes, of this content.
+   * Returns the current total space in this storage.
    */
-  long sizeInBytes();
+  long getTotalSpace();
 
   /**
-   * Called when the file is deleted.
+   * Returns the current unallocated space in this storage.
    */
-  void delete();
+  long getUnallocatedSpace();
 }
