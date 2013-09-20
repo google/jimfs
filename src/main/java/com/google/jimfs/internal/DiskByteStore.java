@@ -18,6 +18,7 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static com.google.jimfs.internal.Disk.BlockQueue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -32,14 +33,14 @@ import java.nio.channels.WritableByteChannel;
 final class DiskByteStore extends ByteStore {
 
   private final Disk disk;
-  private final Disk.BlockQueue blocks;
+  private final BlockQueue blocks;
   private long size;
 
   public DiskByteStore(Disk disk) {
-    this(disk, new Disk.BlockQueue(32), 0);
+    this(disk, new BlockQueue(32), 0);
   }
 
-  private DiskByteStore(Disk disk, Disk.BlockQueue blocks, long size) {
+  private DiskByteStore(Disk disk, BlockQueue blocks, long size) {
     this.disk = checkNotNull(disk);
     this.blocks = blocks;
     this.size = size;
@@ -52,7 +53,7 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   protected ByteStore createCopy() {
-    Disk.BlockQueue copyBlocks = new Disk.BlockQueue(blocks.size() * 2);
+    BlockQueue copyBlocks = new BlockQueue(blocks.size() * 2);
     for (int i = 0; i < blocks.size(); i++) {
       long block = blocks.get(i);
       long copy = disk.alloc();
@@ -66,7 +67,7 @@ final class DiskByteStore extends ByteStore {
   public void delete() {
     writeLock().lock();
     try {
-      disk.freeAll(blocks);
+      disk.free(blocks);
       blocks.clear();
       size = 0;
     } finally {
@@ -79,15 +80,15 @@ final class DiskByteStore extends ByteStore {
     long lastPosition = size - 1;
     if (size < this.size) {
       this.size = size;
-      int blockIndex = blockIndex(lastPosition);
-      while (blocks.size() - 1 > blockIndex) {
-        disk.free(blocks.take());
-      }
 
-      // zero the unused portion of the last block
-      if (!blocks.isEmpty()) {
-        long lastBlock = blocks.get(blockIndex);
-        disk.zero(lastBlock, indexInBlock(size));
+      int newBlockCount = blockIndex(lastPosition) + 1;
+      int blocksToRemove = blocks.size() - newBlockCount;
+      if (blocksToRemove > 0) {
+        BlockQueue blocksToFree = new BlockQueue(blocksToRemove);
+        for (int i = 0; i < blocksToRemove; i++) {
+          blocksToFree.add(blocks.take()); // removing blocks from the end
+        }
+        disk.free(blocks);
       }
 
       return true;
@@ -95,9 +96,32 @@ final class DiskByteStore extends ByteStore {
     return false;
   }
 
+  /**
+   * If pos is greater than the current size of this store, zeroes bytes between the current size
+   * and pos and sets size to pos. New blocks are added to the file if necessary.
+   */
+  private void zeroForWrite(long pos) {
+    if (pos > size) {
+      long currentPos = size;
+      long remaining = pos - size;
+      while (remaining > 0) {
+        long block = blockForWrite(currentPos);
+        int off = indexInBlock(currentPos);
+        int lenToZero = (int) Math.min(disk.blockSize() - off, remaining);
+        disk.zero(block, off, lenToZero);
+        currentPos += lenToZero;
+        remaining -= lenToZero;
+      }
+
+      size = pos;
+    }
+  }
+
   @Override
   public int write(long pos, byte b) {
     checkNotNegative(pos, "pos");
+
+    zeroForWrite(pos);
 
     disk.put(blockForWrite(pos), indexInBlock(pos), b);
 
@@ -112,6 +136,8 @@ final class DiskByteStore extends ByteStore {
   public int write(long pos, byte[] b, int off, int len) {
     checkNotNegative(pos, "pos");
     checkPositionIndexes(off, off + len, b.length);
+
+    zeroForWrite(pos);
 
     int remaining = len;
     long currentPos = pos;
@@ -136,6 +162,8 @@ final class DiskByteStore extends ByteStore {
   public int write(long pos, ByteBuffer buf) {
     checkNotNegative(pos, "pos");
 
+    zeroForWrite(pos);
+
     int bytesToWrite = buf.remaining();
     long currentPos = pos;
     while (buf.hasRemaining()) {
@@ -155,9 +183,12 @@ final class DiskByteStore extends ByteStore {
     checkNotNegative(pos, "pos");
     checkNotNegative(count, "count");
 
+    zeroForWrite(pos);
+
     if (count == 0) {
       return 0;
     }
+
 
     long currentPos = pos;
     long remaining = count;
@@ -309,11 +340,11 @@ final class DiskByteStore extends ByteStore {
   }
 
   private int blockIndex(long position) {
-    return (int) position / disk.blockSize();
+    return (int) (position / disk.blockSize());
   }
 
   private int indexInBlock(long position) {
-    return (int) position % disk.blockSize();
+    return (int) (position % disk.blockSize());
   }
 
   /**

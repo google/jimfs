@@ -22,6 +22,7 @@ import com.google.common.primitives.UnsignedBytes;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -41,7 +42,7 @@ final class MultiArrayDisk extends Disk {
   private final int blocksPerArray;
   private final int arraySize;
   private final List<byte[]> arrays;
-  private int size;
+  private long size;
 
   /**
    * Create a disk with default settings.
@@ -67,22 +68,21 @@ final class MultiArrayDisk extends Disk {
   @Override
   protected int allocateMoreBlocks() {
     arrays.add(new byte[arraySize]);
-    int firstBlockPosition = size;
+    long firstBlockPosition = size;
     size += arraySize;
-    for (int i = firstBlockPosition; i < size; i += blockSize) {
+    for (long i = firstBlockPosition; i < size; i += blockSize) {
       blocks.add(i);
     }
     return blocksPerArray;
   }
 
   @Override
-  public void zero(long block, int off) {
+  public void zero(long block, int off, int len) {
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
-    int end = blockOff + blockSize;
-    for (int i = blockOff + off; i < end; i++) {
-      bytes[i] = 0;
-    }
+    int start = blockOff + off;
+    int end = start + len;
+    Arrays.fill(bytes, start, end, (byte) 0);
   }
 
   @Override

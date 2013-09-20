@@ -165,7 +165,8 @@ abstract class ByteStore implements FileContent {
    *
    * @throws IllegalArgumentException if {@code pos} is negative.
    */
-  public abstract long transferFrom(ReadableByteChannel src, long pos, long count) throws IOException;
+  public abstract long transferFrom(
+      ReadableByteChannel src, long pos, long count) throws IOException;
 
   /**
    * Appends the given byte to this store. Returns the number of bytes written.

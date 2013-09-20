@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.primitives.UnsignedBytes;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * A {@link Disk} using a single byte array that doubles in size when more blocks are needed.
@@ -85,11 +86,10 @@ final class SingleArrayDisk extends Disk {
   }
 
   @Override
-  public void zero(long block, int off) {
-    int end = (int) block + blockSize;
-    for (int i = (int) block + off; i < end; i++) {
-      array[i] = 0;
-    }
+  public void zero(long block, int off, int len) {
+    int start = (int) block + off;
+    int end = start + len;
+    Arrays.fill(array, start, end, (byte) 0);
   }
 
   @Override

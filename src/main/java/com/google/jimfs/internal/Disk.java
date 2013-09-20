@@ -84,34 +84,16 @@ abstract class Disk implements RegularFileStorage {
   }
 
   /**
-   * Frees the block starting at the given position.
-   */
-  public final synchronized void free(long block) {
-    zero(block);
-    blocks.add(block);
-  }
-
-  /**
    * Frees all blocks in the given queue.
    */
-  public final synchronized void freeAll(BlockQueue blocks) {
+  public final synchronized void free(BlockQueue blocks) {
     this.blocks.addAll(blocks);
-    for (int i = 0; i < blocks.size(); i++) {
-      zero(blocks.get(i));
-    }
   }
 
   /**
-   * Zeroes all bytes in the given block.
+   * Zeroes len bytes in the given block starting at the given offset.
    */
-  private void zero(long block) {
-    zero(block, 0);
-  }
-
-  /**
-   * Zeroes the bytes in the given block starting at the given offset.
-   */
-  public abstract void zero(long block, int off);
+  public abstract void zero(long block, int off, int len);
 
   /**
    * Copies the block at from to the block at to.
