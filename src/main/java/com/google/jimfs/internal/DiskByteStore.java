@@ -88,7 +88,7 @@ final class DiskByteStore extends ByteStore {
         for (int i = 0; i < blocksToRemove; i++) {
           blocksToFree.add(blocks.take()); // removing blocks from the end
         }
-        disk.free(blocks);
+        disk.free(blocksToFree);
       }
 
       return true;
@@ -334,7 +334,6 @@ final class DiskByteStore extends ByteStore {
 
   private void expandBlocks(int additionalBlocksNeeded) {
     for (int i = 0; i < additionalBlocksNeeded; i++) {
-      // sparse-ish allocation... don't allocate a new block until we actually need to write to it
       blocks.add(disk.alloc());
     }
   }

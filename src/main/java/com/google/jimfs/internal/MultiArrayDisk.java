@@ -70,7 +70,9 @@ final class MultiArrayDisk extends Disk {
     arrays.add(new byte[arraySize]);
     long firstBlockPosition = size;
     size += arraySize;
-    for (long i = firstBlockPosition; i < size; i += blockSize) {
+
+    // add blocks in reverse so they come out in contiguous order... not that it matters
+    for (long i = size - blockSize; i >= firstBlockPosition; i -= blockSize) {
       blocks.add(i);
     }
     return blocksPerArray;
