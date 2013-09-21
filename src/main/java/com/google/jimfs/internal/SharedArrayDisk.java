@@ -26,69 +26,68 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A {@link Disk} made up of multiple byte arrays. Each time more blocks are needed, a new byte
- * array is allocated and used to back multiple arrays.
+ * {@link Disk} made up of multiple byte arrays, each of which backs multiple blocks.
  *
  * @author Colin Decker
  */
-final class MultiArrayDisk extends Disk {
+final class SharedArrayDisk extends Disk {
 
-  /** 8 KB blocks */
-  private static final int DEFAULT_BLOCK_SIZE = 8 * 1024;
-
-  /** Allocated in 4 MB arrays. */
   private static final int DEFAULT_BLOCKS_PER_ARRAY = 512;
 
   private final int blocksPerArray;
   private final int arraySize;
   private final List<byte[]> arrays;
-  private long size;
+  private int blockCount;
 
   /**
    * Create a disk with default settings.
    */
-  public MultiArrayDisk() {
+  public SharedArrayDisk() {
     this(DEFAULT_BLOCK_SIZE, DEFAULT_BLOCKS_PER_ARRAY);
   }
 
   /**
    * Creates a disk using the given block size and number of blocks per allocated array.
    */
-  public MultiArrayDisk(int blockSize, int blocksPerArray) {
+  public SharedArrayDisk(int blockSize, int blocksPerArray) {
     super(blockSize);
     checkArgument(blocksPerArray > 0, "blocksPerArray (%s) must be positive", blocksPerArray);
 
     this.blocksPerArray = blocksPerArray;
     this.arraySize = blockSize * blocksPerArray;
     this.arrays = new ArrayList<>();
-
-    initialize();
   }
 
   @Override
-  protected int allocateMoreBlocks() {
-    arrays.add(new byte[arraySize]);
-    long firstBlockPosition = size;
-    size += arraySize;
+  protected int blockCount() {
+    return blockCount;
+  }
 
-    // add blocks in reverse so they come out in contiguous order... not that it matters
-    for (long i = size - blockSize; i >= firstBlockPosition; i -= blockSize) {
+  @Override
+  protected void allocateMoreBlocks() {
+    arrays.add(new byte[arraySize]);
+
+    int newBlockCount = blockCount + blocksPerArray;
+
+    // add blocks in reverse so they come out in contiguous order... not that it really matters
+    for (int i = newBlockCount - 1; i >= blockCount; i--) {
       blocks.add(i);
     }
-    return blocksPerArray;
+
+    blockCount = newBlockCount;
   }
 
   @Override
-  public void zero(long block, int off, int len) {
+  public void zero(int block, int offset, int len) {
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
-    int start = blockOff + off;
+    int start = blockOff + offset;
     int end = start + len;
     Arrays.fill(bytes, start, end, (byte) 0);
   }
 
   @Override
-  public void copy(long from, long to) {
+  public void copy(int from, int to) {
     byte[] fromBytes = bytes(from);
     int fromOff = offset(from);
 
@@ -99,80 +98,82 @@ final class MultiArrayDisk extends Disk {
   }
 
   @Override
-  public void put(long block, int index, byte b) {
-    checkArgument(index < blockSize);
+  public void put(int block, int offset, byte b) {
+    checkArgument(offset < blockSize);
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
-    bytes[blockOff + index] = b;
+    bytes[blockOff + offset] = b;
   }
 
   @Override
-  public int put(long block, int index, byte[] b, int off, int len) {
-    int bytesToWrite = Math.min(len, blockSize - index);
+  public int put(int block, int offset, byte[] b, int off, int len) {
+    int bytesToWrite = Math.min(len, blockSize - offset);
 
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
 
-    System.arraycopy(b, off, bytes, blockOff + index, bytesToWrite);
+    System.arraycopy(b, off, bytes, blockOff + offset, bytesToWrite);
     return bytesToWrite;
   }
 
   @Override
-  public int put(long block, int index, ByteBuffer buf) {
-    int bytesToWrite = Math.min(buf.remaining(), blockSize - index);
+  public int put(int block, int offset, ByteBuffer buf) {
+    int bytesToWrite = Math.min(buf.remaining(), blockSize - offset);
 
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
 
-    buf.get(bytes, blockOff + index, bytesToWrite);
+    buf.get(bytes, blockOff + offset, bytesToWrite);
     return bytesToWrite;
   }
 
   @Override
-  public int get(long block, int index) {
-    checkArgument(index < blockSize);
+  public int get(int block, int offset) {
+    checkArgument(offset < blockSize);
 
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
 
-    return UnsignedBytes.toInt(bytes[blockOff + index]);
+    return UnsignedBytes.toInt(bytes[blockOff + offset]);
   }
 
   @Override
-  public int get(long block, int index, byte[] b, int off, int len) {
-    int bytesToRead = Math.min(len, blockSize - index);
+  public int get(int block, int offset, byte[] b, int off, int len) {
+    int bytesToRead = Math.min(len, blockSize - offset);
 
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
 
-    System.arraycopy(bytes, blockOff + index, b, off, bytesToRead);
+    System.arraycopy(bytes, blockOff + offset, b, off, bytesToRead);
     return bytesToRead;
   }
 
   @Override
-  public int get(long block, int index, ByteBuffer buf, int len) {
-    int bytesToRead = Math.min(len, blockSize - index);
+  public int get(int block, int offset, ByteBuffer buf, int maxLen) {
+    int len = Math.min(blockSize - offset, maxLen);
 
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
 
-    buf.put(bytes, blockOff + index, bytesToRead);
-    return bytesToRead;
+    buf.put(bytes, blockOff + offset, len);
+    return len;
   }
 
   @Override
-  public ByteBuffer asByteBuffer(long block) {
+  public ByteBuffer asByteBuffer(int block, int offset, long maxLen) {
     byte[] bytes = bytes(block);
     int blockOff = offset(block);
 
-    return ByteBuffer.wrap(bytes, blockOff, blockSize).slice();
+    int len = (int) Math.min(blockSize - offset, maxLen);
+
+    return ByteBuffer.wrap(bytes, blockOff + offset, len);
   }
 
-  private byte[] bytes(long block) {
-    return arrays.get((int) (block / arraySize));
+  private byte[] bytes(int block) {
+    return arrays.get(block / blocksPerArray);
   }
 
-  private int offset(long block) {
-    return (int) (block % arraySize);
+  private int offset(int block) {
+    return (block % blocksPerArray) * blockSize;
   }
 }

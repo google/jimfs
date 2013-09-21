@@ -59,7 +59,7 @@ final class JimfsFileStore extends FileStore {
   private final String name;
   private final AttributeProviderRegistry attributeProviders;
 
-  private final RegularFileStorage storage = new MultiArrayDisk();
+  private final RegularFileStorage storage = new PrivateArrayDisk();
 
   /** Directory supplier with no extra file attributes. */
   private final Supplier<File> defaultDirectorySupplier = new DirectorySupplier();

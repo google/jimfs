@@ -17,13 +17,16 @@
 package com.google.jimfs.internal;
 
 /**
- * Tests for {@link ArrayPerBlockDiskByteStore}.
+ * Tests for byte stores created by {@link SharedArrayDisk}.
  *
  * @author Colin Decker
  */
-public class ArrayPerBlockDiskByteStoreTest extends AbstractByteStoreTest {
+public class SharedArrayDiskTest extends AbstractByteStoreTest {
 
-  private final ArrayPerBlockDisk disk = new ArrayPerBlockDisk(4);
+  /**
+   * Use small blocks and arrays so tests don't all just work in one block or one array.
+   */
+  private final SharedArrayDisk disk = new SharedArrayDisk(4, 2);
 
   @Override
   protected ByteStore createByteStore() {

@@ -55,8 +55,8 @@ final class DiskByteStore extends ByteStore {
   protected ByteStore createCopy() {
     BlockQueue copyBlocks = new BlockQueue(blocks.size() * 2);
     for (int i = 0; i < blocks.size(); i++) {
-      long block = blocks.get(i);
-      long copy = disk.alloc();
+      int block = blockForRead(i);
+      int copy = disk.alloc();
       disk.copy(block, copy);
       copyBlocks.add(copy);
     }
@@ -77,23 +77,24 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public boolean truncate(long size) {
-    long lastPosition = size - 1;
-    if (size < this.size) {
-      this.size = size;
-
-      int newBlockCount = blockIndex(lastPosition) + 1;
-      int blocksToRemove = blocks.size() - newBlockCount;
-      if (blocksToRemove > 0) {
-        BlockQueue blocksToFree = new BlockQueue(blocksToRemove);
-        for (int i = 0; i < blocksToRemove; i++) {
-          blocksToFree.add(blocks.take()); // removing blocks from the end
-        }
-        disk.free(blocksToFree);
-      }
-
-      return true;
+    if (size >= this.size) {
+      return false;
     }
-    return false;
+
+    long lastPosition = size - 1;
+    this.size = size;
+
+    int newBlockCount = blockIndex(lastPosition) + 1;
+    int blocksToRemove = blocks.size() - newBlockCount;
+    if (blocksToRemove > 0) {
+      BlockQueue blocksToFree = new BlockQueue(blocksToRemove);
+      for (int i = 0; i < blocksToRemove; i++) {
+        blocksToFree.add(blocks.take()); // removing blocks from the end
+      }
+      disk.free(blocksToFree);
+    }
+
+    return true;
   }
 
   /**
@@ -101,20 +102,31 @@ final class DiskByteStore extends ByteStore {
    * and pos and sets size to pos. New blocks are added to the file if necessary.
    */
   private void zeroForWrite(long pos) {
-    if (pos > size) {
-      long currentPos = size;
-      long remaining = pos - size;
-      while (remaining > 0) {
-        long block = blockForWrite(currentPos);
-        int off = indexInBlock(currentPos);
-        int lenToZero = (int) Math.min(disk.blockSize() - off, remaining);
-        disk.zero(block, off, lenToZero);
-        currentPos += lenToZero;
-        remaining -= lenToZero;
-      }
-
-      size = pos;
+    if (pos <= size) {
+      return;
     }
+
+    long remaining = pos - size;
+
+    int blockIndex = blockIndex(size);
+    int block = blockForWrite(blockIndex);
+    int off = offsetInBlock(size);
+    int len = (int) Math.min(disk.blockSize() - off, remaining);
+
+    disk.zero(block, off, len);
+
+    remaining -= len;
+
+    while (remaining > 0) {
+      block = blockForWrite(++blockIndex);
+      len = (int) Math.min(disk.blockSize(), remaining);
+
+      disk.zero(block, 0, len);
+
+      remaining -= len;
+    }
+
+    size = pos;
   }
 
   @Override
@@ -123,9 +135,11 @@ final class DiskByteStore extends ByteStore {
 
     zeroForWrite(pos);
 
-    disk.put(blockForWrite(pos), indexInBlock(pos), b);
+    int block = blockForWrite(blockIndex(pos));
+    int off = offsetInBlock(pos);
+    disk.put(block, off, b);
 
-    if (pos + 1 > size) {
+    if (pos >= size) {
       size = pos + 1;
     }
 
@@ -139,20 +153,35 @@ final class DiskByteStore extends ByteStore {
 
     zeroForWrite(pos);
 
-    int remaining = len;
-    long currentPos = pos;
-    int currentOff = off;
-    while (remaining > 0) {
-      long block = blockForWrite(currentPos);
-
-      int written = disk.put(block, indexInBlock(currentPos), b, currentOff, remaining);
-      remaining -= written;
-      currentPos += written;
-      currentOff += written;
+    if (len == 0) {
+      return 0;
     }
 
-    if (pos + len > size) {
-      size = pos + len;
+    int remaining = len;
+
+    int blockIndex = blockIndex(pos);
+    int block = blockForWrite(blockIndex);
+    int offInBlock = offsetInBlock(pos);
+    int writeLen = Math.min(disk.blockSize() - offInBlock, remaining);
+
+    disk.put(block, offInBlock, b, off, writeLen);
+
+    remaining -= writeLen;
+    off += writeLen;
+
+    while (remaining > 0) {
+      block = blockForWrite(++blockIndex);
+      writeLen = Math.min(disk.blockSize(), remaining);
+
+      disk.put(block, 0, b, off, writeLen);
+
+      remaining -= writeLen;
+      off += writeLen;
+    }
+
+    long newPos = pos + len;
+    if (newPos > size) {
+      size = newPos;
     }
 
     return len;
@@ -164,11 +193,22 @@ final class DiskByteStore extends ByteStore {
 
     zeroForWrite(pos);
 
+    if (!buf.hasRemaining()) {
+      return 0;
+    }
+
     int bytesToWrite = buf.remaining();
-    long currentPos = pos;
+
+    int blockIndex = blockIndex(pos);
+    int block = blockForWrite(blockIndex);
+    int off = offsetInBlock(pos);
+
+    disk.put(block, off, buf);
+
     while (buf.hasRemaining()) {
-      long block = blockForWrite(currentPos);
-      currentPos += disk.put(block, indexInBlock(currentPos), buf);
+      block = blockForWrite(++blockIndex);
+
+      disk.put(block, 0, buf);
     }
 
     if (pos + bytesToWrite > size) {
@@ -189,32 +229,47 @@ final class DiskByteStore extends ByteStore {
       return 0;
     }
 
-
-    long currentPos = pos;
     long remaining = count;
-    while (remaining > 0) {
-      long block = blockForWrite(currentPos);
 
-      ByteBuffer buffer = disk.asByteBuffer(block);
-      buffer.position(indexInBlock(currentPos));
-      if (buffer.remaining() > remaining) {
-        buffer.limit((int) (buffer.position() + remaining));
-      }
+    int blockIndex = blockIndex(pos);
+    int block = blockForWrite(blockIndex);
+    int off = offsetInBlock(pos);
 
-      int read = src.read(buffer);
+    ByteBuffer buf = disk.asByteBuffer(block, off, remaining);
+
+    int read = 0;
+    while (buf.hasRemaining()) {
+      read = src.read(buf);
       if (read == -1) {
         break;
       }
 
-      currentPos += read;
       remaining -= read;
     }
 
-    if (currentPos > size) {
-      size = currentPos;
+    if (read != -1) {
+      outer: while (remaining > 0) {
+        block = blockForWrite(++blockIndex);
+
+        buf = disk.asByteBuffer(block, 0, remaining);
+        while (buf.hasRemaining()) {
+          read = src.read(buf);
+          if (read == -1) {
+            break outer;
+          }
+
+          remaining -= read;
+        }
+      }
     }
 
-    return count - remaining;
+    long written = count - remaining;
+    long newPos = pos + written;
+    if (newPos > size) {
+      size = newPos;
+    }
+
+    return written;
   }
 
   @Override
@@ -225,7 +280,9 @@ final class DiskByteStore extends ByteStore {
       return -1;
     }
 
-    return disk.get(blockForRead(pos), indexInBlock(pos));
+    int block = blockForRead(blockIndex(pos));
+    int off = offsetInBlock(pos);
+    return disk.get(block, off);
   }
 
   @Override
@@ -234,21 +291,33 @@ final class DiskByteStore extends ByteStore {
     checkPositionIndexes(off, off + len, b.length);
 
     int bytesToRead = bytesToRead(pos, len);
+
     if (bytesToRead > 0) {
-      int currentRelativePos = 0;
-      int remaining = bytesToRead - currentRelativePos;
+      int remaining = bytesToRead;
+
+      int blockIndex = blockIndex(pos);
+      int block = blockForRead(blockIndex);
+      int offsetInBlock = offsetInBlock(pos);
+
+      int readLen = Math.min(disk.blockSize() - offsetInBlock, remaining);
+
+      disk.get(block, offsetInBlock, b, off, readLen);
+
+      remaining -= readLen;
+      off += readLen;
 
       while (remaining > 0) {
-        long currentPos = pos + currentRelativePos;
-        int currentOff = off + currentRelativePos;
+        block = blockForRead(++blockIndex);
 
-        long block = blockForRead(currentPos);
-        int indexInBlock = indexInBlock(currentPos);
-        int read = disk.get(block, indexInBlock, b, currentOff, remaining);
-        currentRelativePos += read;
-        remaining -= read;
+        readLen = Math.min(disk.blockSize(), remaining);
+
+        disk.get(block, 0, b, off, readLen);
+
+        remaining -= readLen;
+        off += readLen;
       }
     }
+
     return bytesToRead;
   }
 
@@ -257,20 +326,22 @@ final class DiskByteStore extends ByteStore {
     checkNotNegative(pos, "pos");
 
     int bytesToRead = bytesToRead(pos, buf.remaining());
+
     if (bytesToRead > 0) {
-      int currentRelativePos = 0;
       int remaining = bytesToRead;
 
-      while (remaining > 0) {
-        long currentPos = pos + currentRelativePos;
+      int blockIndex = blockIndex(pos);
+      int block = blockForRead(blockIndex);
+      int off = offsetInBlock(pos);
 
-        long block = blockForRead(currentPos);
-        int indexInBlock = indexInBlock(currentPos);
-        int read = disk.get(block, indexInBlock, buf, remaining);
-        currentRelativePos += read;
-        remaining -= read;
+      remaining -= disk.get(block, off, buf, remaining);
+
+      while (remaining > 0) {
+        block = blockForRead(++blockIndex);
+        remaining -= disk.get(block, 0, buf, remaining);
       }
     }
+
     return bytesToRead;
   }
 
@@ -279,70 +350,59 @@ final class DiskByteStore extends ByteStore {
     checkNotNegative(pos, "pos");
     checkNotNegative(count, "count");
 
-    if (count == 0) {
-      return 0;
-    }
-
     long bytesToRead = bytesToRead(pos, count);
+
     if (bytesToRead > 0) {
-      int currentRelativePos = 0;
       long remaining = bytesToRead;
 
+      int blockIndex = blockIndex(pos);
+      int block = blockForRead(blockIndex);
+      int off = offsetInBlock(pos);
+
+      ByteBuffer buf = disk.asByteBuffer(block, off, remaining);
+      while (buf.hasRemaining()) {
+        remaining -= dest.write(buf);
+      }
+
       while (remaining > 0) {
-        long currentPos = pos + currentRelativePos;
+        block = blockForRead(++blockIndex);
 
-        long block = blockForRead(currentPos);
-        int indexInBlock = indexInBlock(currentPos);
-
-        ByteBuffer buf = disk.asByteBuffer(block);
-        buf.position(indexInBlock);
-
-        int bytesToReadFromBlock = (int) Math.min(remaining, buf.remaining());
-        buf.limit(indexInBlock + bytesToReadFromBlock);
-
+        buf = disk.asByteBuffer(block, 0, remaining);
         while (buf.hasRemaining()) {
-          dest.write(buf);
+          remaining -= dest.write(buf);
         }
-
-        currentRelativePos += bytesToReadFromBlock;
-        remaining -= bytesToReadFromBlock;
       }
     }
+
     return Math.max(bytesToRead, 0); // don't return -1 for this method
   }
 
   /**
-   * Gets the block containing the given position. May return a proxy for empty blocks. Should not
-   * be called if pos >= size.
+   * Gets the block at the given index.
    */
-  private long blockForRead(long pos) {
-    return blocks.get(blockIndex(pos));
+  private int blockForRead(int index) {
+    return blocks.get(index);
   }
 
   /**
-   * Gets the block at the given position, expanding to create the block if necessary. Must return
-   * an actual writable block.
+   * Gets the block at the given index, expanding to create the block if necessary.
    */
-  private long blockForWrite(long pos) {
-    int index = blockIndex(pos);
-
-    int additionalBlocksNeeded = (index + 1) - blocks.size();
+  private int blockForWrite(int index) {
+    int additionalBlocksNeeded = index - blocks.size() + 1;
     expandBlocks(additionalBlocksNeeded);
 
     return blocks.get(index);
   }
 
   private void expandBlocks(int additionalBlocksNeeded) {
-    for (int i = 0; i < additionalBlocksNeeded; i++) {
-      blocks.add(disk.alloc());
-    }
+    disk.alloc(blocks, additionalBlocksNeeded);
   }
 
   private int blockIndex(long position) {
     return (int) (position / disk.blockSize());
   }
 
-  private int indexInBlock(long position) {
+  private int offsetInBlock(long position) {
     return (int) (position % disk.blockSize());
   }
 

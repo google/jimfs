@@ -27,9 +27,11 @@ import java.nio.ByteBuffer;
  */
 abstract class Disk implements RegularFileStorage {
 
+  /** 8 KB */
+  protected static final int DEFAULT_BLOCK_SIZE = 8 * 1024;
+
   protected final int blockSize;
   protected final BlockQueue blocks = new BlockQueue(1024);
-  private long totalSize;
 
   protected Disk(int blockSize) {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
@@ -43,17 +45,10 @@ abstract class Disk implements RegularFileStorage {
   }
 
   /**
-   * Initialize the disk by allocating initial blocks.
-   */
-  protected final void initialize() {
-    totalSize = allocateMoreBlocks() * blockSize;
-  }
-
-  /**
    * Allocates more blocks if possible. The {@code blocks} queue should have blocks in it when this
    * returns if an exception is not thrown. Returns the number of blocks allocated.
    */
-  protected abstract int allocateMoreBlocks();
+  protected abstract void allocateMoreBlocks();
 
   /**
    * Returns the size of blocks created by this disk.
@@ -62,9 +57,14 @@ abstract class Disk implements RegularFileStorage {
     return blockSize;
   }
 
+  /**
+   * Returns the number of blocks this disk contains.
+   */
+  protected abstract int blockCount();
+
   @Override
   public synchronized final long getTotalSpace() {
-    return totalSize;
+    return blockCount() * blockSize;
   }
 
   @Override
@@ -73,14 +73,27 @@ abstract class Disk implements RegularFileStorage {
   }
 
   /**
-   * Allocates and returns an available block.
+   * Allocates an available block and returns its ID.
    */
-  public final synchronized long alloc() {
+  public final synchronized int alloc() {
     if (blocks.isEmpty()) {
-      totalSize += allocateMoreBlocks() * blockSize;
+      allocateMoreBlocks();
     }
 
     return blocks.take();
+  }
+
+  /**
+   * Allocates numBlocks available blocks and adds their IDs to the given queue.
+   */
+  public final synchronized void alloc(BlockQueue queue, int numBlocks) {
+    while (blocks.size() < numBlocks) {
+      allocateMoreBlocks();
+    }
+
+    for (int i = 0; i < numBlocks; i++) {
+      queue.add(blocks.take());
+    }
   }
 
   /**
@@ -93,53 +106,50 @@ abstract class Disk implements RegularFileStorage {
   /**
    * Zeroes len bytes in the given block starting at the given offset.
    */
-  public abstract void zero(long block, int off, int len);
+  public abstract void zero(int block, int offset, int len);
 
   /**
    * Copies the block at from to the block at to.
    */
-  public abstract void copy(long from, long to);
+  public abstract void copy(int from, int to);
 
   /**
-   * Puts the given byte at the given index in the given block.
-   *
-   * @throws IllegalArgumentException if index >= the size of this block
+   * Puts the given byte at the given offset in the given block.
    */
-  public abstract void put(long block, int index, byte b);
+  public abstract void put(int block, int offset, byte b);
 
   /**
-   * Puts the given subsequence of the given array at the given index in the given block.
+   * Puts the given slice of the given array at the given offset in the given block.
    */
-  public abstract int put(long block, int index, byte[] b, int off, int len);
+  public abstract int put(int block, int offset, byte[] b, int off, int len);
 
   /**
-   * Puts the contents of the given byte buffer at the given index in the given block.
+   * Puts the contents of the given byte buffer at the given offset in the given block.
    */
-  public abstract int put(long block, int index, ByteBuffer buf);
+  public abstract int put(int block, int offset, ByteBuffer buf);
 
   /**
-   * Returns the byte at the given index in the given block.
-   *
-   * @throws IllegalArgumentException if index >= the size of this block
+   * Returns the byte at the given offset in the given block.
    */
-  public abstract int get(long block, int index);
+  public abstract int get(int block, int offset);
 
   /**
-   * Reads len bytes starting at the given index in the given block into the given byte array
-   * starting at the given offset.
+   * Reads len bytes starting at the given offset in the given block into the given slice of the
+   * given byte array.
    */
-  public abstract int get(long block, int index, byte[] b, int off, int len);
+  public abstract int get(int block, int offset, byte[] b, int off, int len);
 
   /**
-   * Reads up to len bytes starting at the given index in the given block into the given byte
+   * Reads up to maxLen bytes starting at the given offset in the given block into the given byte
    * buffer.
    */
-  public abstract int get(long block, int index, ByteBuffer buf, int len);
+  public abstract int get(int block, int offset, ByteBuffer buf, int maxLen);
 
   /**
-   * Returns a view of the given block as a byte buffer.
+   * Returns a ByteBuffer view of the slice of the given block starting at the given offset and
+   * having at most the given maximum length.
    */
-  public abstract ByteBuffer asByteBuffer(long block);
+  public abstract ByteBuffer asByteBuffer(int block, int offset, long maxLen);
 
   /**
    * Simple queue of block start positions. Can be read like a list, but values can only be added
@@ -147,11 +157,11 @@ abstract class Disk implements RegularFileStorage {
    */
   static final class BlockQueue {
 
-    private long[] values;
+    private int[] values;
     private int head;
 
     public BlockQueue(int initialCapacity) {
-      this.values = new long[initialCapacity];
+      this.values = new int[initialCapacity];
     }
 
     private void expandIfNecessary(int minSize) {
@@ -160,7 +170,7 @@ abstract class Disk implements RegularFileStorage {
         while (newLength < minSize) {
           newLength *= 2;
         }
-        long[] newValues = new long[newLength];
+        int[] newValues = new int[newLength];
         System.arraycopy(values, 0, newValues, 0, values.length);
         this.values = newValues;
       }
@@ -178,7 +188,7 @@ abstract class Disk implements RegularFileStorage {
       addAll(queue.values, queue.head);
     }
 
-    public void addAll(long[] values, int len) {
+    public void addAll(int[] values, int len) {
       int end = head + len;
       expandIfNecessary(end);
 
@@ -186,12 +196,12 @@ abstract class Disk implements RegularFileStorage {
       head = end;
     }
 
-    public void add(long value) {
+    public void add(int value) {
       expandIfNecessary(head + 1);
       values[head++] = value;
     }
 
-    public long get(int index) {
+    public int get(int index) {
       return values[index];
     }
 
@@ -199,7 +209,7 @@ abstract class Disk implements RegularFileStorage {
       head = 0;
     }
 
-    public long take() {
+    public int take() {
       return values[--head];
     }
   }
