@@ -53,7 +53,7 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   protected ByteStore createCopy() {
-    BlockQueue copyBlocks = new BlockQueue(blocks.size() * 2);
+    BlockQueue copyBlocks = new BlockQueue(Math.max(blocks.size() * 2, 32));
     for (int i = 0; i < blocks.size(); i++) {
       int block = blockForRead(i);
       int copy = disk.alloc();

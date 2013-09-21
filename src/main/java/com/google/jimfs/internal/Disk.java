@@ -21,7 +21,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import java.nio.ByteBuffer;
 
 /**
- * A resizable, in-memory pseudo-disk acting as a shared space for storing file data.
+ * A resizable pseudo-disk acting as a shared space for storing file data. A disk allocates fixed
+ * size blocks of bytes to files as needed and retains blocks that have been freed for reuse. Each
+ * block is represented by an integer which is used to locate the block for read and write
+ * operations implemented by the disk.
  *
  * @author Colin Decker
  */
@@ -30,8 +33,15 @@ abstract class Disk implements RegularFileStorage {
   /** 8 KB */
   protected static final int DEFAULT_BLOCK_SIZE = 8 * 1024;
 
+  /**
+   * Fixed size of each block for this disk.
+   */
   protected final int blockSize;
-  protected final BlockQueue blocks = new BlockQueue(1024);
+
+  /**
+   * Queue of free blocks to be allocated to files.
+   */
+  protected final BlockQueue freeBlocks = new BlockQueue(1024);
 
   protected Disk(int blockSize) {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
@@ -69,30 +79,30 @@ abstract class Disk implements RegularFileStorage {
 
   @Override
   public synchronized final long getUnallocatedSpace() {
-    return blocks.size() * blockSize;
+    return freeBlocks.size() * blockSize;
   }
 
   /**
-   * Allocates an available block and returns its ID.
+   * Allocates a block and returns its identifier.
    */
   public final synchronized int alloc() {
-    if (blocks.isEmpty()) {
+    if (freeBlocks.isEmpty()) {
       allocateMoreBlocks();
     }
 
-    return blocks.take();
+    return freeBlocks.take();
   }
 
   /**
-   * Allocates numBlocks available blocks and adds their IDs to the given queue.
+   * Allocates the given number of blocks and adds their identifiers to the given queue.
    */
   public final synchronized void alloc(BlockQueue queue, int numBlocks) {
-    while (blocks.size() < numBlocks) {
+    while (freeBlocks.size() < numBlocks) {
       allocateMoreBlocks();
     }
 
     for (int i = 0; i < numBlocks; i++) {
-      queue.add(blocks.take());
+      queue.add(freeBlocks.take());
     }
   }
 
@@ -100,7 +110,7 @@ abstract class Disk implements RegularFileStorage {
    * Frees all blocks in the given queue.
    */
   public final synchronized void free(BlockQueue blocks) {
-    this.blocks.addAll(blocks);
+    this.freeBlocks.addAll(blocks);
   }
 
   /**
@@ -152,8 +162,8 @@ abstract class Disk implements RegularFileStorage {
   public abstract ByteBuffer asByteBuffer(int block, int offset, long maxLen);
 
   /**
-   * Simple queue of block start positions. Can be read like a list, but values can only be added
-   * or removed on the end.
+   * Simple queue of block identifiers. Can be read like a list, but values can only be added
+   * or removed at the end.
    */
   static final class BlockQueue {
 

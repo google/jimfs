@@ -71,7 +71,7 @@ final class SharedArrayDisk extends Disk {
 
     // add blocks in reverse so they come out in contiguous order... not that it really matters
     for (int i = newBlockCount - 1; i >= blockCount; i--) {
-      blocks.add(i);
+      freeBlocks.add(i);
     }
 
     blockCount = newBlockCount;

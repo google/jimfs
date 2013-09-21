@@ -17,9 +17,7 @@
 package com.google.jimfs.internal;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * {@link Disk} that gives each block its own byte array.
@@ -28,7 +26,8 @@ import java.util.List;
  */
 final class PrivateArrayDisk extends Disk {
 
-  private final List<byte[]> blockIndex = new ArrayList<>();
+  private byte[][] blockIndex = new byte[256][];
+  private int blockCount;
 
   /**
    * Creates a disk with the default block size.
@@ -46,13 +45,18 @@ final class PrivateArrayDisk extends Disk {
 
   @Override
   protected void allocateMoreBlocks() {
-    blocks.add(blockCount()); // block count is also the index of the block we're about to allocate
-    blockIndex.add(new byte[blockSize]);
+    int newBlockCount = blockCount + 1;
+    if (newBlockCount > blockIndex.length) {
+      blockIndex = Arrays.copyOf(blockIndex, blockIndex.length * 2);
+    }
+    freeBlocks.add(blockCount()); // block count is also the index of the block we're about to allocate
+    blockIndex[blockCount] = new byte[blockSize];
+    blockCount = newBlockCount;
   }
 
   @Override
   protected int blockCount() {
-    return blockIndex.size();
+    return blockCount;
   }
 
   @Override
@@ -110,6 +114,6 @@ final class PrivateArrayDisk extends Disk {
    * Gets the byte array for the given block.
    */
   private byte[] bytes(int block) {
-    return blockIndex.get(block);
+    return blockIndex[block];
   }
 }
