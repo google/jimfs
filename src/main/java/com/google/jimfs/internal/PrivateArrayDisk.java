@@ -26,7 +26,7 @@ import java.util.Arrays;
  */
 final class PrivateArrayDisk extends Disk {
 
-  private byte[][] blockIndex = new byte[256][];
+  private byte[][] blocks = new byte[256][];
   private int blockCount;
 
   /**
@@ -45,13 +45,14 @@ final class PrivateArrayDisk extends Disk {
 
   @Override
   protected void allocateMoreBlocks() {
-    int newBlockCount = blockCount + 1;
-    if (newBlockCount > blockIndex.length) {
-      blockIndex = Arrays.copyOf(blockIndex, blockIndex.length * 2);
+    int newBlockIndex = blockCount;
+    blockCount++;
+    if (blockCount > blocks.length) {
+      blocks = Arrays.copyOf(blocks, blocks.length * 2);
     }
-    freeBlocks.add(blockCount()); // block count is also the index of the block we're about to allocate
-    blockIndex[blockCount] = new byte[blockSize];
-    blockCount = newBlockCount;
+
+    blocks[newBlockIndex] = new byte[blockSize];
+    freeBlocks.add(newBlockIndex);
   }
 
   @Override
@@ -61,59 +62,52 @@ final class PrivateArrayDisk extends Disk {
 
   @Override
   public void zero(int block, int offset, int len) {
-    Arrays.fill(bytes(block), offset, offset + len, (byte) 0);
+    Arrays.fill(blocks[block], offset, offset + len, (byte) 0);
   }
 
   @Override
   public void copy(int from, int to) {
-    System.arraycopy(bytes(from), 0, bytes(to), 0, blockSize);
+    System.arraycopy(blocks[from], 0, blocks[to], 0, blockSize);
   }
 
   @Override
   public void put(int block, int offset, byte b) {
-    bytes(block)[offset] = b;
+    blocks[block][offset] = b;
   }
 
   @Override
   public int put(int block, int offset, byte[] b, int off, int len) {
-    System.arraycopy(b, off, bytes(block), offset, len);
+    System.arraycopy(b, off, blocks[block], offset, len);
     return len;
   }
 
   @Override
   public int put(int block, int offset, ByteBuffer buf) {
     int len = Math.min(blockSize - offset, buf.remaining());
-    buf.get(bytes(block), offset, len);
+    buf.get(blocks[block], offset, len);
     return len;
   }
 
   @Override
   public int get(int block, int offset) {
-    return bytes(block)[offset];
+    return blocks[block][offset];
   }
 
   @Override
   public int get(int block, int offset, byte[] b, int off, int len) {
-    System.arraycopy(bytes(block), offset, b, off, len);
+    System.arraycopy(blocks[block], offset, b, off, len);
     return len;
   }
 
   @Override
   public int get(int block, int offset, ByteBuffer buf, int maxLen) {
     int len = Math.min(blockSize - offset, maxLen);
-    buf.put(bytes(block), offset, len);
+    buf.put(blocks[block], offset, len);
     return len;
   }
 
   @Override
   public ByteBuffer asByteBuffer(int block, int offset, long maxLen) {
-    return ByteBuffer.wrap(bytes(block), offset, (int) Math.min(blockSize - offset, maxLen));
-  }
-
-  /**
-   * Gets the byte array for the given block.
-   */
-  private byte[] bytes(int block) {
-    return blockIndex[block];
+    return ByteBuffer.wrap(blocks[block], offset, (int) Math.min(blockSize - offset, maxLen));
   }
 }

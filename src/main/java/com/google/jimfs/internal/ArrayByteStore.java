@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static com.google.jimfs.internal.Util.nextPowerOf2;
 
 import com.google.common.primitives.UnsignedBytes;
 
@@ -80,14 +81,6 @@ final class ArrayByteStore extends ByteStore {
 
     // don't create an array smaller than the default initial array size
     return new byte[Math.max(newSize, INITIAL_ARRAY_SIZE)];
-  }
-
-  /**
-   * Returns the next power of 2 >= n.
-   */
-  private static int nextPowerOf2(int n) {
-    int highestOneBit = Integer.highestOneBit(n);
-    return highestOneBit == n ? n : highestOneBit << 1;
   }
 
   /**

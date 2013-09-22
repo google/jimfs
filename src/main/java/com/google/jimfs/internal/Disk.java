@@ -17,8 +17,10 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.jimfs.internal.Util.nextPowerOf2;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * A resizable pseudo-disk acting as a shared space for storing file data. A disk allocates fixed
@@ -56,7 +58,7 @@ abstract class Disk implements RegularFileStorage {
 
   /**
    * Allocates more blocks if possible. The {@code blocks} queue should have blocks in it when this
-   * returns if an exception is not thrown. Returns the number of blocks allocated.
+   * returns if an exception is not thrown.
    */
   protected abstract void allocateMoreBlocks();
 
@@ -176,13 +178,7 @@ abstract class Disk implements RegularFileStorage {
 
     private void expandIfNecessary(int minSize) {
       if (minSize > values.length) {
-        int newLength = values.length * 2;
-        while (newLength < minSize) {
-          newLength *= 2;
-        }
-        int[] newValues = new int[newLength];
-        System.arraycopy(values, 0, newValues, 0, values.length);
-        this.values = newValues;
+        this.values = Arrays.copyOf(values, nextPowerOf2(minSize));
       }
     }
 
