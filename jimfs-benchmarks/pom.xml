@@ -18,13 +18,9 @@
       <version>${parent.version}</version>
     </dependency>
 
-    <!--
-    This currently relies on the latest version of Caliper which must be built from HEAD.
-     -->
     <dependency>
       <groupId>com.google.caliper</groupId>
       <artifactId>caliper</artifactId>
-      <version>1.0-beta-SNAPSHOT</version>
     </dependency>
   </dependencies>
 

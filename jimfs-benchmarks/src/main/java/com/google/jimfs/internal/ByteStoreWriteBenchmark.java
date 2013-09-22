@@ -13,10 +13,10 @@ import java.util.Random;
 /**
  * @author Colin Decker
  */
-@VmOptions({"-Xmx12G"})
+@VmOptions({"-Xmx8G"})
 public class ByteStoreWriteBenchmark {
 
-  @Param({/*"1000", */"100000", "1000000", "10000000"})
+  @Param({"100000", "1000000", "10000000"})
   private int size;
 
   @Param
@@ -37,8 +37,13 @@ public class ByteStoreWriteBenchmark {
     store = type.createByteStore();
   }
 
+  /**
+   * Only benchmarking 8K buffered write because A) it's probably about the norm, and B) previous
+   * benchmarking has shown that there isn't actually much difference between that and writing the
+   * whole array in one call.
+   */
   @Macrobenchmark
-  public int timeBufferedWrite() {
+  public int write() {
     int pos = 0;
     while (pos < size) {
       pos += store.write(pos, bytes, pos, Math.min(8192, size - pos));
@@ -50,38 +55,6 @@ public class ByteStoreWriteBenchmark {
   public void afterRep() {
     store.delete();
   }
-
-  /*@Benchmark
-  public int timeBufferedWrite(int reps) {
-    int result = 0;
-    for (int i = 0; i < reps; i++) {
-      // must create a new store each rep to ensure state is fresh
-      ByteStore store = type.createByteStore();
-      int pos = 0;
-      while (pos < size) {
-        pos += store.write(pos, bytes, pos, Math.min(8192, size - pos));
-        result ^= pos;
-      }
-      store.truncate(0); // ensure disk stores return their blocks to the disk for reuse
-    }
-    return result;
-  }*/
-
-  /*@Benchmark
-  public int timeWriteWholeArray(int reps) {
-    int result = 0;
-    for (int i = 0; i < reps; i++) {
-      // must create a new store each rep to ensure state is fresh
-      ByteStore store = type.createByteStore();
-      int pos = 0;
-      while (pos < size) {
-        pos += store.write(pos, bytes);
-        result ^= pos;
-      }
-      store.truncate(0); // ensure disk stores return their blocks to the disk for reuse
-    }
-    return result;
-  }*/
 
   public static void main(String[] args) {
     CaliperMain.main(ByteStoreWriteBenchmark.class, args);
@@ -96,36 +69,22 @@ public class ByteStoreWriteBenchmark {
       }
     },
 
-    PRIVATE_ARRAY_DISK_EMPTY {
+    DISK_EMPTY_8KB_BLOCKS {
       @Override
       public ByteStore createByteStore() {
         return new PrivateArrayDisk().createByteStore();
       }
     },
 
-    PRIVATE_ARRAY_DISK_ALREADY_ALLOCATED {
+    DISK_EMPTY_32KB_BLOCKS {
+      @Override
+      public ByteStore createByteStore() {
+        return new PrivateArrayDisk(32 * 1024).createByteStore();
+      }
+    },
+
+    DISK_ALREADY_ALLOCATED {
       private final Disk disk = new PrivateArrayDisk();
-      {
-        while (disk.getTotalSpace() < 10000000) {
-          disk.allocateMoreBlocks();
-        }
-      }
-
-      @Override
-      public ByteStore createByteStore() {
-        return disk.createByteStore();
-      }
-    },
-
-    SHARED_ARRAY_DISK_EMPTY {
-      @Override
-      public ByteStore createByteStore() {
-        return new SharedArrayDisk().createByteStore();
-      }
-    },
-
-    SHARED_ARRAY_DISK_ALREADY_ALLOCATED {
-      private final Disk disk = new SharedArrayDisk();
       {
         while (disk.getTotalSpace() < 10000000) {
           disk.allocateMoreBlocks();
