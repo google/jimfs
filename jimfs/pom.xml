@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <groupId>com.google.jimfs</groupId>
+    <artifactId>jimfs-parent</artifactId>
+    <version>0.6-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>jimfs</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
+    <!--
+    TODO(cgdecker): Don't really like needing a dependency on ICU4J here.
+    However, it does seem like the best option for dealing with good general purpose case
+    insensitivity with Normalizer2. Of course, not many people probably care about case
+    insensitivity beyond ASCII for an in-memory file system, so I'll see if I can make it optional
+    unless the user really wants Unicode case insensitivity...
+     -->
+    <dependency>
+      <groupId>com.ibm.icu</groupId>
+      <artifactId>icu4j</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.code.findbugs</groupId>
+      <artifactId>jsr305</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava-testlib</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.truth0</groupId>
+      <artifactId>truth</artifactId>
+    </dependency>
+  </dependencies>
+
+</project>

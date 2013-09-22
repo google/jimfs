@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.runner.CaliperMain;
@@ -32,11 +33,11 @@ import java.util.Random;
 /**
  * @author Colin Decker
  */
-public class NameBenchmark extends Benchmark {
+public class NameBenchmark {
 
-  private static int CHAR_RANGE_START = '.';
-  private static int CHAR_RANGE_END = 'z';
-  private static int CHAR_RANGE_LENGTH = CHAR_RANGE_END - CHAR_RANGE_START;
+  private static final int CHAR_RANGE_START = '.';
+  private static final int CHAR_RANGE_END = 'z';
+  private static final int CHAR_RANGE_LENGTH = CHAR_RANGE_END - CHAR_RANGE_START;
 
   private static final Collator COLLATOR = Collator.getInstance(Locale.US);
   private static final Normalizer2 NORMALIZER = Normalizer2.getNFKCCasefoldInstance();
@@ -52,7 +53,7 @@ public class NameBenchmark extends Benchmark {
   private Iterable<Name> names;
   private Iterable<Name> names2;
 
-  @Override
+  @BeforeExperiment
   protected void setUp() throws Exception {
     // consistent for each run
     Random random = new Random(928374893271892L);
@@ -85,6 +86,7 @@ public class NameBenchmark extends Benchmark {
     return Iterables.cycle(nameBuilder.build());
   }
 
+  @Benchmark
   public int timeCreate(int reps) {
     Iterator<String> iterator = strings.iterator();
     int result = 0;
@@ -94,6 +96,7 @@ public class NameBenchmark extends Benchmark {
     return result;
   }
 
+  @Benchmark
   public int timeEqualsAndHashCode(int reps) {
     Iterator<Name> iterator = names.iterator();
     Iterator<Name> iterator2 = names2.iterator();
@@ -112,6 +115,7 @@ public class NameBenchmark extends Benchmark {
     CaliperMain.main(NameBenchmark.class, args);
   }
 
+  @SuppressWarnings("unused")
   private enum NameImpl {
     SIMPLE {
       @Override

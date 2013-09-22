@@ -21,70 +21,71 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.google.jimfs</groupId>
-  <artifactId>jimfs</artifactId>
+  <artifactId>jimfs-parent</artifactId>
+  <packaging>pom</packaging>
   <version>0.6-SNAPSHOT</version>
+
+  <modules>
+    <module>jimfs</module>
+    <module>jimfs-benchmarks</module>
+  </modules>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <guava.version>15.0</guava.version>
   </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-    </dependency>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
+      </dependency>
 
-    <!--
-    TODO(cgdecker): Don't really like needing a dependency on ICU4J here.
-    However, it does seem like the best option for dealing with good general purpose case
-    insensitivity with Normalizer2. Of course, not many people probably care about case
-    insensitivity beyond ASCII for an in-memory file system, so I'll see if I can make it optional
-    unless the user really wants Unicode case insensitivity...
-     -->
-    <dependency>
-      <groupId>com.ibm.icu</groupId>
-      <artifactId>icu4j</artifactId>
-      <version>51.2</version>
-      <optional>true</optional>
-    </dependency>
+      <!--
+      TODO(cgdecker): Don't really like needing a dependency on ICU4J here.
+      However, it does seem like the best option for dealing with good general purpose case
+      insensitivity with Normalizer2. Of course, not many people probably care about case
+      insensitivity beyond ASCII for an in-memory file system, so I'll see if I can make it optional
+      unless the user really wants Unicode case insensitivity...
+       -->
+      <dependency>
+        <groupId>com.ibm.icu</groupId>
+        <artifactId>icu4j</artifactId>
+        <version>51.2</version>
+        <optional>true</optional>
+      </dependency>
 
-    <dependency>
-      <groupId>com.google.code.findbugs</groupId>
-      <artifactId>jsr305</artifactId>
-      <version>2.0.1</version>
-      <scope>provided</scope>
-    </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>2.0.1</version>
+        <scope>provided</scope>
+      </dependency>
 
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.11</version>
+        <scope>test</scope>
+      </dependency>
 
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava-testlib</artifactId>
-      <version>${guava.version}</version>
-      <scope>test</scope>
-    </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava-testlib</artifactId>
+        <version>${guava.version}</version>
+        <scope>test</scope>
+      </dependency>
 
-    <dependency>
-      <groupId>org.truth0</groupId>
-      <artifactId>truth</artifactId>
-      <version>0.13</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.caliper</groupId>
-      <artifactId>caliper</artifactId>
-      <version>1.0-beta-1</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+      <dependency>
+        <groupId>org.truth0</groupId>
+        <artifactId>truth</artifactId>
+        <version>0.13</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <plugins>

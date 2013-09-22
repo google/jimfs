@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <groupId>com.google.jimfs</groupId>
+    <artifactId>jimfs-parent</artifactId>
+    <version>0.6-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>jimfs-benchmarks</artifactId>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.google.jimfs</groupId>
+      <artifactId>jimfs</artifactId>
+      <version>${parent.version}</version>
+    </dependency>
+
+    <!--
+    This currently relies on the latest version of Caliper which must be built from HEAD.
+     -->
+    <dependency>
+      <groupId>com.google.caliper</groupId>
+      <artifactId>caliper</artifactId>
+      <version>1.0-beta-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+
+</project>
