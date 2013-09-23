@@ -17,13 +17,13 @@
 package com.google.jimfs.internal;
 
 /**
- * Tests for byte stores created by {@link PrivateArrayDisk}.
+ * Tests for byte stores created by {@link HeapDisk}.
  *
  * @author Colin Decker
  */
-public class PrivateArrayDiskTest extends AbstractByteStoreTest {
+public class HeapDiskTest extends AbstractByteStoreTest {
 
-  private final Disk disk = new PrivateArrayDisk();
+  private final Disk disk = new HeapDisk();
 
   @Override
   protected ByteStore createByteStore() {

@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 import static com.google.jimfs.internal.Disk.BlockQueue;
 
+import com.google.common.primitives.UnsignedBytes;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -56,9 +58,7 @@ final class DiskByteStore extends ByteStore {
     BlockQueue copyBlocks = new BlockQueue(Math.max(blocks.size() * 2, 32));
     for (int i = 0; i < blocks.size(); i++) {
       int block = blockForRead(i);
-      int copy = disk.alloc();
-      disk.copy(block, copy);
-      copyBlocks.add(copy);
+      copyBlocks.add(disk.copy(block));
     }
     return new DiskByteStore(disk, copyBlocks, size);
   }
@@ -111,19 +111,13 @@ final class DiskByteStore extends ByteStore {
     int blockIndex = blockIndex(size);
     int block = blockForWrite(blockIndex);
     int off = offsetInBlock(size);
-    int len = (int) Math.min(disk.blockSize() - off, remaining);
 
-    disk.zero(block, off, len);
-
-    remaining -= len;
+    remaining -= disk.zero(block, off, length(off, remaining));
 
     while (remaining > 0) {
       block = blockForWrite(++blockIndex);
-      len = (int) Math.min(disk.blockSize(), remaining);
 
-      disk.zero(block, 0, len);
-
-      remaining -= len;
+      remaining -= disk.zero(block, 0, length(remaining));
     }
 
     size = pos;
@@ -162,21 +156,17 @@ final class DiskByteStore extends ByteStore {
     int blockIndex = blockIndex(pos);
     int block = blockForWrite(blockIndex);
     int offInBlock = offsetInBlock(pos);
-    int writeLen = Math.min(disk.blockSize() - offInBlock, remaining);
 
-    disk.put(block, offInBlock, b, off, writeLen);
-
-    remaining -= writeLen;
-    off += writeLen;
+    int written = disk.put(block, offInBlock, b, off, length(offInBlock, remaining));
+    remaining -= written;
+    off += written;
 
     while (remaining > 0) {
       block = blockForWrite(++blockIndex);
-      writeLen = Math.min(disk.blockSize(), remaining);
 
-      disk.put(block, 0, b, off, writeLen);
-
-      remaining -= writeLen;
-      off += writeLen;
+      written = disk.put(block, 0, b, off, length(remaining));
+      remaining -= written;
+      off += written;
     }
 
     long newPos = pos + len;
@@ -235,7 +225,7 @@ final class DiskByteStore extends ByteStore {
     int block = blockForWrite(blockIndex);
     int off = offsetInBlock(pos);
 
-    ByteBuffer buf = disk.asByteBuffer(block, off, remaining);
+    ByteBuffer buf = disk.asByteBuffer(block, off, length(off, remaining));
 
     int read = 0;
     while (buf.hasRemaining()) {
@@ -251,7 +241,7 @@ final class DiskByteStore extends ByteStore {
       outer: while (remaining > 0) {
         block = blockForWrite(++blockIndex);
 
-        buf = disk.asByteBuffer(block, 0, remaining);
+        buf = disk.asByteBuffer(block, 0, length(remaining));
         while (buf.hasRemaining()) {
           read = src.read(buf);
           if (read == -1) {
@@ -282,7 +272,7 @@ final class DiskByteStore extends ByteStore {
 
     int block = blockForRead(blockIndex(pos));
     int off = offsetInBlock(pos);
-    return disk.get(block, off);
+    return UnsignedBytes.toInt(disk.get(block, off));
   }
 
   @Override
@@ -299,22 +289,16 @@ final class DiskByteStore extends ByteStore {
       int block = blockForRead(blockIndex);
       int offsetInBlock = offsetInBlock(pos);
 
-      int readLen = Math.min(disk.blockSize() - offsetInBlock, remaining);
-
-      disk.get(block, offsetInBlock, b, off, readLen);
-
-      remaining -= readLen;
-      off += readLen;
+      int read = disk.get(block, offsetInBlock, b, off, length(offsetInBlock, remaining));
+      remaining -= read;
+      off += read;
 
       while (remaining > 0) {
         block = blockForRead(++blockIndex);
 
-        readLen = Math.min(disk.blockSize(), remaining);
-
-        disk.get(block, 0, b, off, readLen);
-
-        remaining -= readLen;
-        off += readLen;
+        read = disk.get(block, 0, b, off, length(remaining));
+        remaining -= read;
+        off += read;
       }
     }
 
@@ -334,11 +318,11 @@ final class DiskByteStore extends ByteStore {
       int block = blockForRead(blockIndex);
       int off = offsetInBlock(pos);
 
-      remaining -= disk.get(block, off, buf, remaining);
+      remaining -= disk.get(block, off, buf, length(off, remaining));
 
       while (remaining > 0) {
         block = blockForRead(++blockIndex);
-        remaining -= disk.get(block, 0, buf, remaining);
+        remaining -= disk.get(block, 0, buf, length(remaining));
       }
     }
 
@@ -359,18 +343,20 @@ final class DiskByteStore extends ByteStore {
       int block = blockForRead(blockIndex);
       int off = offsetInBlock(pos);
 
-      ByteBuffer buf = disk.asByteBuffer(block, off, remaining);
+      ByteBuffer buf = disk.asByteBuffer(block, off, length(off, remaining));
       while (buf.hasRemaining()) {
         remaining -= dest.write(buf);
       }
+      buf.clear();
 
       while (remaining > 0) {
         block = blockForRead(++blockIndex);
 
-        buf = disk.asByteBuffer(block, 0, remaining);
+        buf = disk.asByteBuffer(block, 0, length(remaining));
         while (buf.hasRemaining()) {
           remaining -= dest.write(buf);
         }
+        buf.clear();
       }
     }
 
@@ -404,6 +390,14 @@ final class DiskByteStore extends ByteStore {
 
   private int offsetInBlock(long position) {
     return (int) (position % disk.blockSize());
+  }
+
+  private int length(long max) {
+    return (int) Math.min(disk.blockSize(), max);
+  }
+
+  private int length(int off, long max) {
+    return (int) Math.min(disk.blockSize() - off, max);
   }
 
   /**

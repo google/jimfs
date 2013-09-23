@@ -116,14 +116,14 @@ abstract class Disk implements RegularFileStorage {
   }
 
   /**
-   * Zeroes len bytes in the given block starting at the given offset.
+   * Zeroes len bytes in the given block starting at the given offset. Returns len.
    */
-  public abstract void zero(int block, int offset, int len);
+  public abstract int zero(int block, int offset, int len);
 
   /**
-   * Copies the block at from to the block at to.
+   * Copies the given block and returns the copy.
    */
-  public abstract void copy(int from, int to);
+  public abstract int copy(int block);
 
   /**
    * Puts the given byte at the given offset in the given block.
@@ -143,7 +143,7 @@ abstract class Disk implements RegularFileStorage {
   /**
    * Returns the byte at the given offset in the given block.
    */
-  public abstract int get(int block, int offset);
+  public abstract byte get(int block, int offset);
 
   /**
    * Reads len bytes starting at the given offset in the given block into the given slice of the
@@ -152,16 +152,15 @@ abstract class Disk implements RegularFileStorage {
   public abstract int get(int block, int offset, byte[] b, int off, int len);
 
   /**
-   * Reads up to maxLen bytes starting at the given offset in the given block into the given byte
-   * buffer.
+   * Reads len bytes starting at the given offset in the given block into the given byte buffer.
    */
-  public abstract int get(int block, int offset, ByteBuffer buf, int maxLen);
+  public abstract int get(int block, int offset, ByteBuffer buf, int len);
 
   /**
    * Returns a ByteBuffer view of the slice of the given block starting at the given offset and
-   * having at most the given maximum length.
+   * having the given length.
    */
-  public abstract ByteBuffer asByteBuffer(int block, int offset, long maxLen);
+  public abstract ByteBuffer asByteBuffer(int block, int offset, int len);
 
   /**
    * Simple queue of block identifiers. Can be read like a list, but values can only be added

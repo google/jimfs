@@ -20,11 +20,11 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * {@link Disk} that gives each block its own byte array.
+ * {@link Disk} using byte arrays for blocks.
  *
  * @author Colin Decker
  */
-final class PrivateArrayDisk extends Disk {
+final class HeapDisk extends Disk {
 
   private byte[][] blocks = new byte[256][];
   private int blockCount;
@@ -32,14 +32,14 @@ final class PrivateArrayDisk extends Disk {
   /**
    * Creates a disk with the default block size.
    */
-  public PrivateArrayDisk() {
+  public HeapDisk() {
     this(DEFAULT_BLOCK_SIZE);
   }
 
   /**
    * Creates a disk with the given block size.
    */
-  public PrivateArrayDisk(int blockSize) {
+  public HeapDisk(int blockSize) {
     super(blockSize);
   }
 
@@ -61,13 +61,16 @@ final class PrivateArrayDisk extends Disk {
   }
 
   @Override
-  public void zero(int block, int offset, int len) {
+  public int zero(int block, int offset, int len) {
     Arrays.fill(blocks[block], offset, offset + len, (byte) 0);
+    return len;
   }
 
   @Override
-  public void copy(int from, int to) {
-    System.arraycopy(blocks[from], 0, blocks[to], 0, blockSize);
+  public int copy(int block) {
+    int copy = alloc();
+    System.arraycopy(blocks[block], 0, blocks[copy], 0, blockSize);
+    return copy;
   }
 
   @Override
@@ -89,7 +92,7 @@ final class PrivateArrayDisk extends Disk {
   }
 
   @Override
-  public int get(int block, int offset) {
+  public byte get(int block, int offset) {
     return blocks[block][offset];
   }
 
@@ -100,14 +103,13 @@ final class PrivateArrayDisk extends Disk {
   }
 
   @Override
-  public int get(int block, int offset, ByteBuffer buf, int maxLen) {
-    int len = Math.min(blockSize - offset, maxLen);
+  public int get(int block, int offset, ByteBuffer buf, int len) {
     buf.put(blocks[block], offset, len);
     return len;
   }
 
   @Override
-  public ByteBuffer asByteBuffer(int block, int offset, long maxLen) {
-    return ByteBuffer.wrap(blocks[block], offset, (int) Math.min(blockSize - offset, maxLen));
+  public ByteBuffer asByteBuffer(int block, int offset, int len) {
+    return ByteBuffer.wrap(blocks[block], offset, len);
   }
 }
