@@ -16,6 +16,8 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.BenchmarkUtils.preAllocate;
+
 import com.google.caliper.AfterExperiment;
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
@@ -108,7 +110,7 @@ public class TransferFromBenchmark {
     },
 
     HEAP_DISK_ALREADY_ALLOCATED {
-      private final Disk disk = preAllocate(new HeapDisk());
+      private final Disk disk = preAllocate(new HeapDisk(), 10000000);
 
       @Override
       public ByteStore createByteStore() {
@@ -117,7 +119,7 @@ public class TransferFromBenchmark {
     },
 
     DIRECT_DISK_ALREADY_ALLOCATED {
-      private final Disk disk = preAllocate(new DirectDisk());
+      private final Disk disk = preAllocate(new DirectDisk(), 10000000);
 
       @Override
       public ByteStore createByteStore() {
@@ -126,13 +128,6 @@ public class TransferFromBenchmark {
     };
 
     public abstract ByteStore createByteStore();
-  }
-
-  private static Disk preAllocate(Disk disk) {
-    while (disk.getTotalSpace() < 10000000) {
-      disk.allocateMoreBlocks();
-    }
-    return disk;
   }
 
   @SuppressWarnings("unused")

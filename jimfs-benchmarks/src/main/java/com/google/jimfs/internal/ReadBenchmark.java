@@ -16,22 +16,24 @@
 
 package com.google.jimfs.internal;
 
-import com.google.caliper.AfterExperiment;
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
-import com.google.caliper.api.VmOptions;
 import com.google.caliper.runner.CaliperMain;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 /**
+ * Benchmark for reading from a store to either heap or native memory.
+ *
+ * <p>Uses 8K buffered reads because it seems like approximately the most common way to read and
+ * previous benchmarking has shown me that it really doesn't make a significant difference what
+ * kind of read is done: 8k buffered, 32k buffered or passing in a full array at once.
+ *
  * @author Colin Decker
  */
-@VmOptions({"-Xmx8G"})
 public class ReadBenchmark {
 
   @Param({"1000", "100000", "10000000"})
@@ -41,9 +43,9 @@ public class ReadBenchmark {
   private ByteStoreType type;
 
   private ByteStore store;
-  private Path file;
 
-  private byte[] readTarget;
+  private byte[] heapTarget;
+  private ByteBuffer directTarget;
 
   @BeforeExperiment
   public void setUp() throws IOException {
@@ -57,29 +59,31 @@ public class ReadBenchmark {
       pos += store.write(pos, bytes, pos, size - pos);
     }
 
-    readTarget = new byte[size];
-
-    file = Files.createTempFile("ByteStoreReadBenchmark", "tmp");
-    Files.write(file, bytes);
+    heapTarget = new byte[size];
+    directTarget = ByteBuffer.allocateDirect(size);
   }
 
-  @AfterExperiment
-  public void tearDown() throws IOException {
-    Files.deleteIfExists(file);
-  }
-
-  /**
-   * Using 8K buffered reading because it seems like approximately the most common way to read and
-   * previous benchmarking has shown me that it really doesn't make a significant difference what
-   * kind of read is done: 8k buffered, 32k buffered or passing in a full array at once.
-   */
   @Benchmark
-  public int read(int reps) {
+  public int readToByteArray(int reps) {
     int pos = 0;
     for (int i = 0; i < reps; i++) {
       pos = 0;
       while (pos < size) {
-        pos += store.read(pos, readTarget, pos, Math.min(8192, size - pos));
+        pos += store.read(pos, heapTarget, pos, Math.min(8192, size - pos));
+      }
+    }
+    return pos;
+  }
+
+  @Benchmark
+  public int readToDirectBuffer(int reps) {
+    int pos = 0;
+    for (int i = 0; i < reps; i++) {
+      pos = 0;
+      directTarget.clear();
+      while (pos < size) {
+        directTarget.limit(Math.min(pos + 8192, size));
+        pos += store.read(pos, directTarget);
       }
     }
     return pos;
@@ -95,6 +99,13 @@ public class ReadBenchmark {
       @Override
       public ByteStore createByteStore() {
         return new ArrayByteStore();
+      }
+    },
+
+    DIRECT_BYTE_STORE {
+      @Override
+      public ByteStore createByteStore() {
+        return new DirectByteStore();
       }
     },
 

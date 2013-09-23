@@ -16,93 +16,75 @@
 
 package com.google.jimfs.internal;
 
-import static java.nio.file.StandardOpenOption.READ;
+import static com.google.jimfs.internal.BenchmarkUtils.preAllocate;
 
-import com.google.caliper.AfterExperiment;
 import com.google.caliper.BeforeExperiment;
+import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
-import com.google.caliper.api.AfterRep;
-import com.google.caliper.api.BeforeRep;
-import com.google.caliper.api.Macrobenchmark;
-import com.google.caliper.api.VmOptions;
 import com.google.caliper.runner.CaliperMain;
 
 import java.io.IOException;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.ByteBuffer;
 import java.util.Random;
 
 /**
+ * Benchmark for writing to a store from either heap or native memory.
+ *
+ * <p>Uses 8K buffered writing because it seems like approximately the most common way to write and
+ * previous benchmarking has shown me that it really doesn't make a significant difference what
+ * kind of write is done: 8k buffered, 32k buffered or passing in a full array at once.
+ *
  * @author Colin Decker
  */
-@VmOptions({"-Xmx8G"})
 public class WriteBenchmark {
 
-  @Param({"100000", "1000000", "10000000"})
+  @Param({"1000", "100000", "10000000"})
   private int size;
 
   @Param
-  private ByteStoreType type;
+  private ByteStoreType storeType;
 
-  private byte[] bytes;
-  private Path file;
+  private byte[] heapSource;
+  private ByteBuffer directSource;
 
   @BeforeExperiment
   public void setUp() throws IOException {
-    bytes = new byte[size];
-    new Random(19827398712389L).nextBytes(bytes);
+    heapSource = new byte[size];
+    new Random(19827398712389L).nextBytes(heapSource);
 
-    file = Files.createTempFile("ByteStoreWriteBenchmark", "");
-    Files.write(file, bytes);
+    directSource = ByteBuffer.allocateDirect(size);
+    directSource.put(heapSource);
+    directSource.clear();
   }
 
-  @AfterExperiment
-  public void tearDown() throws IOException {
-    Files.deleteIfExists(file);
-  }
-
-  private ByteStore store;
-  private FileChannel channel;
-
-  @BeforeRep
-  public void beforeRep() throws IOException {
-    store = type.createByteStore();
-    channel = FileChannel.open(file, READ);
-  }
-
-  /**
-   * Using 8K buffered writing because it seems like approximately the most common way to write and
-   * previous benchmarking has shown me that it really doesn't make a significant difference what
-   * kind of write is done: 8k buffered, 32k buffered or passing in a full array at once.
-   */
-  @Macrobenchmark
-  public int write() {
+  @Benchmark
+  public int writeFromByteArray(int reps) {
     int pos = 0;
-    while (pos < size) {
-      pos += store.write(pos, bytes, pos, Math.min(8192, size - pos));
+    for (int i = 0; i < reps; i++) {
+      ByteStore store = storeType.createByteStore();
+      pos = 0;
+      while (pos < size) {
+        pos += store.write(pos, heapSource, pos, Math.min(8192, size - pos));
+      }
+      store.delete();
     }
     return pos;
   }
 
-  /**
-   * Test transferring an actual file to a store. This is where the difference between direct and
-   * heap buffers should be most pronounced. It would probably also have some impact on writing to
-   * a store from a socket channel.
-   */
-  @Macrobenchmark
-  public int transferFromFile() throws IOException {
+  @Benchmark
+  public int writeFromDirectBuffer(int reps) {
     int pos = 0;
-    while (pos < size) {
-      pos += store.transferFrom(channel, pos, size - pos);
+    for (int i = 0; i < reps; i++) {
+      ByteStore store = storeType.createByteStore();
+      directSource.clear();
+      pos = 0;
+      while (directSource.hasRemaining()) {
+        directSource.limit(pos + Math.min(8192, size - pos));
+        pos += store.write(pos, directSource);
+      }
+      store.delete();
     }
     return pos;
-  }
-
-  @AfterRep
-  public void afterRep() throws IOException {
-    store.delete();
-    channel.close();
   }
 
   public static void main(String[] args) {
@@ -118,6 +100,13 @@ public class WriteBenchmark {
       }
     },
 
+    DIRECT_BYTE_STORE {
+      @Override
+      public ByteStore createByteStore() {
+        return new DirectByteStore();
+      }
+    },
+
     HEAP_DISK_EMPTY {
       @Override
       public ByteStore createByteStore() {
@@ -126,12 +115,7 @@ public class WriteBenchmark {
     },
 
     HEAP_DISK_ALREADY_ALLOCATED {
-      private final Disk disk = new HeapDisk();
-      {
-        while (disk.getTotalSpace() < 10000000) {
-          disk.allocateMoreBlocks();
-        }
-      }
+      private final Disk disk = preAllocate(new HeapDisk(), 10000000);
 
       @Override
       public ByteStore createByteStore() {
@@ -147,12 +131,7 @@ public class WriteBenchmark {
     },
 
     DIRECT_DISK_ALREADY_ALLOCATED {
-      private final Disk disk = new DirectDisk();
-      {
-        while (disk.getTotalSpace() < 10000000) {
-          disk.allocateMoreBlocks();
-        }
-      }
+      private final Disk disk = preAllocate(new DirectDisk(), 10000000);
 
       @Override
       public ByteStore createByteStore() {

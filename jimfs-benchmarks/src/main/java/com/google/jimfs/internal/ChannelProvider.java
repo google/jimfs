@@ -131,8 +131,12 @@ public abstract class ChannelProvider {
       channel = FileChannel.open(file, READ, WRITE, TRUNCATE_EXISTING);
       if (bytes != null) {
         channel.write(ByteBuffer.wrap(bytes));
-        channel.position(0);
       }
+    }
+
+    @Override
+    public void beforeRep() throws IOException {
+      channel.position(0);
     }
 
     @Override
