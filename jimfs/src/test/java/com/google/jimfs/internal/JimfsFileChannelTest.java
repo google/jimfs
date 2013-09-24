@@ -38,14 +38,23 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.file.OpenOption;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -649,5 +658,175 @@ public class JimfsFileChannelTest {
     assertTrue(lock.isValid());
     lock.release();
     assertFalse(lock.isValid());
+  }
+
+  @Test
+  public void testAsynchronousClose() throws IOException, InterruptedException {
+    ByteStore store = store(10);
+    final FileChannel channel = channel(store, READ, WRITE);
+
+    store.writeLock().lock(); // ensure all operations on the channel will block
+
+    ExecutorService executor = Executors.newCachedThreadPool();
+
+    List<Future<?>> futures = queueAllBlockingOperations(channel, executor);
+
+    // ensure time for operations to start blocking
+    Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
+
+    channel.close();
+
+    for (Future<?> future : futures) {
+      try {
+        future.get();
+        fail();
+      } catch (ExecutionException expected) {
+        assertTrue(expected.getCause() instanceof AsynchronousCloseException);
+      }
+    }
+  }
+
+  @Test
+  public void testCloseByInterrupt() throws IOException, InterruptedException {
+    ByteStore store = store(10);
+    final FileChannel channel = channel(store, READ, WRITE);
+
+    store.writeLock().lock(); // ensure all operations on the channel will block
+
+    ExecutorService executor = Executors.newCachedThreadPool();
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    final AtomicReference<Throwable> interruptException = new AtomicReference<>();
+
+    // This thread, being the first to run, will be blocking on the interruptible lock (the byte
+    // store's write lock) and as such will be interrupted properly... the other threads will be
+    // blocked on the lock that guards the position field and the specification that only one method
+    // on the channel will be in progress at a time. That lock is not interruptible, so we must
+    // interrupt this thread.
+    Thread thread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          channel.write(ByteBuffer.allocate(20));
+          latch.countDown();
+        } catch (Throwable e) {
+          interruptException.set(e);
+          latch.countDown();
+        }
+      }
+    });
+    thread.start();
+
+    // ensure time for thread to start blocking on the write lock
+    Uninterruptibles.sleepUninterruptibly(5, MILLISECONDS);
+
+    List<Future<?>> futures = queueAllBlockingOperations(channel, executor);
+
+    // ensure time for operations to start blocking
+    Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
+
+    // interrupting this blocking thread closes the channel and makes all the other threads
+    // throw AsynchronousCloseException... the operation on this thread should throw
+    // ClosedByInterruptException
+    thread.interrupt();
+
+    latch.await();
+    assertTrue(interruptException.get() instanceof ClosedByInterruptException);
+
+    for (Future<?> future : futures) {
+      try {
+        future.get();
+        fail();
+      } catch (ExecutionException expected) {
+        assertTrue(expected.getCause() instanceof AsynchronousCloseException);
+      }
+    }
+  }
+
+  private List<Future<?>> queueAllBlockingOperations(final FileChannel channel, ExecutorService executor) {
+    List<Future<?>> futures = new ArrayList<>();
+
+    final ByteBuffer buffer = ByteBuffer.allocate(10);
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.write(buffer);
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.write(buffer, 0);
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.write(new ByteBuffer[] {buffer, buffer});
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.write(new ByteBuffer[] {buffer, buffer, buffer}, 0, 2);
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.read(buffer);
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.read(buffer, 0);
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.read(new ByteBuffer[] {buffer, buffer});
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.read(new ByteBuffer[] {buffer, buffer, buffer}, 0, 2);
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.transferTo(0, 10, new ByteBufferChannel(buffer));
+        return null;
+      }
+    }));
+
+    futures.add(executor.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        channel.transferFrom(new ByteBufferChannel(buffer), 0, 10);
+        return null;
+      }
+    }));
+
+    return futures;
   }
 }

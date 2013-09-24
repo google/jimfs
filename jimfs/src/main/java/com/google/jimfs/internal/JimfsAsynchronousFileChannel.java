@@ -20,8 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.JimfsFileChannel.checkNotNegative;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -29,19 +27,13 @@ import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileLock;
-import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Nullable;
 
@@ -101,12 +93,12 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     } else {
       channel.checkWritable();
     }
-    return new AsynchronousChannelFuture<>(executor.submit(new Callable<FileLock>() {
+    return executor.submit(new Callable<FileLock>() {
       @Override
       public FileLock call() throws Exception {
         return tryLock(position, size, shared);
       }
-    }));
+    });
   }
 
   @Override
@@ -136,12 +128,12 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
       return closedChannelFuture();
     }
     channel.checkReadable();
-    return new AsynchronousChannelFuture<>(executor.submit(new Callable<Integer>() {
+    return executor.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return channel.readInterruptibly(dst, position);
+        return channel.read(dst, position);
       }
-    }));
+    });
   }
 
   @Override
@@ -157,12 +149,12 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
       return closedChannelFuture();
     }
     channel.checkWritable();
-    return new AsynchronousChannelFuture<>(executor.submit(new Callable<Integer>() {
+    return executor.submit(new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return channel.writeInterruptibly(src, position);
+        return channel.write(src, position);
       }
-    }));
+    });
   }
 
   @Override
@@ -172,9 +164,6 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
 
   @Override
   public void close() throws IOException {
-    for (AsynchronousChannelFuture<?> future : activeFutures) {
-      future.close();
-    }
     channel.close();
   }
 
@@ -229,86 +218,6 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
 
     private void onFailure(Throwable t) {
       completionHandler.failed(t, attachment);
-    }
-  }
-
-  /**
-   * Set of current futures that have not yet completed.
-   */
-  @VisibleForTesting
-  final Set<AsynchronousChannelFuture<?>> activeFutures = Sets.newConcurrentHashSet();
-
-  /**
-   * A future that can be closed when this channel is closed. When the future is closed, it will
-   * complete immediately with an {@link AsynchronousCloseException}. The underlying future will
-   * be cancelled.
-   */
-  private final class AsynchronousChannelFuture<V> implements ListenableFuture<V> {
-
-    private final ListenableFuture<V> delegate;
-    private final SettableFuture<V> future = SettableFuture.create();
-
-    private AsynchronousChannelFuture(ListenableFuture<V> delegate) {
-      this.delegate = delegate;
-      // add to activeFutures before adding the listener
-      // otherwise it may be removed before being added
-      activeFutures.add(this);
-      this.delegate.addListener(new Runnable() {
-        @Override
-        public void run() {
-          activeFutures.remove(AsynchronousChannelFuture.this);
-          try {
-            future.set(AsynchronousChannelFuture.this.delegate.get());
-          } catch (CancellationException | InterruptedException e) {
-            future.cancel(true);
-          } catch (ExecutionException e) {
-            future.setException(e.getCause());
-          }
-        }
-      }, MoreExecutors.sameThreadExecutor());
-    }
-
-    /**
-     * Called when the channel is closed.
-     */
-    private void close() {
-      activeFutures.remove(this);
-      if (!delegate.isDone()) {
-        future.setException(new AsynchronousCloseException());
-        delegate.cancel(true);
-      }
-    }
-
-    @Override
-    public void addListener(Runnable listener, Executor executor) {
-      future.addListener(listener, executor);
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      activeFutures.remove(this);
-      return delegate.cancel(mayInterruptIfRunning) && future.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-      return future.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-      return future.isDone();
-    }
-
-    @Override
-    public V get() throws InterruptedException, ExecutionException {
-      return future.get();
-    }
-
-    @Override
-    public V get(long timeout, TimeUnit unit)
-        throws InterruptedException, ExecutionException, TimeoutException {
-      return future.get(timeout, unit);
     }
   }
 }

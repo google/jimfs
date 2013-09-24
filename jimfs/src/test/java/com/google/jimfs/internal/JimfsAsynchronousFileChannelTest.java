@@ -19,12 +19,15 @@ package com.google.jimfs.internal;
 import static com.google.jimfs.testing.TestUtils.buffer;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.Test;
 
@@ -110,7 +113,7 @@ public class JimfsAsynchronousFileChannelTest {
   @Test
   public void testAsyncClose_write() throws IOException, InterruptedException {
     StubByteStore store = store(15);
-    ExecutorService executor = Executors.newFixedThreadPool(2);
+    ExecutorService executor = Executors.newFixedThreadPool(4);
 
     try {
       JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
@@ -134,8 +137,8 @@ public class JimfsAsynchronousFileChannelTest {
         }
       });
 
-      assertTrue(channel.activeFutures.size() == 2);
-      assertTrue(channel.activeFutures.contains(future));
+      // give enough time to ensure both writes start blocking
+      Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
 
       channel.close();
 
@@ -181,8 +184,8 @@ public class JimfsAsynchronousFileChannelTest {
         }
       });
 
-      assertTrue(channel.activeFutures.size() == 2);
-      assertTrue(channel.activeFutures.contains(future));
+      // give enough time to ensure both reads start blocking
+      Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
 
       channel.close();
 

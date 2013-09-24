@@ -20,21 +20,26 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
+import com.google.common.collect.Sets;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.InterruptibleChannel;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -42,18 +47,27 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * A {@link FileChannel} implementation that reads and writes to a {@link ByteStore} object. The
  * read and write methods and other methods that read or change the position of the channel are
- * locked because the {@link ReadableByteChannel} and {@link WritableByteChannel} interfaces
- * specify that the read and write methods block when another thread is currently doing a read or
- * write operation.
+ * locked because the {@link ReadableByteChannel} and {@link WritableByteChannel} interfaces specify
+ * that the read and write methods block when another thread is currently doing a read or write
+ * operation.
  *
  * @author Colin Decker
  */
 final class JimfsFileChannel extends FileChannel {
 
+  /**
+   * Set of threads that are currently doing operations that may be blocking, used for implementing
+   * the contract of {@link InterruptibleChannel} correctly.
+   */
+  private final Set<Thread> activeThreads = Sets.newConcurrentHashSet();
+
+  /**
+   * Lock enforcing one thread at a time for operations on the channel.
+   */
   private final Lock lock = new ReentrantLock();
 
-  private File file;
-  private ByteStore store;
+  private final File file;
+  private final ByteStore store;
 
   private final OpenOptions options;
 
@@ -102,30 +116,65 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   void checkOpen() throws ClosedChannelException {
-    if (store == null) {
+    if (!isOpen()) {
       throw new ClosedChannelException();
     }
   }
 
+  /**
+   * Begins a blocking operation, making the operation interruptible. Returns whether or not the
+   * channel is open.
+   */
+  private boolean beginBlocking() {
+    activeThreads.add(Thread.currentThread());
+    begin();
+    return isOpen();
+  }
+
+  /**
+   * Ends a blocking operation, throwing an exception if the thread was interrupted while blocking
+   * or if the channel was closed from another thread.
+   */
+  private void endBlocking(boolean completed) throws AsynchronousCloseException {
+    activeThreads.remove(Thread.currentThread());
+    end(completed);
+  }
+
   @Override
   public int read(ByteBuffer dst) throws IOException {
+    checkOpen();
+    checkReadable();
+
     lock.lock();
     try {
-      checkOpen();
-      checkReadable();
-
-      store.readLock().lock();
+      boolean completed = false;
       try {
-        int read = store.read(position, dst);
-        if (read != -1) {
-          position += read;
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
         }
 
-        file.updateAccessTime();
-        return read;
+        store.readLock().lockInterruptibly();
+        try {
+
+          int read = store.read(position, dst);
+          if (read != -1) {
+            position += read;
+          }
+
+          file.updateAccessTime();
+          completed = true;
+          return read;
+        } finally {
+          store.readLock().unlock();
+        }
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.readLock().unlock();
+        endBlocking(completed);
       }
+
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -138,23 +187,38 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   private long read(List<ByteBuffer> buffers) throws IOException {
+    checkOpen();
+    checkReadable();
+
     lock.lock();
     try {
-      checkOpen();
-      checkReadable();
-
-      store.readLock().lock();
+      boolean completed = false;
       try {
-        long read = store.read(position, buffers);
-        if (read != -1) {
-          position += read;
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
         }
 
-        file.updateAccessTime();
-        return read;
+        store.readLock().lockInterruptibly();
+        try {
+          long read = store.read(position, buffers);
+          if (read != -1) {
+            position += read;
+          }
+
+          file.updateAccessTime();
+          completed = true;
+          return read;
+        } finally {
+          store.readLock().unlock();
+        }
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.readLock().unlock();
+        endBlocking(completed);
       }
+
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -162,27 +226,42 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   public int write(ByteBuffer src) throws IOException {
+    checkOpen();
+    checkWritable();
+
     lock.lock();
     try {
-      checkOpen();
-      checkWritable();
-
-      store.writeLock().lock();
+      boolean completed = false;
       try {
-        int written;
-        if (options.isAppend()) {
-          written = store.append(src);
-          position = store.sizeInBytes();
-        } else {
-          written = store.write(position, src);
-          position += written;
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
         }
 
-        file.updateModifiedTime();
-        return written;
+        store.writeLock().lockInterruptibly();
+        try {
+          int written;
+          if (options.isAppend()) {
+            written = store.append(src);
+            position = store.sizeInBytes();
+          } else {
+            written = store.write(position, src);
+            position += written;
+          }
+
+          file.updateModifiedTime();
+          completed = true;
+          return written;
+        } finally {
+          store.writeLock().unlock();
+        }
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.writeLock().unlock();
+        endBlocking(completed);
       }
+
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -195,27 +274,42 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   private long write(List<ByteBuffer> srcs) throws IOException {
+    checkOpen();
+    checkWritable();
+
     lock.lock();
     try {
-      checkOpen();
-      checkWritable();
-
-      store.writeLock().lock();
+      boolean completed = false;
       try {
-        long written;
-        if (options.isAppend()) {
-          written = store.append(srcs);
-          position = store.sizeInBytes();
-        } else {
-          written = store.write(position, srcs);
-          position += written;
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
         }
 
-        file.updateModifiedTime();
-        return written;
+        store.writeLock().lockInterruptibly();
+        try {
+          long written;
+          if (options.isAppend()) {
+            written = store.append(srcs);
+            position = store.sizeInBytes();
+          } else {
+            written = store.write(position, srcs);
+            position += written;
+          }
+
+          file.updateModifiedTime();
+          completed = true;
+          return written;
+        } finally {
+          store.writeLock().unlock();
+        }
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.writeLock().unlock();
+        endBlocking(completed);
       }
+
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -223,9 +317,10 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   public long position() throws IOException {
+    checkOpen();
+
     lock.lock();
     try {
-      checkOpen();
       return position;
     } finally {
       lock.unlock();
@@ -235,10 +330,10 @@ final class JimfsFileChannel extends FileChannel {
   @Override
   public FileChannel position(long newPosition) throws IOException {
     checkNotNegative(newPosition, "newPosition");
+    checkOpen();
 
     lock.lock();
     try {
-      checkOpen();
       this.position = (int) newPosition;
       return this;
     } finally {
@@ -248,9 +343,10 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   public long size() throws IOException {
+    checkOpen();
+
     lock.lock();
     try {
-      checkOpen();
       return store.sizeInBytes();
     } finally {
       lock.unlock();
@@ -260,24 +356,38 @@ final class JimfsFileChannel extends FileChannel {
   @Override
   public FileChannel truncate(long size) throws IOException {
     checkNotNegative(size, "size");
+    checkOpen();
+    checkWritable();
 
     lock.lock();
     try {
-      checkOpen();
-      checkWritable();
-
-      store.writeLock().lock();
+      boolean completed = false;
       try {
-        store.truncate((int) size);
-        if (position > size) {
-          position = (int) size;
+        if (!beginBlocking()) {
+          return this; // AsynchronousCloseException will be thrown
         }
 
-        file.updateModifiedTime();
-        return this;
+        store.writeLock().lockInterruptibly();
+        try {
+          store.truncate((int) size);
+          if (position > size) {
+            position = (int) size;
+          }
+
+          file.updateModifiedTime();
+          completed = true;
+          return this;
+        } finally {
+          store.writeLock().unlock();
+        }
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.writeLock().unlock();
+        endBlocking(completed);
       }
+
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -299,20 +409,34 @@ final class JimfsFileChannel extends FileChannel {
     checkNotNull(target);
     checkNotNegative(position, "position");
     checkNotNegative(count, "count");
+    checkOpen();
+    checkReadable();
 
     lock.lock();
     try {
-      checkOpen();
-      checkReadable();
-
-      store.readLock().lock();
+      boolean completed = false;
       try {
-        long transferred = store.transferTo((int) position, (int) count, target);
-        file.updateAccessTime();
-        return transferred;
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
+        }
+
+        store.readLock().lockInterruptibly();
+        try {
+          long transferred = store.transferTo((int) position, (int) count, target);
+          file.updateAccessTime();
+          completed = true;
+          return transferred;
+        } finally {
+          store.readLock().unlock();
+        }
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.readLock().unlock();
+        endBlocking(completed);
       }
+
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -323,26 +447,42 @@ final class JimfsFileChannel extends FileChannel {
     checkNotNull(src);
     checkNotNegative(position, "position");
     checkNotNegative(count, "count");
+    checkOpen();
+    checkWritable();
 
     lock.lock();
     try {
-      checkOpen();
-      checkWritable();
-
-      store.writeLock().lock();
+      boolean completed = false;
       try {
-        if (options.isAppend()) {
-          long appended = store.appendFrom(src, (int) count);
-          this.position = store.sizeInBytes();
-          file.updateModifiedTime();
-          return appended;
-        } else {
-          file.updateModifiedTime();
-          return store.transferFrom(src, (int) position, (int) count);
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
         }
+
+        store.writeLock().lockInterruptibly();
+        try {
+          long transferred;
+          if (options.isAppend()) {
+            transferred = store.appendFrom(src, (int) count);
+            this.position = store.sizeInBytes();
+            file.updateModifiedTime();
+          } else {
+            file.updateModifiedTime();
+            transferred = store.transferFrom(src, (int) position, (int) count);
+          }
+
+          completed = true;
+          return transferred;
+        } finally {
+          store.writeLock().unlock();
+        }
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.writeLock().unlock();
+        endBlocking(completed);
       }
+
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -352,47 +492,34 @@ final class JimfsFileChannel extends FileChannel {
   public int read(ByteBuffer dst, long position) throws IOException {
     checkNotNull(dst);
     checkNotNegative(position, "position");
+    checkOpen();
+    checkReadable();
 
     lock.lock();
     try {
-      checkOpen();
-      checkReadable();
-
-      store.readLock().lock();
+      boolean completed = false;
       try {
-        int read = store.read((int) position, dst);
-        file.updateAccessTime();
-        return read;
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
+        }
+
+        store.readLock().lockInterruptibly();
+        try {
+          int read = store.read((int) position, dst);
+          file.updateAccessTime();
+          completed = true;
+          return read;
+        } finally {
+          store.readLock().unlock();
+        }
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.readLock().unlock();
+        endBlocking(completed);
       }
-    } finally {
-      lock.unlock();
-    }
-  }
 
-  /**
-   * Equivalent of {@link #read(ByteBuffer, long)} that may be interrupted if blocked waiting for a
-   * lock.
-   */
-  public int readInterruptibly(
-      ByteBuffer dst, long position) throws IOException, InterruptedException {
-    checkNotNull(dst);
-    checkNotNegative(position, "position");
-
-    lock.lockInterruptibly();
-    try {
-      checkOpen();
-      checkReadable();
-
-      file.updateAccessTime();
-
-      store.readLock().lockInterruptibly();
-      try {
-        return store.read((int) position, dst);
-      } finally {
-        store.readLock().unlock();
-      }
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -402,61 +529,41 @@ final class JimfsFileChannel extends FileChannel {
   public int write(ByteBuffer src, long position) throws IOException {
     checkNotNull(src);
     checkNotNegative(position, "position");
+    checkOpen();
+    checkWritable();
 
     lock.lock();
     try {
-      checkOpen();
-      checkWritable();
-
-      store.writeLock().lock();
+      boolean completed = false;
       try {
-        int written;
-        if (options.isAppend()) {
-          written = store.append(src);
-          this.position = store.size();
-        } else {
-          written = store.write((int) position, src);
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
         }
 
-        file.updateModifiedTime();
-        return written;
-      } finally {
-        store.writeLock().unlock();
-      }
-    } finally {
-      lock.unlock();
-    }
-  }
+        store.writeLock().lockInterruptibly();
+        try {
+          int written;
+          if (options.isAppend()) {
+            written = store.append(src);
+            this.position = store.size();
+          } else {
+            written = store.write((int) position, src);
+          }
 
-  /**
-   * Equivalent of {@link #write(ByteBuffer, long)} that may be interrupted if blocked waiting for
-   * a lock.
-   */
-  public int writeInterruptibly(
-      ByteBuffer src, long position) throws IOException, InterruptedException {
-    checkNotNull(src);
-    checkNotNegative(position, "position");
-
-    lock.lockInterruptibly();
-    try {
-      checkOpen();
-      checkWritable();
-
-      store.writeLock().lockInterruptibly();
-      try {
-        int written;
-        if (options.isAppend()) {
-          written = store.append(src);
-          this.position = store.size();
-        } else {
-          written = store.write((int) position, src);
+          file.updateModifiedTime();
+          completed = true;
+          return written;
+        } finally {
+          store.writeLock().unlock();
         }
-
-        file.updateModifiedTime();
-        return written;
+      } catch (InterruptedException ignore) {
+        // the interruption will be handled by endBlocking
       } finally {
-        store.writeLock().unlock();
+        endBlocking(completed);
       }
+
+      // if InterruptedException is caught, endBlocking should always throw
+      throw new AssertionError();
     } finally {
       lock.unlock();
     }
@@ -473,7 +580,7 @@ final class JimfsFileChannel extends FileChannel {
   public FileLock lock(long position, long size, boolean shared) throws IOException {
     checkNotNegative(position, "position");
     checkNotNegative(size, "size");
-    
+
     lock.lock();
     try {
       checkOpen();
@@ -497,15 +604,10 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
-  protected void implCloseChannel() throws IOException {
-    // if the file has been deleted, allow it to be GCed even if a reference to this channel is
-    // held after closing for some reason
-    lock.lock();
-    try {
-      file = null;
-      store = null;
-    } finally {
-      lock.unlock();
+  protected void implCloseChannel() {
+    // interrupt any threads that are blocking, causing them to throw AsynchronousCloseException
+    for (Thread thread : activeThreads) {
+      thread.interrupt();
     }
   }
 
