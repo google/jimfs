@@ -27,7 +27,8 @@ import java.nio.channels.WritableByteChannel;
 import java.util.Random;
 
 /**
- * Benchmarks transferring a store to a file or socket channel.
+ * Benchmark comparing the speed of transferring bytes to a target channel such as a socket or
+ * file channel from different types of ByteSources using FileChannel.transferTo.
  *
  * @author Colin Decker
  */

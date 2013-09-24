@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal;
+package misc;
 
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
@@ -24,6 +24,8 @@ import com.google.caliper.runner.CaliperMain;
 import java.util.Random;
 
 /**
+ * Benchmark comparing the use of System.arraycopy to byte[].clone() when copying an array.
+ *
  * @author Colin Decker
  */
 public class ArrayCopyBenchmark {

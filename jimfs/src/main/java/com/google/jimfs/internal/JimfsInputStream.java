@@ -76,7 +76,6 @@ final class JimfsInputStream extends InputStream {
 
       store.readLock().lock();
       try {
-
         int read = store.read(pos, b, off, len);
         if (read == -1) {
           finished = true;

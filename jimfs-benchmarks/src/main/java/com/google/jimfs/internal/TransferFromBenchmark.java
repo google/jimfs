@@ -29,7 +29,8 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.Random;
 
 /**
- *
+ * Benchmark comparing the speed of transferring bytes from a source channel such as a socket or
+ * file channel to different types of ByteSources using FileChannel.transferFrom.
  *
  * @author Colin Decker
  */

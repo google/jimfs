@@ -570,8 +570,10 @@ final class JimfsFileChannel extends FileChannel {
     }
   }
 
+  @Override
   public MappedByteBuffer map(MapMode mode, long position, long size) throws IOException {
     // would like this to pretend to work, but can't create an implementation of MappedByteBuffer
+    // well, a direct buffer could be cast to MappedByteBuffer, but it couldn't work in general
     throw new UnsupportedOperationException();
   }
 
@@ -581,17 +583,16 @@ final class JimfsFileChannel extends FileChannel {
   public FileLock lock(long position, long size, boolean shared) throws IOException {
     checkNotNegative(position, "position");
     checkNotNegative(size, "size");
+    checkOpen();
+    if (shared) {
+      checkReadable();
+    } else {
+      checkWritable();
+    }
 
     lock.lock();
     try {
       checkOpen();
-      if (shared) {
-        // shared is for a read lock
-        checkReadable();
-      } else {
-        // non-shared is for a write lock
-        checkWritable();
-      }
       return new FakeFileLock(this, position, size, shared);
     } finally {
       lock.unlock();

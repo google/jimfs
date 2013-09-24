@@ -1,4 +1,4 @@
-package com.google.jimfs.internal;
+package misc;
 
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;

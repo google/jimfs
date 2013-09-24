@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal;
+package misc;
 
 import com.google.caliper.AfterExperiment;
 import com.google.caliper.BeforeExperiment;
@@ -26,6 +26,9 @@ import com.google.caliper.runner.CaliperMain;
 import java.util.Arrays;
 
 /**
+ * Benchmark comparing allocating a single large array vs. allocating multiple smaller arrays of
+ * different sizes that add up to the same total size.
+ *
  * @author Colin Decker
  */
 public class ArrayAllocationBenchmark {
