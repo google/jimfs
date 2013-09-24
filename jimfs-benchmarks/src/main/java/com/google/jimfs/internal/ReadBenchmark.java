@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import com.google.caliper.AfterExperiment;
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
@@ -89,6 +90,11 @@ public class ReadBenchmark {
     return pos;
   }
 
+  @AfterExperiment
+  public void tearDown() {
+    store.delete();
+  }
+
   public static void main(String[] args) {
     CaliperMain.main(ReadBenchmark.class, args);
   }
@@ -121,7 +127,16 @@ public class ReadBenchmark {
       public ByteStore createByteStore() {
         return new DirectDisk().createByteStore();
       }
-    };
+    }/*,
+
+    // For comparison
+    // The bar is long enough compared to the other results that this isn't run by default
+    REAL_FILE {
+      @Override
+      public ByteStore createByteStore() {
+        return new RealFileByteStore();
+      }
+    }*/;
 
     public abstract ByteStore createByteStore();
   }
