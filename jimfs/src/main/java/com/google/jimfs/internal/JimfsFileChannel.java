@@ -20,8 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
-import com.google.common.collect.Sets;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,17 +30,17 @@ import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.nio.channels.InterruptibleChannel;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import javax.annotation.Nullable;
 
 /**
  * A {@link FileChannel} implementation that reads and writes to a {@link ByteStore} object. The
@@ -56,10 +54,13 @@ import java.util.concurrent.locks.ReentrantLock;
 final class JimfsFileChannel extends FileChannel {
 
   /**
-   * Set of threads that are currently doing operations that may be blocking, used for implementing
-   * the contract of {@link InterruptibleChannel} correctly.
+   * Thread that is currently doing an interruptible blocking operation; that is, doing something
+   * that requires acquiring the byte store's lock. Since a thread has to already have this
+   * channel's lock to do that, there can only be one such thread at a time. This thread must be
+   * interrupted if the channel is closed by another thread.
    */
-  private final Set<Thread> activeThreads = Sets.newConcurrentHashSet();
+  @Nullable
+  private volatile Thread blockingThread;
 
   /**
    * Lock enforcing one thread at a time for operations on the channel.
@@ -126,7 +127,7 @@ final class JimfsFileChannel extends FileChannel {
    * channel is open.
    */
   private boolean beginBlocking() {
-    activeThreads.add(Thread.currentThread());
+    blockingThread = Thread.currentThread();
     begin();
     return isOpen();
   }
@@ -136,7 +137,7 @@ final class JimfsFileChannel extends FileChannel {
    * or if the channel was closed from another thread.
    */
   private void endBlocking(boolean completed) throws AsynchronousCloseException {
-    activeThreads.remove(Thread.currentThread());
+    blockingThread = null;
     end(completed);
   }
 
@@ -167,13 +168,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.readLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -211,13 +212,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.readLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -254,13 +255,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.writeLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -302,13 +303,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.writeLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -380,13 +381,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.writeLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -429,13 +430,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.readLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -475,13 +476,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.writeLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -512,13 +513,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.readLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -556,13 +557,13 @@ final class JimfsFileChannel extends FileChannel {
         } finally {
           store.writeLock().unlock();
         }
-      } catch (InterruptedException ignore) {
-        // the interruption will be handled by endBlocking
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } finally {
         endBlocking(completed);
       }
 
-      // if InterruptedException is caught, endBlocking should always throw
+      // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
     } finally {
       lock.unlock();
@@ -605,8 +606,9 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   protected void implCloseChannel() {
-    // interrupt any threads that are blocking, causing them to throw AsynchronousCloseException
-    for (Thread thread : activeThreads) {
+    // interrupt the current blocking thread, if any, causing it to throw ClosedByInterruptException
+    final Thread thread = blockingThread;
+    if (thread != null) {
       thread.interrupt();
     }
   }

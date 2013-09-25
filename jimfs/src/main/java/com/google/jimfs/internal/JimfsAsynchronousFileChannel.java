@@ -95,7 +95,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     }
     return executor.submit(new Callable<FileLock>() {
       @Override
-      public FileLock call() throws Exception {
+      public FileLock call() throws IOException {
         return tryLock(position, size, shared);
       }
     });
@@ -130,7 +130,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     channel.checkReadable();
     return executor.submit(new Callable<Integer>() {
       @Override
-      public Integer call() throws Exception {
+      public Integer call() throws IOException {
         return channel.read(dst, position);
       }
     });
@@ -151,7 +151,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     channel.checkWritable();
     return executor.submit(new Callable<Integer>() {
       @Override
-      public Integer call() throws Exception {
+      public Integer call() throws IOException {
         return channel.write(src, position);
       }
     });
@@ -183,9 +183,8 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
 
     private final ListenableFuture<R> future;
     private final CompletionHandler<R, ? super A> completionHandler;
-    private final
     @Nullable
-    A attachment;
+    private final A attachment;
 
     private CompletionHandlerCallback(ListenableFuture<R> future,
         CompletionHandler<R, ? super A> completionHandler, @Nullable A attachment) {
