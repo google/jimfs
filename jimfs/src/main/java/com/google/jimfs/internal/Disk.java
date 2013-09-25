@@ -84,32 +84,22 @@ abstract class Disk implements RegularFileStorage {
   }
 
   @Override
-  public synchronized final long getTotalSpace() {
+  public final synchronized long getTotalSpace() {
     return blockCount * blockSize;
   }
 
   @Override
-  public synchronized final long getUnallocatedSpace() {
+  public final synchronized long getUnallocatedSpace() {
     return freeBlocks.size() * blockSize;
-  }
-
-  /**
-   * Allocates a block and returns its identifier.
-   */
-  public final synchronized int alloc() {
-    if (freeBlocks.isEmpty()) {
-      blockCount += allocateMoreBlocks(1);
-    }
-
-    return freeBlocks.take();
   }
 
   /**
    * Allocates the given number of blocks and adds their identifiers to the given queue.
    */
   public final synchronized void alloc(BlockQueue queue, int numBlocks) {
-    while (freeBlocks.size() < numBlocks) {
-      blockCount += allocateMoreBlocks(numBlocks);
+    int additionalBlocksNeeded = numBlocks - freeBlocks.size();
+    if (additionalBlocksNeeded > 0) {
+      blockCount += allocateMoreBlocks(additionalBlocksNeeded);
     }
 
     for (int i = 0; i < numBlocks; i++) {
@@ -132,7 +122,7 @@ abstract class Disk implements RegularFileStorage {
   /**
    * Copies the given block and returns the copy.
    */
-  public abstract int copy(int block);
+  public abstract void copy(int block, int copy);
 
   /**
    * Puts the given byte at the given offset in the given block.

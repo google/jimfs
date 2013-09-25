@@ -66,10 +66,8 @@ final class HeapDisk extends Disk {
   }
 
   @Override
-  public int copy(int block) {
-    int copy = alloc();
+  public void copy(int block, int copy) {
     System.arraycopy(blocks[block], 0, blocks[copy], 0, blockSize);
-    return copy;
   }
 
   @Override

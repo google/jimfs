@@ -70,13 +70,11 @@ final class DirectDisk extends Disk {
   }
 
   @Override
-  public int copy(int block) {
+  public void copy(int block, int copy) {
     ByteBuffer blockBuf = blockForRead(block);
-    int copyBlock = alloc();
-    ByteBuffer copyBuf = blocks[copyBlock];
+    ByteBuffer copyBuf = blocks[copy];
     copyBuf.put(blockBuf);
     copyBuf.clear();
-    return copyBlock;
   }
 
   @Override
