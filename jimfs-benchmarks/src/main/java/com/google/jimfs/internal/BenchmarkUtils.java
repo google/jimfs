@@ -27,9 +27,7 @@ public final class BenchmarkUtils {
    * Pre-allocates enough bytes in the given disk to hold up to maxSize bytes.
    */
   public static Disk preAllocate(Disk disk, int maxSize) {
-    while (disk.getTotalSpace() < maxSize) {
-      disk.allocateMoreBlocks();
-    }
+    disk.allocateMoreBlocks((int) Math.ceil((double) maxSize / disk.blockSize()));
     return disk;
   }
 }

@@ -41,7 +41,7 @@ final class HeapDisk extends Disk {
    * Creates a disk with the given block size.
    */
   public HeapDisk(int blockSize) {
-    super(blockSize);
+    super(blockSize, DEFAULT_MAX_CACHE);
   }
 
   @Override

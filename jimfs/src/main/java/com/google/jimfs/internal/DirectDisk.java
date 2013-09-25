@@ -41,7 +41,7 @@ final class DirectDisk extends Disk {
    * Creates a disk with the given block size.
    */
   public DirectDisk(int blockSize) {
-    super(blockSize);
+    super(blockSize, DEFAULT_MAX_CACHE);
   }
 
   @Override
