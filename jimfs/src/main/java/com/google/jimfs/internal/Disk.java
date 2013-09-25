@@ -41,6 +41,12 @@ abstract class Disk implements RegularFileStorage {
   protected final int blockSize;
 
   /**
+   * The current total number of blocks this disk contains, including both free blocks and blocks
+   * that are allocated to files.
+   */
+  private int blockCount;
+
+  /**
    * Queue of free blocks to be allocated to files.
    */
   protected final BlockQueue freeBlocks = new BlockQueue(1024);
@@ -57,10 +63,11 @@ abstract class Disk implements RegularFileStorage {
   }
 
   /**
-   * Allocates more blocks if possible. The {@code blocks} queue should have blocks in it when this
-   * returns if an exception is not thrown.
+   * Allocates at least {@code minBlocks} more blocks if possible. The {@code blocks} queue should
+   * have blocks in it when this returns if an exception is not thrown. Returns the number of new
+   * blocks that were allocated.
    */
-  protected abstract void allocateMoreBlocks();
+  protected abstract int allocateMoreBlocks(int minBlocks);
 
   /**
    * Returns the size of blocks created by this disk.
@@ -70,13 +77,15 @@ abstract class Disk implements RegularFileStorage {
   }
 
   /**
-   * Returns the number of blocks this disk contains.
+   * Returns the current total number of blocks this disk contains.
    */
-  protected abstract int blockCount();
+  protected final int blockCount() {
+    return blockCount;
+  }
 
   @Override
   public synchronized final long getTotalSpace() {
-    return blockCount() * blockSize;
+    return blockCount * blockSize;
   }
 
   @Override
@@ -89,7 +98,7 @@ abstract class Disk implements RegularFileStorage {
    */
   public final synchronized int alloc() {
     if (freeBlocks.isEmpty()) {
-      allocateMoreBlocks();
+      blockCount += allocateMoreBlocks(1);
     }
 
     return freeBlocks.take();
@@ -100,7 +109,7 @@ abstract class Disk implements RegularFileStorage {
    */
   public final synchronized void alloc(BlockQueue queue, int numBlocks) {
     while (freeBlocks.size() < numBlocks) {
-      allocateMoreBlocks();
+      blockCount += allocateMoreBlocks(numBlocks);
     }
 
     for (int i = 0; i < numBlocks; i++) {

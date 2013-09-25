@@ -16,6 +16,8 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.Util.nextPowerOf2;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -27,7 +29,6 @@ import java.util.Arrays;
 final class HeapDisk extends Disk {
 
   private byte[][] blocks = new byte[256][];
-  private int blockCount;
 
   /**
    * Creates a disk with the default block size.
@@ -44,20 +45,18 @@ final class HeapDisk extends Disk {
   }
 
   @Override
-  protected void allocateMoreBlocks() {
-    int newBlockIndex = blockCount;
-    blockCount++;
-    if (blockCount > blocks.length) {
-      blocks = Arrays.copyOf(blocks, blocks.length * 2);
+  protected int allocateMoreBlocks(int minBlocks) {
+    int newBlockCount = blockCount() + minBlocks;
+    if (newBlockCount > blocks.length) {
+      blocks = Arrays.copyOf(blocks, nextPowerOf2(newBlockCount));
     }
 
-    blocks[newBlockIndex] = new byte[blockSize];
-    freeBlocks.add(newBlockIndex);
-  }
+    for (int i = blockCount(); i < newBlockCount; i++) {
+      blocks[i] = new byte[blockSize];
+      freeBlocks.add(i);
+    }
 
-  @Override
-  protected int blockCount() {
-    return blockCount;
+    return minBlocks;
   }
 
   @Override
