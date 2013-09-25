@@ -71,7 +71,12 @@ public class LookupServiceTest {
    * addition to /, allowing for two roots.
    */
   private final PathService pathService = new TestPathService(
-      new PathType(CaseSensitivity.CASE_SENSITIVE, '/') {
+      new PathType(CaseSensitivity.CASE_SENSITIVE, true, '/') {
+        @Override
+        public PathType withCaseSensitivity(CaseSensitivity caseSensitivity) {
+          return this; // ignore
+        }
+
         @Override
         public ParseResult parsePath(String path) {
           String root = null;

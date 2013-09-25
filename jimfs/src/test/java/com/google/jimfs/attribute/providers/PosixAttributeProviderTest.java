@@ -42,9 +42,8 @@ public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttri
 
   @Override
   protected PosixAttributeProvider createProvider() {
-    OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal("user"));
-    return new PosixAttributeProvider(
-        createGroupPrincipal("group"), PosixFilePermissions.fromString("rw-r--r--"), owner);
+    OwnerAttributeProvider owner = new OwnerAttributeProvider("user");
+    return new PosixAttributeProvider("group", "rw-r--r--", owner);
   }
 
   @Test

@@ -16,14 +16,11 @@
 
 package com.google.jimfs.attribute.providers;
 
-import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
 
 import org.junit.Test;
 
 import java.nio.file.attribute.FileTime;
-import java.nio.file.attribute.PosixFilePermissions;
 
 /**
  * Tests for {@link UnixAttributeProvider}.
@@ -44,11 +41,10 @@ public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttribu
     // unix provider relies on other providers to set their initial attributes
     BasicAttributeProvider.INSTANCE.setInitial(store);
 
-    OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal("foo"));
+    OwnerAttributeProvider owner = new OwnerAttributeProvider("foo");
     owner.setInitial(store);
 
-    PosixAttributeProvider posix = new PosixAttributeProvider(createGroupPrincipal("bar"),
-        PosixFilePermissions.fromString("rw-r--r--"), owner);
+    PosixAttributeProvider posix = new PosixAttributeProvider("bar", "rw-r--r--", owner);
     posix.setInitial(store);
 
     // these are pretty much meaningless here since they aren't properties this

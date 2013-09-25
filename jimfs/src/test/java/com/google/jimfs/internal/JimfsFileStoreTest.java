@@ -61,7 +61,7 @@ public class JimfsFileStoreTest {
     store = new JimfsFileStore("foo",
         BasicAttributeProvider.INSTANCE,
         new TestAttributeProvider(),
-        new OwnerAttributeProvider(USER));
+        new OwnerAttributeProvider("user"));
   }
 
   @Test

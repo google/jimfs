@@ -16,7 +16,7 @@
 
 package com.google.jimfs.attribute.providers;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
@@ -48,9 +48,13 @@ public final class OwnerAttributeProvider extends AbstractAttributeProvider
 
   private final UserPrincipal defaultOwner;
 
-  public OwnerAttributeProvider(UserPrincipal defaultOwner) {
+  public OwnerAttributeProvider() {
+    this("user");
+  }
+
+  public OwnerAttributeProvider(String defaultOwner) {
     super(ATTRIBUTES);
-    this.defaultOwner = checkNotNull(defaultOwner);
+    this.defaultOwner = createUserPrincipal(defaultOwner);
   }
 
   @Override

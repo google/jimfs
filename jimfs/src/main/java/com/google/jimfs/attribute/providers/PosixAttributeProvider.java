@@ -17,6 +17,7 @@
 package com.google.jimfs.attribute.providers;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
@@ -35,6 +36,7 @@ import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Set;
 
@@ -61,13 +63,16 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
 
   final OwnerAttributeProvider owner;
 
+  public PosixAttributeProvider(OwnerAttributeProvider owner) {
+    this("group", "rw-r--r--", owner);
+  }
+
   public PosixAttributeProvider(
-      GroupPrincipal defaultGroup,
-      Iterable<PosixFilePermission> defaultPermissions,
-      OwnerAttributeProvider owner) {
+      String defaultGroup, String defaultPermissions, OwnerAttributeProvider owner) {
     super(ATTRIBUTES);
-    this.defaultGroup = checkNotNull(defaultGroup);
-    this.defaultPermissions = ImmutableSet.copyOf(defaultPermissions);
+    this.defaultGroup = createGroupPrincipal(defaultGroup);
+    this.defaultPermissions = ImmutableSet.copyOf(
+        PosixFilePermissions.fromString(defaultPermissions));
     this.owner = checkNotNull(owner);
   }
 
@@ -182,7 +187,8 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
   /**
    * Implementation of {@link PosixFileAttributes}.
    */
-  public static class Attributes extends BasicAttributeProvider.Attributes implements PosixFileAttributes {
+  public static class Attributes
+      extends BasicAttributeProvider.Attributes implements PosixFileAttributes {
 
     private final UserPrincipal owner;
     private final GroupPrincipal group;

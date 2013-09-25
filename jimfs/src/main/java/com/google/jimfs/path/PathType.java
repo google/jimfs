@@ -92,21 +92,31 @@ public abstract class PathType {
   }
 
   private final CaseSensitivity caseSensitivity;
+  private final boolean allowsMultipleRoots;
   private final String separator;
   private final String otherSeparators;
   private final Joiner joiner;
   private final Splitter splitter;
 
   protected PathType(
-      CaseSensitivity caseSensitivity, char separator, char... otherSeparators) {
+      CaseSensitivity caseSensitivity, boolean allowsMultipleRoots,
+      char separator, char... otherSeparators) {
     this.caseSensitivity = checkNotNull(caseSensitivity);
     this.separator = String.valueOf(separator);
+    this.allowsMultipleRoots = allowsMultipleRoots;
     this.otherSeparators = String.valueOf(otherSeparators);
     this.joiner = Joiner.on(separator);
     // TODO(cgdecker): This uses CharMatcher, which is @Beta... what to do
     this.splitter = otherSeparators.length == 0
         ? Splitter.on(separator).omitEmptyStrings()
         : Splitter.on(CharMatcher.anyOf(this.separator + this.otherSeparators)).omitEmptyStrings();
+  }
+
+  /**
+   * Returns whether or not this type of path allows multiple root directories.
+   */
+  public final boolean allowsMultipleRoots() {
+    return allowsMultipleRoots;
   }
 
   /**
@@ -145,6 +155,11 @@ public abstract class PathType {
   public final CaseSensitivity getCaseSensitivity() {
     return caseSensitivity;
   }
+
+  /**
+   * Returns a new path type identical to this one except using the given case sensitivity.
+   */
+  public abstract PathType withCaseSensitivity(CaseSensitivity caseSensitivity);
 
   /**
    * Returns an empty path.

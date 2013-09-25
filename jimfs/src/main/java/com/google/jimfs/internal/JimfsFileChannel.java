@@ -123,13 +123,11 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   /**
-   * Begins a blocking operation, making the operation interruptible. Returns whether or not the
-   * channel is open.
+   * Begins a blocking operation, making the operation interruptible.
    */
-  private boolean beginBlocking() {
+  private void beginBlocking() {
     begin();
     blockingThread = Thread.currentThread();
-    return isOpen();
   }
 
   /**
@@ -150,7 +148,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }
 
@@ -194,7 +193,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }
 
@@ -233,7 +233,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }
 
@@ -281,7 +282,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }
 
@@ -363,7 +365,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return this; // AsynchronousCloseException will be thrown
         }
 
@@ -416,7 +419,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }
 
@@ -454,7 +458,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }
 
@@ -499,7 +504,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }
 
@@ -536,7 +542,8 @@ final class JimfsFileChannel extends FileChannel {
     try {
       boolean completed = false;
       try {
-        if (!beginBlocking()) {
+        beginBlocking();
+        if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }
 

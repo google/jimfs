@@ -34,7 +34,12 @@ final class UnixPathType extends PathType {
   static final UnixPathType INSTANCE = new UnixPathType(CASE_SENSITIVE);
 
   UnixPathType(CaseSensitivity caseSensitivity) {
-    super(caseSensitivity, '/');
+    super(caseSensitivity, false, '/');
+  }
+
+  @Override
+  public PathType withCaseSensitivity(CaseSensitivity caseSensitivity) {
+    return new UnixPathType(caseSensitivity);
   }
 
   @Override

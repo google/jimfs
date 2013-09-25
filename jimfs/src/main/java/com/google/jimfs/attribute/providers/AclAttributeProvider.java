@@ -53,6 +53,10 @@ public class AclAttributeProvider extends AbstractAttributeProvider
 
   private final ImmutableList<AclEntry> defaultAcl;
 
+  public AclAttributeProvider(OwnerAttributeProvider owner) {
+    this(owner, ImmutableList.<AclEntry>of());
+  }
+
   public AclAttributeProvider(OwnerAttributeProvider owner, List<AclEntry> defaultAcl) {
     super(ATTRIBUTES);
     this.owner = checkNotNull(owner);

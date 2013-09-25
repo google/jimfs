@@ -61,7 +61,12 @@ final class WindowsPathType extends PathType {
   private static final Pattern TRAILING_SPACES = Pattern.compile("[ ]+(\\\\|$)");
 
   WindowsPathType(CaseSensitivity caseSensitivity) {
-    super(caseSensitivity, '\\', '/');
+    super(caseSensitivity, true, '\\', '/');
+  }
+
+  @Override
+  public PathType withCaseSensitivity(CaseSensitivity caseSensitivity) {
+    return new WindowsPathType(caseSensitivity);
   }
 
   @Override

@@ -32,8 +32,8 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.jimfs.FileSystemConfiguration;
 import com.google.jimfs.Jimfs;
-import com.google.jimfs.JimfsConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -89,11 +89,11 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
         "uri (%s) scheme must be '%s'", uri, URI_SCHEME);
     checkArgument(isValidFileSystemUri(uri),
         "uri (%s) may not have a path, query or fragment", uri);
-    checkArgument(env.get(CONFIG_KEY) instanceof JimfsConfiguration,
-        "env map (%s) must contain key '%s' mapped to an instance of JimfsConfiguration",
+    checkArgument(env.get(CONFIG_KEY) instanceof FileSystemConfiguration,
+        "env map (%s) must contain key '%s' mapped to an instance of FileSystemConfiguration",
         env, CONFIG_KEY);
 
-    JimfsConfiguration config = (JimfsConfiguration) env.get(CONFIG_KEY);
+    FileSystemConfiguration config = (FileSystemConfiguration) env.get(CONFIG_KEY);
     JimfsFileSystem fileSystem = FileSystemInitializer.createFileSystem(this, uri, config);
     if (fileSystems.putIfAbsent(uri, fileSystem) != null) {
       throw new FileSystemAlreadyExistsException(uri.toString());

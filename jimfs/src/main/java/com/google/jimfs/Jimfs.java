@@ -20,12 +20,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import com.google.jimfs.path.PathType;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.util.UUID;
 
 /**
  * Static factory methods for JIMFS file systems.
@@ -40,8 +40,8 @@ public final class Jimfs {
   public static final String URI_SCHEME = "jimfs";
 
   /**
-   * The key used for mapping to the {@link JimfsConfiguration} in the env map when creating a new
-   * JIMFS file system instance.
+   * The key used for mapping to the {@link FileSystemConfiguration} in the env map when creating a
+   * new file system instance.
    */
   public static final String CONFIG_KEY = "config";
 
@@ -51,13 +51,37 @@ public final class Jimfs {
    * Returns a new in-memory file system with semantics similar to UNIX.
    *
    * <p>The returned file system has a single root, "/", and uses "/" as a separator. It supports
-   * symbolic and hard links. File lookup is case-sensitive. The supported file attribute views
-   * are "basic", "owner", "posix" and "unix".
+   * symbolic and hard links. File lookup is case-sensitive. Only the "basic" file attribute view
+   * is supported. The working directory for the file system is "/work".
    *
-   * <p>The working directory for the file system, which exists when it is created, is "/work".
+   * <p>For more advanced configuration, including changing the working directory, supported
+   * attribute views or type of storage to use or for setting the host name to be used in the file
+   * system's URI, use {@link #newUnixLikeConfiguration()}.
    */
   public static FileSystem newUnixLikeFileSystem() {
-    return newFileSystem(new UnixConfiguration());
+    return newUnixLikeConfiguration().createFileSystem();
+  }
+
+  /**
+   * Returns a new {@link FileSystemConfiguration} instance with defaults for a UNIX-like file
+   * system. If no changes are made to the configuration, the file system it creates will be
+   * identical to that created by {@link #newUnixLikeFileSystem()}.
+   *
+   * <p>Example usage:
+   *
+   * <pre>
+   *   // the returned file system has URI "jimfs://unix" and supports
+   *   // the "basic", "owner", "posix" and "unix" attribute views
+   *   FileSystem fs = Jimfs.newUnixLikeConfiguration()
+   *       .name("unix")
+   *       .workingDirectory("/home/user")
+   *       .attributes(AttributeConfiguration.unix())
+   *       .createFileSystem(); </pre>
+   */
+  public static FileSystemConfiguration newUnixLikeConfiguration() {
+    return newFileSystemConfiguration(PathType.unix())
+        .addRoots("/")
+        .workingDirectory("/work");
   }
 
   /**
@@ -65,21 +89,51 @@ public final class Jimfs {
    *
    * <p>The returned file system has a single root, "C:\", and uses "\" as a separator. It also
    * recognizes "/" as a separator when parsing paths. It supports symbolic and hard links. File
-   * lookup is not case-sensitive. The supported file attribute views are "basic", "owner", "dos",
-   * "acl" and "user".
+   * lookup is not case-sensitive. Only the "basic" file attribute view is supported. The working
+   * directory for the file system is "C:\work".
    *
-   * <p>The working directory for the file system, which exists when it is created, is "C:\work".
+   * <p>For more advanced configuration, including changing the working directory, supported
+   * attribute views or type of storage to use or for setting the host name to be used in the file
+   * system's URI, use {@link #newWindowsLikeConfiguration()}.
    */
   public static FileSystem newWindowsLikeFileSystem() {
-    return newFileSystem(new WindowsConfiguration());
+    return newWindowsLikeConfiguration().createFileSystem();
   }
 
-  private static FileSystem newFileSystem(JimfsConfiguration config) {
-    return newFileSystem(newRandomUri(), config);
+  /**
+   * Returns a new {@link FileSystemConfiguration} instance with defaults for a Windows-like file
+   * system. If no changes are made to the configuration, the file system it creates will be
+   * identical to that created by {@link #newWindowsLikeFileSystem()}.
+   *
+   * <p>Example usage:
+   *
+   * <pre>
+   *   // the returned file system has URI "jimfs://win", has root directories
+   *   // "C:\", "E:\" and "F:\" and supports the "basic", "owner", "dos",
+   *   // "acl and "user" attribute views
+   *   FileSystem fs = Jimfs.newWindowsLikeConfiguration()
+   *       .name("win")
+   *       .addRoots("E:\\", "F:\\")
+   *       .workingDirectory("C:\\Users\\user")
+   *       .attributes(AttributeConfiguration.windows())
+   *       .createFileSystem(); </pre>
+   */
+  public static FileSystemConfiguration newWindowsLikeConfiguration() {
+    return newFileSystemConfiguration(PathType.windows())
+        .addRoots("C:\\")
+        .workingDirectory("C:\\work");
+  }
+
+  /**
+   * Returns a new {@link FileSystemConfiguration} instance using the given path type. At least one
+   * root must be added to the configuration before creating a file system with it.
+   */
+  public static FileSystemConfiguration newFileSystemConfiguration(PathType pathType) {
+    return new FileSystemConfiguration(pathType);
   }
 
   @VisibleForTesting
-  static FileSystem newFileSystem(URI uri, JimfsConfiguration config) {
+  static FileSystem newFileSystem(URI uri, FileSystemConfiguration config) {
     checkArgument(URI_SCHEME.equals(uri.getScheme()),
         "uri (%s) must have scheme %s", uri, URI_SCHEME);
 
@@ -91,9 +145,5 @@ public final class Jimfs {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-  }
-
-  private static URI newRandomUri() {
-    return URI.create(URI_SCHEME + "://" + UUID.randomUUID());
   }
 }

@@ -16,7 +16,7 @@
 
 package com.google.jimfs.internal;
 
-import com.google.jimfs.JimfsConfiguration;
+import com.google.jimfs.FileSystemConfiguration;
 
 import java.io.IOException;
 import java.net.URI;
@@ -33,9 +33,9 @@ final class FileSystemInitializer {
    * configuration.
    */
   public static JimfsFileSystem createFileSystem(
-      JimfsFileSystemProvider provider, URI uri, JimfsConfiguration config) throws IOException {
+      JimfsFileSystemProvider provider, URI uri, FileSystemConfiguration config) throws IOException {
     RealPathService pathService = new RealPathService(config.getPathType());
-    JimfsFileStore fileStore = new JimfsFileStore("jimfs", config.getAllAttributeProviders());
+    JimfsFileStore fileStore = new JimfsFileStore("jimfs", config.getAttributeProviders());
 
     File superRoot = fileStore.createDirectory();
     DirectoryTable superRootTable = superRoot.content();

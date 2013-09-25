@@ -60,7 +60,7 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
 
     defaultAcl = ImmutableList.of(entry1, entry2);
 
-    OwnerAttributeProvider owner = new OwnerAttributeProvider(USER);
+    OwnerAttributeProvider owner = new OwnerAttributeProvider("user");
     return new AclAttributeProvider(owner, defaultAcl);
   }
 

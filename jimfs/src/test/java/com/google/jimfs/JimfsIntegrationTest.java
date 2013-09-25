@@ -109,8 +109,14 @@ public class JimfsIntegrationTest {
 
   @Before
   public void setUp() throws IOException {
-    unix = Jimfs.newFileSystem(URI.create("jimfs://unix"), new UnixConfiguration());
-    win = Jimfs.newFileSystem(URI.create("jimfs://win"), new WindowsConfiguration());
+    unix = Jimfs.newUnixLikeConfiguration()
+        .name("unix")
+        .attributes(AttributeConfiguration.unix())
+        .createFileSystem();
+    win = Jimfs.newWindowsLikeConfiguration()
+        .name("win")
+        .attributes(AttributeConfiguration.windows())
+        .createFileSystem();
   }
 
   @After

@@ -16,9 +16,6 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
-
 import com.google.caliper.Param;
 import com.google.caliper.api.Footprint;
 import com.google.caliper.memory.ObjectGraphMeasurer;
@@ -36,9 +33,6 @@ import com.google.jimfs.attribute.providers.UnixAttributeProvider;
 import com.google.jimfs.attribute.providers.UserDefinedAttributeProvider;
 
 import java.nio.file.attribute.AclEntry;
-import java.nio.file.attribute.PosixFilePermission;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.util.Set;
 
 /**
  * @author Colin Decker
@@ -128,11 +122,8 @@ public class FileFootprintBenchmark {
     UNIX_ATTRIBUTES {
       @Override
       public ImmutableSet<? extends AttributeProvider> createProviders() {
-        OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal("user"));
-
-        Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-r--r--");
-        PosixAttributeProvider posix = new PosixAttributeProvider(createGroupPrincipal("group"),
-            permissions, owner);
+        OwnerAttributeProvider owner = new OwnerAttributeProvider();
+        PosixAttributeProvider posix = new PosixAttributeProvider(owner);
         UnixAttributeProvider unix = new UnixAttributeProvider(posix);
         return ImmutableSet.of(BasicAttributeProvider.INSTANCE, owner, posix, unix);
       }
@@ -141,7 +132,7 @@ public class FileFootprintBenchmark {
     WINDOWS_ATTRIBUTES {
       @Override
       public ImmutableSet<? extends AttributeProvider> createProviders() {
-        OwnerAttributeProvider owner = new OwnerAttributeProvider(createUserPrincipal("user"));
+        OwnerAttributeProvider owner = new OwnerAttributeProvider();
         AclAttributeProvider acl = new AclAttributeProvider(owner, ImmutableList.<AclEntry>of());
         return ImmutableSet.of(
             BasicAttributeProvider.INSTANCE,

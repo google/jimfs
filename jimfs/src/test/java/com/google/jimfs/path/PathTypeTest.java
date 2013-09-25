@@ -122,7 +122,12 @@ public class PathTypeTest {
   private static final class FakePathType extends PathType {
 
     protected FakePathType(CaseSensitivity caseSensitivity) {
-      super(caseSensitivity, '/', '\\');
+      super(caseSensitivity, false, '/', '\\');
+    }
+
+    @Override
+    public PathType withCaseSensitivity(CaseSensitivity caseSensitivity) {
+      return new FakePathType(caseSensitivity);
     }
 
     @Override

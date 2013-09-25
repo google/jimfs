@@ -33,7 +33,7 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
   @Override
   protected OwnerAttributeProvider createProvider() {
-    return new OwnerAttributeProvider(createUserPrincipal("user"));
+    return new OwnerAttributeProvider("user");
   }
 
   @Test
