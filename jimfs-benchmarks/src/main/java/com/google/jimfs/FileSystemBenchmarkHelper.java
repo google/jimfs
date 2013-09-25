@@ -52,7 +52,7 @@ final class FileSystemBenchmarkHelper {
     return tempDir;
   }
 
-  public final void tearDown() throws Exception {
+  public final void tearDown() throws IOException {
     if (tempDir != null) {
       deleteRecursively(tempDir);
     }

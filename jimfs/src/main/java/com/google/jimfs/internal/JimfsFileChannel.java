@@ -127,8 +127,8 @@ final class JimfsFileChannel extends FileChannel {
    * channel is open.
    */
   private boolean beginBlocking() {
-    blockingThread = Thread.currentThread();
     begin();
+    blockingThread = Thread.currentThread();
     return isOpen();
   }
 
@@ -156,7 +156,6 @@ final class JimfsFileChannel extends FileChannel {
 
         store.readLock().lockInterruptibly();
         try {
-
           int read = store.read(position, dst);
           if (read != -1) {
             position += read;

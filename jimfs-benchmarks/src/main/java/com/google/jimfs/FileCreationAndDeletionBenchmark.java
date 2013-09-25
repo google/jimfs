@@ -27,50 +27,56 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
+ * Benchmark comparing the times to create and delete a file between JIMFS and the default file
+ * system.
+ *
  * @author Colin Decker
  */
-public class LookupBenchmark {
-
-  @Param({"2", "8", "32"})
-  private int pathLength;
+public class FileCreationAndDeletionBenchmark {
 
   @Param
   private FileSystemImpl impl;
 
   private FileSystemBenchmarkHelper helper;
+
   private Path file;
 
   @BeforeExperiment
-  protected void setUp() throws Exception {
+  public void setUp() throws IOException {
     helper = new FileSystemBenchmarkHelper(impl);
-    Path tempDir = helper.getTempDir();
-
-    Files.createDirectories(tempDir.resolve("foo/bar/baz"));
-    Files.createDirectories(tempDir.resolve("a/b/c/d/e/f/g"));
-    Files.createSymbolicLink(tempDir.resolve("a/b/c/d/e/link"),
-        tempDir.toAbsolutePath().resolve("foo/bar"));
-    Files.createSymbolicLink(tempDir.resolve("foo/bar/baz/link"),
-        helper.getFileSystem().getPath("../../../..", tempDir.getFileName().toString(), "a/b"));
-
-    file = tempDir.resolve("a/b/c/d/../../c/d/e/link/../../foo/bar/../bar/baz/link/c/file");
-    Files.write(file, new byte[] {1, 2, 3, 4});
-  }
-
-  @AfterExperiment
-  protected void tearDown() throws Exception {
-    helper.tearDown();
+    file = helper.getTempDir().resolve("file");
   }
 
   @Benchmark
-  public int timeLookupAndReadAttribute(int reps) throws IOException {
-    int result = 0;
+  public void createAndDeleteDirectory(int reps) throws IOException {
     for (int i = 0; i < reps; i++) {
-      result ^= (Long) Files.getAttribute(file, "size");
+      Files.createDirectory(file);
+      Files.deleteIfExists(file);
     }
-    return result;
+  }
+
+  @Benchmark
+  public void createAndDeleteRegularFile(int reps) throws IOException {
+    for (int i = 0; i < reps; i++) {
+      Files.createFile(file);
+      Files.deleteIfExists(file);
+    }
+  }
+
+  @Benchmark
+  public void createAndDeleteSymbolicLink(int reps) throws IOException {
+    for (int i = 0; i < reps; i++) {
+      Files.createSymbolicLink(file, file);
+      Files.deleteIfExists(file);
+    }
+  }
+
+  @AfterExperiment
+  public void tearDown() throws Exception {
+    helper.tearDown();
   }
 
   public static void main(String[] args) {
-    CaliperMain.main(LookupBenchmark.class, args);
+    CaliperMain.main(FileCreationAndDeletionBenchmark.class, args);
   }
 }

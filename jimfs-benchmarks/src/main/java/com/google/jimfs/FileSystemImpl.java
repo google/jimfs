@@ -33,7 +33,7 @@ enum FileSystemImpl {
   /**
    * The system default file system.
    */
-  /*DEFAULT {
+  DEFAULT {
     @Override
     public FileSystem getFileSystem() {
       return FileSystems.getDefault();
@@ -43,7 +43,7 @@ enum FileSystemImpl {
     public Path createTempDir(FileSystem fileSystem) throws IOException {
       return Files.createTempDirectory("FileSystemBenchmark");
     }
-  },*/
+  },
 
   /**
    * A Unix-like JIMFS file system.
