@@ -30,6 +30,10 @@ final class DirectDisk extends Disk {
 
   private ByteBuffer[] blocks = new ByteBuffer[256];
 
+  DirectDisk() {
+    this(8192, Long.MAX_VALUE);
+  }
+
   /**
    * Creates a disk with the given block size and max cache size.
    */

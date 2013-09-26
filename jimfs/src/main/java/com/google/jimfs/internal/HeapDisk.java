@@ -30,6 +30,10 @@ final class HeapDisk extends Disk {
 
   private byte[][] blocks = new byte[256][];
 
+  HeapDisk() {
+    this(8192, Long.MAX_VALUE);
+  }
+
   /**
    * Creates a disk with the given block size and max cache size.
    */
