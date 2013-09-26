@@ -18,8 +18,6 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.CharMatcher;
-
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.regex.PatternSyntaxException;
@@ -51,11 +49,12 @@ final class GlobToRegex {
     return new GlobToRegex(glob, separators).convert();
   }
 
-  private static final CharMatcher REGEX_RESERVED = CharMatcher.anyOf("^$.?+*\\[]{}()");
+  private static final InternalCharMatcher REGEX_RESERVED
+      = InternalCharMatcher.anyOf("^$.?+*\\[]{}()");
 
   private final String glob;
   private final String separators;
-  private final CharMatcher separatorMatcher;
+  private final InternalCharMatcher separatorMatcher;
 
   private final StringBuilder builder = new StringBuilder();
   private final Deque<State> states = new ArrayDeque<>();
@@ -64,7 +63,7 @@ final class GlobToRegex {
   private GlobToRegex(String glob, String separators) {
     this.glob = checkNotNull(glob);
     this.separators = separators;
-    this.separatorMatcher = CharMatcher.anyOf(separators);
+    this.separatorMatcher = InternalCharMatcher.anyOf(separators);
   }
 
   /**

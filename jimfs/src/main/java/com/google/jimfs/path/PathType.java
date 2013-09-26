@@ -18,13 +18,13 @@ package com.google.jimfs.path;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 
 import javax.annotation.Nullable;
 
@@ -106,10 +106,39 @@ public abstract class PathType {
     this.allowsMultipleRoots = allowsMultipleRoots;
     this.otherSeparators = String.valueOf(otherSeparators);
     this.joiner = Joiner.on(separator);
-    // TODO(cgdecker): This uses CharMatcher, which is @Beta... what to do
-    this.splitter = otherSeparators.length == 0
-        ? Splitter.on(separator).omitEmptyStrings()
-        : Splitter.on(CharMatcher.anyOf(this.separator + this.otherSeparators)).omitEmptyStrings();
+    this.splitter = createSplitter(separator, otherSeparators);
+  }
+
+  private static final char[] regexReservedChars = "^$.?+*\\[]{}()".toCharArray();
+  static {
+    Arrays.sort(regexReservedChars);
+  }
+
+  private static boolean isRegexReserved(char c) {
+    return Arrays.binarySearch(regexReservedChars, c) >= 0;
+  }
+
+  private static Splitter createSplitter(char separator, char... otherSeparators) {
+    if (otherSeparators.length == 0) {
+      return Splitter.on(separator).omitEmptyStrings();
+    }
+
+    // TODO(cgdecker): When CharMatcher is out of @Beta, us Splitter.on(CharMatcher)
+    StringBuilder patternBuilder = new StringBuilder();
+    patternBuilder.append("[");
+    appendToRegex(separator, patternBuilder);
+    for (char other : otherSeparators) {
+      appendToRegex(other, patternBuilder);
+    }
+    patternBuilder.append("]");
+    return Splitter.onPattern(patternBuilder.toString()).omitEmptyStrings();
+  }
+
+  private static void appendToRegex(char separator, StringBuilder patternBuilder) {
+    if (isRegexReserved(separator)) {
+      patternBuilder.append("\\");
+    }
+    patternBuilder.append(separator);
   }
 
   /**
