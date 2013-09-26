@@ -18,6 +18,8 @@ package com.google.jimfs.internal;
 
 import static com.google.jimfs.internal.Util.nextPowerOf2;
 
+import com.google.jimfs.Storage;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -31,14 +33,14 @@ final class HeapDisk extends Disk {
   private byte[][] blocks = new byte[256][];
 
   HeapDisk() {
-    this(8192, Long.MAX_VALUE);
+    this(Storage.DEFAULT_BLOCK_SIZE);
   }
 
   /**
-   * Creates a disk with the given block size and max cache size.
+   * Creates a disk with the given block size.
    */
-  public HeapDisk(int blockSize, long maxCacheSize) {
-    super(blockSize, maxCacheSize);
+  public HeapDisk(int blockSize) {
+    super(blockSize);
   }
 
   @Override

@@ -31,11 +31,10 @@ abstract class RegularFileStorage {
   public static RegularFileStorage from(Storage configuration) {
     if (configuration.isBlock()) {
       int blockSize = configuration.getBlockSize();
-      long maxCacheSize = configuration.getMaxCacheSize();
       if (configuration.isDirect()) {
-        return new DirectDisk(blockSize, maxCacheSize);
+        return new DirectDisk(blockSize);
       } else {
-        return new HeapDisk(blockSize, maxCacheSize);
+        return new HeapDisk(blockSize);
       }
     } else {
       if (configuration.isDirect()) {

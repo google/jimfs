@@ -23,7 +23,7 @@ package com.google.jimfs.internal;
  */
 public class HeapDiskTest extends AbstractByteStoreTest {
 
-  private final Disk disk = new HeapDisk(8192, Long.MAX_VALUE);
+  private final Disk disk = new HeapDisk();
 
   @Override
   protected ByteStore createByteStore() {

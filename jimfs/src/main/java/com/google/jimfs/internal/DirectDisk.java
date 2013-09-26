@@ -18,6 +18,8 @@ package com.google.jimfs.internal;
 
 import static com.google.jimfs.internal.Util.nextPowerOf2;
 
+import com.google.jimfs.Storage;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -31,14 +33,14 @@ final class DirectDisk extends Disk {
   private ByteBuffer[] blocks = new ByteBuffer[256];
 
   DirectDisk() {
-    this(8192, Long.MAX_VALUE);
+    this(Storage.DEFAULT_BLOCK_SIZE);
   }
 
   /**
    * Creates a disk with the given block size and max cache size.
    */
-  public DirectDisk(int blockSize, long maxCacheSize) {
-    super(blockSize, maxCacheSize);
+  public DirectDisk(int blockSize) {
+    super(blockSize);
   }
 
   @Override

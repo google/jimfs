@@ -34,8 +34,6 @@ public final class Storage {
    */
   public static final int DEFAULT_BLOCK_SIZE = 8192;
 
-  private static final long DEFAULT_MAX_CACHE_SIZE = Long.MAX_VALUE;
-
   /**
    * Returns a new storage configuration for block storage. This is the preferred type of storage
    * to use.
@@ -45,10 +43,8 @@ public final class Storage {
    * system and reused for new files, resulting in much faster writes and much less garbage
    * collection during use of the file system.
    *
-   * <p>If no other options are configured, the returned configuration uses heap memory, a block
-   * size of 8192 bytes and has no limit on the number of of unused blocks it will retain for reuse.
-   * In other words, the size of the storage is always the maximum number of bytes it has used
-   * needed at one time so far.
+   * <p>If no other options are configured, the returned configuration uses heap memory and a block
+   * size of 8192 bytes.
    */
   public static Storage block() {
     return new Storage(true);
@@ -66,9 +62,8 @@ public final class Storage {
    * The most significant difference is observed when transferring large files to a socket using
    * {@link FileChannel#transferTo}.
    *
-   * <p>By default, this storage uses heap memory. The {@linkplain #blockSize(int) block size} and
-   * {@linkplain #maxCacheSize(long) max cache size} options do not apply to this type of storage
-   * and cannot be set.
+   * <p>By default, this storage uses heap memory. The {@linkplain #blockSize(int) block size}
+   * option does not apply to this type of storage and cannot be set.
    */
   public static Storage perFile() {
     return new Storage(false);
@@ -77,7 +72,6 @@ public final class Storage {
   private final boolean block;
   private boolean direct = false;
   private int blockSize = DEFAULT_BLOCK_SIZE;
-  private long maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
 
   private Storage(boolean block) {
     this.block = block;
@@ -102,13 +96,6 @@ public final class Storage {
    */
   public int getBlockSize() {
     return blockSize;
-  }
-
-  /**
-   * Returns the maximum cache size to use if block storage is used.
-   */
-  public long getMaxCacheSize() {
-    return maxCacheSize;
   }
 
   /**
@@ -143,36 +130,8 @@ public final class Storage {
    */
   public Storage blockSize(int blockSize) {
     checkState(block, "cannot set block size for non-block storage");
-    checkArgument(blockSize > 0, "maxCacheSize must be positive");
+    checkArgument(blockSize > 0, "blockSize must be positive");
     this.blockSize = blockSize;
-    return this;
-  }
-
-  /**
-   * Configures this storage to use no more than the given {@code maxCacheSize} bytes when the
-   * currently allocated files do not require more.
-   *
-   * <p>In other words, the storage will allocate an unlimited number of bytes for creating and
-   * writing to files (up to the memory limits of the VM, of course) but as long as the total
-   * number of bytes in the storage is greater than the given size, blocks that are freed by
-   * truncated or deleted files will not be discarded rather than being cached for reuse by other
-   * files.
-   *
-   * <p>The default max cache size is unlimited (that is, {@code Long.MAX_VALUE}). This means that
-   * the storage will retain the maximum number of bytes it's allocated so far until garbage
-   * collected.
-   *
-   * <p>The max cache size may also be set to 0, meaning that the storage will not cache any unused
-   * blocks.
-   *
-   * @throws IllegalStateException if this configuration is for {@linkplain #perFile() per-file}
-   *     storage
-   * @throws IllegalArgumentException if {@code maxCacheSize} is negative
-   */
-  public Storage maxCacheSize(long maxCacheSize) {
-    checkState(block, "cannot set max cache size for non-block storage");
-    checkArgument(maxCacheSize >= 0, "maxCacheSize must be non-negative");
-    this.maxCacheSize = maxCacheSize;
     return this;
   }
 }

@@ -38,13 +38,6 @@ abstract class Disk extends RegularFileStorage {
   protected final int blockSize;
 
   /**
-   * The target maximum number of blocks the disk should hold. While the number of blocks in the
-   * disk can go over this number if needed for files, when the number of block in the disk is over
-   * this number freed blocks will be discarded rather than being re-added to the block pool.
-   */
-  private final int maxCacheBlocks;
-
-  /**
    * The current total number of blocks this disk contains, including both free blocks and blocks
    * that are allocated to files.
    */
@@ -55,11 +48,10 @@ abstract class Disk extends RegularFileStorage {
    */
   protected final BlockQueue freeBlocks = new BlockQueue(1024);
 
-  protected Disk(int blockSize, long maxCacheSize) {
+  protected Disk(int blockSize) {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
     checkArgument(blockSize % 2 == 0, "blockSize (%s) must be a multiple of 2", blockSize);
     this.blockSize = blockSize;
-    this.maxCacheBlocks = (int) (maxCacheSize / blockSize);
   }
 
   @Override
@@ -116,14 +108,7 @@ abstract class Disk extends RegularFileStorage {
    * Frees all blocks in the given queue.
    */
   public final synchronized void free(BlockQueue blocks) {
-    int blocksToCache = maxCacheBlocks - blockCount;
-    if (blocksToCache > blocks.size()) {
-      freeBlocks.addAll(blocks);
-    } else {
-      for (int i = 0; i < blocksToCache; i++) {
-        freeBlocks.add(blocks.take());
-      }
-    }
+    freeBlocks.addAll(blocks);
   }
 
   /**
