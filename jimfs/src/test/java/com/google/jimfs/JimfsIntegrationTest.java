@@ -110,12 +110,12 @@ public class JimfsIntegrationTest {
   @Before
   public void setUp() throws IOException {
     unix = Jimfs.newUnixLikeConfiguration()
-        .name("unix")
-        .attributes(AttributeConfiguration.unix())
+        .setName("unix")
+        .setAttributeViews(AttributeViews.unix())
         .createFileSystem();
     win = Jimfs.newWindowsLikeConfiguration()
-        .name("win")
-        .attributes(AttributeConfiguration.windows())
+        .setName("win")
+        .setAttributeViews(AttributeViews.windows())
         .createFileSystem();
   }
 

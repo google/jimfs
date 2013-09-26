@@ -16,25 +16,48 @@
 
 package com.google.jimfs.internal;
 
+import com.google.jimfs.Storage;
+
 /**
  * Factory for creating new byte stores for regular files.
  *
  * @author Colin Decker
  */
-interface RegularFileStorage {
+abstract class RegularFileStorage {
+
+  /**
+   * Returns a {@link RegularFileStorage} instance matching the given configuration.
+   */
+  public static RegularFileStorage from(Storage configuration) {
+    if (configuration.isBlock()) {
+      int blockSize = configuration.getBlockSize();
+      long maxCacheSize = configuration.getMaxCacheSize();
+      if (configuration.isDirect()) {
+        return new DirectDisk(blockSize, maxCacheSize);
+      } else {
+        return new HeapDisk(blockSize, maxCacheSize);
+      }
+    } else {
+      if (configuration.isDirect()) {
+        return DirectByteStore.factory();
+      } else {
+        return ArrayByteStore.factory();
+      }
+    }
+  }
 
   /**
    * Creates a new, empty byte store.
    */
-  ByteStore createByteStore();
+  public abstract ByteStore createByteStore();
 
   /**
    * Returns the current total space in this storage.
    */
-  long getTotalSpace();
+  public abstract long getTotalSpace();
 
   /**
    * Returns the current unallocated space in this storage.
    */
-  long getUnallocatedSpace();
+  public abstract long getUnallocatedSpace();
 }

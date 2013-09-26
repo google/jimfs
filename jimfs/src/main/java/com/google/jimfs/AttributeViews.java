@@ -33,14 +33,14 @@ import java.util.Map;
 
 /**
  * Attribute view configuration for a file system. This class contains a set of static methods that
- * return configuration instances that define one or more attribute views. Multiple configurations
- * may be combined to configure the set of attribute views that a file system supports, but
- * providing more than one configuration that defines the same attribute view will result in an
- * exception.
+ * return {@code AttributeViews} instances that define one or more attribute views. Multiple
+ * {@code AttributeViews} may be combined to configure the full set of attribute views that a file
+ * system supports, but providing more than one configuration that defines the same view will
+ * result in an exception.
  *
  * @author Colin Decker
  */
-public abstract class AttributeConfiguration {
+public abstract class AttributeViews {
 
   /**
    * Returns a configuration for the "basic" attribute view.
@@ -48,15 +48,15 @@ public abstract class AttributeConfiguration {
    * <p>This is the default, and a file system will always have a basic attribute view regardless
    * of what views are configured for it.
    */
-  public static AttributeConfiguration basic() {
-    return new ProviderAttributeConfiguration(BasicAttributeProvider.INSTANCE);
+  public static AttributeViews basic() {
+    return fromProvider(BasicAttributeProvider.INSTANCE);
   }
 
   /**
    * Returns a configuration for the "owner" attribute view. Files will be created with the owner
    * "user" by default.
    */
-  public static AttributeConfiguration owner() {
+  public static AttributeViews owner() {
     return owner("user");
   }
 
@@ -64,8 +64,8 @@ public abstract class AttributeConfiguration {
    * Returns a configuration for the "owner" attribute view. Files will be created with the given
    * owner by default.
    */
-  public static AttributeConfiguration owner(String owner) {
-    return new ProviderAttributeConfiguration(new OwnerAttributeProvider(owner));
+  public static AttributeViews owner(String owner) {
+    return fromProvider(new OwnerAttributeProvider(owner));
   }
 
   /**
@@ -75,7 +75,7 @@ public abstract class AttributeConfiguration {
    * <p>If an "owner" view configuration is not provided, the configuration defined by
    * {@link #owner() owner} will be used.
    */
-  public static AttributeConfiguration posix() {
+  public static AttributeViews posix() {
     return posix("group", "rw-r--r--");
   }
 
@@ -86,10 +86,10 @@ public abstract class AttributeConfiguration {
    * <p>If an "owner" view configuration is not provided, the configuration defined by
    * {@link #owner() owner} will be used.
    */
-  public static AttributeConfiguration posix(final String group, final String permissions) {
-    return new DependantAttributeConfiguration("posix", "owner") {
+  public static AttributeViews posix(final String group, final String permissions) {
+    return new DependantAttributeViews("posix", "owner") {
       @Override
-      protected Iterable<? extends AttributeProvider> getProviders(
+      public Iterable<? extends AttributeProvider> getProviders(
           Map<String, AttributeProvider> otherProviders) {
         OwnerAttributeProvider owner = (OwnerAttributeProvider) otherProviders.get("owner");
         PosixAttributeProvider posix = new PosixAttributeProvider(group, permissions, owner);
@@ -107,10 +107,10 @@ public abstract class AttributeConfiguration {
    * <p>If a "posix" view configuration not provided, the configuration defined by
    * {@link #posix() posix} will be used.
    */
-  public static AttributeConfiguration unix() {
-    return new DependantAttributeConfiguration("unix", "posix") {
+  public static AttributeViews unix() {
+    return new DependantAttributeViews("unix", "posix") {
       @Override
-      protected Iterable<? extends AttributeProvider> getProviders(
+      public Iterable<? extends AttributeProvider> getProviders(
           Map<String, AttributeProvider> otherProviders) {
         PosixAttributeProvider posix = (PosixAttributeProvider) otherProviders.get("posix");
         UnixAttributeProvider unix = new UnixAttributeProvider(posix);
@@ -123,11 +123,11 @@ public abstract class AttributeConfiguration {
    * Returns a configuration for the "unix", "posix" and "owner" attribute views. Files will be
    * created with the given owner, group and permissions by default.
    */
-  public static AttributeConfiguration unix(String owner, String group, String permissions) {
-    AttributeConfiguration ownerView = owner(owner);
-    AttributeConfiguration posixView = posix(group, permissions);
-    AttributeConfiguration unixView = unix();
-    return new AttributeConfigurationSet(ownerView, posixView, unixView);
+  public static AttributeViews unix(String owner, String group, String permissions) {
+    AttributeViews ownerView = owner(owner);
+    AttributeViews posixView = posix(group, permissions);
+    AttributeViews unixView = unix();
+    return new AttributeViewsSet(ownerView, posixView, unixView);
   }
 
   /**
@@ -137,8 +137,8 @@ public abstract class AttributeConfiguration {
    * <p>If an "owner" view configuration is not provided, the configuration defined by
    * {@link #owner() owner} will be used.
    */
-  public static AttributeConfiguration dos() {
-    return new ProviderAttributeConfiguration(DosAttributeProvider.INSTANCE);
+  public static AttributeViews dos() {
+    return fromProvider(DosAttributeProvider.INSTANCE);
   }
 
   /**
@@ -148,7 +148,7 @@ public abstract class AttributeConfiguration {
    * <p>If an "owner" view configuration is not provided, the configuration defined by
    * {@link #owner() owner} will be used.
    */
-  public static AttributeConfiguration acl() {
+  public static AttributeViews acl() {
     return acl(ImmutableList.<AclEntry>of());
   }
 
@@ -159,11 +159,11 @@ public abstract class AttributeConfiguration {
    * <p>If an "owner" view configuration is not provided, the configuration defined by
    * {@link #owner() owner} will be used.
    */
-  public static AttributeConfiguration acl(List<AclEntry> acl) {
+  public static AttributeViews acl(List<AclEntry> acl) {
     final ImmutableList<AclEntry> aclCopy = ImmutableList.copyOf(acl);
-    return new DependantAttributeConfiguration("acl", "owner") {
+    return new DependantAttributeViews("acl", "owner") {
       @Override
-      protected Iterable<? extends AttributeProvider> getProviders(
+      public Iterable<? extends AttributeProvider> getProviders(
           Map<String, AttributeProvider> otherProviders) {
         OwnerAttributeProvider owner = (OwnerAttributeProvider) otherProviders.get("owner");
         AclAttributeProvider aclProvider = new AclAttributeProvider(owner, aclCopy);
@@ -173,10 +173,10 @@ public abstract class AttributeConfiguration {
   }
 
   /**
-   * Returns a set of attribute views containing the "user" attribute view.
+   * Returns a configuration for the "user" attribute view.
    */
-  public static AttributeConfiguration user() {
-    return new ProviderAttributeConfiguration(UserDefinedAttributeProvider.INSTANCE);
+  public static AttributeViews user() {
+    return new ProviderAttributeViews(UserDefinedAttributeProvider.INSTANCE);
   }
 
   /**
@@ -184,7 +184,7 @@ public abstract class AttributeConfiguration {
    * default set of views supported on Windows. Files will be created by default with the four
    * DOS attributes all set to false, the owner set to "user" and an empty ACL.
    */
-  public static AttributeConfiguration windows() {
+  public static AttributeViews windows() {
     return windows("owner", ImmutableList.<AclEntry>of());
   }
 
@@ -193,44 +193,44 @@ public abstract class AttributeConfiguration {
    * default set of views supported on Windows. Files will be created by default with the four DOS
    * attributes all set to false, owner set to the given owner and the given ACL.
    */
-  public static AttributeConfiguration windows(String owner, List<AclEntry> acl) {
-    AttributeConfiguration ownerView = owner(owner);
-    AttributeConfiguration dosView = dos();
-    AttributeConfiguration aclView = acl(acl);
-    AttributeConfiguration userView = user();
-    return new AttributeConfigurationSet(ownerView, dosView, aclView, userView);
+  public static AttributeViews windows(String owner, List<AclEntry> acl) {
+    AttributeViews ownerView = owner(owner);
+    AttributeViews dosView = dos();
+    AttributeViews aclView = acl(acl);
+    AttributeViews userView = user();
+    return new AttributeViewsSet(ownerView, dosView, aclView, userView);
   }
 
   /**
-   * Returns a configuration for the attribute view defined by the given attribute provider.
+   * Returns a configuration for the attribute view defined by the given provider.
    */
-  public static AttributeConfiguration view(AttributeProvider provider) {
-    return views(provider);
+  public static AttributeViews fromProvider(AttributeProvider provider) {
+    return fromProviders(provider);
   }
 
   /**
-   * Returns a configuration for the attribute views defined by the given attribute providers.
+   * Returns a configuration for the attribute views defined by the given providers.
    */
-  public static AttributeConfiguration views(AttributeProvider... providers) {
-    return new ProviderAttributeConfiguration(providers);
+  public static AttributeViews fromProviders(AttributeProvider... providers) {
+    return new ProviderAttributeViews(providers);
   }
 
   // restrict subclasses to this package
-  AttributeConfiguration() {}
+  AttributeViews() {}
 
   /**
    * Returns the set of views that provides directly.
    */
-  protected abstract ImmutableSet<String> provides();
+  abstract ImmutableSet<String> provides();
 
   /**
-   * Returns the set of view that this requires to create its views.
+   * Returns the set of views that this requires to create its views.
    */
-  protected abstract ImmutableSet<String> requires();
+  abstract ImmutableSet<String> requires();
 
   /**
    * Gets the providers this provides, creating them if necessary.
    */
-  protected abstract Iterable<? extends AttributeProvider> getProviders(
+  public abstract Iterable<? extends AttributeProvider> getProviders(
       Map<String, AttributeProvider> otherProviders);
 }

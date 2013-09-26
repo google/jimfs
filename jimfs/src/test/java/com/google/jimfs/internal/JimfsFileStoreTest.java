@@ -22,6 +22,8 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.AttributeViews;
+import com.google.jimfs.Storage;
 import com.google.jimfs.attribute.BasicFileAttribute;
 import com.google.jimfs.attribute.TestAttributeProvider;
 import com.google.jimfs.attribute.TestAttributeView;
@@ -58,10 +60,10 @@ public class JimfsFileStoreTest {
 
   @Before
   public void setUp() {
-    store = new JimfsFileStore("foo",
-        BasicAttributeProvider.INSTANCE,
-        new TestAttributeProvider(),
-        new OwnerAttributeProvider("user"));
+    store = new JimfsFileStore("foo", Storage.block(),
+        AttributeViews.fromProviders(BasicAttributeProvider.INSTANCE,
+            new TestAttributeProvider(),
+            new OwnerAttributeProvider("user")));
   }
 
   @Test

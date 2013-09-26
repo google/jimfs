@@ -32,27 +32,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A collection of other {@code AttributeConfiguration} instances.
+ * A collection of other {@code AttributeViews} instances.
  *
  * @author Colin Decker
  */
-final class AttributeConfigurationSet extends AttributeConfiguration {
+final class AttributeViewsSet extends AttributeViews {
 
-  private ImmutableMap<String, AttributeConfiguration> configurations;
+  private ImmutableMap<String, AttributeViews> configurations;
 
-  public AttributeConfigurationSet(AttributeConfiguration... configurations) {
+  public AttributeViewsSet(AttributeViews... configurations) {
     this(Arrays.asList(configurations));
   }
 
-  public AttributeConfigurationSet(Iterable<? extends AttributeConfiguration> configurations) {
+  public AttributeViewsSet(Iterable<? extends AttributeViews> configurations) {
     // build the map of view name to config that creates the provider for that view
-    Map<String, AttributeConfiguration> builder = new HashMap<>();
+    Map<String, AttributeViews> builder = new HashMap<>();
 
     // flatten any other AttributeConfigurationSets when building the map
-    for (AttributeConfiguration config : configurations) {
-      if (config instanceof AttributeConfigurationSet) {
-        for (AttributeConfiguration config2 :
-            ((AttributeConfigurationSet) config).getConfigurations()) {
+    for (AttributeViews config : configurations) {
+      if (config instanceof AttributeViewsSet) {
+        for (AttributeViews config2 :
+            ((AttributeViewsSet) config).getConfigurations()) {
           addViews(builder, config2);
         }
       } else {
@@ -64,7 +64,7 @@ final class AttributeConfigurationSet extends AttributeConfiguration {
   }
 
   private void addViews(
-      Map<String, AttributeConfiguration> builder, AttributeConfiguration config) {
+      Map<String, AttributeViews> builder, AttributeViews config) {
     for (String providedView : config.provides()) {
       if (builder.containsKey(providedView)) {
         throw new IllegalStateException(
@@ -78,22 +78,22 @@ final class AttributeConfigurationSet extends AttributeConfiguration {
   /**
    * Gets the set of configurations this contains.
    */
-  private ImmutableSet<AttributeConfiguration> getConfigurations() {
+  private ImmutableSet<AttributeViews> getConfigurations() {
     return ImmutableSet.copyOf(configurations.values());
   }
 
   @Override
-  protected ImmutableSet<String> provides() {
+  ImmutableSet<String> provides() {
     return configurations.keySet();
   }
 
   @Override
-  protected ImmutableSet<String> requires() {
+  ImmutableSet<String> requires() {
     return ImmutableSet.of();
   }
 
   @Override
-  protected Iterable<? extends AttributeProvider> getProviders(
+  public Iterable<? extends AttributeProvider> getProviders(
       Map<String, AttributeProvider> otherProviders) {
     Map<String, AttributeProvider> providers = new HashMap<>();
     providers.put("basic", BasicAttributeProvider.INSTANCE);
@@ -122,7 +122,7 @@ final class AttributeConfigurationSet extends AttributeConfiguration {
       return;
     }
 
-    AttributeConfiguration providerFactory = configurations.get(viewName);
+    AttributeViews providerFactory = configurations.get(viewName);
     if (providerFactory == null) {
       createDefault(viewName, providers);
     } else {

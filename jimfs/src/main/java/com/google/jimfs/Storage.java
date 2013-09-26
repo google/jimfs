@@ -27,7 +27,14 @@ import java.nio.channels.FileChannel;
  *
  * @author Colin Decker
  */
-public final class StorageConfiguration {
+public final class Storage {
+
+  /**
+   * The default block size.
+   */
+  public static final int DEFAULT_BLOCK_SIZE = 8192;
+
+  private static final long DEFAULT_MAX_CACHE_SIZE = Long.MAX_VALUE;
 
   /**
    * Returns a new storage configuration for block storage. This is the preferred type of storage
@@ -43,8 +50,8 @@ public final class StorageConfiguration {
    * In other words, the size of the storage is always the maximum number of bytes it has used
    * needed at one time so far.
    */
-  public static StorageConfiguration block() {
-    return new StorageConfiguration(true);
+  public static Storage block() {
+    return new Storage(true);
   }
 
   /**
@@ -63,17 +70,45 @@ public final class StorageConfiguration {
    * {@linkplain #maxCacheSize(long) max cache size} options do not apply to this type of storage
    * and cannot be set.
    */
-  public static StorageConfiguration perFile() {
-    return new StorageConfiguration(false);
+  public static Storage perFile() {
+    return new Storage(false);
   }
 
   private final boolean block;
   private boolean direct = false;
-  private int blockSize = 8192;
-  private long maxCacheSize = Long.MAX_VALUE;
+  private int blockSize = DEFAULT_BLOCK_SIZE;
+  private long maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
 
-  private StorageConfiguration(boolean block) {
+  private Storage(boolean block) {
     this.block = block;
+  }
+
+  /**
+   * Returns whether or not block storage should be used.
+   */
+  public boolean isBlock() {
+    return block;
+  }
+
+  /**
+   * Returns whether or not direct storage should be used.
+   */
+  public boolean isDirect() {
+    return direct;
+  }
+
+  /**
+   * Returns the block size to use if block storage is used.
+   */
+  public int getBlockSize() {
+    return blockSize;
+  }
+
+  /**
+   * Returns the maximum cache size to use if block storage is used.
+   */
+  public long getMaxCacheSize() {
+    return maxCacheSize;
   }
 
   /**
@@ -81,7 +116,7 @@ public final class StorageConfiguration {
    *
    * <p>This is the default.
    */
-  public StorageConfiguration heap() {
+  public Storage heap() {
     this.direct = false;
     return this;
   }
@@ -92,7 +127,7 @@ public final class StorageConfiguration {
    * performance advantages in certain situations (such as transferring files to sockets) but in
    * general {@linkplain #heap() heap} storage is preferred.
    */
-  public StorageConfiguration direct() {
+  public Storage direct() {
     this.direct = true;
     return this;
   }
@@ -106,7 +141,7 @@ public final class StorageConfiguration {
    *     storage
    * @throws IllegalArgumentException if {@code blockSize} is not positive
    */
-  public StorageConfiguration blockSize(int blockSize) {
+  public Storage blockSize(int blockSize) {
     checkState(block, "cannot set block size for non-block storage");
     checkArgument(blockSize > 0, "maxCacheSize must be positive");
     this.blockSize = blockSize;
@@ -134,7 +169,7 @@ public final class StorageConfiguration {
    *     storage
    * @throws IllegalArgumentException if {@code maxCacheSize} is negative
    */
-  public StorageConfiguration maxCacheSize(long maxCacheSize) {
+  public Storage maxCacheSize(long maxCacheSize) {
     checkState(block, "cannot set max cache size for non-block storage");
     checkArgument(maxCacheSize >= 0, "maxCacheSize must be non-negative");
     this.maxCacheSize = maxCacheSize;

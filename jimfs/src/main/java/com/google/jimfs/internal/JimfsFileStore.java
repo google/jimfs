@@ -23,6 +23,8 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.AttributeViews;
+import com.google.jimfs.Storage;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.common.IoSupplier;
@@ -37,7 +39,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,7 @@ final class JimfsFileStore extends FileStore {
   private final String name;
   private final AttributeProviderRegistry attributeProviders;
 
-  private final RegularFileStorage storage = new HeapDisk();
+  private final RegularFileStorage storage;
 
   /** Directory supplier with no extra file attributes. */
   private final Supplier<File> defaultDirectorySupplier = new DirectorySupplier();
@@ -69,17 +70,20 @@ final class JimfsFileStore extends FileStore {
   /**
    * Creates a new file service using the given providers to handle file attributes.
    */
-  public JimfsFileStore(String name, AttributeProvider... providers) {
-    this(name, Arrays.asList(providers));
+  public JimfsFileStore(String name, Storage storage, AttributeViews attributeViews) {
+    this.name = checkNotNull(name);
+    this.storage = RegularFileStorage.from(storage);
+    this.attributeProviders = new AttributeProviderRegistry(attributeViews);
   }
 
-  /**
-   * Creates a new file service using the given providers to handle file attributes.
-   */
-  public JimfsFileStore(String name, Iterable<? extends AttributeProvider> providers) {
+  private JimfsFileStore(
+      String name, RegularFileStorage storage, AttributeProviderRegistry attributeProviders) {
     this.name = checkNotNull(name);
-    this.attributeProviders = new AttributeProviderRegistry(providers);
+    this.storage = checkNotNull(storage);
+    this.attributeProviders = checkNotNull(attributeProviders);
   }
+
+
 
   @Override
   public String name() {

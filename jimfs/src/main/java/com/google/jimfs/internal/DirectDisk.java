@@ -31,17 +31,10 @@ final class DirectDisk extends Disk {
   private ByteBuffer[] blocks = new ByteBuffer[256];
 
   /**
-   * Creates a disk with the default block size.
+   * Creates a disk with the given block size and max cache size.
    */
-  public DirectDisk() {
-    this(DEFAULT_BLOCK_SIZE);
-  }
-
-  /**
-   * Creates a disk with the given block size.
-   */
-  public DirectDisk(int blockSize) {
-    super(blockSize, DEFAULT_MAX_CACHE);
+  public DirectDisk(int blockSize, long maxCacheSize) {
+    super(blockSize, maxCacheSize);
   }
 
   @Override

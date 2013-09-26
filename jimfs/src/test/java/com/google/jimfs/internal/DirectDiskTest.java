@@ -21,7 +21,7 @@ package com.google.jimfs.internal;
  */
 public class DirectDiskTest extends AbstractByteStoreTest {
 
-  private final Disk disk = new DirectDisk();
+  private final Disk disk = new DirectDisk(8192, Long.MAX_VALUE);
 
   @Override
   protected ByteStore createByteStore() {

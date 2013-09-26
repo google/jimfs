@@ -25,21 +25,21 @@ import java.util.Arrays;
 import java.util.Map;
 
 /**
- * {@code AttributeConfiguration} providing a set of one or more already constructed
+ * {@code AttributeViews} providing a set of one or more already constructed
  * {@code AttributeProvider} instances.
  *
  * @author Colin Decker
  */
-final class ProviderAttributeConfiguration extends AttributeConfiguration {
+final class ProviderAttributeViews extends AttributeViews {
 
   private final ImmutableSet<AttributeProvider> providers;
   private final ImmutableSet<String> views;
 
-  ProviderAttributeConfiguration(AttributeProvider... providers) {
+  ProviderAttributeViews(AttributeProvider... providers) {
     this(Arrays.asList(providers));
   }
 
-  ProviderAttributeConfiguration(Iterable<? extends AttributeProvider> providers) {
+  ProviderAttributeViews(Iterable<? extends AttributeProvider> providers) {
     this.providers = ImmutableSet.copyOf(providers);
     this.views = ImmutableSet.copyOf(Iterables.transform(this.providers,
         new Function<AttributeProvider, String>() {
@@ -61,7 +61,7 @@ final class ProviderAttributeConfiguration extends AttributeConfiguration {
   }
 
   @Override
-  protected Iterable<? extends AttributeProvider> getProviders(
+  public Iterable<? extends AttributeProvider> getProviders(
       Map<String, AttributeProvider> otherProviders) {
     return providers;
   }

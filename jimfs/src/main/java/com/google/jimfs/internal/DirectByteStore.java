@@ -283,4 +283,31 @@ final class DirectByteStore extends ByteStore {
 
     return (int) size;
   }
+
+  /**
+   * Returns a {@link RegularFileStorage} that creates direct byte stores.
+   */
+  public static RegularFileStorage factory() {
+    return Factory.INSTANCE;
+  }
+
+  private static final class Factory extends RegularFileStorage {
+
+    private static final Factory INSTANCE = new Factory();
+
+    @Override
+    public ByteStore createByteStore() {
+      return new DirectByteStore();
+    }
+
+    @Override
+    public long getTotalSpace() {
+      return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public long getUnallocatedSpace() {
+      return Integer.MAX_VALUE;
+    }
+  }
 }

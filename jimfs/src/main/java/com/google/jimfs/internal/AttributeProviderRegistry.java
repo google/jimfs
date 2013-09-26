@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
+import com.google.jimfs.AttributeViews;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeReader;
 import com.google.jimfs.attribute.AttributeViewProvider;
@@ -42,6 +43,10 @@ final class AttributeProviderRegistry {
   private final ImmutableListMultimap<String, AttributeProvider> allProviders;
   private final ImmutableMap<Class<?>, AttributeViewProvider<?>> viewProviders;
   private final ImmutableMap<Class<?>, AttributeReader<?>> readers;
+
+  public AttributeProviderRegistry(AttributeViews views) {
+    this(views.getProviders(new HashMap<String, AttributeProvider>()));
+  }
 
   public AttributeProviderRegistry(Iterable<? extends AttributeProvider> providers) {
     this.providers = ImmutableSet.copyOf(providers);

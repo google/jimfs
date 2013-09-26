@@ -31,17 +31,10 @@ final class HeapDisk extends Disk {
   private byte[][] blocks = new byte[256][];
 
   /**
-   * Creates a disk with the default block size.
+   * Creates a disk with the given block size and max cache size.
    */
-  public HeapDisk() {
-    this(DEFAULT_BLOCK_SIZE);
-  }
-
-  /**
-   * Creates a disk with the given block size.
-   */
-  public HeapDisk(int blockSize) {
-    super(blockSize, DEFAULT_MAX_CACHE);
+  public HeapDisk(int blockSize, long maxCacheSize) {
+    super(blockSize, maxCacheSize);
   }
 
   @Override

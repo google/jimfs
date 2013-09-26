@@ -26,23 +26,23 @@ import com.google.common.collect.ImmutableSet;
  *
  * @author Colin Decker
  */
-abstract class DependantAttributeConfiguration extends AttributeConfiguration {
+abstract class DependantAttributeViews extends AttributeViews {
 
   private final String view;
   private final ImmutableSet<String> requires;
 
-  protected DependantAttributeConfiguration(String view, String... requires) {
+  protected DependantAttributeViews(String view, String... requires) {
     this.view = checkNotNull(view);
     this.requires = ImmutableSet.copyOf(requires);
   }
 
   @Override
-  protected ImmutableSet<String> provides() {
+  ImmutableSet<String> provides() {
     return ImmutableSet.of(view);
   }
 
   @Override
-  protected ImmutableSet<String> requires() {
+  ImmutableSet<String> requires() {
     return requires;
   }
 }
