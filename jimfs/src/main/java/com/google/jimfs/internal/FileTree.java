@@ -1,51 +1,60 @@
-/*
- * Copyright 2013 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.DirectoryTable.DirEntry;
 import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
 
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.Iterator;
 
 import javax.annotation.Nullable;
 
 /**
- * Service handling file lookup for a {@link FileSystemService}.
+ * The tree of directories and files for the file system.
  *
  * @author Colin Decker
  */
-final class LookupService {
+final class FileTree {
 
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
 
   private final File superRoot;
+  private final ImmutableSortedSet<Name> rootDirectoryNames;
 
-  LookupService(File superRoot) {
+  /**
+   * Creates a new file tree with the given super root.
+   */
+  FileTree(File superRoot) {
     this.superRoot = checkNotNull(superRoot);
+
+    DirectoryTable superRootTable = superRoot.content();
+    this.rootDirectoryNames = superRootTable.snapshot();
+  }
+
+  /**
+   * Returns the names of the root directories in this tree.
+   */
+  public ImmutableSortedSet<Name> getRootDirectoryNames() {
+    return rootDirectoryNames;
+  }
+
+  /**
+   * Gets the directory entry for the root with the given name or {@code null} if no such root
+   * exists.
+   */
+  @Nullable
+  public DirectoryEntry getRoot(Name name) {
+    DirectoryTable superRootTable = superRoot.content();
+    return superRootTable.getEntry(name);
   }
 
   /**
    * Returns the result of the file lookup for the given path.
    */
-  public LookupResult lookup(
+  public DirectoryEntry lookup(
       File workingDirectory, JimfsPath path, LinkOptions options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
@@ -62,10 +71,14 @@ final class LookupService {
       }
     }
 
-    return lookup(base, names, options, 0);
+    DirectoryEntry result = lookup(base, names, options, 0);
+    if (result == null) {
+      throw new NoSuchFileException(path.toString());
+    }
+    return result;
   }
 
-  private LookupResult lookup(
+  private DirectoryEntry lookup(
       File dir, JimfsPath path, LinkOptions options, int linkDepth) throws IOException {
     Iterable<Name> names = path.path();
     if (path.isAbsolute()) {
@@ -82,22 +95,31 @@ final class LookupService {
    * Looks up the given names against the given base file. If the file does not exist ({@code dir}
    * is null) or is not a directory, the lookup fails.
    */
-  private LookupResult lookup(@Nullable File dir,
+  @Nullable
+  private DirectoryEntry lookup(@Nullable File dir,
       Iterable<Name> names, LinkOptions options, int linkDepth) throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
       DirectoryTable table = getDirectoryTable(dir);
-      File file = table == null ? null : table.get(name);
+      if (table == null) {
+        return null;
+      }
 
-      if (file != null && file.isSymbolicLink()) {
-        LookupResult linkResult = followSymbolicLink(table, file, linkDepth);
+      DirectoryEntry entry = table.getEntry(name);
+      if (entry == null) {
+        return null;
+      }
 
-        if (!linkResult.found()) {
-          return LookupResult.notFound();
+      File file = entry.file();
+      if (file.isSymbolicLink()) {
+        DirectoryEntry linkResult = followSymbolicLink(dir, file, linkDepth);
+
+        if (linkResult == null) {
+          return null;
         }
 
-        dir = linkResult.file();
+        dir = linkResult.orNull();
       } else {
         dir = file;
       }
@@ -111,60 +133,51 @@ final class LookupService {
   /**
    * Looks up the last element of a path.
    */
-  private LookupResult lookupLast(@Nullable File dir,
+  @Nullable
+  private DirectoryEntry lookupLast(@Nullable File dir,
       Name name, LinkOptions options, int linkDepth) throws IOException {
     DirectoryTable table = getDirectoryTable(dir);
     if (table == null) {
-      return LookupResult.notFound();
+      return null;
     }
 
-    DirEntry entry = table.getEntry(name);
+    DirectoryEntry entry = table.getEntry(name);
     if (entry == null) {
-      return LookupResult.parentFound(dir);
+      return new DirectoryEntry(dir, name, null);
     }
 
     File file = entry.file();
     if (options.isFollowLinks() && file.isSymbolicLink()) {
-      // TODO(cgdecker): can add info on the symbolic link and its parent here if needed
-      // for now it doesn't seem like it's needed though
-      return followSymbolicLink(table, file, linkDepth);
+      return followSymbolicLink(dir, file, linkDepth);
     }
 
-    Name canonicalName = entry.name();
-    return createFoundResult(dir, canonicalName, file);
+    return getRealEntry(entry);
   }
 
-  private LookupResult followSymbolicLink(
-      DirectoryTable table, File link, int linkDepth) throws IOException {
+  private DirectoryEntry followSymbolicLink(File dir, File link, int linkDepth) throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");
     }
 
     JimfsPath targetPath = link.content();
-    return lookup(table.self(), targetPath, FOLLOW_LINKS, linkDepth + 1);
+    return lookup(dir, targetPath, FOLLOW_LINKS, linkDepth + 1);
   }
 
   /**
-   * Creates a result indicating the file was found. Accounts for cases where the name used to
-   * lookup the file was "." or "..", meaning that the directory the last lookup was done in is not
-   * actually the parent directory of the file.
+   * Returns the entry for the file in its parent directory. This will be the given entry unless the
+   * name for the entry is "." or "..", in which the directory linking to the file is not the file's
+   * parent directory. In that case, we know the file must be a directory ("." and ".." can only
+   * link to directories), so we can just get the entry that links to the directory in its parent.
    */
-  private LookupResult createFoundResult(File parent, Name name, File file) {
+  private DirectoryEntry getRealEntry(DirectoryEntry entry) {
+    Name name = entry.name();
+
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
-      // the parent dir is not the directory we did the lookup in
-      // also, the file itself must be a directory
-      DirectoryTable fileTable = file.content();
-      parent = fileTable.parent();
-      if (parent == file) {
-        // root dir
-        parent = superRoot;
-        DirectoryTable superRootTable = parent.content();
-        name = superRootTable.getName(file);
-      } else {
-        name = fileTable.name();
-      }
+      DirectoryTable table = entry.file().content();
+      return table.entry();
+    } else {
+      return entry;
     }
-    return LookupResult.found(parent, file, name);
   }
 
   @Nullable
@@ -177,8 +190,8 @@ final class LookupService {
   }
 
   /**
-   * Returns true if path has no root component (is not absolute) and either has no name
-   * components or only has a single name component, the empty string.
+   * Returns true if path has no root component (is not absolute) and either has no name components
+   * or only has a single name component, the empty string.
    */
   private static boolean isEmpty(JimfsPath path) {
     return !path.isAbsolute() && (path.getNameCount() == 0

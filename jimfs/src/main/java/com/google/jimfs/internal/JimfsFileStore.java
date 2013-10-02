@@ -18,76 +18,195 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.jimfs.AttributeViews;
 import com.google.jimfs.Storage;
-import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.annotation.Nullable;
 
 /**
- * Service for creating and copying files as well as reading and setting attributes on them.
+ * {@link FileStore} implementation which provides methods for file creation, lookup and attribute
+ * handling.
  *
  * @author Colin Decker
  */
 final class JimfsFileStore extends FileStore {
 
-  private static final String ALL_ATTRIBUTES = "*";
-
-  private final AtomicLong idGenerator = new AtomicLong();
-
-  private final String name;
-  private final AttributeProviderRegistry attributeProviders;
-
+  private final FileTree tree;
   private final RegularFileStorage storage;
+  private final AttributeService attributes;
+  private final FileFactory factory;
 
-  /** Directory supplier with no extra file attributes. */
-  private final Supplier<File> defaultDirectorySupplier = new DirectorySupplier();
-  /** Regular file supplier with no extra file attributes. */
-  private final Supplier<File> defaultRegularFileSupplier = new RegularFileSupplier();
+  private final Lock readLock;
+  private final Lock writeLock;
 
   /**
-   * Creates a new file service using the given providers to handle file attributes.
+   * Creates a new file store with the given storage and attribute view configuration.
    */
-  public JimfsFileStore(String name, Storage storage, AttributeViews attributeViews) {
-    this.name = checkNotNull(name);
-    this.storage = RegularFileStorage.from(storage);
-    this.attributeProviders = new AttributeProviderRegistry(attributeViews);
+  public JimfsFileStore(
+      FileTree tree, FileFactory factory, Storage storage, AttributeViews attributeViews) {
+    this(tree, factory, RegularFileStorage.from(storage),
+        new AttributeService(new AttributeProviderRegistry(attributeViews)));
   }
 
-  private JimfsFileStore(
-      String name, RegularFileStorage storage, AttributeProviderRegistry attributeProviders) {
-    this.name = checkNotNull(name);
+  public JimfsFileStore(
+      FileTree tree, FileFactory factory, RegularFileStorage storage, AttributeService attributes) {
+    this.tree = checkNotNull(tree);
+    this.factory = checkNotNull(factory);
     this.storage = checkNotNull(storage);
-    this.attributeProviders = checkNotNull(attributeProviders);
+    this.attributes = checkNotNull(attributes);
+
+    ReadWriteLock lock = new ReentrantReadWriteLock();
+    this.readLock = lock.readLock();
+    this.writeLock = lock.writeLock();
   }
 
+  // internal use methods
 
+  /**
+   * Returns the read lock for this store.
+   */
+  Lock readLock() {
+    return readLock;
+  }
+
+  /**
+   * Returns the write lock for this store.
+   */
+  Lock writeLock() {
+    return writeLock;
+  }
+
+  /**
+   * Returns the names of the root directories in this store.
+   */
+  ImmutableSortedSet<Name> getRootDirectoryNames() {
+    return tree.getRootDirectoryNames();
+  }
+
+  /**
+   * Looks up the file at the given path using the given link options. If the path is relative, the
+   * lookup is relative to the given working directory.
+   *
+   * @throws NoSuchFileException if an element of the path other than the final element does not
+   *     resolve to a directory or symbolic link (e.g. it doesn't exist or is a regular file)
+   * @throws IOException if a symbolic link cycle is detected or the depth of symbolic link
+   *    recursion otherwise exceeds a threshold
+   */
+  DirectoryEntry lookup(
+      File workingDirectory, JimfsPath path, LinkOptions options) throws IOException {
+    return tree.lookup(workingDirectory, path, options);
+  }
+
+  /**
+   * Returns a supplier that creates a new regular file.
+   */
+  Supplier<File> createRegularFile() {
+    return factory.regularFileSupplier();
+  }
+
+  /**
+   * Returns a supplier that creates a new directory.
+   */
+  Supplier<File> createDirectory() {
+    return factory.directorySupplier();
+  }
+
+  /**
+   * Returns a supplier that creates a new symbolic link with the given target.
+   */
+  Supplier<File> createSymbolicLink(JimfsPath target) {
+    return factory.symbolicLinkSupplier(target);
+  }
+
+  /**
+   * Creates a copy of the given file, copying its attributes as well if copy attributes is true.
+   * Returns the copy.
+   */
+  File copy(File file, boolean copyAttributes) {
+    File copy = factory.copy(file);
+    setInitialAttributes(copy);
+    if (copyAttributes) {
+      attributes.copyAttributes(file, copy);
+    }
+    return copy;
+  }
+
+  /**
+   * Sets initial attributes on the given file, including the given attributes if possible.
+   */
+  void setInitialAttributes(File file, FileAttribute<?>... attrs) {
+    attributes.setInitialAttributes(file, attrs);
+  }
+
+  /**
+   * Copies the basic attributes (just file times) of the given file to the given copy file.
+   */
+  void copyBasicAttributes(File file, File copy) {
+    attributes.copyBasicAttributes(file, copy);
+  }
+
+  /**
+   * Returns an attribute view of the given type for the given file supplier, or {@code null} if the
+   * view type is not supported.
+   */
+  @Nullable
+  <V extends FileAttributeView> V getFileAttributeView(
+      IoSupplier<? extends AttributeStore> supplier, Class<V> type) {
+    return attributes.getFileAttributeView(supplier, type);
+  }
+
+  /**
+   * Returns a map containing the attributes described by the given string mapped to their values.
+   */
+  ImmutableMap<String, Object> readAttributes(File file, String attributes) {
+    return this.attributes.readAttributes(file, attributes);
+  }
+
+  /**
+   * Returns attributes of the given file as an object of the given type.
+   *
+   * @throws UnsupportedOperationException if the given attributes type is not supported
+   */
+  <A extends BasicFileAttributes> A readAttributes(File file, Class<A> type) {
+    return attributes.readAttributes(file, type);
+  }
+
+  /**
+   * Sets the given attribute to the given value for the given file.
+   */
+  void setAttribute(File file, String attribute, Object value) {
+    attributes.setAttribute(file, attribute, value);
+  }
+
+  /**
+   * Returns the file attribute views supported by this store.
+   */
+  ImmutableSet<String> supportedFileAttributeViews() {
+    return attributes.supportedFileAttributeViews();
+  }
+
+  // methods implementing the FileStore API
 
   @Override
   public String name() {
-    return name;
+    return "jimfs";
   }
 
   @Override
@@ -115,366 +234,23 @@ final class JimfsFileStore extends FileStore {
     return storage.getUnallocatedSpace();
   }
 
-  private long nextFileId() {
-    return idGenerator.getAndIncrement();
-  }
-
-  private File createFile(long id, FileContent content, FileAttribute<?>... attrs) {
-    File file = new File(id, content);
-    setInitialAttributes(file);
-    for (FileAttribute<?> attr : attrs) {
-      setAttributeInternal(file, attr.name(), attr.value(), true);
-    }
-    return file;
-  }
-
-  /**
-   * Creates a new directory and stores it. Returns the key of the new file.
-   */
-  public File createDirectory(FileAttribute<?>... attrs) {
-    return createFile(nextFileId(), new DirectoryTable(), attrs);
-  }
-
-  /**
-   * Creates a new regular file and stores it. Returns the key of the new file.
-   */
-  public File createRegularFile(FileAttribute<?>... attrs) {
-    return createFile(nextFileId(), storage.createByteStore(), attrs);
-  }
-
-  /**
-   * Creates a new symbolic link referencing the given target path and stores it. Returns the key of
-   * the new file.
-   */
-  public File createSymbolicLink(JimfsPath target, FileAttribute<?>... attrs) {
-    return createFile(nextFileId(), target, attrs);
-  }
-
-  /**
-   * Creates copies of the given file metadata and content and stores them. Returns the key of the
-   * new file.
-   */
-  public File copy(File file, boolean copyAttributes) {
-    File copy = createFile(nextFileId(), file.content().copy());
-    if (copyAttributes) {
-      copyAttributes(file, copy);
-    }
-    return copy;
-  }
-
-  /**
-   * Copies the file times of the given file to the given copy file.
-   */
-  public void copyBasicAttributes(File file, File copy) {
-    copy.setCreationTime(file.getCreationTime());
-    copy.setLastAccessTime(file.getLastAccessTime());
-    copy.setLastModifiedTime(file.getLastModifiedTime());
-  }
-
-  /**
-   * Copies the attributes of the given file to the given copy file.
-   */
-  private void copyAttributes(File file, File copy) {
-    copyBasicAttributes(file, copy);
-    for (String attribute : file.getAttributeKeys()) {
-      copy.setAttribute(attribute, file.getAttribute(attribute));
-    }
-  }
-
-  /**
-   * Returns a supplier that creates directories and sets the given attributes.
-   */
-  public Supplier<File> directorySupplier(FileAttribute<?>... attrs) {
-    return attrs.length == 0 ? defaultDirectorySupplier : new DirectorySupplier(attrs);
-  }
-
-  /**
-   * Returns a supplier that creates a regular files and sets the given attributes.
-   */
-  public Supplier<File> regularFileSupplier(FileAttribute<?>... attrs) {
-    return attrs.length == 0 ? defaultRegularFileSupplier : new RegularFileSupplier(attrs);
-  }
-
-  /**
-   * Returns a supplier that creates a symbolic links to the given path and sets the given
-   * attributes.
-   */
-  public Supplier<File> symbolicLinkSupplier(JimfsPath target, FileAttribute<?>... attrs) {
-    return new SymbolicLinkSupplier(target, attrs);
-  }
-
-  /**
-   * Implements {@link FileSystem#supportedFileAttributeViews()}.
-   */
-  public ImmutableSet<String> supportedFileAttributeViews() {
-    return attributeProviders.getSupportedViews();
-  }
-
-  /**
-   * Implements {@link FileStore#supportsFileAttributeView(Class)}.
-   */
+  @Override
   public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
-    return attributeProviders.getSupportedViewTypes().contains(type);
+    return attributes.supportsFileAttributeView(type);
   }
 
   @Override
   public boolean supportsFileAttributeView(String name) {
-    return supportedFileAttributeViews().contains(name);
+    return attributes.supportedFileAttributeViews().contains(name);
   }
 
-  /**
-   * Sets all initial attributes for the given file.
-   */
-  private void setInitialAttributes(File file) {
-    for (AttributeProvider provider : attributeProviders.getProviders()) {
-      provider.setInitial(file);
-    }
-  }
-
-  /**
-   * Gets the value of the given attribute for the given file. {@code attribute} must be of the form
-   * "view:attribute" or "attribute".
-   */
-  public <V> V getAttribute(File file, String attribute) {
-    String view = getViewName(attribute);
-    String attr = getSingleAttribute(attribute);
-    return getAttribute(file, view, attr);
-  }
-
-  /**
-   * Gets the value of the given attribute for the given view and file. Neither view nor file may
-   * have a ':' character.
-   */
-  @SuppressWarnings("unchecked")
-  public <V> V getAttribute(File file, String view, String attribute) {
-    for (AttributeProvider provider : attributeProviders.getProviders(view)) {
-      if (provider.isGettable(file, attribute)) {
-        return (V) provider.get(file, attribute);
-      }
-    }
-
-    throw new IllegalArgumentException("attribute not found: " + attribute);
-  }
-
-  /**
-   * Sets the value of the given attribute to the given value for the given file.
-   */
-  public void setAttribute(File file, String attribute, Object value) {
-    setAttributeInternal(file, attribute, value, false);
-  }
-
-  /**
-   * Sets the value of the given attribute to the given value for the given view and file.
-   */
-  public void setAttribute(File file, String view, String attribute, Object value) {
-    setAttributeInternal(file, view, attribute, value, false);
-  }
-
-  private void setAttributeInternal(File file, String attribute, Object value, boolean create) {
-    String view = getViewName(attribute);
-    String attr = getSingleAttribute(attribute);
-    setAttributeInternal(file, view, attr, value, create);
-  }
-
-  private void setAttributeInternal(
-      File file, String view, String attribute, Object value, boolean create) {
-    for (AttributeProvider provider : attributeProviders.getProviders(view)) {
-      if (provider.isSettable(file, attribute)) {
-        if (create && !provider.isSettableOnCreate(attribute)) {
-          throw new UnsupportedOperationException(
-              "cannot set attribute '" + view + ":" + attribute + "' during file creation");
-        }
-
-        ImmutableSet<Class<?>> acceptedTypes = provider.acceptedTypes(attribute);
-        boolean validType = false;
-        for (Class<?> type : acceptedTypes) {
-          if (type.isInstance(value)) {
-            validType = true;
-            break;
-          }
-        }
-
-        if (validType) {
-          provider.set(file, attribute, value);
-          return;
-        } else {
-          Object acceptedTypeMessage = acceptedTypes.size() == 1
-              ? acceptedTypes.iterator().next()
-              : "one of " + acceptedTypes;
-          throw new IllegalArgumentException("invalid type " + value.getClass()
-              + " for attribute '" + view + ":" + attribute + "': should be "
-              + acceptedTypeMessage);
-        }
-      }
-    }
-
-    throw new IllegalArgumentException("cannot set attribute '" + view + ":" + attribute + "'");
-  }
-
-  /**
-   * Returns an attribute view of the given type for the given file provider, or {@code null} if the
-   * view type is not supported.
-   */
-  @Nullable
-  public <V extends FileAttributeView> V getFileAttributeView(
-      IoSupplier<? extends AttributeStore> supplier, Class<V> type) {
-    if (supportsFileAttributeView(type)) {
-      return attributeProviders.getViewProvider(type).getView(supplier);
-    }
-
-    return null;
-  }
-
-  /**
-   * Implements {@link Files#readAttributes(Path, String, LinkOption...)}.
-   */
-  public ImmutableMap<String, Object> readAttributes(File file, String attributes) {
-    String view = getViewName(attributes);
-    List<String> attrs = getAttributeNames(attributes);
-
-    if (attrs.size() > 1 && attrs.contains(ALL_ATTRIBUTES)) {
-      // attrs contains * and other attributes
-      throw new IllegalArgumentException("invalid attributes: " + attributes);
-    }
-
-    Map<String, Object> result = new HashMap<>();
-    if (attrs.size() == 1 && attrs.contains(ALL_ATTRIBUTES)) {
-      // for 'view:*' format, get all keys for all providers for the view
-      for (AttributeProvider provider : attributeProviders.getProviders(view)) {
-        provider.readAll(file, result);
-      }
-    } else {
-      // for 'view:attr1,attr2,etc'
-      for (String attr : attrs) {
-        boolean found = false;
-        for (AttributeProvider provider : attributeProviders.getProviders(view)) {
-          if (provider.isGettable(file, attr)) {
-            result.put(attr, provider.get(file, attr));
-            found = true;
-            break;
-          }
-        }
-
-        if (!found) {
-          throw new IllegalArgumentException("invalid attribute for view '" + view + "': " + attr);
-        }
-      }
-    }
-
-    return ImmutableMap.copyOf(result);
-  }
-
-  /**
-   * Returns attributes of the given file as an object of the given type.
-   *
-   * @throws UnsupportedOperationException if the given attributes type is not supported
-   */
-  public <A extends BasicFileAttributes> A readAttributes(File file, Class<A> type) {
-    if (attributeProviders.getSupportedAttributesTypes().contains(type)) {
-      return attributeProviders.getReader(type).read(file);
-    }
-
-    throw new UnsupportedOperationException("unsupported attributes type: " + type);
-  }
-
-  private static String getViewName(String attribute) {
-    int separatorIndex = attribute.indexOf(':');
-
-    if (separatorIndex == -1) {
-      return "basic";
-    }
-
-    // separator must not be at the start or end of the string or appear more than once
-    if (separatorIndex == 0
-        || separatorIndex == attribute.length() - 1
-        || attribute.indexOf(':', separatorIndex + 1) != -1) {
-      throw new IllegalArgumentException("illegal attribute format: " + attribute);
-    }
-
-    return attribute.substring(0, separatorIndex);
-  }
-
-  private static final Splitter ATTRIBUTE_SPLITTER = Splitter.on(',');
-
-  private static ImmutableList<String> getAttributeNames(String attributes) {
-    int separatorIndex = attributes.indexOf(':');
-    String attributesPart = attributes.substring(separatorIndex + 1);
-
-    return ImmutableList.copyOf(ATTRIBUTE_SPLITTER.split(attributesPart));
-  }
-
-  private static String getSingleAttribute(String attribute) {
-    ImmutableList<String> attributeNames = getAttributeNames(attribute);
-
-    if (attributeNames.size() != 1 || ALL_ATTRIBUTES.equals(attributeNames.get(0))) {
-      throw new IllegalArgumentException("must specify a single attribute: " + attribute);
-    }
-
-    return attributeNames.get(0);
-  }
-
-  /**
-   * Returns {@code null}. This file store does not support any file store attribute views.
-   */
   @Override
   public <V extends FileStoreAttributeView> V getFileStoreAttributeView(Class<V> type) {
-    return null;
+    return null; // no supported views
   }
 
-  /**
-   * Throws {@link UnsupportedOperationException}. This file store does not support any file store
-   * attributes.
-   */
   @Override
   public Object getAttribute(String attribute) throws IOException {
     throw new UnsupportedOperationException();
-  }
-
-  private abstract class FileSupplier implements Supplier<File> {
-
-    protected final FileAttribute<?>[] attrs;
-
-    protected FileSupplier(FileAttribute<?>[] attrs) {
-      this.attrs = checkNotNull(attrs);
-    }
-  }
-
-  private final class DirectorySupplier extends FileSupplier {
-
-    private DirectorySupplier(FileAttribute<?>... attrs) {
-      super(attrs);
-    }
-
-    @Override
-    public File get() {
-      return createDirectory(attrs);
-    }
-  }
-
-  private final class RegularFileSupplier extends FileSupplier {
-
-    private RegularFileSupplier(FileAttribute<?>... attrs) {
-      super(attrs);
-    }
-
-    @Override
-    public File get() {
-      return createRegularFile(attrs);
-    }
-  }
-
-  private final class SymbolicLinkSupplier extends FileSupplier {
-
-    private final JimfsPath target;
-
-    protected SymbolicLinkSupplier(JimfsPath target, FileAttribute<?>... attrs) {
-      super(attrs);
-      this.target = checkNotNull(target);
-    }
-
-    @Override
-    public File get() {
-      return createSymbolicLink(target, attrs);
-    }
   }
 }

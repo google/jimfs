@@ -69,17 +69,28 @@ public class FileTest {
 
   @Test
   public void testRootDirectory() {
+    DirectoryTable superRootTable = new DirectoryTable();
+    File superRoot = new File(-1L, superRootTable);
+    superRootTable.setSuperRoot(superRoot);
+
     DirectoryTable table = new DirectoryTable();
     File file = new File(0L, table);
-    table.linkParent(file);
-    table.linkSelf(file);
+
+    superRootTable.link(Name.simple("/"), file);
+    table.setRoot();
 
     ASSERT.that(file.isRootDirectory()).isTrue();
 
-    table.unlinkParent();
-    table.linkParent(new File(1L, new DirectoryTable()));
+    superRootTable.unlink(Name.simple("/"));
 
-    ASSERT.that(file.isRegularFile()).isFalse();
+    DirectoryTable otherTable = new DirectoryTable();
+    File otherFile = new File(1L, otherTable);
+    superRootTable.link(Name.simple("$"), otherFile);
+    otherTable.setRoot();
+
+    otherTable.link(Name.simple("foo"), file);
+
+    ASSERT.that(file.isRootDirectory()).isFalse();
   }
 
   @Test

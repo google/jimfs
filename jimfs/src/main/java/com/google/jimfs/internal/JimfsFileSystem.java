@@ -44,14 +44,16 @@ final class JimfsFileSystem extends FileSystem {
 
   private final AtomicBoolean open = new AtomicBoolean(true);
 
-  /**
-   * Service providing actual file system operations.
-   */
+  private final JimfsFileStore fileStore;
+  private final PathService pathService;
   private final FileSystemService service;
 
-  JimfsFileSystem(JimfsFileSystemProvider provider, URI uri, FileSystemService service) {
+  JimfsFileSystem(JimfsFileSystemProvider provider, URI uri,
+      JimfsFileStore fileStore, PathService pathService, FileSystemService service) {
     this.provider = checkNotNull(provider);
     this.uri = checkNotNull(uri);
+    this.fileStore = checkNotNull(fileStore);
+    this.pathService = checkNotNull(pathService);
     this.service = checkNotNull(service);
   }
 
@@ -82,9 +84,8 @@ final class JimfsFileSystem extends FileSystem {
   @Override
   public ImmutableSet<Path> getRootDirectories() {
     ImmutableSet.Builder<Path> builder = ImmutableSet.builder();
-    DirectoryTable superRootTable = service.getSuperRoot().content();
-    for (Name name : superRootTable.snapshot()) {
-      builder.add(service.paths().createRoot(name));
+    for (Name name : fileStore.getRootDirectoryNames()) {
+      builder.add(pathService.createRoot(name));
     }
     return builder.build();
   }
@@ -98,36 +99,36 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public ImmutableSet<FileStore> getFileStores() {
-    return ImmutableSet.<FileStore>of(service.fileStore());
+    return ImmutableSet.<FileStore>of(fileStore);
   }
 
   @Override
   public ImmutableSet<String> supportedFileAttributeViews() {
-    return service.fileStore().supportedFileAttributeViews();
+    return fileStore.supportedFileAttributeViews();
   }
 
   @Override
   public JimfsPath getPath(String first, String... more) {
-    return service.paths().parsePath(first, more);
+    return pathService.parsePath(first, more);
   }
 
   /**
    * Gets the URI of the given path in this file system.
    */
   public URI toUri(JimfsPath path) {
-    return service.paths().toUri(uri, path.toAbsolutePath());
+    return pathService.toUri(uri, path.toAbsolutePath());
   }
 
   /**
    * Converts the given URI into a path in this file system.
    */
   public JimfsPath toPath(URI uri) {
-    return service.paths().fromUri(uri);
+    return pathService.fromUri(uri);
   }
 
   @Override
   public PathMatcher getPathMatcher(String syntaxAndPattern) {
-    return service.paths().createPathMatcher(syntaxAndPattern);
+    return pathService.createPathMatcher(syntaxAndPattern);
   }
 
   @Override

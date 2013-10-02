@@ -16,7 +16,6 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.internal.DirectoryTable.DirEntry;
 import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
 import static org.junit.Assert.fail;
@@ -31,6 +30,8 @@ import com.ibm.icu.text.Normalizer2;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.annotation.Nullable;
+
 /**
  * Tests for {@link DirectoryTable}.
  *
@@ -38,6 +39,7 @@ import org.junit.Test;
  */
 public class DirectoryTableTest {
 
+  private File superRoot;
   private File rootFile;
   private File dirFile;
 
@@ -46,19 +48,18 @@ public class DirectoryTableTest {
 
   @Before
   public void setUp() {
-    rootFile = new File(0L, new DirectoryTable());
-    root = rootFile.content();
+    DirectoryTable superRootTable = new DirectoryTable();
+    superRoot = new File(-1, superRootTable);
+    superRootTable.setSuperRoot(superRoot);
 
-    // root dir's parent is itself
-    root.linkParent(rootFile);
-    root.linkSelf(rootFile);
+    root = new DirectoryTable();
+    rootFile = new File(0L, root);
 
-    dirFile = new File(1L, new DirectoryTable());
-    table = dirFile.content();
+    superRootTable.link(Name.simple("/"), rootFile);
+    root.setRoot();
 
-    table.linkParent(rootFile);
-    table.linkSelf(dirFile);
-
+    table = new DirectoryTable();
+    dirFile = new File(1L, table);
     root.link(Name.simple("foo"), dirFile);
   }
 
@@ -67,6 +68,8 @@ public class DirectoryTableTest {
   public void testRootDirectory() {
     ASSERT.that(root.size()).is(3); // two for parent/self, one for table
     ASSERT.that(root.isEmpty()).isFalse();
+    ASSERT.that(root.entry()).is(entry(rootFile, "/", rootFile));
+    ASSERT.that(root.name()).is(Name.simple("/"));
 
     assertParentAndSelf(root, rootFile, rootFile);
   }
@@ -81,19 +84,19 @@ public class DirectoryTableTest {
 
   @Test
   public void testGet() {
-    ASSERT.that(root.get(Name.simple("foo"))).is(dirFile);
-    ASSERT.that(table.get(Name.simple("foo"))).isNull();
-    ASSERT.that(root.get(Name.simple("Foo"))).isNull();
+    ASSERT.that(root.getEntry(Name.simple("foo"))).is(entry(rootFile, "foo", dirFile));
+    ASSERT.that(table.getEntry(Name.simple("foo"))).isNull();
+    ASSERT.that(root.getEntry(Name.simple("Foo"))).isNull();
   }
 
   @Test
   public void testLink() {
-    ASSERT.that(table.get(Name.simple("bar"))).isNull();
+    ASSERT.that(table.getEntry(Name.simple("bar"))).isNull();
 
     File bar = new File(2L, new DirectoryTable());
     table.link(Name.simple("bar"), bar);
 
-    ASSERT.that(table.get(Name.simple("bar"))).is(bar);
+    ASSERT.that(table.getEntry(Name.simple("bar"))).is(entry(dirFile, "bar", bar));
   }
 
   @Test
@@ -144,19 +147,20 @@ public class DirectoryTableTest {
 
     table.link(barName, bar);
 
-    ASSERT.that(table.get(caseInsensitive("bar"))).is(bar);
-    ASSERT.that(table.get(caseInsensitive("BAR"))).is(bar);
-    ASSERT.that(table.get(caseInsensitive("Bar"))).is(bar);
-    ASSERT.that(table.get(caseInsensitive("baR"))).is(bar);
+    DirectoryEntry expected = new DirectoryEntry(dirFile, barName, bar);
+    ASSERT.that(table.getEntry(caseInsensitive("bar"))).is(expected);
+    ASSERT.that(table.getEntry(caseInsensitive("BAR"))).is(expected);
+    ASSERT.that(table.getEntry(caseInsensitive("Bar"))).is(expected);
+    ASSERT.that(table.getEntry(caseInsensitive("baR"))).is(expected);
   }
 
   @Test
   public void testUnlink() {
-    ASSERT.that(root.get(Name.simple("foo"))).isNotNull();
+    ASSERT.that(root.getEntry(Name.simple("foo"))).isNotNull();
 
     root.unlink(Name.simple("foo"));
 
-    ASSERT.that(root.get(Name.simple("foo"))).isNull();
+    ASSERT.that(root.getEntry(Name.simple("foo"))).isNull();
   }
 
   @Test
@@ -187,59 +191,50 @@ public class DirectoryTableTest {
   public void testUnlink_normalizingCaseInsensitive() {
     table.link(caseInsensitive("bar"), new File(2L, new DirectoryTable()));
 
-    ASSERT.that(table.get(caseInsensitive("bar"))).isNotNull();
+    ASSERT.that(table.getEntry(caseInsensitive("bar"))).isNotNull();
 
     table.unlink(caseInsensitive("BAR"));
 
-    ASSERT.that(table.get(caseInsensitive("bar"))).isNull();
+    ASSERT.that(table.getEntry(caseInsensitive("bar"))).isNull();
   }
 
   @Test
-  public void testGetEntry() {
-    table.link(caseInsensitive("bar"), new File(2L, new DirectoryTable()));
+  public void testLinkDirectory() {
+    DirectoryTable newTable = new DirectoryTable();
+    File newDir = new File(10, newTable);
 
-    DirEntry entry = table.getEntry(caseInsensitive("BAR"));
-    ASSERT.that(entry.file().id()).is(2L);
-    ASSERT.that(entry.name().toString()).is("bar");
+    ASSERT.that(newTable.entry()).isNull();
+    ASSERT.that(newTable.getEntry(Name.SELF)).isNull();
+    ASSERT.that(newTable.getEntry(Name.PARENT)).isNull();
+    ASSERT.that(newDir.links()).is(0);
 
-    ASSERT.that(table.getEntry(caseInsensitive("none"))).isNull();
+    table.link(Name.simple("foo"), newDir);
+
+    ASSERT.that(newTable.entry()).is(entry(dirFile, "foo", newDir));
+    ASSERT.that(newTable.parent()).is(dirFile);
+    ASSERT.that(newTable.name()).is(Name.simple("foo"));
+    ASSERT.that(newTable.self()).is(newDir);
+    ASSERT.that(newTable.getEntry(Name.SELF)).is(entry(newDir, ".", newDir));
+    ASSERT.that(newTable.getEntry(Name.PARENT)).is(entry(newDir, "..", dirFile));
+    ASSERT.that(newDir.links()).is(2);
   }
 
   @Test
-  public void testGetName() {
-    File file = new File(2L, new ArrayByteStore());
-    table.link(Name.simple("bar"), file);
+  public void testUnlinkDirectory() {
+    DirectoryTable newTable = new DirectoryTable();
+    File newDir = new File(10, newTable);
 
-    ASSERT.that(table.getName(file)).is(Name.simple("bar"));
-  }
+    table.link(Name.simple("foo"), newDir);
 
-  @Test
-  public void testGetName_failsWithNoLinksToFile() {
-    File file = new File(2L, new ArrayByteStore());
+    ASSERT.that(newTable.entry()).is(entry(dirFile, "foo", newDir));
+    ASSERT.that(newDir.links()).is(2);
 
-    try {
-      table.getName(file);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
+    table.unlink(Name.simple("foo"));
 
-  @Test
-  public void testGetName_failsWithMultipleLinksToSameFile() {
-    File file = new File(2L, new ArrayByteStore());
-    table.link(Name.simple("bar"), file);
-    table.link(Name.simple("bar2"), file); // 2nd hard link to file in table
-
-    try {
-      table.getName(file);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  @Test
-  public void testName() {
-    ASSERT.that(table.name()).is(Name.simple("foo"));
+    ASSERT.that(newTable.entry()).isNull();
+    ASSERT.that(newTable.getEntry(Name.SELF)).isNull();
+    ASSERT.that(newTable.getEntry(Name.PARENT)).isNull();
+    ASSERT.that(newDir.links()).is(0);
   }
 
   @Test
@@ -266,12 +261,16 @@ public class DirectoryTableTest {
     ASSERT.that(strings).iteratesAs("FOO", "bar");
   }
 
+  private static DirectoryEntry entry(File dir, String name, @Nullable File file) {
+    return new DirectoryEntry(dir, Name.simple(name), file);
+  }
+
   @SuppressWarnings("ConstantConditions")
   private static void assertParentAndSelf(DirectoryTable table, File parent, File self) {
-    ASSERT.that(table.get(PARENT)).is(parent);
+    ASSERT.that(table.getEntry(PARENT)).is(entry(self, "..", parent));
     ASSERT.that(table.parent()).is(parent);
 
-    ASSERT.that(table.get(SELF)).is(self);
+    ASSERT.that(table.getEntry(SELF)).is(entry(self, ".", self));
     ASSERT.that(table.self()).is(self);
   }
 

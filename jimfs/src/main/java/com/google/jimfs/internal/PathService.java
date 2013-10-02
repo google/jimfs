@@ -67,6 +67,11 @@ abstract class PathService {
   private volatile JimfsPath emptyPath;
 
   /**
+   * Sets the file system to use for created paths.
+   */
+  public abstract void setFileSystem(JimfsFileSystem fileSystem);
+
+  /**
    * Returns the default path separator.
    */
   public String getSeparator() {

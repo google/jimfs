@@ -32,6 +32,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -39,11 +40,11 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 /**
- * Tests for {@link LookupService}.
+ * Tests for {@link FileTree}.
  *
  * @author Colin Decker
  */
-public class LookupServiceTest {
+public class FileTreeTest {
 
   /*
    * Directory structure. Each file should have a unique name.
@@ -107,7 +108,7 @@ public class LookupServiceTest {
         }
       });
 
-  private LookupService lookupService;
+  private FileTree fileTree;
   private File workingDirectory;
   private final Map<String, File> files = new HashMap<>();
 
@@ -115,24 +116,23 @@ public class LookupServiceTest {
   public void setUp() {
     DirectoryTable superRootTable = new DirectoryTable();
     File superRoot = new File(-1, superRootTable);
+    superRootTable.setSuperRoot(superRoot);
 
     files.put("SUPER_ROOT", superRoot);
 
-    lookupService = new LookupService(superRoot);
+    fileTree = new FileTree(superRoot);
 
     DirectoryTable rootTable = new DirectoryTable();
     File root = new File(0, rootTable);
-    rootTable.linkSelf(root);
-    rootTable.linkParent(root);
     superRootTable.link(Name.simple("/"), root);
+    rootTable.setRoot();
 
     files.put("/", root);
 
     DirectoryTable otherRootTable = new DirectoryTable();
     File otherRoot = new File(2, otherRootTable);
-    otherRootTable.linkSelf(otherRoot);
-    otherRootTable.linkParent(otherRoot);
     superRootTable.link(Name.simple("$"), otherRoot);
+    otherRootTable.setRoot();
 
     files.put("$", otherRoot);
 
@@ -157,67 +157,95 @@ public class LookupServiceTest {
 
   @Test
   public void testLookup_root() throws IOException {
-    assertFound(lookup("/"), "SUPER_ROOT", "/");
-    assertFound(lookup("$"), "SUPER_ROOT", "$");
+    assertExists(lookup("/"), "SUPER_ROOT", "/");
+    assertExists(lookup("$"), "SUPER_ROOT", "$");
   }
 
   @Test
   public void testLookup_absolute() throws IOException {
-    assertFound(lookup("/work"), "/", "work");
-    assertFound(lookup("/work/one/two/three"), "two", "three");
-    assertFound(lookup("$a"), "$", "a");
-    assertFound(lookup("$a/b/c"), "b", "c");
+    assertExists(lookup("/work"), "/", "work");
+    assertExists(lookup("/work/one/two/three"), "two", "three");
+    assertExists(lookup("$a"), "$", "a");
+    assertExists(lookup("$a/b/c"), "b", "c");
   }
 
   @Test
-  public void testLookup_absolute_notFound() throws IOException {
-    assertNotFound(lookup("/a/b"));
-    assertNotFound(lookup("/work/one/foo/bar"));
-    assertNotFound(lookup("$c/d"));
-    assertNotFound(lookup("$a/b/c/d/e"));
+  public void testLookup_absolute_notExists() throws IOException {
+    try {
+      lookup("/a/b");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
+
+    try {
+      lookup("/work/one/foo/bar");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
+
+    try {
+      lookup("$c/d");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
+
+    try {
+      lookup("$a/b/c/d/e");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
   }
 
   @Test
-  public void testLookup_absolute_parentFound() throws IOException {
-    assertParentFound(lookup("/a"), "/");
-    assertParentFound(lookup("/foo/baz"), "foo");
-    assertParentFound(lookup("$c"), "$");
-    assertParentFound(lookup("$a/b/c/d"), "c");
+  public void testLookup_absolute_parentExists() throws IOException {
+    assertParentExists(lookup("/a"), "/");
+    assertParentExists(lookup("/foo/baz"), "foo");
+    assertParentExists(lookup("$c"), "$");
+    assertParentExists(lookup("$a/b/c/d"), "c");
   }
 
   @Test
   public void testLookup_absolute_nonDirectoryIntermediateFile() throws IOException {
-    assertNotFound(lookup("/work/one/eleven/twelve"));
-    assertNotFound(lookup("/work/one/eleven/twelve/thirteen/fourteen"));
+    try {
+      lookup("/work/one/eleven/twelve");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
+
+    try {
+      lookup("/work/one/eleven/twelve/thirteen/fourteen");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
   }
 
   @Test
   public void testLookup_absolute_intermediateSymlink() throws IOException {
-    assertFound(lookup("/work/four/five/bar"), "foo", "bar");
-    assertFound(lookup("/work/four/six/two/three"), "two", "three");
+    assertExists(lookup("/work/four/five/bar"), "foo", "bar");
+    assertExists(lookup("/work/four/six/two/three"), "two", "three");
 
     // NOFOLLOW_LINKS doesn't affect intermediate symlinks
-    assertFound(lookup("/work/four/five/bar", NOFOLLOW_LINKS), "foo", "bar");
-    assertFound(lookup("/work/four/six/two/three", NOFOLLOW_LINKS), "two", "three");
+    assertExists(lookup("/work/four/five/bar", NOFOLLOW_LINKS), "foo", "bar");
+    assertExists(lookup("/work/four/six/two/three", NOFOLLOW_LINKS), "two", "three");
   }
 
   @Test
-  public void testLookup_absolute_intermediateSymlink_parentFound() throws IOException {
-    assertParentFound(lookup("/work/four/five/baz"), "foo");
-    assertParentFound(lookup("/work/four/six/baz"), "one");
+  public void testLookup_absolute_intermediateSymlink_parentExists() throws IOException {
+    assertParentExists(lookup("/work/four/five/baz"), "foo");
+    assertParentExists(lookup("/work/four/six/baz"), "one");
   }
 
   @Test
   public void testLookup_absolute_finalSymlink() throws IOException {
-    assertFound(lookup("/work/four/five"), "/", "foo");
-    assertFound(lookup("/work/four/six"), "work", "one");
+    assertExists(lookup("/work/four/five"), "/", "foo");
+    assertExists(lookup("/work/four/six"), "work", "one");
   }
 
   @Test
   public void testLookup_absolute_finalSymlink_nofollowLinks() throws IOException {
-    assertFound(lookup("/work/four/five", NOFOLLOW_LINKS), "four", "five");
-    assertFound(lookup("/work/four/six", NOFOLLOW_LINKS), "four", "six");
-    assertFound(lookup("/work/four/loop", NOFOLLOW_LINKS), "four", "loop");
+    assertExists(lookup("/work/four/five", NOFOLLOW_LINKS), "four", "five");
+    assertExists(lookup("/work/four/six", NOFOLLOW_LINKS), "four", "six");
+    assertExists(lookup("/work/four/loop", NOFOLLOW_LINKS), "four", "loop");
   }
 
   @Test
@@ -237,83 +265,101 @@ public class LookupServiceTest {
 
   @Test
   public void testLookup_absolute_withDotsInPath() throws IOException {
-    assertFound(lookup("/."), "SUPER_ROOT", "/");
-    assertFound(lookup("/./././."), "SUPER_ROOT", "/");
-    assertFound(lookup("/work/./one/./././two/three"), "two", "three");
-    assertFound(lookup("/work/./one/./././two/././three"), "two", "three");
-    assertFound(lookup("/work/./one/./././two/three/././."), "two", "three");
+    assertExists(lookup("/."), "/", "/");
+    assertExists(lookup("/./././."), "/", "/");
+    assertExists(lookup("/work/./one/./././two/three"), "two", "three");
+    assertExists(lookup("/work/./one/./././two/././three"), "two", "three");
+    assertExists(lookup("/work/./one/./././two/three/././."), "two", "three");
   }
 
   @Test
   public void testLookup_absolute_withDotDotsInPath() throws IOException {
-    assertFound(lookup("/.."), "SUPER_ROOT", "/");
-    assertFound(lookup("/../../.."), "SUPER_ROOT", "/");
-    assertFound(lookup("/work/.."), "SUPER_ROOT", "/");
-    assertFound(lookup("/work/../work/one/two/../two/three"), "two", "three");
-    assertFound(lookup("/work/one/two/../../four/../one/two/three/../three"), "two", "three");
-    assertFound(lookup("/work/one/two/three/../../two/three/.."), "one", "two");
-    assertFound(lookup("/work/one/two/three/../../two/three/../.."), "work", "one");
+    assertExists(lookup("/.."), "/", "/");
+    assertExists(lookup("/../../.."), "/", "/");
+    assertExists(lookup("/work/.."), "/", "/");
+    assertExists(lookup("/work/../work/one/two/../two/three"), "two", "three");
+    assertExists(lookup("/work/one/two/../../four/../one/two/three/../three"), "two", "three");
+    assertExists(lookup("/work/one/two/three/../../two/three/.."), "one", "two");
+    assertExists(lookup("/work/one/two/three/../../two/three/../.."), "work", "one");
   }
 
   @Test
   public void testLookup_absolute_withDotDotsInPath_afterSymlink() throws IOException {
-    assertFound(lookup("/work/four/five/.."), "SUPER_ROOT", "/");
-    assertFound(lookup("/work/four/six/.."), "/", "work");
+    assertExists(lookup("/work/four/five/.."), "/", "/");
+    assertExists(lookup("/work/four/six/.."), "/", "work");
   }
 
   // relative lookups
 
   @Test
   public void testLookup_relative() throws IOException {
-    assertFound(lookup("one"), "work", "one");
-    assertFound(lookup("one/two/three"), "two", "three");
+    assertExists(lookup("one"), "work", "one");
+    assertExists(lookup("one/two/three"), "two", "three");
   }
 
   @Test
-  public void testLookup_relative_notFound() throws IOException {
-    assertNotFound(lookup("/a/b"));
-    assertNotFound(lookup("/work/one/foo/bar"));
+  public void testLookup_relative_notExists() throws IOException {
+    try {
+      lookup("a/b");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
+
+    try {
+      lookup("one/foo/bar");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
   }
 
   @Test
-  public void testLookup_relative_parentFound() throws IOException {
-    assertParentFound(lookup("a"), "work");
-    assertParentFound(lookup("one/two/four"), "two");
+  public void testLookup_relative_parentExists() throws IOException {
+    assertParentExists(lookup("a"), "work");
+    assertParentExists(lookup("one/two/four"), "two");
   }
 
   @Test
   public void testLookup_relative_nonDirectoryIntermediateFile() throws IOException {
-    assertNotFound(lookup("one/eleven/twelve"));
-    assertNotFound(lookup("one/eleven/twelve/thirteen/fourteen"));
+    try {
+      lookup("one/eleven/twelve");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
+
+    try {
+      lookup("one/eleven/twelve/thirteen/fourteen");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
   }
 
   @Test
   public void testLookup_relative_intermediateSymlink() throws IOException {
-    assertFound(lookup("four/five/bar"), "foo", "bar");
-    assertFound(lookup("four/six/two/three"), "two", "three");
+    assertExists(lookup("four/five/bar"), "foo", "bar");
+    assertExists(lookup("four/six/two/three"), "two", "three");
 
     // NOFOLLOW_LINKS doesn't affect intermediate symlinks
-    assertFound(lookup("four/five/bar", NOFOLLOW_LINKS), "foo", "bar");
-    assertFound(lookup("four/six/two/three", NOFOLLOW_LINKS), "two", "three");
+    assertExists(lookup("four/five/bar", NOFOLLOW_LINKS), "foo", "bar");
+    assertExists(lookup("four/six/two/three", NOFOLLOW_LINKS), "two", "three");
   }
 
   @Test
-  public void testLookup_relative_intermediateSymlink_parentFound() throws IOException {
-    assertParentFound(lookup("four/five/baz"), "foo");
-    assertParentFound(lookup("four/six/baz"), "one");
+  public void testLookup_relative_intermediateSymlink_parentExists() throws IOException {
+    assertParentExists(lookup("four/five/baz"), "foo");
+    assertParentExists(lookup("four/six/baz"), "one");
   }
 
   @Test
   public void testLookup_relative_finalSymlink() throws IOException {
-    assertFound(lookup("four/five"), "/", "foo");
-    assertFound(lookup("four/six"), "work", "one");
+    assertExists(lookup("four/five"), "/", "foo");
+    assertExists(lookup("four/six"), "work", "one");
   }
 
   @Test
   public void testLookup_relative_finalSymlink_nofollowLinks() throws IOException {
-    assertFound(lookup("four/five", NOFOLLOW_LINKS), "four", "five");
-    assertFound(lookup("four/six", NOFOLLOW_LINKS), "four", "six");
-    assertFound(lookup("four/loop", NOFOLLOW_LINKS), "four", "loop");
+    assertExists(lookup("four/five", NOFOLLOW_LINKS), "four", "five");
+    assertExists(lookup("four/six", NOFOLLOW_LINKS), "four", "six");
+    assertExists(lookup("four/loop", NOFOLLOW_LINKS), "four", "loop");
   }
 
   @Test
@@ -333,86 +379,55 @@ public class LookupServiceTest {
 
   @Test
   public void testLookup_relative_emptyPath() throws IOException {
-    assertFound(lookup(""), "/", "work");
+    assertExists(lookup(""), "/", "work");
   }
 
   @Test
   public void testLookup_relative_withDotsInPath() throws IOException {
-    assertFound(lookup("."), "/", "work");
-    assertFound(lookup("././."), "/", "work");
-    assertFound(lookup("./one/./././two/three"), "two", "three");
-    assertFound(lookup("./one/./././two/././three"), "two", "three");
-    assertFound(lookup("./one/./././two/three/././."), "two", "three");
+    assertExists(lookup("."), "/", "work");
+    assertExists(lookup("././."), "/", "work");
+    assertExists(lookup("./one/./././two/three"), "two", "three");
+    assertExists(lookup("./one/./././two/././three"), "two", "three");
+    assertExists(lookup("./one/./././two/three/././."), "two", "three");
   }
 
   @Test
   public void testLookup_relative_withDotDotsInPath() throws IOException {
-    assertFound(lookup(".."), "SUPER_ROOT", "/");
-    assertFound(lookup("../../.."), "SUPER_ROOT", "/");
-    assertFound(lookup("../work"), "/", "work");
-    assertFound(lookup("../../work"), "/", "work");
-    assertFound(lookup("../foo"), "/", "foo");
-    assertFound(lookup("../work/one/two/../two/three"), "two", "three");
-    assertFound(lookup("one/two/../../four/../one/two/three/../three"), "two", "three");
-    assertFound(lookup("one/two/three/../../two/three/.."), "one", "two");
-    assertFound(lookup("one/two/three/../../two/three/../.."), "work", "one");
+    assertExists(lookup(".."), "/", "/");
+    assertExists(lookup("../../.."), "/", "/");
+    assertExists(lookup("../work"), "/", "work");
+    assertExists(lookup("../../work"), "/", "work");
+    assertExists(lookup("../foo"), "/", "foo");
+    assertExists(lookup("../work/one/two/../two/three"), "two", "three");
+    assertExists(lookup("one/two/../../four/../one/two/three/../three"), "two", "three");
+    assertExists(lookup("one/two/three/../../two/three/.."), "one", "two");
+    assertExists(lookup("one/two/three/../../two/three/../.."), "work", "one");
   }
 
   @Test
   public void testLookup_relative_withDotDotsInPath_afterSymlink() throws IOException {
-    assertFound(lookup("four/five/.."), "SUPER_ROOT", "/");
-    assertFound(lookup("four/six/.."), "/", "work");
+    assertExists(lookup("four/five/.."), "/", "/");
+    assertExists(lookup("four/six/.."), "/", "work");
   }
 
-  private LookupResult lookup(String path, LinkOption... options) throws IOException {
+  private DirectoryEntry lookup(String path, LinkOption... options) throws IOException {
     JimfsPath pathObj = pathService.parsePath(path);
-    return lookupService.lookup(workingDirectory, pathObj, LinkOptions.from(options));
+    return fileTree.lookup(workingDirectory, pathObj, LinkOptions.from(options));
   }
 
-  private void assertFound(LookupResult result, String parent, String file) {
-    ASSERT.that(result.found()).isTrue();
-    ASSERT.that(result.parentFound()).isTrue();
-    ASSERT.that(result.name()).is(Name.simple(file));
-    ASSERT.that(result.parent()).is(files.get(parent));
-    ASSERT.that(result.file()).is(files.get(file));
+  private void assertExists(DirectoryEntry entry, String parent, String file) {
+    ASSERT.that(entry.exists()).isTrue();
+    ASSERT.that(entry.name()).is(Name.simple(file));
+    ASSERT.that(entry.directory()).is(files.get(parent));
+    ASSERT.that(entry.file()).is(files.get(file));
   }
 
-  private void assertParentFound(LookupResult result, String parent) {
-    ASSERT.that(result.found()).isFalse();
-    ASSERT.that(result.parentFound()).isTrue();
-    ASSERT.that(result.parent()).is(files.get(parent));
+  private void assertParentExists(DirectoryEntry entry, String parent) {
+    ASSERT.that(entry.exists()).isFalse();
+    ASSERT.that(entry.directory()).is(files.get(parent));
 
     try {
-      result.name();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
-
-    try {
-      result.file();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
-  }
-
-  private void assertNotFound(LookupResult result) {
-    ASSERT.that(result.found()).isFalse();
-    ASSERT.that(result.parentFound()).isFalse();
-
-    try {
-      result.name();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
-
-    try {
-      result.file();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
-
-    try {
-      result.parent();
+      entry.file();
       fail();
     } catch (IllegalStateException expected) {
     }
@@ -426,8 +441,6 @@ public class LookupServiceTest {
 
     DirectoryTable parentTable = dir.content();
     parentTable.link(Name.simple(name), newFile);
-    table.linkSelf(newFile);
-    table.linkParent(dir);
 
     files.put(name, newFile);
 

@@ -35,6 +35,10 @@ public final class TestPathService extends PathService {
   }
 
   @Override
+  public void setFileSystem(JimfsFileSystem fileSystem) {
+  }
+
+  @Override
   public JimfsPath createPathInternal(@Nullable Name root, Iterable<Name> names) {
     return new TestPath(this, root, names);
   }

@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.jimfs.Jimfs.CONFIG_KEY;
 import static com.google.jimfs.Jimfs.URI_SCHEME;
-import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
 import static com.google.jimfs.internal.LinkOptions.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -80,6 +79,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     return URI_SCHEME;
   }
 
+  /**
+   * Cache of file systems that have been created but not closed.
+   */
   private final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new ConcurrentHashMap<>();
 
   @Override
@@ -180,12 +182,6 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
    */
   private static FileSystemService getService(JimfsPath path) {
     return ((JimfsFileSystem) path.getFileSystem()).service();
-  }
-
-  private static LookupResult lookup(Path path, LinkOptions linkHandling) throws IOException {
-    JimfsPath checkedPath = checkPath(path);
-    FileSystemService service = getService(checkedPath);
-    return service.lookup(checkedPath, linkHandling);
   }
 
   @Override
@@ -291,11 +287,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public Path readSymbolicLink(Path link) throws IOException {
-    File file = lookup(link, NOFOLLOW_LINKS)
-        .requireSymbolicLink(link)
-        .file();
-
-    return file.<JimfsPath>content();
+    JimfsPath checkedPath = checkPath(link);
+    return getService(checkedPath).readSymbolicLink(checkedPath);
   }
 
   @Override
@@ -370,7 +363,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   @Override
   public void checkAccess(Path path, AccessMode... modes) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    lookup(checkedPath, FOLLOW_LINKS).requireFound(path);
+    getService(checkedPath).checkAccess(checkedPath);
   }
 
   @Override

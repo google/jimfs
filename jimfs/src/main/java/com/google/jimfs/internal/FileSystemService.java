@@ -17,7 +17,6 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.DirectoryTable.DirEntry;
 import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
 import static com.google.jimfs.internal.LinkOptions.NOFOLLOW_LINKS;
 
@@ -45,8 +44,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Service implementing most operations for a file system. A file system service has two root
@@ -64,25 +61,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 final class FileSystemService {
 
-  private final File superRoot;
+  private final JimfsFileStore store;
+
   private final File workingDirectory;
   private final JimfsPath workingDirectoryPath;
 
-  private final JimfsFileStore fileStore;
   private final PathService pathService;
-
-  private final LookupService lookupService;
   private final ResourceManager resourceManager;
-
-  private final ReadWriteLock lock;
 
   /**
    * Creates a new file system service using the given services.
    */
-  public FileSystemService(File superRoot, File workingDirectory, JimfsPath workingDirectoryPath,
-      JimfsFileStore fileStore, PathService pathService) {
-    this(superRoot, workingDirectory, workingDirectoryPath, fileStore, pathService,
-        new LookupService(superRoot), new ResourceManager(), new ReentrantReadWriteLock());
+  public FileSystemService(JimfsFileStore store,
+      File workingDirectory, JimfsPath workingDirectoryPath, PathService pathService) {
+    this(store, workingDirectory, workingDirectoryPath, pathService, new ResourceManager());
   }
 
   /**
@@ -91,46 +83,27 @@ final class FileSystemService {
    */
   private FileSystemService(
       File workingDirectory, JimfsPath workingDirectoryPath, FileSystemService parent) {
-    this(parent.superRoot, workingDirectory, workingDirectoryPath,
-        parent.fileStore, parent.pathService, parent.lookupService,
-        parent.resourceManager, parent.lock);
+    this(parent.store,
+        workingDirectory, workingDirectoryPath,
+        parent.pathService, parent.resourceManager);
   }
 
-  private FileSystemService(File superRoot, File workingDirectory, JimfsPath workingDirectoryPath,
-      JimfsFileStore fileStore, PathService pathService, LookupService lookupService,
-      ResourceManager resourceManager, ReadWriteLock lock) {
-    this.superRoot = checkNotNull(superRoot);
+  private FileSystemService(JimfsFileStore store,
+      File workingDirectory, JimfsPath workingDirectoryPath, PathService pathService,
+      ResourceManager resourceManager) {
+    this.store = checkNotNull(store);
     this.workingDirectory = checkNotNull(workingDirectory);
     this.workingDirectoryPath = checkNotNull(workingDirectoryPath);
 
-    this.fileStore = checkNotNull(fileStore);
     this.pathService = checkNotNull(pathService);
-    this.lookupService = checkNotNull(lookupService);
     this.resourceManager = checkNotNull(resourceManager);
-
-    this.lock = checkNotNull(lock);
-  }
-
-  private Lock readLock() {
-    return lock.readLock();
-  }
-
-  private Lock writeLock() {
-    return lock.writeLock();
   }
 
   /**
    * Returns whether or not this service and the given service belong to the same file system.
    */
   private boolean isSameFileSystem(FileSystemService other) {
-    return superRoot == other.superRoot;
-  }
-
-  /**
-   * Returns the super root directory for the file system.
-   */
-  public File getSuperRoot() {
-    return superRoot;
+    return store == other.store;
   }
 
   /**
@@ -152,7 +125,7 @@ final class FileSystemService {
    * Returns the file store for the file system.
    */
   public JimfsFileStore fileStore() {
-    return fileStore;
+    return store;
   }
 
   /**
@@ -172,20 +145,20 @@ final class FileSystemService {
   /**
    * Attempt to lookup the file at the given path.
    */
-  public LookupResult lookup(JimfsPath path, LinkOptions options) throws IOException {
-    readLock().lock();
+  public DirectoryEntry lookup(JimfsPath path, LinkOptions options) throws IOException {
+    store.readLock().lock();
     try {
       return lookupInternal(path, options);
     } finally {
-      readLock().unlock();
+      store.readLock().unlock();
     }
   }
 
   /**
    * Looks up the file at the given path without locking.
    */
-  private LookupResult lookupInternal(JimfsPath path, LinkOptions options) throws IOException {
-    return lookupService.lookup(workingDirectory, path, options);
+  private DirectoryEntry lookupInternal(JimfsPath path, LinkOptions options) throws IOException {
+    return store.lookup(workingDirectory, path, options);
   }
 
   /**
@@ -199,7 +172,7 @@ final class FileSystemService {
       @Override
       public File get() throws IOException {
         return lookup(path, options)
-            .requireFound(path)
+            .requireExists(path)
             .file();
       }
     };
@@ -241,13 +214,13 @@ final class FileSystemService {
    */
   public ImmutableSortedSet<String> snapshotBaseEntries() {
     ImmutableSortedSet<Name> names;
-    readLock().lock();
+    store.readLock().lock();
     try {
       DirectoryTable table = workingDirectory.content();
       names = table.snapshot();
       workingDirectory.updateAccessTime();
     } finally {
-      readLock().unlock();
+      store.readLock().unlock();
     }
 
     ImmutableSortedSet.Builder<String> builder = ImmutableSortedSet.naturalOrder();
@@ -264,21 +237,21 @@ final class FileSystemService {
   public ImmutableMap<Name, Long> snapshotModifiedTimes(JimfsPath path) throws IOException {
     Map<Name, Long> modifiedTimes = new HashMap<>();
 
-    lock.readLock().lock();
+    store.readLock().lock();
     try {
       File dir = lookupInternal(path, LinkOptions.NOFOLLOW_LINKS)
           .requireDirectory(path)
           .file();
 
       DirectoryTable table = dir.content();
-      for (DirEntry entry : table.entries()) {
+      for (DirectoryEntry entry : table.entries()) {
         long modifiedTime = entry.file().getLastModifiedTime();
         modifiedTimes.put(entry.name(), modifiedTime);
       }
 
       return ImmutableMap.copyOf(modifiedTimes);
     } finally {
-      lock.readLock().unlock();
+      store.readLock().unlock();
     }
   }
 
@@ -292,13 +265,13 @@ final class FileSystemService {
       return false;
     }
 
-    readLock().lock();
+    store.readLock().lock();
     try {
       File file = lookupInternal(path, FOLLOW_LINKS).orNull();
       File file2 = service2.lookupInternal(path2, FOLLOW_LINKS).orNull();
       return file != null && Objects.equal(file, file2);
     } finally {
-      readLock().unlock();
+      store.readLock().unlock();
     }
   }
 
@@ -309,26 +282,27 @@ final class FileSystemService {
     checkNotNull(path);
     checkNotNull(options);
 
-    readLock().lock();
+    store.readLock().lock();
     try {
-      LookupResult lookupResult = lookupInternal(path, options)
-          .requireFound(path);
+      DirectoryEntry entry = lookupInternal(path, options)
+          .requireExists(path);
 
       List<Name> names = new ArrayList<>();
-      names.add(lookupResult.name());
+      names.add(entry.name());
 
       // if the result was a root directory, the name for the result is the only name
-      if (!lookupResult.file().isRootDirectory()) {
-        File file = lookupResult.parent();
-        while (!file.isRootDirectory()) {
+      if (!entry.file().isRootDirectory()) {
+        File file = entry.directory();
+        while (true) {
           DirectoryTable fileTable = file.content();
           names.add(fileTable.name());
-          file = fileTable.parent();
+          File parent = fileTable.parent();
+          if (file.isRootDirectory()) {
+            // file is a root directory
+            break;
+          }
+          file = parent;
         }
-
-        // must handle root directory separately
-        DirectoryTable superRootTable = superRoot.content();
-        names.add(superRootTable.getName(file));
       }
 
       // names are ordered last to first in the list, so get the reverse view
@@ -336,17 +310,25 @@ final class FileSystemService {
       Name root = reversed.remove(0);
       return pathService.createPath(root, reversed);
     } finally {
-      readLock().unlock();
+      store.readLock().unlock();
     }
   }
 
+  /**
+   * Creates a new directory at the given path. The given attributes will be set on the new file if
+   * possible.
+   */
   public File createDirectory(JimfsPath path, FileAttribute<?>... attrs) throws IOException {
-    return createFile(path, fileStore.directorySupplier(attrs), false);
+    return createFile(path, store.createDirectory(), false, attrs);
   }
 
+  /**
+   * Creates a new symbolic link at the given path with the given target. The given attributes will
+   * be set on the new file if possible.
+   */
   public File createSymbolicLink(
       JimfsPath path, JimfsPath target, FileAttribute<?>... attrs) throws IOException {
-    return createFile(path, fileStore.symbolicLinkSupplier(target, attrs), false);
+    return createFile(path, store.createSymbolicLink(target), false, attrs);
   }
 
   /**
@@ -355,55 +337,39 @@ final class FileSystemService {
    * already exists at the given path, returns the key of that file. Otherwise, throws {@link
    * FileAlreadyExistsException}.
    */
-  public File createFile(
-      JimfsPath path, Supplier<File> fileSupplier, boolean allowExisting) throws IOException {
+  public File createFile(JimfsPath path, Supplier<File> fileSupplier,
+      boolean allowExisting, FileAttribute<?>... attrs) throws IOException {
     checkNotNull(path);
     checkNotNull(fileSupplier);
 
     Name name = path.name();
 
-    writeLock().lock();
+    store.writeLock().lock();
     try {
-      LookupResult result = lookupInternal(path, NOFOLLOW_LINKS)
-          .requireParentFound(path);
+      DirectoryEntry entry = lookupInternal(path, NOFOLLOW_LINKS);
 
-      if (result.found()) {
+      if (entry.exists()) {
         if (allowExisting) {
           // currently can only happen if getOrCreateFile doesn't find the file with the read lock
           // and then the file is created between when it releases the read lock and when it
           // acquires the write lock; so, very unlikely
-          return result.file();
+          return entry.file();
         } else {
           throw new FileAlreadyExistsException(path.toString());
         }
       }
 
-      File parent = result.parent();
+      File parent = entry.directory();
       DirectoryTable parentTable = parent.content();
 
       File newFile = fileSupplier.get();
+      store.setInitialAttributes(newFile, attrs);
       parentTable.link(name, newFile);
       parent.updateModifiedTime();
-
-      if (newFile.isDirectory()) {
-        linkSelfAndParent(newFile, parent);
-      }
       return newFile;
     } finally {
-      writeLock().unlock();
+      store.writeLock().unlock();
     }
-  }
-
-  private void linkSelfAndParent(File self, File parent) {
-    DirectoryTable table = self.content();
-    table.linkSelf(self);
-    table.linkParent(parent);
-  }
-
-  private void unlinkSelfAndParent(File dir) {
-    DirectoryTable table = dir.content();
-    table.unlinkSelf();
-    table.unlinkParent();
   }
 
   /**
@@ -422,11 +388,11 @@ final class FileSystemService {
       // while it could make sense to just look up with a write lock if we're in CREATE mode to
       // avoid the chance of needing to do 2 lookups, the fact that all calls to openOutputStream
       // that don't provide any options are automatically in CREATE mode make me not want to
-      readLock().lock();
+      store.readLock().lock();
       try {
-        LookupResult result = lookupInternal(path, options);
-        if (result.found()) {
-          File file = result.file();
+        DirectoryEntry entry = lookupInternal(path, options);
+        if (entry.exists()) {
+          File file = entry.file();
           if (!file.isRegularFile()) {
             throw new FileSystemException(path.toString(), null, "not a regular file");
           }
@@ -437,38 +403,58 @@ final class FileSystemService {
           throw new NoSuchFileException(path.toString());
         }
       } finally {
-        readLock().unlock();
+        store.readLock().unlock();
       }
     }
 
     // otherwise, we're in create mode and there was no file, so try to create the file, using the
     // value of createNew to tell the create method whether or not it should allow returning the
     // existing key if the file already exists when it tries to create it
-    writeLock().lock();
+    store.writeLock().lock();
     try {
-      File file = createFile(path, fileStore.regularFileSupplier(attrs), !createNew);
+      File file = createFile(path, store.createRegularFile(), !createNew, attrs);
       // the file already existed but was not a regular file
       if (!file.isRegularFile()) {
         throw new FileSystemException(path.toString(), null, "not a regular file");
       }
       return truncateIfNeeded(file, options);
     } finally {
-      writeLock().unlock();
+      store.writeLock().unlock();
     }
   }
 
   private static File truncateIfNeeded(File regularFile, OpenOptions options) {
     if (options.isTruncateExisting() && options.isWrite()) {
-      ByteStore store = regularFile.content();
-      store.writeLock().lock();
+      ByteStore byteStore = regularFile.content();
+      byteStore.writeLock().lock();
       try {
-        store.truncate(0);
+        byteStore.truncate(0);
       } finally {
-        store.writeLock().unlock();
+        byteStore.writeLock().unlock();
       }
     }
 
     return regularFile;
+  }
+
+  /**
+   * Returns the target of the symbolic link at the given path.
+   */
+  public JimfsPath readSymbolicLink(JimfsPath path) throws IOException {
+    File symbolicLink = lookupInternal(path, NOFOLLOW_LINKS)
+        .requireSymbolicLink(path)
+        .file();
+
+    return symbolicLink.content();
+  }
+
+  /**
+   * Checks access to the file at the given path for the given modes. Since access controls are not
+   * implemented for this file system, this just checks that the file exists.
+   */
+  public void checkAccess(JimfsPath path) throws IOException {
+    // just check that the file exists
+    lookupInternal(path, FOLLOW_LINKS).requireExists(path);
   }
 
   /**
@@ -490,11 +476,11 @@ final class FileSystemService {
     Name linkName = link.name();
 
     // existingService is in the same file system, so just one lock is needed
-    writeLock().lock();
+    store.writeLock().lock();
     try {
       // we do want to follow links when finding the existing file
       File existingFile = existingService.lookupInternal(existing, FOLLOW_LINKS)
-          .requireFound(existing)
+          .requireExists(existing)
           .file();
       if (!existingFile.isRegularFile()) {
         throw new FileSystemException(link.toString(), existing.toString(),
@@ -502,15 +488,14 @@ final class FileSystemService {
       }
 
       File linkParent = lookupInternal(link, NOFOLLOW_LINKS)
-          .requireParentFound(link)
-          .requireNotFound(link)
-          .parent();
+          .requireDoesNotExist(link)
+          .directory();
 
       DirectoryTable linkParentTable = linkParent.content();
       linkParentTable.link(linkName, existingFile);
       linkParent.updateModifiedTime();
     } finally {
-      writeLock().unlock();
+      store.writeLock().unlock();
     }
   }
 
@@ -525,34 +510,28 @@ final class FileSystemService {
    * Deletes the file at the given absolute path.
    */
   public void deleteFile(JimfsPath path, DeleteMode deleteMode) throws IOException {
-    writeLock().lock();
+    store.writeLock().lock();
     try {
-      LookupResult result = lookupInternal(path, NOFOLLOW_LINKS)
-          .requireFound(path);
-
-      File parent = result.parent();
-      Name name = result.name();
-      delete(parent, name, deleteMode, path);
+      DirectoryEntry entry = lookupInternal(path, NOFOLLOW_LINKS)
+          .requireExists(path);
+      delete(entry, deleteMode, path);
     } finally {
-      writeLock().unlock();
+      store.writeLock().unlock();
     }
   }
 
   /**
    * Deletes the file with the given name and key from the given parent directory.
    */
-  private void delete(File parent, Name name,
+  private void delete(DirectoryEntry entry,
       DeleteMode deleteMode, JimfsPath pathForException) throws IOException {
+    File parent = entry.directory();
     DirectoryTable parentTable = parent.content();
-    File file = parentTable.get(name);
-    assert file != null;
+    File file = entry.file();
 
     checkDeletable(file, deleteMode, pathForException);
-    parentTable.unlink(name);
+    parentTable.unlink(entry.name());
     parent.updateModifiedTime();
-    if (file.isDirectory()) {
-      unlinkSelfAndParent(file);
-    }
 
     if (file.links() == 0) {
       file.content().delete();
@@ -629,18 +608,17 @@ final class FileSystemService {
     Name sourceName = source.name();
     Name destName = dest.name();
 
-    lockBoth(writeLock(), destService.writeLock());
+    lockBoth(store.writeLock(), destService.store.writeLock());
     try {
-      LookupResult sourceLookup = lookupInternal(source, options)
-          .requireFound(source);
-      LookupResult destLookup = destService.lookupInternal(dest, NOFOLLOW_LINKS)
-          .requireParentFound(dest);
+      DirectoryEntry sourceEntry = lookupInternal(source, options)
+          .requireExists(source);
+      DirectoryEntry destEntry = destService.lookupInternal(dest, NOFOLLOW_LINKS);
 
-      File sourceParent = sourceLookup.parent();
-      DirectoryTable sourceParentTable = sourceLookup.parent().content();
-      File sourceFile = sourceLookup.file();
+      File sourceParent = sourceEntry.directory();
+      DirectoryTable sourceParentTable = sourceEntry.directory().content();
+      File sourceFile = sourceEntry.file();
 
-      File destParent = destLookup.parent();
+      File destParent = destEntry.directory();
       DirectoryTable destParentTable = destParent.content();
 
       if (options.isMove() && sourceFile.isDirectory()) {
@@ -654,13 +632,13 @@ final class FileSystemService {
         }
       }
 
-      if (destLookup.found()) {
+      if (destEntry.exists()) {
         // identity because files from 2 file system instances could have the same ID
         // TODO(cgdecker): consider changing this to make the IDs unique per VM
-        if (destLookup.file() == sourceFile) {
+        if (destEntry.file() == sourceFile) {
           return;
         } else if (options.isReplaceExisting()) {
-          destService.delete(destParent, destName, DeleteMode.ANY, dest);
+          destService.delete(destEntry, DeleteMode.ANY, dest);
         } else {
           throw new FileAlreadyExistsException(dest.toString());
         }
@@ -674,30 +652,21 @@ final class FileSystemService {
 
         destParentTable.link(destName, sourceFile);
         destParent.updateModifiedTime();
-
-        if (sourceFile.isDirectory()) {
-          unlinkSelfAndParent(sourceFile);
-          linkSelfAndParent(sourceFile, destParent);
-        }
       } else {
         // copy
         boolean copyAttributes = options.isCopyAttributes() && !options.isMove();
-        File copy = destService.fileStore.copy(sourceFile, copyAttributes);
+        File copy = destService.store.copy(sourceFile, copyAttributes);
         destParentTable.link(destName, copy);
         destParent.updateModifiedTime();
 
-        if (copy.isDirectory()) {
-          linkSelfAndParent(copy, destParent);
-        }
-
         if (options.isMove()) {
-          fileStore.copyBasicAttributes(sourceFile, copy);
-          delete(sourceParent, sourceName, DeleteMode.ANY, source);
+          store.copyBasicAttributes(sourceFile, copy);
+          delete(sourceEntry, DeleteMode.ANY, source);
         }
       }
     } finally {
-      destService.writeLock().unlock();
-      writeLock().unlock();
+      destService.store.writeLock().unlock();
+      store.writeLock().unlock();
     }
   }
 
@@ -753,7 +722,7 @@ final class FileSystemService {
    */
   public <V extends FileAttributeView> V getFileAttributeView(
       JimfsPath path, Class<V> type, LinkOptions options) {
-    return fileStore.getFileAttributeView(lookupFileSupplier(path, options), type);
+    return store.getFileAttributeView(lookupFileSupplier(path, options), type);
   }
 
   /**
@@ -762,9 +731,9 @@ final class FileSystemService {
   public <A extends BasicFileAttributes> A readAttributes(
       JimfsPath path, Class<A> type, LinkOptions options) throws IOException {
     File file = lookup(path, options)
-        .requireFound(path)
+        .requireExists(path)
         .file();
-    return fileStore.readAttributes(file, type);
+    return store.readAttributes(file, type);
   }
 
   /**
@@ -773,9 +742,9 @@ final class FileSystemService {
   public Map<String, Object> readAttributes(
       JimfsPath path, String attributes, LinkOptions options) throws IOException {
     File file = lookup(path, options)
-        .requireFound(path)
+        .requireExists(path)
         .file();
-    return fileStore.readAttributes(file, attributes);
+    return store.readAttributes(file, attributes);
   }
 
   /**
@@ -785,8 +754,8 @@ final class FileSystemService {
   public void setAttribute(JimfsPath path, String attribute, Object value,
       LinkOptions options) throws IOException {
     File file = lookup(path, options)
-        .requireFound(path)
+        .requireExists(path)
         .file();
-    fileStore.setAttribute(file, attribute, value);
+    store.setAttribute(file, attribute, value);
   }
 }

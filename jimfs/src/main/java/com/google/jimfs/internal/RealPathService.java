@@ -36,10 +36,8 @@ final class RealPathService extends PathService {
     super(type);
   }
 
-  /**
-   * Allow the file system to be set after the path service is created.
-   */
-  void setFileSystem(JimfsFileSystem fileSystem) {
+  @Override
+  public void setFileSystem(JimfsFileSystem fileSystem) {
     checkState(this.fileSystem == null, "may not set fileSystem twice");
     this.fileSystem = checkNotNull(fileSystem);
   }

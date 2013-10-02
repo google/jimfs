@@ -17,7 +17,6 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
 
@@ -34,7 +33,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * A table of directory entries which link names to {@linkplain File files}.
+ * A table of {@linkplain DirectoryEntry directory entries}.
  *
  * @author Colin Decker
  */
@@ -42,7 +41,15 @@ final class DirectoryTable implements FileContent {
 
   private static final ImmutableSet<Name> RESERVED_NAMES = ImmutableSet.of(SELF, PARENT);
 
-  private final Map<Name, DirEntry> entries = new HashMap<>();
+  /**
+   * Map for looking up an entry by name.
+   */
+  private final Map<Name, DirectoryEntry> entries = new HashMap<>();
+
+  /**
+   * The entry linking to this directory in its parent directory.
+   */
+  private DirectoryEntry entry;
 
   /**
    * Creates a copy of this table. The copy does <i>not</i> contain a copy of the entries in this
@@ -63,64 +70,72 @@ final class DirectoryTable implements FileContent {
   }
 
   /**
+   * Sets this directory as the super root.
+   */
+  public void setSuperRoot(File file) {
+    // just set this table's entry to include the file
+    this.entry = new DirectoryEntry(file, Name.simple(""), file);
+  }
+
+  /**
+   * Sets this directory as a root directory, linking ".." to itself.
+   */
+  public void setRoot() {
+    this.entry = new DirectoryEntry(self(), name(), self());
+    unlinkInternal(PARENT);
+    linkInternal(PARENT, self());
+  }
+
+  /**
+   * Returns the entry linking to this directory in its parent.
+   */
+  public DirectoryEntry entry() {
+    return entry;
+  }
+
+  /**
    * Returns the file for this directory.
    */
   public File self() {
-    return get(SELF);
+    return entry.file();
   }
 
   /**
-   * Returns the parent directory.
-   */
-  public File parent() {
-    return get(PARENT);
-  }
-
-  /**
-   * Returns the directory table for the parent directory.
-   */
-  public DirectoryTable parentTable() {
-    return entries.get(PARENT).file.content();
-  }
-
-  /**
-   * Returns the current name of this directory. This relies on the fact that multiple links to a
-   * directory can't be created, not counting special self and parent links which don't apply
-   * here. Note that this method cannot be used to get the name of a root directory, as its parent
-   * link is to itself.
+   * Returns the name of this directory.
    */
   public Name name() {
-    return parentTable().getName(self());
+    return entry.name();
   }
 
   /**
-   * Links this directory to its own file.
+   * Returns the parent of this directory.
    */
-  public void linkSelf(File self) {
-    linkInternal(SELF, checkNotNull(self));
+  public File parent() {
+    return entry.directory();
   }
 
   /**
-   * Links this directory to the given parent file.
+   * Called when this directory is linked in a parent directory. The given entry is the new entry
+   * linking to this directory.
    */
-  public void linkParent(File parent) {
-    linkInternal(PARENT, checkNotNull(parent));
+  public void linked(DirectoryEntry entry) {
+    this.entry = entry;
+    linkInternal(SELF, entry.file());
+    linkInternal(PARENT, entry.directory());
   }
 
   /**
-   * Unlinks this directory from its own file.
+   * Called when this directory is unlinked from its parent directory.
    */
-  public void unlinkSelf() {
+  public void unlinked() {
     unlinkInternal(SELF);
+    unlinkInternal(PARENT);
+    entry = null;
   }
 
   /**
-   * Unlinks this directory from its parent file.
+   * Returns the number of entries in this directory.
    */
-  public void unlinkParent() {
-    unlinkInternal(PARENT);
-  }
-
   public int size() {
     return entries.size();
   }
@@ -129,7 +144,7 @@ final class DirectoryTable implements FileContent {
    * Returns true if this directory has no entries other than those to itself and its parent.
    */
   public boolean isEmpty() {
-    return entries.size() == 2;
+    return entries.size() <= 2;
   }
 
   /**
@@ -139,13 +154,19 @@ final class DirectoryTable implements FileContent {
    *     entry already exists for the it
    */
   public void link(Name name, File file) {
-    linkInternal(checkValidName(name, "link"), file);
+    DirectoryEntry entry = linkInternal(checkValidName(name, "link"), file);
+    if (file.isDirectory()) {
+      DirectoryTable table = file.content();
+      table.linked(entry);
+    }
   }
 
-  private void linkInternal(Name name, File file) {
+  private DirectoryEntry linkInternal(Name name, File file) {
     checkArgument(!entries.containsKey(name), "entry '%s' already exists", name);
-    entries.put(name, new DirEntry(name, file));
+    DirectoryEntry entry = new DirectoryEntry(self(), name, file);
+    entries.put(name, entry);
     file.linked();
+    return entry;
   }
 
   /**
@@ -155,15 +176,21 @@ final class DirectoryTable implements FileContent {
    * @throws IllegalArgumentException if {@code name} is a reserved name such as "."
    */
   public void unlink(Name name) {
-    unlinkInternal(checkValidName(name, "unlink"));
+    DirectoryEntry entry = unlinkInternal(checkValidName(name, "unlink"));
+    File file = entry.file();
+    if (file.isDirectory()) {
+      DirectoryTable table = file.content();
+      table.unlinked();
+    }
   }
 
-  private void unlinkInternal(Name name) {
-    DirEntry entry = entries.remove(name);
+  private DirectoryEntry unlinkInternal(Name name) {
+    DirectoryEntry entry = entries.remove(name);
     if (entry == null) {
       throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
     }
-    entry.file.unlinked();
+    entry.file().unlinked();
+    return entry;
   }
 
   /**
@@ -171,44 +198,8 @@ final class DirectoryTable implements FileContent {
    * no such file exists.
    */
   @Nullable
-  public DirEntry getEntry(Name name) {
+  public DirectoryEntry getEntry(Name name) {
     return entries.get(name);
-  }
-
-  /**
-   * Returns the file linked by the given name in this directory or {@code null} if no such file
-   * exists.
-   */
-  @Nullable
-  public File get(Name name) {
-    DirEntry entry = entries.get(name);
-    return entry == null ? null : entry.file;
-  }
-
-  /**
-   * Returns the name that links to the given file key in this directory, throwing an exception if
-   * zero names or more than one name links to the key. Should only be used for getting the name of
-   * a directory, as directories cannot have more than one link.
-   */
-  public Name getName(File file) {
-    Name result = null;
-    for (Map.Entry<Name, DirEntry> entry : entries.entrySet()) {
-      Name name = entry.getKey();
-      DirEntry dirEntry = entry.getValue();
-      if (dirEntry.file.equals(file)) {
-        if (result == null) {
-          result = name;
-        } else {
-          throw new IllegalArgumentException("more than one name links to the given file");
-        }
-      }
-    }
-
-    if (result == null) {
-      throw new IllegalArgumentException("directory contains no links to the given file");
-    }
-
-    return result;
   }
 
   /**
@@ -219,47 +210,19 @@ final class DirectoryTable implements FileContent {
     return ImmutableSortedSet.copyOf(Ordering.usingToString(), asMap().keySet());
   }
 
-  private Map<Name, DirEntry> asMap() {
+  private Map<Name, DirectoryEntry> asMap() {
     return Maps.filterKeys(entries, Predicates.not(Predicates.in(RESERVED_NAMES)));
   }
 
   /**
    * Returns a view of the entries in this table, excluding entries for "." and "..".
    */
-  public Collection<DirEntry> entries() {
+  public Collection<DirectoryEntry> entries() {
     return asMap().values();
   }
 
   private static Name checkValidName(Name name, String action) {
     checkArgument(!RESERVED_NAMES.contains(name), "cannot %s: %s", action, name);
     return name;
-  }
-
-  /**
-   * Directory entry containing a file and a name linking to that file.
-   */
-  public static final class DirEntry {
-
-    private final Name name;
-    private final File file;
-
-    private DirEntry(Name name, File file) {
-      this.name = name;
-      this.file = file;
-    }
-
-    /**
-     * Returns the name of this entry.
-     */
-    public Name name() {
-      return name;
-    }
-
-    /**
-     * Returns the file this entry links to.
-     */
-    public File file() {
-      return file;
-    }
   }
 }

@@ -34,30 +34,44 @@ final class FileSystemInitializer {
    */
   public static JimfsFileSystem createFileSystem(
       JimfsFileSystemProvider provider, URI uri, Jimfs.Configuration config) throws IOException {
-    RealPathService pathService = new RealPathService(config.getPathType());
-    JimfsFileStore fileStore = new JimfsFileStore(
-        "jimfs-" + uri.getHost(), config.getStorage(), config.getAttributeViews());
+    // create core services
+    PathService pathService = new RealPathService(config.getPathType());
+    AttributeService attributeService = new AttributeService(config.getAttributeViews());
+    RegularFileStorage storage = RegularFileStorage.from(config.getStorage());
+    FileFactory fileFactory = new FileFactory(storage);
 
-    File superRoot = fileStore.createDirectory();
-    DirectoryTable superRootTable = superRoot.content();
-
-    for (String root : config.getRoots()) {
-      createRootDir(root, pathService, fileStore, superRootTable);
-    }
+    FileTree tree = createFileTree(config, pathService, fileFactory);
+    JimfsFileStore fileStore = new JimfsFileStore(tree, fileFactory, storage, attributeService);
 
     JimfsPath workingDirPath = pathService.parsePath(config.getWorkingDirectory());
+    File workingDir = createWorkingDirectory(workingDirPath, fileFactory, tree);
 
-    File workingDir = createWorkingDirectory(workingDirPath, fileStore, superRootTable);
     FileSystemService service = new FileSystemService(
-        superRoot, workingDir, workingDirPath, fileStore, pathService);
-
-    JimfsFileSystem fileSystem = new JimfsFileSystem(provider, uri, service);
+        fileStore, workingDir, workingDirPath, pathService);
+    JimfsFileSystem fileSystem = new JimfsFileSystem(
+        provider, uri, fileStore, pathService, service);
     pathService.setFileSystem(fileSystem);
     return fileSystem;
   }
 
+  /**
+   * Creates the file tree for the file system including all root directories.
+   */
+  private static FileTree createFileTree(
+      Jimfs.Configuration config, PathService pathService, FileFactory fileFactory) {
+    File superRoot = fileFactory.createDirectory();
+    DirectoryTable superRootTable = superRoot.content();
+    superRootTable.setSuperRoot(superRoot);
+
+    for (String root : config.getRoots()) {
+      createRootDir(root, pathService, fileFactory, superRootTable);
+    }
+
+    return new FileTree(superRoot);
+  }
+
   private static void createRootDir(String root,
-      PathService pathService, JimfsFileStore fileStore, DirectoryTable superRootTable) {
+      PathService pathService, FileFactory fileFactory, DirectoryTable superRootTable) {
     JimfsPath path = pathService.parsePath(root);
     if (!path.isAbsolute() && path.getNameCount() == 0) {
       throw new IllegalArgumentException("Invalid root path: " + root);
@@ -65,27 +79,26 @@ final class FileSystemInitializer {
 
     Name rootName = path.root();
 
-    File rootDir = fileStore.createDirectory();
+    File rootDir = fileFactory.createDirectory();
     DirectoryTable rootDirTable = rootDir.content();
-    rootDirTable.linkSelf(rootDir);
-    rootDirTable.linkParent(rootDir);
     superRootTable.link(rootName, rootDir);
+    rootDirTable.setRoot();
   }
 
   private static File createWorkingDirectory(JimfsPath workingDirPath,
-      JimfsFileStore fileStore, DirectoryTable superRootTable) throws IOException {
-    File dir = superRootTable.get(workingDirPath.root());
-    if (dir == null) {
+      FileFactory fileFactory, FileTree tree) throws IOException {
+    DirectoryEntry rootEntry = tree.getRoot(workingDirPath.root());
+    if (rootEntry == null) {
       throw new IllegalArgumentException("Invalid working dir path: " + workingDirPath);
     }
+    File dir = rootEntry.file();
     DirectoryTable table = dir.content();
     for (Name name : workingDirPath.names()) {
-      File newDir = fileStore.createDirectory();
+      File newDir = fileFactory.createDirectory();
       table.link(name, newDir);
-      table = newDir.content();
-      table.linkSelf(newDir);
-      table.linkParent(dir);
+
       dir = newDir;
+      table = newDir.content();
     }
     return dir;
   }
