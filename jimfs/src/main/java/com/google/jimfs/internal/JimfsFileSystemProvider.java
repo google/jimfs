@@ -65,6 +65,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
+import javax.annotation.Nullable;
+
 /**
  * {@link FileSystemProvider} implementation for JIMFS. Should not be used directly. To create a
  * new file system instance, see {@link Jimfs}. For other operations, use the public APIs in
@@ -185,8 +187,8 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public JimfsFileChannel newFileChannel(Path path, Set<? extends OpenOption> options,
-      FileAttribute<?>... attrs) throws IOException {
+  public JimfsFileChannel newFileChannel(
+      Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     OpenOptions opts = OpenOptions.from(getOptionsForChannel(options));
     File file = getService(checkedPath).getRegularFile(checkedPath, opts, attrs);
@@ -194,14 +196,15 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options,
-      FileAttribute<?>... attrs) throws IOException {
+  public SeekableByteChannel newByteChannel(
+      Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     return newFileChannel(path, options, attrs);
   }
 
   @Override
-  public AsynchronousFileChannel newAsynchronousFileChannel(Path path,
-      Set<? extends OpenOption> options, ExecutorService executor, FileAttribute<?>... attrs)
+  public AsynchronousFileChannel newAsynchronousFileChannel(
+      Path path, Set<? extends OpenOption> options,
+      @Nullable ExecutorService executor, FileAttribute<?>... attrs)
       throws IOException {
     JimfsFileChannel channel = newFileChannel(path, options, attrs);
     if (executor == null) {
