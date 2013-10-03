@@ -30,6 +30,7 @@ import java.io.IOException;
  *
  * @author Colin Decker
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class JimfsInputStreamTest {
 
   @Test
@@ -156,7 +157,7 @@ public class JimfsInputStreamTest {
     ASSERT.that(in.read(new byte[5])).is(5);
     assertEmpty(in);
 
-    in.file.asByteStore().append(new byte[10]); // append more bytes to file
+    in.file.asByteStore().write(5, new byte[10]); // append more bytes to file
     assertEmpty(in);
   }
 
@@ -221,7 +222,7 @@ public class JimfsInputStreamTest {
     }
 
     ByteStore store = new ArrayByteStore();
-    store.append(b);
+    store.write(0, b);
     return new JimfsInputStream(new File(1, store));
   }
 

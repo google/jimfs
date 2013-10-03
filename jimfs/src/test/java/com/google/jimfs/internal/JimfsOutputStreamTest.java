@@ -168,8 +168,9 @@ public class JimfsOutputStreamTest {
 
   private static void addBytesToStore(JimfsOutputStream out, int... bytes) {
     ByteStore store = out.file.asByteStore();
+    long pos = store.size();
     for (int b : bytes) {
-      store.append((byte) b);
+      store.write(pos++, (byte) b);
     }
   }
 

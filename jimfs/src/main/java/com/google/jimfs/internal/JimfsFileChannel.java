@@ -240,14 +240,11 @@ final class JimfsFileChannel extends FileChannel {
 
         store.writeLock().lockInterruptibly();
         try {
-          int written;
           if (options.isAppend()) {
-            written = store.append(src);
             position = store.sizeInBytes();
-          } else {
-            written = store.write(position, src);
-            position += written;
           }
+          int written = store.write(position, src);
+          position += written;
 
           file.updateModifiedTime();
           completed = true;
@@ -289,14 +286,11 @@ final class JimfsFileChannel extends FileChannel {
 
         store.writeLock().lockInterruptibly();
         try {
-          long written;
           if (options.isAppend()) {
-            written = store.append(srcs);
             position = store.sizeInBytes();
-          } else {
-            written = store.write(position, srcs);
-            position += written;
           }
+          long written = store.write(position, srcs);
+          position += written;
 
           file.updateModifiedTime();
           completed = true;
@@ -465,16 +459,17 @@ final class JimfsFileChannel extends FileChannel {
 
         store.writeLock().lockInterruptibly();
         try {
-          long transferred;
           if (options.isAppend()) {
-            transferred = store.appendFrom(src, (int) count);
-            this.position = store.sizeInBytes();
-            file.updateModifiedTime();
-          } else {
-            file.updateModifiedTime();
-            transferred = store.transferFrom(src, (int) position, (int) count);
+            position = store.sizeInBytes();
           }
 
+          long transferred = store.transferFrom(src, (int) position, (int) count);
+
+          if (options.isAppend()) {
+            this.position = position + transferred;
+          }
+
+          file.updateModifiedTime();
           completed = true;
           return transferred;
         } finally {
@@ -549,12 +544,14 @@ final class JimfsFileChannel extends FileChannel {
 
         store.writeLock().lockInterruptibly();
         try {
-          int written;
           if (options.isAppend()) {
-            written = store.append(src);
-            this.position = store.size();
-          } else {
-            written = store.write((int) position, src);
+            position = store.size();
+          }
+
+          int written = store.write((int) position, src);
+
+          if (options.isAppend()) {
+            this.position = position + written;
           }
 
           file.updateModifiedTime();

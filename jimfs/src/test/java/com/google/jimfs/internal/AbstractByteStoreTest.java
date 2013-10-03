@@ -102,22 +102,9 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testEmpty_append_singleByte() {
-    store.append((byte) 1);
-    assertContentEquals("1", store);
-  }
-
-  @Test
   public void testEmpty_write_byteArray_atStart() {
     byte[] bytes = bytes("111111");
     store.write(0, bytes);
-    assertContentEquals(bytes, store);
-  }
-
-  @Test
-  public void testEmpty_append_byteArray() {
-    byte[] bytes = bytes("111111");
-    store.append(bytes);
     assertContentEquals(bytes, store);
   }
 
@@ -129,33 +116,14 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testEmpty_append_ByteArray() {
-    byte[] bytes = bytes("2211111122");
-    store.append(bytes, 2, 6);
-    assertContentEquals("111111", store);
-  }
-
-  @Test
   public void testEmpty_write_singleBuffer_atStart() {
     store.write(0, buffer("111111"));
     assertContentEquals("111111", store);
   }
 
   @Test
-  public void testEmpty_append_singleBuffer() {
-    store.append(buffer("111111"));
-    assertContentEquals("111111", store);
-  }
-
-  @Test
   public void testEmpty_write_multipleBuffers_atStart() {
     store.write(0, buffers("111", "111"));
-    assertContentEquals("111111", store);
-  }
-
-  @Test
-  public void testEmpty_append_multipleBuffers() {
-    store.append(buffers("111", "111"));
     assertContentEquals("111111", store);
   }
 
@@ -478,13 +446,6 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_append_singleByte() {
-    fillContent("222222");
-    assertEquals(1, store.append((byte) 1));
-    assertContentEquals("2222221", store);
-  }
-
-  @Test
   public void testNonEmpty_write_partial_fromStart_byteArray() {
     fillContent("222222");
     assertEquals(3, store.write(0, bytes("111")));
@@ -517,15 +478,6 @@ public abstract class AbstractByteStoreTest {
     assertEquals(3, store.write(6, bytes("111")));
     assertContentEquals("222222111", store);
     assertEquals(2, store.write(9, bytes("333333"), 3, 2));
-    assertContentEquals("22222211133", store);
-  }
-
-  @Test
-  public void testNonEmpty_append_byteArray() {
-    fillContent("222222");
-    assertEquals(3, store.append(bytes("111")));
-    assertContentEquals("222222111", store);
-    assertEquals(2, store.append(bytes("333333"), 3, 2));
     assertContentEquals("22222211133", store);
   }
 
@@ -567,13 +519,6 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_append_singleBuffer() {
-    fillContent("222222");
-    assertEquals(3, store.append(buffer("111")));
-    assertContentEquals("222222111", store);
-  }
-
-  @Test
   public void testNonEmpty_write_partial_fromPastEnd_singleBuffer() {
     fillContent("222222");
     assertEquals(3, store.write(8, buffer("111")));
@@ -605,13 +550,6 @@ public abstract class AbstractByteStoreTest {
   public void testNonEmpty_write_partial_fromEnd_multipleBuffers() {
     fillContent("222222");
     assertEquals(6, store.write(6, buffers("111", "333")));
-    assertContentEquals("222222111333", store);
-  }
-
-  @Test
-  public void testNonEmpty_append_multipleBuffers() {
-    fillContent("222222");
-    assertEquals(6, store.append(buffers("111", "333")));
     assertContentEquals("222222111333", store);
   }
 

@@ -169,57 +169,6 @@ abstract class ByteStore implements FileContent {
       ReadableByteChannel src, long pos, long count) throws IOException;
 
   /**
-   * Appends the given byte to this store. Returns the number of bytes written.
-   */
-  public int append(byte b) {
-    return write(size(), b);
-  }
-
-  /**
-   * Appends all bytes in the given byte array to this store. Returns the number of bytes written.
-   */
-  public int append(byte[] b) {
-    return write(size(), b, 0, b.length);
-  }
-
-  /**
-   * Appends {@code len} bytes starting at offset {@code off} in the given byte array to this store.
-   * Returns the number of bytes written.
-   *
-   * @throws IndexOutOfBoundsException if {@code off} or {@code len} is negative, or if {@code off +
-   *     len} is greater than {@code b.length}.
-   */
-  public int append(byte[] b, int off, int len) {
-    return write(size(), b, off, len);
-  }
-
-  /**
-   * Appends all available bytes from buffer {@code buf} to this store. Returns the number of bytes
-   * written.
-   */
-  public int append(ByteBuffer buf) {
-    return write(size(), buf);
-  }
-
-  /**
-   * Appends all available bytes from each buffer in {@code bufs}, in order, to this store. Returns
-   * the number of bytes written.
-   *
-   * @throws NullPointerException if any element of {@code bufs} is {@code null}.
-   */
-  public long append(Iterable<ByteBuffer> bufs) {
-    return write(size(), bufs);
-  }
-
-  /**
-   * Appends up to {@code count} bytes from the given channel to this store. Returns the number of
-   * bytes transferred.
-   */
-  public long appendFrom(ReadableByteChannel src, long count) throws IOException {
-    return transferFrom(src, size(), count);
-  }
-
-  /**
    * Reads the byte at position {@code pos} in this store as an unsigned integer in the range 0-255.
    * If {@code pos} is greater than or equal to the size of this store, returns -1 instead.
    *
