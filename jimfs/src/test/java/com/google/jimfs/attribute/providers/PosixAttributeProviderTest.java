@@ -18,7 +18,7 @@ package com.google.jimfs.attribute.providers;
 
 import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
-import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
