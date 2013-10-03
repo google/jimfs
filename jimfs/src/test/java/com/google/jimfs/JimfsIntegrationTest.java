@@ -97,8 +97,8 @@ import java.util.regex.PatternSyntaxException;
 
 /**
  * Tests an in-memory file system through the public APIs in {@link Files}, etc. This also acts as
- * the tests for {@code FileSystemService}, as each public API method is (mostly) implemented by a
- * method in {@code FileSystemService}.
+ * the tests for {@code FileSystemView}, as each public API method is (mostly) implemented by a
+ * method in {@code FileSystemView}.
  *
  * @author Colin Decker
  */
@@ -1154,9 +1154,9 @@ public class JimfsIntegrationTest {
 
   @Test
   public void testSymbolicLinks_lookupOfAbsoluteSymlinkPathFromRelativePath() throws IOException {
-    // relative path lookups are in the FileSystemService for the working directory
+    // relative path lookups are in the FileSystemView for the working directory
     // this tests that when an absolute path is encountered, the lookup switches to the super root
-    // FileSystemService
+    // FileSystemView
 
     Files.createDirectories(path("/foo/bar/baz"));
     Files.createFile(path("/foo/bar/baz/file"));

@@ -33,7 +33,7 @@
  * file system services for each {@link java.nio.file.SecureDirectoryStream} that is opened. Those
  * services may use a different working directory than the file system's default working directory.
  *
- * <p>While the {@code FileSystemService} handles most of the work for implementing file system
+ * <p>While the {@code FileSystemView} handles most of the work for implementing file system
  * operations, lookups are done using the {@link LookupService}. It simply handles resolving paths
  * to files, including following symbolic links if necessary. Lookup results are returned as a
  * {@link LookupResult}, which contains not only the file that was located (if any) but its parent
@@ -77,7 +77,7 @@
  *
  * <p>{@link JimfsDirectoryStream} and {@link JimfsSecureDirectoryStream} handle reading the
  * entries of a directory. The secure directory stream additionally contains a
- * {@code FileSystemService} with its directory as the working directory, allowing for operations
+ * {@code FileSystemView} with its directory as the working directory, allowing for operations
  * relative to the actual directory file rather than just the path to the file. This allows the
  * operations to continue to work as expected even if the directory is moved.
  *

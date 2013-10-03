@@ -16,7 +16,7 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.internal.FileSystemService.DeleteMode;
+import static com.google.jimfs.internal.FileSystemView.DeleteMode;
 import static com.google.jimfs.internal.JimfsFileSystemProvider.getOptionsForChannel;
 
 import java.io.IOException;
@@ -31,7 +31,7 @@ import java.nio.file.attribute.FileAttributeView;
 import java.util.Set;
 
 /**
- * Secure directory stream implementation that uses a {@link FileSystemService} with the stream's
+ * Secure directory stream implementation that uses a {@link FileSystemView} with the stream's
  * directory as its working directory.
  *
  * @author Colin Decker
@@ -39,9 +39,9 @@ import java.util.Set;
 final class JimfsSecureDirectoryStream
     extends JimfsDirectoryStream implements SecureDirectoryStream<Path> {
 
-  private final FileSystemService service;
+  private final FileSystemView service;
 
-  public JimfsSecureDirectoryStream(FileSystemService service, Filter<? super Path> filter) {
+  public JimfsSecureDirectoryStream(FileSystemView service, Filter<? super Path> filter) {
     super(service.getWorkingDirectoryPath(), filter);
     this.service = service;
   }

@@ -57,7 +57,8 @@ public class PollingWatchServiceTest {
   @Before
   public void setUp() {
     fs = (JimfsFileSystem) Jimfs.newUnixLikeFileSystem();
-    watcher = new PollingWatchService(fs.service(), 4, MILLISECONDS);
+    watcher = new PollingWatchService(fs.getDefaultView(),
+        fs.getPathService(), new ResourceManager(), 4, MILLISECONDS);
   }
 
   @After

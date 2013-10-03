@@ -35,7 +35,6 @@ import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
-import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -46,100 +45,56 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 /**
- * Service implementing most operations for a file system. A file system service has two root
- * directories. The first, called the <i>super root</i> is the directory containing the actual root
- * directories of the file system. It acts as the base for operations on absolute paths. The second,
- * just called the <i>relative root</i>, is the base for operations on relative paths.
+ * View of a file system with a specific working directory. As all file system operations need to
+ * work when given either relative or absolute paths, this class contains the implementation of
+ * most file system operations, with relative path operations resolving against the working
+ * directory.
  *
- * <p>By default, a file system has one file system service. This service's relative root is the
- * <i>working directory</i> of the file system. In addition, a file system may have any number of
- * additional file system services for {@link SecureDirectoryStream} instances. These services have
- * the stream's directory as their relative root, allowing for operations relative to that directory
- * object.
+ * <p>A file system has one default view using the file system's working directory. Additional
+ * views may be created for use in {@link SecureDirectoryStream} instances, which each have a
+ * different working directory they use.
  *
  * @author Colin Decker
  */
-final class FileSystemService {
+final class FileSystemView {
 
   private final JimfsFileStore store;
 
   private final File workingDirectory;
   private final JimfsPath workingDirectoryPath;
 
-  private final PathService pathService;
-  private final ResourceManager resourceManager;
-
   /**
-   * Creates a new file system service using the given services.
+   * Creates a new file system view.
    */
-  public FileSystemService(JimfsFileStore store,
-      File workingDirectory, JimfsPath workingDirectoryPath, PathService pathService) {
-    this(store, workingDirectory, workingDirectoryPath, pathService, new ResourceManager());
-  }
-
-  /**
-   * Creates a new file system service using the same super root and services as the given service,
-   * but using the given working directory.
-   */
-  private FileSystemService(
-      File workingDirectory, JimfsPath workingDirectoryPath, FileSystemService parent) {
-    this(parent.store,
-        workingDirectory, workingDirectoryPath,
-        parent.pathService, parent.resourceManager);
-  }
-
-  private FileSystemService(JimfsFileStore store,
-      File workingDirectory, JimfsPath workingDirectoryPath, PathService pathService,
-      ResourceManager resourceManager) {
+  public FileSystemView(JimfsFileStore store,
+      File workingDirectory, JimfsPath workingDirectoryPath) {
     this.store = checkNotNull(store);
     this.workingDirectory = checkNotNull(workingDirectory);
     this.workingDirectoryPath = checkNotNull(workingDirectoryPath);
-
-    this.pathService = checkNotNull(pathService);
-    this.resourceManager = checkNotNull(resourceManager);
   }
 
   /**
-   * Returns whether or not this service and the given service belong to the same file system.
+   * Creates a new file system view identical to the given view but using the given working
+   * directory instead.
    */
-  private boolean isSameFileSystem(FileSystemService other) {
+  private FileSystemView(
+      File workingDirectory, JimfsPath workingDirectoryPath, FileSystemView parent) {
+    this(parent.store, workingDirectory, workingDirectoryPath);
+  }
+
+  /**
+   * Returns whether or not this view and the given view belong to the same file system.
+   */
+  private boolean isSameFileSystem(FileSystemView other) {
     return store == other.store;
   }
 
   /**
-   * Returns the path of the working directory at the time this service was created. Does not
+   * Returns the path of the working directory at the time this view was created. Does not
    * reflect changes to the path caused by the directory being moved.
    */
   public JimfsPath getWorkingDirectoryPath() {
     return workingDirectoryPath;
-  }
-
-  /**
-   * Returns the path service for the file system.
-   */
-  public PathService paths() {
-    return pathService;
-  }
-
-  /**
-   * Returns the file store for the file system.
-   */
-  public JimfsFileStore fileStore() {
-    return store;
-  }
-
-  /**
-   * Returns the resource manager for the file system.
-   */
-  public ResourceManager resourceManager() {
-    return resourceManager;
-  }
-
-  /**
-   * Returns a new watch service for this file system.
-   */
-  public WatchService newWatchService() {
-    return new PollingWatchService(this);
   }
 
   /**
@@ -148,7 +103,7 @@ final class FileSystemService {
   private DirectoryEntry lookupWithLock(JimfsPath path, LinkOptions options) throws IOException {
     store.readLock().lock();
     try {
-      return lookupInternal(path, options);
+      return lookup(path, options);
     } finally {
       store.readLock().unlock();
     }
@@ -157,12 +112,12 @@ final class FileSystemService {
   /**
    * Looks up the file at the given path without locking.
    */
-  private DirectoryEntry lookupInternal(JimfsPath path, LinkOptions options) throws IOException {
+  private DirectoryEntry lookup(JimfsPath path, LinkOptions options) throws IOException {
     return store.lookup(workingDirectory, path, options);
   }
 
   /**
-   * Returns a supplier that suppliers a file by looking up the given path in this service, using
+   * Returns a supplier that suppliers a file by looking up the given path in this view, using
    * the given link handling option.
    */
   public IoSupplier<File> lookupFileSupplier(final JimfsPath path, final LinkOptions options) {
@@ -205,12 +160,12 @@ final class FileSystemService {
         .requireDirectory(dir)
         .file();
 
-    FileSystemService service = new FileSystemService(file, basePathForStream, this);
-    return new JimfsSecureDirectoryStream(service, filter);
+    FileSystemView view = new FileSystemView(file, basePathForStream, this);
+    return new JimfsSecureDirectoryStream(view, filter);
   }
 
   /**
-   * Returns a snapshot of the entries in the working directory of this service.
+   * Returns a snapshot of the entries in the working directory of this view.
    */
   public ImmutableSortedSet<String> snapshotBaseEntries() {
     ImmutableSortedSet<Name> names;
@@ -238,7 +193,7 @@ final class FileSystemService {
 
     store.readLock().lock();
     try {
-      File dir = lookupInternal(path, LinkOptions.NOFOLLOW_LINKS)
+      File dir = lookup(path, LinkOptions.NOFOLLOW_LINKS)
           .requireDirectory(path)
           .file();
 
@@ -255,18 +210,18 @@ final class FileSystemService {
 
   /**
    * Returns whether or not the two given paths locate the same file. The second path is located
-   * using the given file service rather than this file service.
+   * using the given view rather than this file view.
    */
   public boolean isSameFile(
-      JimfsPath path, FileSystemService service2, JimfsPath path2) throws IOException {
-    if (!isSameFileSystem(service2)) {
+      JimfsPath path, FileSystemView view2, JimfsPath path2) throws IOException {
+    if (!isSameFileSystem(view2)) {
       return false;
     }
 
     store.readLock().lock();
     try {
-      File file = lookupInternal(path, FOLLOW_LINKS).orNull();
-      File file2 = service2.lookupInternal(path2, FOLLOW_LINKS).orNull();
+      File file = lookup(path, FOLLOW_LINKS).orNull();
+      File file2 = view2.lookup(path2, FOLLOW_LINKS).orNull();
       return file != null && Objects.equal(file, file2);
     } finally {
       store.readLock().unlock();
@@ -276,13 +231,14 @@ final class FileSystemService {
   /**
    * Gets the real path to the file located by the given path.
    */
-  public JimfsPath toRealPath(JimfsPath path, LinkOptions options) throws IOException {
+  public JimfsPath toRealPath(
+      JimfsPath path, PathService pathService, LinkOptions options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
 
     store.readLock().lock();
     try {
-      DirectoryEntry entry = lookupInternal(path, options)
+      DirectoryEntry entry = lookup(path, options)
           .requireExists(path);
 
       List<Name> names = new ArrayList<>();
@@ -344,7 +300,7 @@ final class FileSystemService {
 
     store.writeLock().lock();
     try {
-      DirectoryEntry entry = lookupInternal(path, NOFOLLOW_LINKS);
+      DirectoryEntry entry = lookup(path, NOFOLLOW_LINKS);
 
       if (entry.exists()) {
         if (allowExisting) {
@@ -387,7 +343,7 @@ final class FileSystemService {
       // that don't provide any options are automatically in CREATE mode make me not want to
       store.readLock().lock();
       try {
-        DirectoryEntry entry = lookupInternal(path, options);
+        DirectoryEntry entry = lookup(path, options);
         if (entry.exists()) {
           File file = entry.file();
           if (!file.isRegularFile()) {
@@ -438,7 +394,7 @@ final class FileSystemService {
    * Returns the target of the symbolic link at the given path.
    */
   public JimfsPath readSymbolicLink(JimfsPath path) throws IOException {
-    File symbolicLink = lookupInternal(path, NOFOLLOW_LINKS)
+    File symbolicLink = lookup(path, NOFOLLOW_LINKS)
         .requireSymbolicLink(path)
         .file();
 
@@ -451,32 +407,32 @@ final class FileSystemService {
    */
   public void checkAccess(JimfsPath path) throws IOException {
     // just check that the file exists
-    lookupInternal(path, FOLLOW_LINKS).requireExists(path);
+    lookup(path, FOLLOW_LINKS).requireExists(path);
   }
 
   /**
    * Creates a hard link at the given link path to the regular file at the given path. The existing
-   * file must exist and must be a regular file. The given file system service must belong to the
-   * same file system as this service.
+   * file must exist and must be a regular file. The given file system view must belong to the
+   * same file system as this view.
    */
   public void link(
-      JimfsPath link, FileSystemService existingService, JimfsPath existing) throws IOException {
+      JimfsPath link, FileSystemView existingView, JimfsPath existing) throws IOException {
     checkNotNull(link);
-    checkNotNull(existingService);
+    checkNotNull(existingView);
     checkNotNull(existing);
 
-    if (!isSameFileSystem(existingService)) {
+    if (!isSameFileSystem(existingView)) {
       throw new FileSystemException(link.toString(), existing.toString(),
           "can't link: source and target are in different file system instances");
     }
 
     Name linkName = link.name();
 
-    // existingService is in the same file system, so just one lock is needed
+    // existingView is in the same file system, so just one lock is needed
     store.writeLock().lock();
     try {
       // we do want to follow links when finding the existing file
-      File existingFile = existingService.lookupInternal(existing, FOLLOW_LINKS)
+      File existingFile = existingView.lookup(existing, FOLLOW_LINKS)
           .requireExists(existing)
           .file();
       if (!existingFile.isRegularFile()) {
@@ -484,7 +440,7 @@ final class FileSystemService {
             "can't link: not a regular file");
       }
 
-      File linkParent = lookupInternal(link, NOFOLLOW_LINKS)
+      File linkParent = lookup(link, NOFOLLOW_LINKS)
           .requireDoesNotExist(link)
           .directory();
 
@@ -508,7 +464,7 @@ final class FileSystemService {
   public void deleteFile(JimfsPath path, DeleteMode deleteMode) throws IOException {
     store.writeLock().lock();
     try {
-      DirectoryEntry entry = lookupInternal(path, NOFOLLOW_LINKS)
+      DirectoryEntry entry = lookup(path, NOFOLLOW_LINKS)
           .requireExists(path);
       delete(entry, deleteMode, path);
     } finally {
@@ -586,10 +542,10 @@ final class FileSystemService {
   /**
    * Copies or moves the file at the given source path to the given dest path.
    */
-  public void copy(JimfsPath source, FileSystemService destService, JimfsPath dest,
+  public void copy(JimfsPath source, FileSystemView destView, JimfsPath dest,
       CopyOptions options) throws IOException {
     checkNotNull(source);
-    checkNotNull(destService);
+    checkNotNull(destView);
     checkNotNull(dest);
     checkNotNull(options);
 
@@ -597,16 +553,16 @@ final class FileSystemService {
       throw new UnsupportedOperationException("ATOMIC_MOVE");
     }
 
-    boolean sameFileSystem = isSameFileSystem(destService);
+    boolean sameFileSystem = isSameFileSystem(destView);
 
     Name sourceName = source.name();
     Name destName = dest.name();
 
-    lockBoth(store.writeLock(), destService.store.writeLock());
+    lockBoth(store.writeLock(), destView.store.writeLock());
     try {
-      DirectoryEntry sourceEntry = lookupInternal(source, options)
+      DirectoryEntry sourceEntry = lookup(source, options)
           .requireExists(source);
-      DirectoryEntry destEntry = destService.lookupInternal(dest, NOFOLLOW_LINKS);
+      DirectoryEntry destEntry = destView.lookup(dest, NOFOLLOW_LINKS);
 
       File sourceParent = sourceEntry.directory();
       File sourceFile = sourceEntry.file();
@@ -616,7 +572,7 @@ final class FileSystemService {
       if (options.isMove() && sourceFile.isDirectory()) {
         if (sameFileSystem) {
           checkMovable(sourceFile, source);
-          checkNotAncestor(sourceFile, destParent, destService);
+          checkNotAncestor(sourceFile, destParent, destView);
         } else {
           // move to another file system is accomplished by copy-then-delete, so the source file
           // must be deletable to be moved
@@ -630,7 +586,7 @@ final class FileSystemService {
         if (destEntry.file() == sourceFile) {
           return;
         } else if (options.isReplaceExisting()) {
-          destService.delete(destEntry, DeleteMode.ANY, dest);
+          destView.delete(destEntry, DeleteMode.ANY, dest);
         } else {
           throw new FileAlreadyExistsException(dest.toString());
         }
@@ -647,7 +603,7 @@ final class FileSystemService {
       } else {
         // copy
         boolean copyAttributes = options.isCopyAttributes() && !options.isMove();
-        File copy = destService.store.copy(sourceFile, copyAttributes);
+        File copy = destView.store.copy(sourceFile, copyAttributes);
         destParent.asDirectoryTable().link(destName, copy);
         destParent.updateModifiedTime();
 
@@ -657,7 +613,7 @@ final class FileSystemService {
         }
       }
     } finally {
-      destService.store.writeLock().unlock();
+      destView.store.writeLock().unlock();
       store.writeLock().unlock();
     }
   }
@@ -695,9 +651,9 @@ final class FileSystemService {
    * Checks that source is not an ancestor of dest, throwing an exception if it is.
    */
   private void checkNotAncestor(
-      File source, File destParent, FileSystemService destService) throws IOException {
+      File source, File destParent, FileSystemView destView) throws IOException {
     // if dest is not in the same file system, it couldn't be in source's subdirectories
-    if (!isSameFileSystem(destService)) {
+    if (!isSameFileSystem(destView)) {
       return;
     }
 
@@ -717,7 +673,7 @@ final class FileSystemService {
   }
 
   /**
-   * Returns a file attribute view for the given path in this service.
+   * Returns a file attribute view for the given path in this view.
    */
   public <V extends FileAttributeView> V getFileAttributeView(
       JimfsPath path, Class<V> type, LinkOptions options) {
@@ -725,7 +681,7 @@ final class FileSystemService {
   }
 
   /**
-   * Reads attributes of the file located by the given path in this service as an object.
+   * Reads attributes of the file located by the given path in this view as an object.
    */
   public <A extends BasicFileAttributes> A readAttributes(
       JimfsPath path, Class<A> type, LinkOptions options) throws IOException {
@@ -736,7 +692,7 @@ final class FileSystemService {
   }
 
   /**
-   * Reads attributes of the file located by the given path in this service as a map.
+   * Reads attributes of the file located by the given path in this view as a map.
    */
   public Map<String, Object> readAttributes(
       JimfsPath path, String attributes, LinkOptions options) throws IOException {
@@ -748,7 +704,7 @@ final class FileSystemService {
 
   /**
    * Sets the given attribute to the given value on the file located by the given path in this
-   * service.
+   * view.
    */
   public void setAttribute(JimfsPath path, String attribute, Object value,
       LinkOptions options) throws IOException {

@@ -70,27 +70,34 @@ final class PollingWatchService extends AbstractWatchService {
    */
   private final ConcurrentMap<Key, Snapshot> snapshots = new ConcurrentHashMap<>();
 
-  private final FileSystemService service;
+  private final FileSystemView view;
+  private final PathService pathService;
+  private final ResourceManager resourceManager;
 
   private final long pollingTime;
   private final TimeUnit timeUnit;
 
   private ScheduledFuture<?> pollingFuture;
 
-  public PollingWatchService(FileSystemService service) {
-    this(service, 5, SECONDS);
+  public PollingWatchService(
+      FileSystemView view, PathService pathService, ResourceManager resourceManager) {
+    this(view, pathService, resourceManager, 5, SECONDS);
   }
 
   // TODO(cgdecker): make user configurable somehow? meh
   @VisibleForTesting
-  PollingWatchService(FileSystemService service, long pollingTime, TimeUnit timeUnit) {
-    this.service = checkNotNull(service);
+  PollingWatchService(
+      FileSystemView view, PathService pathService, ResourceManager resourceManager,
+      long pollingTime, TimeUnit timeUnit) {
+    this.view = checkNotNull(view);
+    this.pathService = checkNotNull(pathService);
+    this.resourceManager = checkNotNull(resourceManager);
 
     checkArgument(pollingTime >= 0, "polling time (%s) may not be negative", pollingTime);
     this.pollingTime = pollingTime;
     this.timeUnit = checkNotNull(timeUnit);
 
-    service.resourceManager().register(this);
+    resourceManager.register(this);
   }
 
   @Override
@@ -126,7 +133,7 @@ final class PollingWatchService extends AbstractWatchService {
   }
 
   private boolean isSameFileSystem(Path path) {
-    return ((JimfsFileSystem) path.getFileSystem()).service() == service;
+    return ((JimfsFileSystem) path.getFileSystem()).getDefaultView() == view;
   }
 
   @VisibleForTesting
@@ -153,7 +160,7 @@ final class PollingWatchService extends AbstractWatchService {
       }
 
       pollingService.shutdown();
-      service.resourceManager().unregister(this);
+      resourceManager.unregister(this);
     }
   }
 
@@ -195,7 +202,7 @@ final class PollingWatchService extends AbstractWatchService {
 
   @Nullable
   private Snapshot takeSnapshot(JimfsPath path) throws IOException {
-    return new Snapshot(service.snapshotModifiedTimes(path));
+    return new Snapshot(view.snapshotModifiedTimes(path));
   }
 
   /**
@@ -225,7 +232,7 @@ final class PollingWatchService extends AbstractWatchService {
             modifiedTimes.keySet());
 
         for (Name name : created) {
-          key.post(new Event<>(ENTRY_CREATE, 1, service.paths().createFileName(name)));
+          key.post(new Event<>(ENTRY_CREATE, 1, pathService.createFileName(name)));
           changesPosted = true;
         }
       }
@@ -236,7 +243,7 @@ final class PollingWatchService extends AbstractWatchService {
             newState.modifiedTimes.keySet());
 
         for (Name name : deleted) {
-          key.post(new Event<>(ENTRY_DELETE, 1, service.paths().createFileName(name)));
+          key.post(new Event<>(ENTRY_DELETE, 1, pathService.createFileName(name)));
           changesPosted = true;
         }
       }
@@ -248,7 +255,7 @@ final class PollingWatchService extends AbstractWatchService {
 
           Long newModifiedTime = newState.modifiedTimes.get(name);
           if (newModifiedTime != null && !modifiedTime.equals(newModifiedTime)) {
-            key.post(new Event<>(ENTRY_MODIFY, 1, service.paths().createFileName(name)));
+            key.post(new Event<>(ENTRY_MODIFY, 1, pathService.createFileName(name)));
             changesPosted = true;
           }
         }

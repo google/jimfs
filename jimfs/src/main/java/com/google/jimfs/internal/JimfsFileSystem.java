@@ -18,6 +18,7 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.jimfs.attribute.UserLookupService;
@@ -33,11 +34,12 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.annotation.Nullable;
 
 /**
- * {@link FileSystem} implementation for JIMFS. Mostly a thin wrapper around a
- * {@link FileSystemService} that implements the required public file system methods.
+ * {@link FileSystem} implementation for JIMFS. Most behavior for the file system is implemented
+ * by its {@linkplain #getDefaultView() default file system view}.
  *
  * @author Colin Decker
  */
@@ -48,15 +50,19 @@ final class JimfsFileSystem extends FileSystem {
 
   private final JimfsFileStore fileStore;
   private final PathService pathService;
-  private final FileSystemService service;
 
-  JimfsFileSystem(JimfsFileSystemProvider provider, URI uri,
-      JimfsFileStore fileStore, PathService pathService, FileSystemService service) {
+  private final ResourceManager resourceManager = new ResourceManager();
+  private final UserPrincipalLookupService userLookupService = new UserLookupService(true);
+
+  private final FileSystemView defaultView;
+
+  JimfsFileSystem(JimfsFileSystemProvider provider, URI uri, JimfsFileStore fileStore,
+      PathService pathService, FileSystemView defaultView) {
     this.provider = checkNotNull(provider);
     this.uri = checkNotNull(uri);
     this.fileStore = checkNotNull(fileStore);
     this.pathService = checkNotNull(pathService);
-    this.service = checkNotNull(service);
+    this.defaultView = checkNotNull(defaultView);
   }
 
   @Override
@@ -72,15 +78,15 @@ final class JimfsFileSystem extends FileSystem {
   }
 
   /**
-   * Returns the service providing operations on this file system.
+   * Returns the default view for this file system.
    */
-  public FileSystemService service() {
-    return service;
+  public FileSystemView getDefaultView() {
+    return defaultView;
   }
 
   @Override
   public String getSeparator() {
-    return service.paths().getSeparator();
+    return pathService.getSeparator();
   }
 
   @Override
@@ -96,7 +102,22 @@ final class JimfsFileSystem extends FileSystem {
    * Returns the working directory path for this file system.
    */
   public JimfsPath getWorkingDirectory() {
-    return service.getWorkingDirectoryPath();
+    return defaultView.getWorkingDirectoryPath();
+  }
+
+  /**
+   * Returns the path service for this file system.
+   */
+  @VisibleForTesting
+  PathService getPathService() {
+    return pathService;
+  }
+
+  /**
+   * Returns the file store for this file system.
+   */
+  public JimfsFileStore getFileStore() {
+    return fileStore;
   }
 
   @Override
@@ -135,19 +156,20 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService() {
-    return new UserLookupService(true);
+    return userLookupService;
   }
 
   @Override
-  public WatchService newWatchService() throws IOException {
-    return service.newWatchService();
+  public synchronized WatchService newWatchService() throws IOException {
+    return new PollingWatchService(defaultView, pathService, resourceManager);
   }
 
+  @Nullable
   private ExecutorService defaultThreadPool;
 
   /**
-   * A default thread pool to use for asynchronous file channels when users do not provide an
-   * executor themselves.
+   * Returns a default thread pool to use for asynchronous file channels when users do not provide
+   * an executor themselves.
    */
   public synchronized ExecutorService getDefaultThreadPool() {
     if (defaultThreadPool == null) {
@@ -155,6 +177,14 @@ final class JimfsFileSystem extends FileSystem {
           .setDaemon(true)
           .setNameFormat("JimfsFileSystem-" + uri.getHost() + "-defaultThreadPool-%s")
           .build());
+
+      // ensure thread pool is closed when file system is closed
+      resourceManager.register(new Closeable() {
+        @Override
+        public void close() {
+          defaultThreadPool.shutdown();
+        }
+      });
     }
     return defaultThreadPool;
   }
@@ -169,21 +199,19 @@ final class JimfsFileSystem extends FileSystem {
     return false;
   }
 
-  private final AtomicBoolean open = new AtomicBoolean(true);
+  private boolean open = true;
 
   @Override
-  public boolean isOpen() {
-    return open.get();
+  public synchronized boolean isOpen() {
+    return open;
   }
 
   @Override
-  public void close() throws IOException {
-    if (open.compareAndSet(true, false)) {
+  public synchronized void close() throws IOException {
+    if (open) {
+      open = false;
       try {
-        if (defaultThreadPool != null) {
-          defaultThreadPool.shutdown();
-        }
-        service.resourceManager().close();
+        resourceManager.close();
       } finally {
         provider.fileSystemClosed(this);
       }

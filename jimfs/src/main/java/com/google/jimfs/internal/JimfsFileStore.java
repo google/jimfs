@@ -95,6 +95,15 @@ final class JimfsFileStore extends FileStore {
   }
 
   /**
+   * Returns the root directory with the given name or {@code null} if no such directory exists.
+   */
+  @Nullable
+  File getRoot(Name name) {
+    DirectoryEntry entry = tree.getRoot(name);
+    return entry == null ? null : entry.file();
+  }
+
+  /**
    * Looks up the file at the given path using the given link options. If the path is relative, the
    * lookup is relative to the given working directory.
    *
