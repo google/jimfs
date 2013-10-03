@@ -19,8 +19,10 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.jimfs.attribute.UserLookupService;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileStore;
@@ -29,6 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -41,8 +45,6 @@ final class JimfsFileSystem extends FileSystem {
 
   private final JimfsFileSystemProvider provider;
   private final URI uri;
-
-  private final AtomicBoolean open = new AtomicBoolean(true);
 
   private final JimfsFileStore fileStore;
   private final PathService pathService;
@@ -141,6 +143,22 @@ final class JimfsFileSystem extends FileSystem {
     return service.newWatchService();
   }
 
+  private ExecutorService defaultThreadPool;
+
+  /**
+   * A default thread pool to use for asynchronous file channels when users do not provide an
+   * executor themselves.
+   */
+  public synchronized ExecutorService getDefaultThreadPool() {
+    if (defaultThreadPool == null) {
+      defaultThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
+          .setDaemon(true)
+          .setNameFormat("JimfsFileSystem-" + uri.getHost() + "-defaultThreadPool-%s")
+          .build());
+    }
+    return defaultThreadPool;
+  }
+
   /**
    * Returns {@code false}; currently, cannot create a read-only file system.
    *
@@ -151,6 +169,8 @@ final class JimfsFileSystem extends FileSystem {
     return false;
   }
 
+  private final AtomicBoolean open = new AtomicBoolean(true);
+
   @Override
   public boolean isOpen() {
     return open.get();
@@ -160,6 +180,9 @@ final class JimfsFileSystem extends FileSystem {
   public void close() throws IOException {
     if (open.compareAndSet(true, false)) {
       try {
+        if (defaultThreadPool != null) {
+          defaultThreadPool.shutdown();
+        }
         service.resourceManager().close();
       } finally {
         provider.fileSystemClosed(this);

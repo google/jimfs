@@ -203,7 +203,12 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public AsynchronousFileChannel newAsynchronousFileChannel(Path path,
       Set<? extends OpenOption> options, ExecutorService executor, FileAttribute<?>... attrs)
       throws IOException {
-    return newFileChannel(path, options, attrs).asAsynchronousFileChannel(executor);
+    JimfsFileChannel channel = newFileChannel(path, options, attrs);
+    if (executor == null) {
+      JimfsFileSystem fileSystem = (JimfsFileSystem) path.getFileSystem();
+      executor = fileSystem.getDefaultThreadPool();
+    }
+    return channel.asAsynchronousFileChannel(executor);
   }
 
   @Override
