@@ -194,11 +194,10 @@ final class DirectoryTable implements FileContent {
   }
 
   /**
-   * Returns the entry for the file linked by the given name in this directory or {@code null} if
-   * no such file exists.
+   * Returns the entry for the given name in this directory or {@code null} if no such entry exists.
    */
   @Nullable
-  public DirectoryEntry getEntry(Name name) {
+  public DirectoryEntry get(Name name) {
     return entries.get(name);
   }
 

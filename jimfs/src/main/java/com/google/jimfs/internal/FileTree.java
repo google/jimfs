@@ -13,7 +13,8 @@ import java.util.Iterator;
 import javax.annotation.Nullable;
 
 /**
- * The tree of directories and files for the file system.
+ * The tree of directories and files for the file system. Contains the file system root directories
+ * and provides the ability to lookup files by path.
  *
  * @author Colin Decker
  */
@@ -21,7 +22,14 @@ final class FileTree {
 
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
 
+  /**
+   * Special directory linking root names to root directories.
+   */
   private final File superRoot;
+
+  /**
+   * Names of the root directories.
+   */
   private final ImmutableSortedSet<Name> rootDirectoryNames;
 
   /**
@@ -48,7 +56,7 @@ final class FileTree {
   @Nullable
   public DirectoryEntry getRoot(Name name) {
     DirectoryTable superRootTable = superRoot.content();
-    return superRootTable.getEntry(name);
+    return superRootTable.get(name);
   }
 
   /**
@@ -73,6 +81,7 @@ final class FileTree {
 
     DirectoryEntry result = lookup(base, names, options, 0);
     if (result == null) {
+      // an intermediate file in the path did not exist or was not a directory
       throw new NoSuchFileException(path.toString());
     }
     return result;
@@ -106,7 +115,7 @@ final class FileTree {
         return null;
       }
 
-      DirectoryEntry entry = table.getEntry(name);
+      DirectoryEntry entry = table.get(name);
       if (entry == null) {
         return null;
       }
@@ -141,7 +150,7 @@ final class FileTree {
       return null;
     }
 
-    DirectoryEntry entry = table.getEntry(name);
+    DirectoryEntry entry = table.get(name);
     if (entry == null) {
       return new DirectoryEntry(dir, name, null);
     }
@@ -154,6 +163,11 @@ final class FileTree {
     return getRealEntry(entry);
   }
 
+  /**
+   * Returns the directory entry located by the target path of the given symbolic link, resolved
+   * relative to the given directory.
+   */
+  @Nullable
   private DirectoryEntry followSymbolicLink(File dir, File link, int linkDepth) throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");

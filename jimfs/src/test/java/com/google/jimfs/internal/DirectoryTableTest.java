@@ -84,19 +84,19 @@ public class DirectoryTableTest {
 
   @Test
   public void testGet() {
-    ASSERT.that(root.getEntry(Name.simple("foo"))).is(entry(rootFile, "foo", dirFile));
-    ASSERT.that(table.getEntry(Name.simple("foo"))).isNull();
-    ASSERT.that(root.getEntry(Name.simple("Foo"))).isNull();
+    ASSERT.that(root.get(Name.simple("foo"))).is(entry(rootFile, "foo", dirFile));
+    ASSERT.that(table.get(Name.simple("foo"))).isNull();
+    ASSERT.that(root.get(Name.simple("Foo"))).isNull();
   }
 
   @Test
   public void testLink() {
-    ASSERT.that(table.getEntry(Name.simple("bar"))).isNull();
+    ASSERT.that(table.get(Name.simple("bar"))).isNull();
 
     File bar = new File(2L, new DirectoryTable());
     table.link(Name.simple("bar"), bar);
 
-    ASSERT.that(table.getEntry(Name.simple("bar"))).is(entry(dirFile, "bar", bar));
+    ASSERT.that(table.get(Name.simple("bar"))).is(entry(dirFile, "bar", bar));
   }
 
   @Test
@@ -148,19 +148,19 @@ public class DirectoryTableTest {
     table.link(barName, bar);
 
     DirectoryEntry expected = new DirectoryEntry(dirFile, barName, bar);
-    ASSERT.that(table.getEntry(caseInsensitive("bar"))).is(expected);
-    ASSERT.that(table.getEntry(caseInsensitive("BAR"))).is(expected);
-    ASSERT.that(table.getEntry(caseInsensitive("Bar"))).is(expected);
-    ASSERT.that(table.getEntry(caseInsensitive("baR"))).is(expected);
+    ASSERT.that(table.get(caseInsensitive("bar"))).is(expected);
+    ASSERT.that(table.get(caseInsensitive("BAR"))).is(expected);
+    ASSERT.that(table.get(caseInsensitive("Bar"))).is(expected);
+    ASSERT.that(table.get(caseInsensitive("baR"))).is(expected);
   }
 
   @Test
   public void testUnlink() {
-    ASSERT.that(root.getEntry(Name.simple("foo"))).isNotNull();
+    ASSERT.that(root.get(Name.simple("foo"))).isNotNull();
 
     root.unlink(Name.simple("foo"));
 
-    ASSERT.that(root.getEntry(Name.simple("foo"))).isNull();
+    ASSERT.that(root.get(Name.simple("foo"))).isNull();
   }
 
   @Test
@@ -191,11 +191,11 @@ public class DirectoryTableTest {
   public void testUnlink_normalizingCaseInsensitive() {
     table.link(caseInsensitive("bar"), new File(2L, new DirectoryTable()));
 
-    ASSERT.that(table.getEntry(caseInsensitive("bar"))).isNotNull();
+    ASSERT.that(table.get(caseInsensitive("bar"))).isNotNull();
 
     table.unlink(caseInsensitive("BAR"));
 
-    ASSERT.that(table.getEntry(caseInsensitive("bar"))).isNull();
+    ASSERT.that(table.get(caseInsensitive("bar"))).isNull();
   }
 
   @Test
@@ -204,8 +204,8 @@ public class DirectoryTableTest {
     File newDir = new File(10, newTable);
 
     ASSERT.that(newTable.entry()).isNull();
-    ASSERT.that(newTable.getEntry(Name.SELF)).isNull();
-    ASSERT.that(newTable.getEntry(Name.PARENT)).isNull();
+    ASSERT.that(newTable.get(Name.SELF)).isNull();
+    ASSERT.that(newTable.get(Name.PARENT)).isNull();
     ASSERT.that(newDir.links()).is(0);
 
     table.link(Name.simple("foo"), newDir);
@@ -214,8 +214,8 @@ public class DirectoryTableTest {
     ASSERT.that(newTable.parent()).is(dirFile);
     ASSERT.that(newTable.name()).is(Name.simple("foo"));
     ASSERT.that(newTable.self()).is(newDir);
-    ASSERT.that(newTable.getEntry(Name.SELF)).is(entry(newDir, ".", newDir));
-    ASSERT.that(newTable.getEntry(Name.PARENT)).is(entry(newDir, "..", dirFile));
+    ASSERT.that(newTable.get(Name.SELF)).is(entry(newDir, ".", newDir));
+    ASSERT.that(newTable.get(Name.PARENT)).is(entry(newDir, "..", dirFile));
     ASSERT.that(newDir.links()).is(2);
   }
 
@@ -232,8 +232,8 @@ public class DirectoryTableTest {
     table.unlink(Name.simple("foo"));
 
     ASSERT.that(newTable.entry()).isNull();
-    ASSERT.that(newTable.getEntry(Name.SELF)).isNull();
-    ASSERT.that(newTable.getEntry(Name.PARENT)).isNull();
+    ASSERT.that(newTable.get(Name.SELF)).isNull();
+    ASSERT.that(newTable.get(Name.PARENT)).isNull();
     ASSERT.that(newDir.links()).is(0);
   }
 
@@ -267,10 +267,10 @@ public class DirectoryTableTest {
 
   @SuppressWarnings("ConstantConditions")
   private static void assertParentAndSelf(DirectoryTable table, File parent, File self) {
-    ASSERT.that(table.getEntry(PARENT)).is(entry(self, "..", parent));
+    ASSERT.that(table.get(PARENT)).is(entry(self, "..", parent));
     ASSERT.that(table.parent()).is(parent);
 
-    ASSERT.that(table.getEntry(SELF)).is(entry(self, ".", self));
+    ASSERT.that(table.get(SELF)).is(entry(self, ".", self));
     ASSERT.that(table.self()).is(self);
   }
 

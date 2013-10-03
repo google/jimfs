@@ -56,15 +56,6 @@ final class JimfsFileStore extends FileStore {
   private final Lock readLock;
   private final Lock writeLock;
 
-  /**
-   * Creates a new file store with the given storage and attribute view configuration.
-   */
-  public JimfsFileStore(
-      FileTree tree, FileFactory factory, Storage storage, AttributeViews attributeViews) {
-    this(tree, factory, RegularFileStorage.from(storage),
-        new AttributeService(new AttributeProviderRegistry(attributeViews)));
-  }
-
   public JimfsFileStore(
       FileTree tree, FileFactory factory, RegularFileStorage storage, AttributeService attributes) {
     this.tree = checkNotNull(tree);
