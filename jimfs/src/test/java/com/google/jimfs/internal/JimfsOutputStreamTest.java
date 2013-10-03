@@ -167,16 +167,15 @@ public class JimfsOutputStreamTest {
   }
 
   private static void addBytesToStore(JimfsOutputStream out, int... bytes) {
-    ByteStore store = out.file.content();
+    ByteStore store = out.file.asByteStore();
     for (int b : bytes) {
       store.append((byte) b);
     }
   }
 
   private static void assertStoreContains(JimfsOutputStream out, int... bytes) {
-    ByteStore store = out.file.content();
     byte[] actualBytes = new byte[bytes.length];
-    store.read(0, actualBytes);
+    out.file.asByteStore().read(0, actualBytes);
     assertArrayEquals(bytes(bytes), actualBytes);
   }
 }

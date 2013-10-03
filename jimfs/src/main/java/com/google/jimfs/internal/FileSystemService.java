@@ -145,7 +145,7 @@ final class FileSystemService {
   /**
    * Attempt to lookup the file at the given path.
    */
-  public DirectoryEntry lookup(JimfsPath path, LinkOptions options) throws IOException {
+  private DirectoryEntry lookupWithLock(JimfsPath path, LinkOptions options) throws IOException {
     store.readLock().lock();
     try {
       return lookupInternal(path, options);
@@ -171,7 +171,7 @@ final class FileSystemService {
     return new IoSupplier<File>() {
       @Override
       public File get() throws IOException {
-        return lookup(path, options)
+        return lookupWithLock(path, options)
             .requireExists(path)
             .file();
       }
@@ -201,7 +201,7 @@ final class FileSystemService {
   public JimfsSecureDirectoryStream newSecureDirectoryStream(JimfsPath dir,
       DirectoryStream.Filter<? super Path> filter, LinkOptions options,
       JimfsPath basePathForStream) throws IOException {
-    File file = lookup(dir, options)
+    File file = lookupWithLock(dir, options)
         .requireDirectory(dir)
         .file();
 
@@ -216,8 +216,7 @@ final class FileSystemService {
     ImmutableSortedSet<Name> names;
     store.readLock().lock();
     try {
-      DirectoryTable table = workingDirectory.content();
-      names = table.snapshot();
+      names = workingDirectory.asDirectoryTable().snapshot();
       workingDirectory.updateAccessTime();
     } finally {
       store.readLock().unlock();
@@ -243,8 +242,7 @@ final class FileSystemService {
           .requireDirectory(path)
           .file();
 
-      DirectoryTable table = dir.content();
-      for (DirectoryEntry entry : table.entries()) {
+      for (DirectoryEntry entry : dir.asDirectoryTable().entries()) {
         long modifiedTime = entry.file().getLastModifiedTime();
         modifiedTimes.put(entry.name(), modifiedTime);
       }
@@ -294,7 +292,7 @@ final class FileSystemService {
       if (!entry.file().isRootDirectory()) {
         File file = entry.directory();
         while (true) {
-          DirectoryTable fileTable = file.content();
+          DirectoryTable fileTable = file.asDirectoryTable();
           names.add(fileTable.name());
           File parent = fileTable.parent();
           if (file.isRootDirectory()) {
@@ -360,11 +358,10 @@ final class FileSystemService {
       }
 
       File parent = entry.directory();
-      DirectoryTable parentTable = parent.content();
 
       File newFile = fileSupplier.get();
       store.setInitialAttributes(newFile, attrs);
-      parentTable.link(name, newFile);
+      parent.asDirectoryTable().link(name, newFile);
       parent.updateModifiedTime();
       return newFile;
     } finally {
@@ -425,7 +422,7 @@ final class FileSystemService {
 
   private static File truncateIfNeeded(File regularFile, OpenOptions options) {
     if (options.isTruncateExisting() && options.isWrite()) {
-      ByteStore byteStore = regularFile.content();
+      ByteStore byteStore = regularFile.asByteStore();
       byteStore.writeLock().lock();
       try {
         byteStore.truncate(0);
@@ -445,7 +442,7 @@ final class FileSystemService {
         .requireSymbolicLink(path)
         .file();
 
-    return symbolicLink.content();
+    return symbolicLink.getTarget();
   }
 
   /**
@@ -491,8 +488,7 @@ final class FileSystemService {
           .requireDoesNotExist(link)
           .directory();
 
-      DirectoryTable linkParentTable = linkParent.content();
-      linkParentTable.link(linkName, existingFile);
+      linkParent.asDirectoryTable().link(linkName, existingFile);
       linkParent.updateModifiedTime();
     } finally {
       store.writeLock().unlock();
@@ -526,11 +522,10 @@ final class FileSystemService {
   private void delete(DirectoryEntry entry,
       DeleteMode deleteMode, JimfsPath pathForException) throws IOException {
     File parent = entry.directory();
-    DirectoryTable parentTable = parent.content();
     File file = entry.file();
 
     checkDeletable(file, deleteMode, pathForException);
-    parentTable.unlink(entry.name());
+    parent.asDirectoryTable().unlink(entry.name());
     parent.updateModifiedTime();
 
     if (file.links() == 0) {
@@ -583,8 +578,7 @@ final class FileSystemService {
    * DirectoryNotEmptyException} if it isn't.
    */
   private void checkEmpty(File file, Path pathForException) throws FileSystemException {
-    DirectoryTable table = file.content();
-    if (!table.isEmpty()) {
+    if (!file.asDirectoryTable().isEmpty()) {
       throw new DirectoryNotEmptyException(pathForException.toString());
     }
   }
@@ -615,11 +609,9 @@ final class FileSystemService {
       DirectoryEntry destEntry = destService.lookupInternal(dest, NOFOLLOW_LINKS);
 
       File sourceParent = sourceEntry.directory();
-      DirectoryTable sourceParentTable = sourceEntry.directory().content();
       File sourceFile = sourceEntry.file();
 
       File destParent = destEntry.directory();
-      DirectoryTable destParentTable = destParent.content();
 
       if (options.isMove() && sourceFile.isDirectory()) {
         if (sameFileSystem) {
@@ -647,16 +639,16 @@ final class FileSystemService {
       // can only do an actual move within one file system instance
       // otherwise we have to copy and delete
       if (options.isMove() && sameFileSystem) {
-        sourceParentTable.unlink(sourceName);
+        sourceParent.asDirectoryTable().unlink(sourceName);
         sourceParent.updateModifiedTime();
 
-        destParentTable.link(destName, sourceFile);
+        destParent.asDirectoryTable().link(destName, sourceFile);
         destParent.updateModifiedTime();
       } else {
         // copy
         boolean copyAttributes = options.isCopyAttributes() && !options.isMove();
         File copy = destService.store.copy(sourceFile, copyAttributes);
-        destParentTable.link(destName, copy);
+        destParent.asDirectoryTable().link(destName, copy);
         destParent.updateModifiedTime();
 
         if (options.isMove()) {
@@ -678,16 +670,24 @@ final class FileSystemService {
 
   /**
    * Acquires both write locks in a way that attempts to avoid the possibility of deadlock. Note
-   * that typically (when only one file system instance is involved), both locks will actually be
-   * the same lock and there will be no issue at all.
+   * that typically (when only one file system instance is involved), both locks will be the same
+   * lock and there will be no issue at all.
    */
   private static void lockBoth(Lock sourceWriteLock, Lock destWriteLock) {
     while (true) {
       sourceWriteLock.lock();
       if (destWriteLock.tryLock()) {
         return;
+      } else {
+        sourceWriteLock.unlock();
       }
-      sourceWriteLock.unlock();
+
+      destWriteLock.lock();
+      if (sourceWriteLock.tryLock()) {
+        return;
+      } else {
+        destWriteLock.unlock();
+      }
     }
   }
 
@@ -711,8 +711,7 @@ final class FileSystemService {
       if (current.isRootDirectory()) {
         return;
       } else {
-        DirectoryTable table = current.content();
-        current = table.parent();
+        current = current.asDirectoryTable().parent();
       }
     }
   }
@@ -730,7 +729,7 @@ final class FileSystemService {
    */
   public <A extends BasicFileAttributes> A readAttributes(
       JimfsPath path, Class<A> type, LinkOptions options) throws IOException {
-    File file = lookup(path, options)
+    File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();
     return store.readAttributes(file, type);
@@ -741,7 +740,7 @@ final class FileSystemService {
    */
   public Map<String, Object> readAttributes(
       JimfsPath path, String attributes, LinkOptions options) throws IOException {
-    File file = lookup(path, options)
+    File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();
     return store.readAttributes(file, attributes);
@@ -753,7 +752,7 @@ final class FileSystemService {
    */
   public void setAttribute(JimfsPath path, String attribute, Object value,
       LinkOptions options) throws IOException {
-    File file = lookup(path, options)
+    File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();
     store.setAttribute(file, attribute, value);

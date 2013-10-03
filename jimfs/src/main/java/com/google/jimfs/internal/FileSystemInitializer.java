@@ -60,11 +60,10 @@ final class FileSystemInitializer {
   private static FileTree createFileTree(
       Jimfs.Configuration config, PathService pathService, FileFactory fileFactory) {
     File superRoot = fileFactory.createDirectory();
-    DirectoryTable superRootTable = superRoot.content();
-    superRootTable.setSuperRoot(superRoot);
+    superRoot.asDirectoryTable().setSuperRoot(superRoot);
 
     for (String root : config.getRoots()) {
-      createRootDir(root, pathService, fileFactory, superRootTable);
+      createRootDir(root, pathService, fileFactory, superRoot.asDirectoryTable());
     }
 
     return new FileTree(superRoot);
@@ -80,9 +79,8 @@ final class FileSystemInitializer {
     Name rootName = path.root();
 
     File rootDir = fileFactory.createDirectory();
-    DirectoryTable rootDirTable = rootDir.content();
     superRootTable.link(rootName, rootDir);
-    rootDirTable.setRoot();
+    rootDir.asDirectoryTable().setRoot();
   }
 
   private static File createWorkingDirectory(JimfsPath workingDirPath,
@@ -92,13 +90,11 @@ final class FileSystemInitializer {
       throw new IllegalArgumentException("Invalid working dir path: " + workingDirPath);
     }
     File dir = rootEntry.file();
-    DirectoryTable table = dir.content();
     for (Name name : workingDirPath.names()) {
       File newDir = fileFactory.createDirectory();
-      table.link(name, newDir);
+      dir.asDirectoryTable().link(name, newDir);
 
       dir = newDir;
-      table = newDir.content();
     }
     return dir;
   }

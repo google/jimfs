@@ -156,8 +156,7 @@ final class DirectoryTable implements FileContent {
   public void link(Name name, File file) {
     DirectoryEntry entry = linkInternal(checkValidName(name, "link"), file);
     if (file.isDirectory()) {
-      DirectoryTable table = file.content();
-      table.linked(entry);
+      file.asDirectoryTable().linked(entry);
     }
   }
 
@@ -179,8 +178,7 @@ final class DirectoryTable implements FileContent {
     DirectoryEntry entry = unlinkInternal(checkValidName(name, "unlink"));
     File file = entry.file();
     if (file.isDirectory()) {
-      DirectoryTable table = file.content();
-      table.unlinked();
+      file.asDirectoryTable().unlinked();
     }
   }
 

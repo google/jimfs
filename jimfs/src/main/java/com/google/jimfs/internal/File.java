@@ -58,7 +58,8 @@ final class File implements AttributeStore {
     return id;
   }
 
-  @Override  public boolean isDirectory() {
+  @Override
+  public boolean isDirectory() {
     return content instanceof DirectoryTable;
   }
 
@@ -74,7 +75,7 @@ final class File implements AttributeStore {
 
   @Override
   public long size() {
-    return content().sizeInBytes();
+    return content.sizeInBytes();
   }
 
   /**
@@ -82,15 +83,35 @@ final class File implements AttributeStore {
    */
   public boolean isRootDirectory() {
     // only root directories have their parent link pointing to themselves
-    return isDirectory() && equals(((DirectoryTable) content()).parent());
+    return isDirectory() && equals(asDirectoryTable().parent());
   }
 
   /**
-   * Returns the file content, with a cast to allow the type to be inferred at the call site.
+   * Returns the content of this file.
    */
-  @SuppressWarnings("unchecked")
-  public <C extends FileContent> C content() {
-    return (C) content;
+  public FileContent content() {
+    return content;
+  }
+
+  /**
+   * Returns a view of this file as a byte store
+   */
+  public ByteStore asByteStore() {
+    return (ByteStore) content;
+  }
+
+  /**
+   * Returns a view of this file as a directory table.
+   */
+  public DirectoryTable asDirectoryTable() {
+    return (DirectoryTable) content;
+  }
+
+  /**
+   * Gets the target of this symbolic link.
+   */
+  public JimfsPath getTarget() {
+    return (JimfsPath) content;
   }
 
   @Override

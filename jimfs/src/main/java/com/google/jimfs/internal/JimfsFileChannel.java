@@ -76,7 +76,7 @@ final class JimfsFileChannel extends FileChannel {
 
   public JimfsFileChannel(File file, OpenOptions options) {
     this.file = file;
-    this.store = file.content();
+    this.store = file.asByteStore();
     this.options = checkNotNull(options);
   }
 

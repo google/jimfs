@@ -53,9 +53,7 @@ final class FileTree {
    */
   FileTree(File superRoot) {
     this.superRoot = checkNotNull(superRoot);
-
-    DirectoryTable superRootTable = superRoot.content();
-    this.rootDirectoryNames = superRootTable.snapshot();
+    this.rootDirectoryNames = superRoot.asDirectoryTable().snapshot();
   }
 
   /**
@@ -71,8 +69,7 @@ final class FileTree {
    */
   @Nullable
   public DirectoryEntry getRoot(Name name) {
-    DirectoryTable superRootTable = superRoot.content();
-    return superRootTable.get(name);
+    return superRoot.asDirectoryTable().get(name);
   }
 
   /**
@@ -126,7 +123,7 @@ final class FileTree {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
-      DirectoryTable table = getDirectoryTable(dir);
+      DirectoryTable table = toDirectoryTable(dir);
       if (table == null) {
         return null;
       }
@@ -161,7 +158,7 @@ final class FileTree {
   @Nullable
   private DirectoryEntry lookupLast(@Nullable File dir,
       Name name, LinkOptions options, int linkDepth) throws IOException {
-    DirectoryTable table = getDirectoryTable(dir);
+    DirectoryTable table = toDirectoryTable(dir);
     if (table == null) {
       return null;
     }
@@ -189,8 +186,7 @@ final class FileTree {
       throw new IOException("too many levels of symbolic links");
     }
 
-    JimfsPath targetPath = link.content();
-    return lookup(dir, targetPath, FOLLOW_LINKS, linkDepth + 1);
+    return lookup(dir, link.getTarget(), FOLLOW_LINKS, linkDepth + 1);
   }
 
   /**
@@ -203,17 +199,16 @@ final class FileTree {
     Name name = entry.name();
 
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
-      DirectoryTable table = entry.file().content();
-      return table.entry();
+      return entry.file().asDirectoryTable().entry();
     } else {
       return entry;
     }
   }
 
   @Nullable
-  private DirectoryTable getDirectoryTable(@Nullable File file) {
+  private DirectoryTable toDirectoryTable(@Nullable File file) {
     if (file != null && file.isDirectory()) {
-      return file.content();
+      return file.asDirectoryTable();
     }
 
     return null;

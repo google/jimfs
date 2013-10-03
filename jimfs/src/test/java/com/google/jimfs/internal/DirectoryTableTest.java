@@ -39,7 +39,6 @@ import javax.annotation.Nullable;
  */
 public class DirectoryTableTest {
 
-  private File superRoot;
   private File rootFile;
   private File dirFile;
 
@@ -49,7 +48,7 @@ public class DirectoryTableTest {
   @Before
   public void setUp() {
     DirectoryTable superRootTable = new DirectoryTable();
-    superRoot = new File(-1, superRootTable);
+    File superRoot = new File(-1, superRootTable);
     superRootTable.setSuperRoot(superRoot);
 
     root = new DirectoryTable();
@@ -125,16 +124,15 @@ public class DirectoryTableTest {
     // ensure that even if the parent/self entries do not already exist in the table,
     // they aren't allowed when calling link()
     File file = new File(2L, new DirectoryTable());
-    DirectoryTable emptyTable = file.content();
 
     try {
-      emptyTable.link(Name.simple("."), new File(2L, new DirectoryTable()));
+      file.asDirectoryTable().link(Name.simple("."), new File(2L, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      emptyTable.link(Name.simple(".."), new File(2L, new DirectoryTable()));
+      file.asDirectoryTable().link(Name.simple(".."), new File(2L, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
