@@ -19,7 +19,8 @@ package com.google.jimfs.internal;
 import com.google.jimfs.Storage;
 
 /**
- * Factory for creating new byte stores for regular files.
+ * Factory for creating new byte stores for regular files. May also actually store the bytes for
+ * those stores. One piece of the file store implementation.
  *
  * @author Colin Decker
  */

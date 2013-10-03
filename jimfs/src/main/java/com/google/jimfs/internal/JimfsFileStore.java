@@ -22,8 +22,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.jimfs.AttributeViews;
-import com.google.jimfs.Storage;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.common.IoSupplier;
 
@@ -43,6 +41,11 @@ import javax.annotation.Nullable;
 /**
  * {@link FileStore} implementation which provides methods for file creation, lookup and attribute
  * handling.
+ *
+ * <p>Most of these methods are actually implemented in another class: {@link FileTree} for lookup,
+ * {@link FileFactory} for creating and copying files and {@link AttributeService} for attribute
+ * handling. This class merely provides a single API through which to access the functionality of
+ * those classes.
  *
  * @author Colin Decker
  */

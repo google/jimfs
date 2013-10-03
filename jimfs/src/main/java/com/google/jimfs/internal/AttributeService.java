@@ -1,12 +1,33 @@
+/*
+ * Copyright 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.jimfs.internal;
 
 import com.google.common.base.Splitter;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ListMultimap;
 import com.google.jimfs.AttributeViews;
 import com.google.jimfs.attribute.AttributeProvider;
+import com.google.jimfs.attribute.AttributeReader;
 import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.attribute.AttributeViewProvider;
 import com.google.jimfs.common.IoSupplier;
 
 import java.nio.file.FileStore;
@@ -24,41 +45,75 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
+ * Service providing all attribute related operations for a file store. One piece of the file store
+ * implementation.
+ *
  * @author Colin Decker
  */
 final class AttributeService {
 
   private static final String ALL_ATTRIBUTES = "*";
 
-  private final AttributeProviderRegistry attributeProviders;
+  private final ImmutableSet<AttributeProvider> providers;
+  private final ImmutableListMultimap<String, AttributeProvider> allProviders;
+  private final ImmutableMap<Class<?>, AttributeViewProvider<?>> viewProviders;
+  private final ImmutableMap<Class<?>, AttributeReader<?>> readers;
 
   public AttributeService(AttributeViews views) {
-    this(new AttributeProviderRegistry(views));
+    this(views.getProviders(new HashMap<String, AttributeProvider>()));
   }
 
-  public AttributeService(AttributeProviderRegistry attributeProviders) {
-    this.attributeProviders = attributeProviders;
+  public AttributeService(Iterable<? extends AttributeProvider> providers) {
+    this.providers = ImmutableSet.copyOf(providers);
+
+    ListMultimap<String, AttributeProvider> allProvidersBuilder = ArrayListMultimap.create();
+    Map<Class<?>, AttributeViewProvider<?>> viewProvidersBuilder = new HashMap<>();
+    Map<Class<?>, AttributeReader<?>> readersBuilder = new HashMap<>();
+
+    for (AttributeProvider provider : this.providers) {
+      allProvidersBuilder.put(provider.name(), provider);
+
+      if (provider instanceof AttributeViewProvider<?>) {
+        AttributeViewProvider<?> viewProvider = (AttributeViewProvider<?>) provider;
+        viewProvidersBuilder.put(viewProvider.viewType(), viewProvider);
+      }
+
+      if (provider instanceof AttributeReader<?>) {
+        AttributeReader<?> reader = (AttributeReader<?>) provider;
+        readersBuilder.put(reader.attributesType(), reader);
+      }
+    }
+
+    for (AttributeProvider provider : this.providers) {
+      for (String inherits : provider.inherits()) {
+        allProvidersBuilder.put(provider.name(), allProvidersBuilder.get(inherits).get(0));
+      }
+    }
+
+    this.allProviders = ImmutableListMultimap.copyOf(allProvidersBuilder);
+    this.viewProviders = ImmutableMap.copyOf(viewProvidersBuilder);
+    this.readers = ImmutableMap.copyOf(readersBuilder);
   }
 
   /**
    * Implements {@link FileSystem#supportedFileAttributeViews()}.
    */
   public ImmutableSet<String> supportedFileAttributeViews() {
-    return attributeProviders.getSupportedViews();
+    return allProviders.keySet();
   }
 
   /**
    * Implements {@link FileStore#supportsFileAttributeView(Class)}.
    */
   public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
-    return attributeProviders.getSupportedViewTypes().contains(type);
+    return viewProviders.keySet().contains(type);
   }
 
   /**
    * Sets all initial attributes for the given file, including the given attributes if possible.
    */
   public void setInitialAttributes(File file, FileAttribute<?>... attrs) {
-    for (AttributeProvider provider : attributeProviders.getProviders()) {
+    for (AttributeProvider provider : providers) {
       provider.setInitial(file);
     }
 
@@ -102,7 +157,7 @@ final class AttributeService {
    */
   @SuppressWarnings("unchecked")
   public <V> V getAttribute(File file, String view, String attribute) {
-    for (AttributeProvider provider : attributeProviders.getProviders(view)) {
+    for (AttributeProvider provider : allProviders.get(view)) {
       if (provider.isGettable(file, attribute)) {
         return (V) provider.get(file, attribute);
       }
@@ -133,7 +188,7 @@ final class AttributeService {
 
   private void setAttributeInternal(
       File file, String view, String attribute, Object value, boolean create) {
-    for (AttributeProvider provider : attributeProviders.getProviders(view)) {
+    for (AttributeProvider provider : allProviders.get(view)) {
       if (provider.isSettable(file, attribute)) {
         if (create && !provider.isSettableOnCreate(attribute)) {
           throw new UnsupportedOperationException(
@@ -170,11 +225,12 @@ final class AttributeService {
    * Returns an attribute view of the given type for the given file provider, or {@code null} if the
    * view type is not supported.
    */
+  @SuppressWarnings("unchecked")
   @Nullable
   public <V extends FileAttributeView> V getFileAttributeView(
       IoSupplier<? extends AttributeStore> supplier, Class<V> type) {
     if (supportsFileAttributeView(type)) {
-      return attributeProviders.getViewProvider(type).getView(supplier);
+      return ((AttributeViewProvider<V>) viewProviders.get(type)).getView(supplier);
     }
 
     return null;
@@ -195,14 +251,14 @@ final class AttributeService {
     Map<String, Object> result = new HashMap<>();
     if (attrs.size() == 1 && attrs.contains(ALL_ATTRIBUTES)) {
       // for 'view:*' format, get all keys for all providers for the view
-      for (AttributeProvider provider : attributeProviders.getProviders(view)) {
+      for (AttributeProvider provider : allProviders.get(view)) {
         provider.readAll(file, result);
       }
     } else {
       // for 'view:attr1,attr2,etc'
       for (String attr : attrs) {
         boolean found = false;
-        for (AttributeProvider provider : attributeProviders.getProviders(view)) {
+        for (AttributeProvider provider : allProviders.get(view)) {
           if (provider.isGettable(file, attr)) {
             result.put(attr, provider.get(file, attr));
             found = true;
@@ -224,9 +280,10 @@ final class AttributeService {
    *
    * @throws UnsupportedOperationException if the given attributes type is not supported
    */
+  @SuppressWarnings("unchecked")
   public <A extends BasicFileAttributes> A readAttributes(File file, Class<A> type) {
-    if (attributeProviders.getSupportedAttributesTypes().contains(type)) {
-      return attributeProviders.getReader(type).read(file);
+    if (readers.keySet().contains(type)) {
+      return ((AttributeReader<A>) readers.get(type)).read(file);
     }
 
     throw new UnsupportedOperationException("unsupported attributes type: " + type);
