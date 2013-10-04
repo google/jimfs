@@ -34,8 +34,11 @@ final class Util {
    * Returns the next power of 2 >= n.
    */
   public static int nextPowerOf2(int n) {
-    int highestOneBit = Integer.highestOneBit(n);
-    return highestOneBit == n ? n : highestOneBit << 1;
+    if (n == 0) {
+      return 1;
+    }
+    int b = Integer.highestOneBit(n);
+    return b == n ? n : b << 1;
   }
 
   /**

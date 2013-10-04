@@ -213,9 +213,10 @@ public final class Jimfs {
     }
 
     /**
-     * Sets the name for the created file system, which will be used as the host part of the URI that
-     * identifies the file system. For example, if the name is "foo" the file system's URI will be
-     * "jimfs://foo" and the URI of the path "/bar" on the file system will be "jimfs://foo/bar".
+     * Sets the name for the created file system, which will be used as the host part of the URI
+     * that identifies the file system. For example, if the name is "foo" the file system's URI
+     * will be "jimfs://foo" and the URI of the path "/bar" on the file system will be
+     * "jimfs://foo/bar".
      *
      * <p>By default, a random unique name will be assigned to the file system.
      */

@@ -16,6 +16,10 @@
 
 package com.google.jimfs.internal;
 
+import com.google.common.math.IntMath;
+
+import java.math.RoundingMode;
+
 /**
  * @author Colin Decker
  */
@@ -27,7 +31,7 @@ public final class BenchmarkUtils {
    * Pre-allocates enough bytes in the given disk to hold up to maxSize bytes.
    */
   public static Disk preAllocate(Disk disk, int maxSize) {
-    disk.allocateMoreBlocks((int) Math.ceil((double) maxSize / disk.blockSize()));
+    disk.allocateMoreBlocks(IntMath.divide(maxSize, disk.blockSize(), RoundingMode.UP));
     return disk;
   }
 }
