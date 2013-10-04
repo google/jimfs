@@ -19,6 +19,8 @@ package com.google.jimfs.path;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.jimfs.path.CaseSensitivity.CASE_SENSITIVE;
 
+import java.nio.file.InvalidPathException;
+
 import javax.annotation.Nullable;
 
 /**
@@ -48,8 +50,18 @@ final class UnixPathType extends PathType {
       return emptyPath();
     }
 
+    checkValid(path);
+
     String root = path.startsWith("/") ? "/" : null;
     return new ParseResult(root, splitter().split(path));
+  }
+
+  private static void checkValid(String path) {
+    for (int i = 0; i < path.length(); i++) {
+      if (path.charAt(i) == '\0') {
+        throw new InvalidPathException(path, "nul character not allowed", i);
+      }
+    }
   }
 
   @Override

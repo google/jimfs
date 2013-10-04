@@ -20,6 +20,8 @@ import static com.google.jimfs.path.CaseSensitivity.CASE_SENSITIVE;
 import static com.google.jimfs.path.PathTypeTest.assertParseResult;
 import static com.google.jimfs.path.PathTypeTest.assertUriRoundTripsCorrectly;
 import static com.google.jimfs.path.PathTypeTest.fileSystemUri;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
@@ -27,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import java.net.URI;
+import java.nio.file.InvalidPathException;
 
 /**
  * Tests for {@link UnixPathType}.
@@ -80,5 +83,22 @@ public class UnixPathTypeTest {
     assertUriRoundTripsCorrectly(PathType.unix(), "/foo bar");
     assertUriRoundTripsCorrectly(PathType.unix(), "/foo bar/");
     assertUriRoundTripsCorrectly(PathType.unix(), "/foo bar/baz/one");
+  }
+
+  @Test
+  public void testUnix_illegalCharacters() {
+    try {
+      PathType.unix().parsePath("/foo/bar\0");
+      fail();
+    } catch (InvalidPathException expected) {
+      assertEquals(8, expected.getIndex());
+    }
+
+    try {
+      PathType.unix().parsePath("/\u00001/foo");
+      fail();
+    } catch (InvalidPathException expected) {
+      assertEquals(1, expected.getIndex());
+    }
   }
 }
