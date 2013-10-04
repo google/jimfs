@@ -82,27 +82,52 @@ final class GlobToRegex {
     return builder.toString();
   }
 
+  /**
+   * Enters the given state. The current state becomes the previous state.
+   */
   private void enterState(State state) {
     states.push(state);
   }
 
+  /**
+   * Returns to the previous state.
+   */
   private void enterPreviousState() {
     states.pop();
   }
 
+  /**
+   * Leaves this state and returns to the previous state, then enters the given state.
+   */
   private void changeState(State state) {
     enterPreviousState();
     enterState(state);
   }
 
+  /**
+   * Returns the current state.
+   */
   private State currentState() {
     return states.peek();
   }
 
+  /**
+   * Throws a {@link PatternSyntaxException}.
+   */
   private PatternSyntaxException syntaxError(String desc) {
     throw new PatternSyntaxException(desc, glob, index);
   }
 
+  /**
+   * Appends the given character as-is to the regex.
+   */
+  private void appendExact(char c) {
+    builder.append(c);
+  }
+
+  /**
+   * Appends the regex form of the given normal character or separator from the glob.
+   */
   private void append(char c) {
     if (separatorMatcher.matches(c)) {
       appendSeparator();
@@ -111,6 +136,9 @@ final class GlobToRegex {
     }
   }
 
+  /**
+   * Appends the regex form of the given normal character from the glob.
+   */
   private void appendNormal(char c) {
     if (REGEX_RESERVED.matches(c)) {
       builder.append('\\');
@@ -118,6 +146,9 @@ final class GlobToRegex {
     builder.append(c);
   }
 
+  /**
+   * Appends the regex form matching the separators for the path type.
+   */
   private void appendSeparator() {
     if (separators.length() == 1) {
       appendNormal(separators.charAt(0));
@@ -126,33 +157,54 @@ final class GlobToRegex {
     }
   }
 
+  /**
+   * Appends the regex form that matches anything except the separators for the path type.
+   */
   private void appendNonSeparator() {
     builder.append("[^").append(separators).append(']');
   }
 
+  /**
+   * Appends the regex form of the glob ? character.
+   */
   private void appendQuestionMark() {
     appendNonSeparator();
   }
 
+  /**
+   * Appends the regex form of the glob * character.
+   */
   private void appendStar() {
     appendNonSeparator();
     builder.append('*');
   }
 
+  /**
+   * Appends the regex form of the glob ** pattern.
+   */
   private void appendStarStar() {
     builder.append(".*");
   }
 
+  /**
+   * Appends the regex form of the start of a glob [] section.
+   */
   private void appendBracketStart() {
     builder.append('[');
     appendNonSeparator();
     builder.append("&&[");
   }
 
+  /**
+   * Appends the regex form of the end of a glob [] section.
+   */
   private void appendBracketEnd() {
     builder.append("]]");
   }
 
+  /**
+   * Appends the regex form of the given character within a glob [] section.
+   */
   private void appendInBracket(char c) {
     // escape \ in regex character class
     if (c == '\\') {
@@ -162,14 +214,23 @@ final class GlobToRegex {
     builder.append(c);
   }
 
+  /**
+   * Appends the regex form of the start of a glob {} section.
+   */
   private void appendCurlyBraceStart() {
     builder.append('(');
   }
 
+  /**
+   * Appends the regex form of the separator (,) within a glob {} section.
+   */
   private void appendSubpatternSeparator() {
     builder.append('|');
   }
 
+  /**
+   * Appends the regex form of the end of a glob {} section.
+   */
   private void appendCurlyBraceEnd() {
     builder.append(')');
   }
@@ -179,7 +240,8 @@ final class GlobToRegex {
    */
   private abstract static class State {
     /**
-     * Process the next character with the current state, returning the state to transition to.
+     * Process the next character with the current state, transitioning the converter to a new
+     * state if necessary.
      */
     abstract void process(GlobToRegex converter, char c);
 
@@ -214,9 +276,9 @@ final class GlobToRegex {
         case '\\':
           converter.enterState(ESCAPE);
           return;
+        default:
+          converter.append(c);
       }
-
-      converter.append(c);
     }
   };
 
@@ -268,9 +330,9 @@ final class GlobToRegex {
         throw converter.syntaxError("Empty []");
       }
       if (c == '!') {
-        converter.builder.append('^');
+        converter.appendExact('^');
       } else if (c == '-') {
-        converter.builder.append(c);
+        converter.appendExact(c);
       } else {
         converter.appendInBracket(c);
       }
