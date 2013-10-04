@@ -93,20 +93,6 @@ public class WriteBenchmark {
 
   @SuppressWarnings("unused")
   private enum ByteStoreType {
-    ARRAY_BYTE_STORE {
-      @Override
-      public ByteStore createByteStore() {
-        return new ArrayByteStore();
-      }
-    },
-
-    DIRECT_BYTE_STORE {
-      @Override
-      public ByteStore createByteStore() {
-        return new DirectByteStore();
-      }
-    },
-
     HEAP_DISK_EMPTY {
       @Override
       public ByteStore createByteStore() {

@@ -224,7 +224,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testFileTimeUpdates() throws IOException {
-    File file = new File(-1, new ArrayByteStore());
+    File file = new File(-1, new StubByteStore(10));
     FileChannel channel = new JimfsFileChannel(file, OpenOptions.from(READ, WRITE));
 
     // accessed

@@ -162,7 +162,7 @@ public class JimfsOutputStreamTest {
   }
 
   private static JimfsOutputStream newOutputStream(boolean append) {
-    File file = new File(1, new ArrayByteStore());
+    File file = new File(1, new StubByteStore(0));
     return new JimfsOutputStream(file, append);
   }
 

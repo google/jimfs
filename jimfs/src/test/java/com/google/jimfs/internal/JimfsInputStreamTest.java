@@ -221,7 +221,7 @@ public class JimfsInputStreamTest {
       b[i] = (byte) bytes[i];
     }
 
-    ByteStore store = new ArrayByteStore();
+    ByteStore store = new StubByteStore(0);
     store.write(0, b, 0, b.length);
     return new JimfsInputStream(new File(1, store));
   }

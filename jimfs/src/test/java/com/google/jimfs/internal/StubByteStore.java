@@ -18,6 +18,7 @@ package com.google.jimfs.internal;
 
 import com.google.common.primitives.UnsignedBytes;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -30,6 +31,7 @@ import java.nio.channels.WritableByteChannel;
  */
 public class StubByteStore extends ByteStore {
 
+  private Bytes bytes = new Bytes();
   private long size;
   private boolean throwException;
 
@@ -57,6 +59,7 @@ public class StubByteStore extends ByteStore {
 
   public void setSize(long size) {
     this.size = size;
+
   }
 
   public void setThrowException(boolean throwException) {
@@ -87,6 +90,8 @@ public class StubByteStore extends ByteStore {
   public int write(long pos, ByteBuffer buf) {
     checkThrowException();
     int written = buf.remaining();
+    bytes.position((int) pos);
+    bytes.write(buf.array(), buf.position(), buf.remaining());
     setSize(Math.max(size, pos + written));
     buf.position(buf.position() + written);
     return written;
@@ -97,9 +102,9 @@ public class StubByteStore extends ByteStore {
       throws IOException {
     checkThrowException();
     ByteBuffer buffer = ByteBuffer.allocate((int) count);
-    int read = src.read(buffer);
-    setSize(Math.max(size, position + read));
-    return read;
+    src.read(buffer);
+    buffer.flip();
+    return write(position, buffer);
   }
 
   @Override
@@ -119,48 +124,44 @@ public class StubByteStore extends ByteStore {
   @Override
   public int read(long pos, ByteBuffer buf) {
     checkThrowException();
-    int toRead = (int) Math.min(buf.remaining(), size - pos);
-    if (toRead <= 0) {
+    int len = (int) Math.min(buf.remaining(), size - pos);
+    if (len <= 0) {
       return -1;
     }
-    buf.position(buf.position() + toRead);
-    return toRead;
+    byte[] b = bytes.getBytes();
+    buf.put(b, (int) pos, len);
+    return len;
   }
 
   @Override
   public long transferTo(long position, long count, WritableByteChannel target)
       throws IOException {
-    int toTransfer = (int) (size - position);
-    if (toTransfer > 0) {
-      target.write(ByteBuffer.allocate(toTransfer));
-    }
-    return toTransfer;
-  }
-
-  @Override
-  public long read(long position, Iterable<ByteBuffer> buffers) {
-    checkThrowException();
-    long toRead = size - position;
-    if (toRead == 0) {
-      return -1;
-    }
-
-    int read = 0;
-    for (ByteBuffer buffer : buffers) {
-      while (buffer.hasRemaining() && read < toRead) {
-        buffer.put((byte) 0);
-        read++;
-      }
-      if (read >= toRead) {
-        break;
+    int len = (int) Math.min(count, size - position);
+    if (len > 0) {
+      ByteBuffer buf = ByteBuffer.allocate(len);
+      read(position, buf);
+      buf.flip();
+      while (buf.hasRemaining()) {
+        target.write(buf);
       }
     }
-    return read;
+    return Math.max(len, 0);
   }
 
   private void checkThrowException() {
     if (throwException) {
       throw new RuntimeException("error");
+    }
+  }
+
+  private static class Bytes extends ByteArrayOutputStream {
+
+    void position(int pos) {
+      count = pos;
+    }
+
+    byte[] getBytes() {
+      return buf;
     }
   }
 }

@@ -188,13 +188,10 @@ abstract class ByteStore implements FileContent {
 
   /**
    * Transfers up to {@code count} bytes to the given channel starting at position {@code pos} in
-   * this store. If {@code count} is negative, no bytes are transferred. Returns the number of bytes
-   * transferred, possibly 0. Note that unlike all other read methods in this class, this method
-   * does not return -1 if {@code pos} is greater than or equal to the current size. This for
-   * consistency with {@link FileChannel#transferTo}, which this method is primarily intended as an
-   * implementation of.
-   *
-   * @throws IllegalArgumentException if {@code pos} is negative.
+   * this store. Returns the number of bytes transferred, possibly 0. Note that unlike all other
+   * read methods in this class, this method does not return -1 if {@code pos} is greater than or
+   * equal to the current size. This for consistency with {@link FileChannel#transferTo}, which
+   * this method is primarily intended as an implementation of.
    */
   public abstract long transferTo(
       long pos, long count, WritableByteChannel dest) throws IOException;

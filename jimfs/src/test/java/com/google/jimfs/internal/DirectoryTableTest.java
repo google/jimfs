@@ -237,8 +237,8 @@ public class DirectoryTableTest {
 
   @Test
   public void testSnapshot() {
-    root.link(Name.simple("bar"), new File(2L, new ArrayByteStore()));
-    root.link(Name.simple("abc"), new File(3L, new ArrayByteStore()));
+    root.link(Name.simple("bar"), new File(2L, new StubByteStore(10)));
+    root.link(Name.simple("abc"), new File(3L, new StubByteStore(10)));
 
     // does not include . or .. and is sorted by the name
     ASSERT.that(root.snapshot())
@@ -247,8 +247,8 @@ public class DirectoryTableTest {
 
   @Test
   public void testSnapshot_sortsUsingStringAndNotCanonicalValueOfNames() {
-    table.link(caseInsensitive("FOO"), new File(2L, new ArrayByteStore()));
-    table.link(caseInsensitive("bar"), new File(3L, new ArrayByteStore()));
+    table.link(caseInsensitive("FOO"), new File(2L, new StubByteStore(10)));
+    table.link(caseInsensitive("bar"), new File(3L, new StubByteStore(10)));
 
     ImmutableSortedSet<Name> snapshot = table.snapshot();
     Iterable<String> strings = Iterables.transform(snapshot, Functions.toStringFunction());

@@ -51,11 +51,11 @@ public class FileTest {
 
   @Test
   public void testRegularFile() {
-    File file = new File(0L, new ArrayByteStore());
+    File file = new File(0L, new StubByteStore(10));
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isTrue();
     ASSERT.that(file.isSymbolicLink()).isFalse();
-    ASSERT.that(file.content()).isA(ArrayByteStore.class);
+    ASSERT.that(file.content()).isA(StubByteStore.class);
   }
 
   @Test
@@ -138,7 +138,7 @@ public class FileTest {
   public void testEquality() {
     File file1 = new File(0L, new FakeFileContent());
     File file2 = new File(0L, new DirectoryTable());
-    File file3 = new File(1L, new ArrayByteStore());
+    File file3 = new File(1L, new StubByteStore(10));
     File file4 = new File(1L, new FakeFileContent());
 
     new EqualsTester()

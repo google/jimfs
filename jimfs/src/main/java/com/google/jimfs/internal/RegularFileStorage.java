@@ -30,19 +30,11 @@ abstract class RegularFileStorage {
    * Returns a {@link RegularFileStorage} instance matching the given configuration.
    */
   public static RegularFileStorage from(Storage configuration) {
-    if (configuration.isBlock()) {
-      int blockSize = configuration.getBlockSize();
-      if (configuration.isDirect()) {
-        return new DirectDisk(blockSize);
-      } else {
-        return new HeapDisk(blockSize);
-      }
+    int blockSize = configuration.getBlockSize();
+    if (configuration.isDirect()) {
+      return new DirectDisk(blockSize);
     } else {
-      if (configuration.isDirect()) {
-        return DirectByteStore.factory();
-      } else {
-        return ArrayByteStore.factory();
-      }
+      return new HeapDisk(blockSize);
     }
   }
 

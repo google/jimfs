@@ -17,10 +17,8 @@
 package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkState;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 
 /**
  * Configuration for file system storage.
@@ -47,41 +45,13 @@ public final class Storage {
    * size of 8192 bytes.
    */
   public static Storage block() {
-    return new Storage(true);
+    return new Storage();
   }
 
-  /**
-   * Returns a new storage configuration for per-file storage.
-   *
-   * <p><b>Note:</b> In general, you should prefer the use of {@linkplain #block} storage. In most
-   * cases it performs as well or better than per-file storage.
-   *
-   * <p>Per-file storage gives each file its own buffer to store data in. The file's buffer is
-   * doubled in size as needed to accommodate the data written to it. Compared to block storage,
-   * writes to this type of storage tend to be slower while reads <i>may</i> be slightly faster.
-   * The most significant difference is observed when transferring large files to a socket using
-   * {@link FileChannel#transferTo}.
-   *
-   * <p>By default, this storage uses heap memory. The {@linkplain #blockSize(int) block size}
-   * option does not apply to this type of storage and cannot be set.
-   */
-  public static Storage perFile() {
-    return new Storage(false);
-  }
-
-  private final boolean block;
   private boolean direct = false;
   private int blockSize = DEFAULT_BLOCK_SIZE;
 
-  private Storage(boolean block) {
-    this.block = block;
-  }
-
-  /**
-   * Returns whether or not block storage should be used.
-   */
-  public boolean isBlock() {
-    return block;
+  private Storage() {
   }
 
   /**
@@ -124,12 +94,9 @@ public final class Storage {
    *
    * <p>The default block size is 8192 bytes.
    *
-   * @throws IllegalStateException if this configuration is for {@linkplain #perFile() per-file}
-   *     storage
    * @throws IllegalArgumentException if {@code blockSize} is not positive
    */
   public Storage blockSize(int blockSize) {
-    checkState(block, "cannot set block size for non-block storage");
     checkArgument(blockSize > 0, "blockSize must be positive");
     this.blockSize = blockSize;
     return this;
