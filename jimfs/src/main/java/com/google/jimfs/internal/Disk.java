@@ -33,6 +33,11 @@ import java.util.Arrays;
 abstract class Disk extends RegularFileStorage {
 
   /**
+   * 8K blocks.
+   */
+  protected static final int DEFAULT_BLOCK_SIZE = 8192;
+
+  /**
    * Fixed size of each block for this disk.
    */
   protected final int blockSize;

@@ -52,7 +52,7 @@ final class JimfsFileSystems {
   private static JimfsFileStore createFileStore(
       Jimfs.Configuration config, PathService pathService) {
     AttributeService attributeService = new AttributeService(config.getAttributeViews());
-    RegularFileStorage storage = RegularFileStorage.from(config.getStorage());
+    RegularFileStorage storage = new HeapDisk();
     FileFactory fileFactory = new FileFactory(storage);
 
     File superRoot = fileFactory.createDirectory();

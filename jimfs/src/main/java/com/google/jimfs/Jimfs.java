@@ -167,7 +167,6 @@ public final class Jimfs {
     private final Set<String> roots = new LinkedHashSet<>();
     private String workingDirectory;
 
-    private Storage storage = Storage.block();
     private AttributeViews attributes = AttributeViews.basic();
 
     private Configuration(PathType pathType) {
@@ -204,13 +203,6 @@ public final class Jimfs {
         return firstRoot + pathType.getSeparator() + "work";
       }
       return workingDirectory;
-    }
-
-    /**
-     * Returns the storage configuration for the file system.
-     */
-    public Storage getStorage() {
-      return storage;
     }
 
     /**
@@ -264,16 +256,6 @@ public final class Jimfs {
      */
     public Configuration setWorkingDirectory(String workingDirectory) {
       this.workingDirectory = checkNotNull(workingDirectory);
-      return this;
-    }
-
-    /**
-     * Sets the storage configuration to use for the file system.
-     *
-     * <p>The default configuration is for block storage using 8192 byte blocks.
-     */
-    public Configuration setStorage(Storage storage) {
-      this.storage = checkNotNull(storage);
       return this;
     }
 

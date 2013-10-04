@@ -16,8 +16,6 @@
 
 package com.google.jimfs.internal;
 
-import com.google.jimfs.Storage;
-
 /**
  * Factory for creating new byte stores for regular files. May also actually store the bytes for
  * those stores. One piece of the file store implementation.
@@ -25,18 +23,6 @@ import com.google.jimfs.Storage;
  * @author Colin Decker
  */
 abstract class RegularFileStorage {
-
-  /**
-   * Returns a {@link RegularFileStorage} instance matching the given configuration.
-   */
-  public static RegularFileStorage from(Storage configuration) {
-    int blockSize = configuration.getBlockSize();
-    if (configuration.isDirect()) {
-      return new DirectDisk(blockSize);
-    } else {
-      return new HeapDisk(blockSize);
-    }
-  }
 
   /**
    * Creates a new, empty byte store.
