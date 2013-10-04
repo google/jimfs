@@ -213,7 +213,7 @@ final class JimfsFileSystem extends FileSystem {
       try {
         resourceManager.close();
       } finally {
-        provider.fileSystemClosed(this);
+        provider.remove(this);
       }
     }
   }

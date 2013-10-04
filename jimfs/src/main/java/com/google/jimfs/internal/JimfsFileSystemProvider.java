@@ -132,7 +132,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   /**
    * Called when the given file system is closed to remove it from this provider.
    */
-  void fileSystemClosed(JimfsFileSystem fileSystem) {
+  void remove(JimfsFileSystem fileSystem) {
     fileSystems.remove(fileSystem.uri());
   }
 
