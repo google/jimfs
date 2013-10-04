@@ -37,8 +37,6 @@ import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
@@ -61,11 +59,6 @@ final class JimfsFileChannel extends FileChannel {
    */
   @Nullable
   private volatile Thread blockingThread;
-
-  /**
-   * Lock enforcing one thread at a time for operations on the channel.
-   */
-  private final Lock lock = new ReentrantLock();
 
   private final File file;
   private final ByteStore store;
@@ -144,8 +137,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkReadable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -174,8 +166,6 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -189,8 +179,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkReadable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -219,8 +208,6 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -229,8 +216,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkWritable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -260,8 +246,6 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -275,8 +259,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkWritable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -306,8 +289,6 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -315,11 +296,8 @@ final class JimfsFileChannel extends FileChannel {
   public long position() throws IOException {
     checkOpen();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       return position;
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -328,25 +306,17 @@ final class JimfsFileChannel extends FileChannel {
     checkNotNegative(newPosition, "newPosition");
     checkOpen();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       this.position = (int) newPosition;
-      return this;
-    } finally {
-      lock.unlock();
     }
+
+    return this;
   }
 
   @Override
   public long size() throws IOException {
     checkOpen();
-
-    lock.lock();
-    try {
-      return store.sizeInBytes();
-    } finally {
-      lock.unlock();
-    }
+    return store.sizeInBytes();
   }
 
   @Override
@@ -355,8 +325,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkWritable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -385,20 +354,13 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
   @Override
   public void force(boolean metaData) throws IOException {
-    lock.lock();
-    try {
-      checkOpen();
-      // do nothing... writes are all synchronous anyway
-    } finally {
-      lock.unlock();
-    }
+    checkOpen();
+    // do nothing... writes are all synchronous anyway
   }
 
   @Override
@@ -409,8 +371,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkReadable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -435,8 +396,6 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -448,8 +407,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkWritable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -483,8 +441,6 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -495,8 +451,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkReadable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -521,8 +476,6 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -533,8 +486,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
     checkWritable();
 
-    lock.lock();
-    try {
+    synchronized (this) {
       boolean completed = false;
       try {
         beginBlocking();
@@ -568,8 +520,6 @@ final class JimfsFileChannel extends FileChannel {
 
       // if InterruptedException is caught, endBlocking will throw ClosedByInterruptException
       throw new AssertionError();
-    } finally {
-      lock.unlock();
     }
   }
 
@@ -593,13 +543,7 @@ final class JimfsFileChannel extends FileChannel {
       checkWritable();
     }
 
-    lock.lock();
-    try {
-      checkOpen();
-      return new FakeFileLock(this, position, size, shared);
-    } finally {
-      lock.unlock();
-    }
+    return new FakeFileLock(this, position, size, shared);
   }
 
   @Override

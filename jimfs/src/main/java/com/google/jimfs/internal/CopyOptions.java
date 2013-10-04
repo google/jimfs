@@ -62,16 +62,12 @@ final class CopyOptions extends LinkOptions {
   }
 
   private final boolean move;
-  private final boolean copyAttributes;
-  private final boolean atomicMove;
-  private final boolean replaceExisting;
+  private final ImmutableSet<?> options;
 
   private CopyOptions(boolean move, Set<?> options) {
     super(move ? ImmutableSet.of(LinkOption.NOFOLLOW_LINKS) : options);
     this.move = move;
-    this.copyAttributes = options.contains(COPY_ATTRIBUTES);
-    this.atomicMove = options.contains(ATOMIC_MOVE);
-    this.replaceExisting = options.contains(REPLACE_EXISTING);
+    this.options = ImmutableSet.copyOf(options);
   }
 
   /**
@@ -92,20 +88,20 @@ final class CopyOptions extends LinkOptions {
    * Returns whether or not attributes should be copied as well.
    */
   public boolean isCopyAttributes() {
-    return copyAttributes;
+    return options.contains(COPY_ATTRIBUTES);
   }
 
   /**
    * Returns whether or not a move must be an atomic move.
    */
   public boolean isAtomicMove() {
-    return atomicMove;
+    return options.contains(ATOMIC_MOVE);
   }
 
   /**
    * Returns whether or not an existing file at the destination should be replaced.
    */
   public boolean isReplaceExisting() {
-    return replaceExisting;
+    return options.contains(REPLACE_EXISTING);
   }
 }

@@ -63,72 +63,59 @@ final class OpenOptions extends LinkOptions {
     return new OpenOptions(ImmutableSet.copyOf(options));
   }
 
-  private final boolean read;
-  private final boolean write;
-  private final boolean append;
-  private final boolean truncateExisting;
-  private final boolean create;
-  private final boolean createNew;
-  private final boolean sparse;
+  private final ImmutableSet<?> options;
 
   private OpenOptions(Set<?> options) {
     super(options);
-    this.read = options.contains(READ);
-    this.write = options.contains(WRITE);
-    this.append = options.contains(APPEND);
-    this.truncateExisting = options.contains(TRUNCATE_EXISTING);
-    this.create = options.contains(CREATE);
-    this.createNew = options.contains(CREATE_NEW);
-    this.sparse = options.contains(SPARSE);
-    // we don't care about any other open options currently
+    this.options = ImmutableSet.copyOf(options);
   }
 
   /**
    * Returns whether or not to open the file for reading.
    */
   public boolean isRead() {
-    return read;
+    return options.contains(READ);
   }
 
   /**
    * Returns whether or not to open the file for writing.
    */
   public boolean isWrite() {
-    return write;
+    return options.contains(WRITE);
   }
 
   /**
    * Returns whether or not to open the file in append mode.
    */
   public boolean isAppend() {
-    return append;
+    return options.contains(APPEND);
   }
 
   /**
    * Returns whether or not to truncate the file when opening it.
    */
   public boolean isTruncateExisting() {
-    return truncateExisting;
+    return options.contains(TRUNCATE_EXISTING);
   }
 
   /**
    * Returns whether or not to create the file if it doesn't exist.
    */
   public boolean isCreate() {
-    return create;
+    return options.contains(CREATE);
   }
 
   /**
    * Returns whether or not to create the file and throw an exception if it already exists.
    */
   public boolean isCreateNew() {
-    return createNew;
+    return options.contains(CREATE_NEW);
   }
 
   /**
    * Returns whether or not the created file should be sparse, if supported.
    */
   public boolean isSparse() {
-    return sparse;
+    return options.contains(SPARSE);
   }
 }

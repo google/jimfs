@@ -76,7 +76,8 @@ final class DirectoryEntry {
    * @return this
    * @throws FileAlreadyExistsException if this entry does not exist
    */
-  public DirectoryEntry requireDoesNotExist(Path pathForException) throws FileAlreadyExistsException {
+  public DirectoryEntry requireDoesNotExist(
+      Path pathForException) throws FileAlreadyExistsException {
     if (exists()) {
       throw new FileAlreadyExistsException(pathForException.toString());
     }
