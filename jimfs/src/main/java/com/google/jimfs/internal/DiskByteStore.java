@@ -17,7 +17,6 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkPositionIndexes;
 import static com.google.jimfs.internal.Disk.BlockQueue;
 
 import com.google.common.primitives.UnsignedBytes;
@@ -128,8 +127,6 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public int write(long pos, byte b) {
-    checkNotNegative(pos, "pos");
-
     zeroForWrite(pos);
 
     int block = blockForWrite(blockIndex(pos));
@@ -145,9 +142,6 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public int write(long pos, byte[] b, int off, int len) {
-    checkNotNegative(pos, "pos");
-    checkPositionIndexes(off, off + len, b.length);
-
     zeroForWrite(pos);
 
     if (len == 0) {
@@ -182,8 +176,6 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public int write(long pos, ByteBuffer buf) {
-    checkNotNegative(pos, "pos");
-
     zeroForWrite(pos);
 
     if (!buf.hasRemaining()) {
@@ -213,9 +205,6 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public long transferFrom(ReadableByteChannel src, long pos, long count) throws IOException {
-    checkNotNegative(pos, "pos");
-    checkNotNegative(count, "count");
-
     zeroForWrite(pos);
 
     if (count == 0) {
@@ -267,8 +256,6 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public int read(long pos) {
-    checkNotNegative(pos, "pos");
-
     if (pos >= size) {
       return -1;
     }
@@ -280,9 +267,6 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public int read(long pos, byte[] b, int off, int len) {
-    checkNotNegative(pos, "pos");
-    checkPositionIndexes(off, off + len, b.length);
-
     int bytesToRead = bytesToRead(pos, len);
 
     if (bytesToRead > 0) {
@@ -310,8 +294,6 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public int read(long pos, ByteBuffer buf) {
-    checkNotNegative(pos, "pos");
-
     int bytesToRead = bytesToRead(pos, buf.remaining());
 
     if (bytesToRead > 0) {
@@ -334,9 +316,6 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   public long transferTo(long pos, long count, WritableByteChannel dest) throws IOException {
-    checkNotNegative(pos, "pos");
-    checkNotNegative(count, "count");
-
     long bytesToRead = bytesToRead(pos, count);
 
     if (bytesToRead > 0) {

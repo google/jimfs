@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static com.google.jimfs.internal.Util.checkNotNegative;
 import static com.google.jimfs.internal.Util.nextPowerOf2;
 
 import com.google.common.primitives.UnsignedBytes;

@@ -16,6 +16,11 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.collect.ImmutableCollection;
+
 /**
  * Miscellaneous static utility methods.
  *
@@ -31,5 +36,24 @@ final class Util {
   public static int nextPowerOf2(int n) {
     int highestOneBit = Integer.highestOneBit(n);
     return highestOneBit == n ? n : highestOneBit << 1;
+  }
+
+  /**
+   * Checks that the given number is not negative, throwing IAE if it is. The given description
+   * describes the number in the exception message.
+   */
+  static void checkNotNegative(long n, String description) {
+    checkArgument(n >= 0, "%s must not be negative: %s", description, n);
+  }
+
+  /**
+   * Checks that no element in the given iterable is null, throwing NPE if any is.
+   */
+  static void checkNoneNull(Iterable<?> objects) {
+    if (!(objects instanceof ImmutableCollection)) {
+      for (Object o : objects) {
+        checkNotNull(o);
+      }
+    }
   }
 }

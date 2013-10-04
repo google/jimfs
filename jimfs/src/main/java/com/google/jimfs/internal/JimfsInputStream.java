@@ -16,6 +16,8 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkPositionIndexes;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 
@@ -28,8 +30,6 @@ import java.io.InputStream;
  * @author Colin Decker
  */
 final class JimfsInputStream extends InputStream {
-
-  private final Object lock = new Object();
 
   @VisibleForTesting File file;
   private ByteStore store;
@@ -44,7 +44,7 @@ final class JimfsInputStream extends InputStream {
 
   @Override
   public int read() throws IOException {
-    synchronized (lock) {
+    synchronized (this) {
       checkNotClosed();
       if (finished) {
         return -1;
@@ -68,7 +68,9 @@ final class JimfsInputStream extends InputStream {
 
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
-    synchronized (lock) {
+    checkPositionIndexes(off, off + len, b.length);
+
+    synchronized (this) {
       checkNotClosed();
       if (finished) {
         return -1;
@@ -97,7 +99,7 @@ final class JimfsInputStream extends InputStream {
       return 0;
     }
 
-    synchronized (lock) {
+    synchronized (this) {
       checkNotClosed();
       if (finished) {
         return 0;
@@ -112,7 +114,7 @@ final class JimfsInputStream extends InputStream {
 
   @Override
   public int available() throws IOException {
-    synchronized (lock) {
+    synchronized (this) {
       checkNotClosed();
       if (finished) {
         return 0;
@@ -130,7 +132,7 @@ final class JimfsInputStream extends InputStream {
 
   @Override
   public void close() throws IOException {
-    synchronized (lock) {
+    synchronized (this) {
       file = null;
       store = null;
     }

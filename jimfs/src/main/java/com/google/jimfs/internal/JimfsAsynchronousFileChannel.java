@@ -18,7 +18,7 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.JimfsFileChannel.checkNotNegative;
+import static com.google.jimfs.internal.Util.checkNotNegative;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;

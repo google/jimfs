@@ -30,8 +30,6 @@ import java.io.OutputStream;
  */
 final class JimfsOutputStream extends OutputStream {
 
-  private final Object lock = new Object();
-
   @VisibleForTesting File file;
   private ByteStore store;
   private final boolean append;
@@ -46,7 +44,7 @@ final class JimfsOutputStream extends OutputStream {
 
   @Override
   public void write(int b) throws IOException {
-    synchronized (lock) {
+    synchronized (this) {
       checkNotClosed();
 
       store.writeLock().lock();
@@ -64,28 +62,10 @@ final class JimfsOutputStream extends OutputStream {
   }
 
   @Override
-  public void write(byte[] b) throws IOException {
-    synchronized (lock) {
-      checkNotClosed();
-
-      store.writeLock().lock();
-      try {
-        if (append) {
-          pos = store.size();
-        }
-        pos += store.write(pos, b);
-
-        file.updateModifiedTime();
-      } finally {
-        store.writeLock().unlock();
-      }
-    }
-  }
-
-  @Override
   public void write(byte[] b, int off, int len) throws IOException {
     checkPositionIndexes(off, off + len, b.length);
-    synchronized (lock) {
+
+    synchronized (this) {
       checkNotClosed();
 
       store.writeLock().lock();
@@ -104,7 +84,7 @@ final class JimfsOutputStream extends OutputStream {
 
   @Override
   public void flush() throws IOException {
-    synchronized (lock) {
+    synchronized (this) {
       checkNotClosed();
       // writes are synchronous to the store, so flush does nothing
     }
@@ -118,7 +98,7 @@ final class JimfsOutputStream extends OutputStream {
 
   @Override
   public void close() throws IOException {
-    synchronized (lock) {
+    synchronized (this) {
       file = null;
       store = null;
     }

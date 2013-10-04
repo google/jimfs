@@ -16,7 +16,6 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.common.base.Preconditions.checkPositionIndexes;
 import static com.google.jimfs.internal.Util.nextPowerOf2;
 
 import com.google.common.primitives.UnsignedBytes;
@@ -94,8 +93,6 @@ final class ArrayByteStore extends ByteStore {
 
   @Override
   public boolean truncate(long size) {
-    checkNotNegative(size, "size");
-
     if (size >= this.size) {
       return false;
     }
@@ -122,8 +119,6 @@ final class ArrayByteStore extends ByteStore {
 
   @Override
   public int write(long pos, byte b) {
-    checkNotNegative(pos, "pos");
-
     resizeForWrite(pos + 1);
 
     bytes[(int) pos] = b;
@@ -132,9 +127,6 @@ final class ArrayByteStore extends ByteStore {
 
   @Override
   public int write(long pos, byte[] b, int off, int len) {
-    checkNotNegative(pos, "pos");
-    checkPositionIndexes(off, off + len, b.length);
-
     resizeForWrite(pos + len);
 
     System.arraycopy(b, off, bytes, (int) pos, len);
@@ -143,8 +135,6 @@ final class ArrayByteStore extends ByteStore {
 
   @Override
   public int write(long pos, ByteBuffer buf) {
-    checkNotNegative(pos, "pos");
-
     int len = buf.remaining();
     resizeForWrite(pos + len);
 
@@ -154,9 +144,6 @@ final class ArrayByteStore extends ByteStore {
 
   @Override
   public long transferFrom(ReadableByteChannel src, long pos, long count) throws IOException {
-    checkNotNegative(pos, "pos");
-    checkNotNegative(count, "count");
-
     if (count == 0) {
       return 0;
     }
@@ -197,9 +184,6 @@ final class ArrayByteStore extends ByteStore {
 
   @Override
   public int read(long pos, byte[] b, int off, int len) {
-    checkNotNegative(pos, "pos");
-    checkPositionIndexes(off, off + len, b.length);
-
     int bytesToRead = bytesToRead(pos, len);
     if (bytesToRead > 0) {
       System.arraycopy(bytes, (int) pos, b, off, bytesToRead);
@@ -209,8 +193,6 @@ final class ArrayByteStore extends ByteStore {
 
   @Override
   public int read(long pos, ByteBuffer buf) {
-    checkNotNegative(pos, "pos");
-
     int bytesToRead = bytesToRead(pos, buf.remaining());
     if (bytesToRead > 0) {
       buf.put(bytes, (int) pos, bytesToRead);
@@ -220,9 +202,6 @@ final class ArrayByteStore extends ByteStore {
 
   @Override
   public long transferTo(long pos, long count, WritableByteChannel dest) throws IOException {
-    checkNotNegative(pos, "pos");
-    checkNotNegative(count, "count");
-
     if (count == 0) {
       return 0;
     }

@@ -21,7 +21,6 @@ import static com.google.jimfs.testing.TestUtils.buffers;
 import static com.google.jimfs.testing.TestUtils.bytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.jimfs.testing.ByteBufferChannel;
@@ -31,11 +30,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 
 /**
  * Base tests for {@link ByteStore} implementations.
@@ -104,7 +98,7 @@ public abstract class AbstractByteStoreTest {
   @Test
   public void testEmpty_write_byteArray_atStart() {
     byte[] bytes = bytes("111111");
-    store.write(0, bytes);
+    store.write(0, bytes, 0, bytes.length);
     assertContentEquals(bytes, store);
   }
 
@@ -136,7 +130,7 @@ public abstract class AbstractByteStoreTest {
   @Test
   public void testEmpty_write_byteArray_atNonZeroPosition() {
     byte[] bytes = bytes("111111");
-    store.write(5, bytes);
+    store.write(5, bytes, 0, bytes.length);
     assertContentEquals("00000111111", store);
   }
 
@@ -448,7 +442,7 @@ public abstract class AbstractByteStoreTest {
   @Test
   public void testNonEmpty_write_partial_fromStart_byteArray() {
     fillContent("222222");
-    assertEquals(3, store.write(0, bytes("111")));
+    assertEquals(3, store.write(0, bytes("111"), 0, 3));
     assertContentEquals("111222", store);
     assertEquals(2, store.write(0, bytes("333333"), 0, 2));
     assertContentEquals("331222", store);
@@ -466,7 +460,7 @@ public abstract class AbstractByteStoreTest {
   @Test
   public void testNonEmpty_write_partial_fromBeforeEnd_byteArray() {
     fillContent("22222222");
-    assertEquals(3, store.write(6, bytes("111")));
+    assertEquals(3, store.write(6, bytes("111"), 0, 3));
     assertContentEquals("222222111", store);
     assertEquals(2, store.write(8, bytes("333333"), 2, 2));
     assertContentEquals("2222221133", store);
@@ -475,7 +469,7 @@ public abstract class AbstractByteStoreTest {
   @Test
   public void testNonEmpty_write_partial_fromEnd_byteArray() {
     fillContent("222222");
-    assertEquals(3, store.write(6, bytes("111")));
+    assertEquals(3, store.write(6, bytes("111"), 0, 3));
     assertContentEquals("222222111", store);
     assertEquals(2, store.write(9, bytes("333333"), 3, 2));
     assertContentEquals("22222211133", store);
@@ -484,7 +478,7 @@ public abstract class AbstractByteStoreTest {
   @Test
   public void testNonEmpty_write_partial_fromPastEnd_byteArray() {
     fillContent("222222");
-    assertEquals(3, store.write(8, bytes("111")));
+    assertEquals(3, store.write(8, bytes("111"), 0, 3));
     assertContentEquals("22222200111", store);
     assertEquals(2, store.write(13, bytes("333333"), 4, 2));
     assertContentEquals("222222001110033", store);
@@ -729,45 +723,6 @@ public abstract class AbstractByteStoreTest {
     assertContentEquals("123456", store);
   }
 
-  @Test
-  public void testIllegalArguments() throws IOException {
-    try {
-      store.write(-1, ByteBuffer.allocate(10));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-
-    try {
-      store.write(-1, ImmutableList.of(ByteBuffer.allocate(10)));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-
-    try {
-      store.transferFrom(fakeChannel(), -1, 10);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-
-    try {
-      store.transferFrom(fakeChannel(), 10, -1);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-
-    try {
-      store.transferTo(-1, 10, fakeChannel());
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-
-    try {
-      store.transferTo(10, -1, fakeChannel());
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
   private static void assertBufferEquals(String expected, ByteBuffer actual) {
     assertEquals(expected.length(), actual.capacity());
     assertArrayEquals(bytes(expected), actual.array());
@@ -787,95 +742,5 @@ public abstract class AbstractByteStoreTest {
     byte[] actualBytes = new byte[(int) actual.size()];
     actual.read(0, ByteBuffer.wrap(actualBytes));
     assertArrayEquals(expected, actualBytes);
-  }
-
-  private static FileChannel fakeChannel() {
-    return new FileChannel() {
-      @Override
-      public int read(ByteBuffer dst) throws IOException {
-        return 0;
-      }
-
-      @Override
-      public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
-        return 0;
-      }
-
-      @Override
-      public int write(ByteBuffer src) throws IOException {
-        return 0;
-      }
-
-      @Override
-      public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
-        return 0;
-      }
-
-      @Override
-      public long position() throws IOException {
-        return 0;
-      }
-
-      @Override
-      public FileChannel position(long newPosition) throws IOException {
-        return null;
-      }
-
-      @Override
-      public long size() throws IOException {
-        return 0;
-      }
-
-      @Override
-      public FileChannel truncate(long size) throws IOException {
-        return null;
-      }
-
-      @Override
-      public void force(boolean metaData) throws IOException {
-      }
-
-      @Override
-      public long transferTo(long position, long count, WritableByteChannel target)
-          throws IOException {
-        return 0;
-      }
-
-      @Override
-      public long transferFrom(ReadableByteChannel src, long position, long count)
-          throws IOException {
-        return 0;
-      }
-
-      @Override
-      public int read(ByteBuffer dst, long position) throws IOException {
-        return 0;
-      }
-
-      @Override
-      public int write(ByteBuffer src, long position) throws IOException {
-        return 0;
-      }
-
-      @Override
-      public MappedByteBuffer map(MapMode mode, long position, long size)
-          throws IOException {
-        return null;
-      }
-
-      @Override
-      public FileLock lock(long position, long size, boolean shared) throws IOException {
-        return null;
-      }
-
-      @Override
-      public FileLock tryLock(long position, long size, boolean shared) throws IOException {
-        return null;
-      }
-
-      @Override
-      protected void implCloseChannel() throws IOException {
-      }
-    };
   }
 }

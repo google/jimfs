@@ -16,9 +16,10 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static com.google.jimfs.internal.Util.checkNoneNull;
+import static com.google.jimfs.internal.Util.checkNotNegative;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,6 +135,7 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   public int read(ByteBuffer dst) throws IOException {
+    checkNotNull(dst);
     checkOpen();
     checkReadable();
 
@@ -176,6 +178,7 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   private long read(List<ByteBuffer> buffers) throws IOException {
+    checkNoneNull(buffers);
     checkOpen();
     checkReadable();
 
@@ -213,6 +216,7 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   public int write(ByteBuffer src) throws IOException {
+    checkNotNull(src);
     checkOpen();
     checkWritable();
 
@@ -256,6 +260,7 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   private long write(List<ByteBuffer> srcs) throws IOException {
+    checkNoneNull(srcs);
     checkOpen();
     checkWritable();
 
@@ -585,9 +590,5 @@ final class JimfsFileChannel extends FileChannel {
     public void release() throws IOException {
       valid = false;
     }
-  }
-
-  static void checkNotNegative(long n, String type) {
-    checkArgument(n >= 0, "%s must not be negative: %s", type, n);
   }
 }

@@ -75,7 +75,7 @@ public class StubByteStore extends ByteStore {
 
   @Override
   public int write(long pos, byte b) {
-    return write(pos, new byte[]{b});
+    return write(pos, new byte[]{b}, 0, 1);
   }
 
   @Override
