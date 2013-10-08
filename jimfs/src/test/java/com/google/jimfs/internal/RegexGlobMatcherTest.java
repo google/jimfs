@@ -78,10 +78,10 @@ public class RegexGlobMatcherTest extends AbstractGlobMatcherTest {
 
   @Test
   public void testRegexTranslationWithMultipleSeparators() {
-    assertGlobRegexIs("?", "[^\\/]", "\\/");
-    assertGlobRegexIs("*", "[^\\/]*", "\\/");
-    assertGlobRegexIs("/", "[\\/]", "\\/");
-    assertGlobRegexIs("\\\\", "[\\/]", "\\/");
+    assertGlobRegexIs("?", "[^\\\\/]", "\\/");
+    assertGlobRegexIs("*", "[^\\\\/]*", "\\/");
+    assertGlobRegexIs("/", "[\\\\/]", "\\/");
+    assertGlobRegexIs("\\\\", "[\\\\/]", "\\/");
   }
 
   private static void assertGlobRegexIs(String glob, String regex) {

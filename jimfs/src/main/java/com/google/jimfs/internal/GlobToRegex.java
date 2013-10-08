@@ -153,7 +153,11 @@ final class GlobToRegex {
     if (separators.length() == 1) {
       appendNormal(separators.charAt(0));
     } else {
-      builder.append('[').append(separators).append("]");
+      builder.append('[');
+      for (int i = 0; i < separators.length(); i++) {
+        appendInBracket(separators.charAt(i));
+      }
+      builder.append("]");
     }
   }
 
@@ -161,7 +165,11 @@ final class GlobToRegex {
    * Appends the regex form that matches anything except the separators for the path type.
    */
   private void appendNonSeparator() {
-    builder.append("[^").append(separators).append(']');
+    builder.append("[^");
+    for (int i = 0; i < separators.length(); i++) {
+      appendInBracket(separators.charAt(i));
+    }
+    builder.append(']');
   }
 
   /**
@@ -280,6 +288,11 @@ final class GlobToRegex {
           converter.append(c);
       }
     }
+
+    @Override
+    public String toString() {
+      return "NORMAL";
+    }
   };
 
   /**
@@ -295,6 +308,11 @@ final class GlobToRegex {
     @Override
     void finish(GlobToRegex converter) {
       throw converter.syntaxError("Hanging escape (\\) at end of pattern");
+    }
+
+    @Override
+    public String toString() {
+      return "ESCAPE";
     }
   };
 
@@ -317,6 +335,11 @@ final class GlobToRegex {
     @Override
     void finish(GlobToRegex converter) {
       converter.appendStar();
+    }
+
+    @Override
+    public String toString() {
+      return "STAR";
     }
   };
 
@@ -343,6 +366,11 @@ final class GlobToRegex {
     void finish(GlobToRegex converter) {
       throw converter.syntaxError("Unclosed [");
     }
+
+    @Override
+    public String toString() {
+      return "BRACKET_FIRST_CHAR";
+    }
   };
 
   /**
@@ -362,6 +390,11 @@ final class GlobToRegex {
     @Override
     void finish(GlobToRegex converter) {
       throw converter.syntaxError("Unclosed [");
+    }
+
+    @Override
+    public String toString() {
+      return "BRACKET";
     }
   };
 
@@ -402,6 +435,11 @@ final class GlobToRegex {
     @Override
     void finish(GlobToRegex converter) {
       throw converter.syntaxError("Unclosed {");
+    }
+
+    @Override
+    public String toString() {
+      return "CURLY_BRACE";
     }
   };
 }

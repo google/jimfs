@@ -18,7 +18,6 @@ package com.google.jimfs;
 
 import static com.google.common.primitives.Bytes.concat;
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
-import static com.google.jimfs.testing.PathSubject.paths;
 import static com.google.jimfs.testing.TestUtils.bytes;
 import static com.google.jimfs.testing.TestUtils.permutations;
 import static com.google.jimfs.testing.TestUtils.preFilledBytes;
@@ -52,10 +51,7 @@ import com.google.common.io.CharStreams;
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.attribute.BasicFileAttribute;
-import com.google.jimfs.testing.PathSubject;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -78,7 +74,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.NotLinkException;
@@ -100,32 +95,19 @@ import java.util.regex.PatternSyntaxException;
  * the tests for {@code FileSystemView}, as each public API method is (mostly) implemented by a
  * method in {@code FileSystemView}.
  *
+ * <p>These tests uses a Unix-like file system, but most of what they test applies to any file
+ * system configuration.
+ *
  * @author Colin Decker
  */
-public class JimfsIntegrationTest {
+public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
-  private FileSystem unix;
-  private FileSystem win;
-
-  @Before
-  public void setUp() throws IOException {
-    unix = Jimfs.newUnixLikeConfiguration()
+  @Override
+  protected FileSystem createFileSystem() {
+    return Jimfs.newUnixLikeConfiguration()
         .setName("unix")
         .setAttributeViews(AttributeViews.unix())
         .createFileSystem();
-    win = Jimfs.newWindowsLikeConfiguration()
-        .setName("win")
-        .setAttributeViews(AttributeViews.windows())
-        .createFileSystem();
-  }
-
-  @After
-  public void tearDown() throws IOException {
-    try {
-      unix.close();
-    } finally {
-      win.close();
-    }
   }
 
   @Test
@@ -235,77 +217,28 @@ public class JimfsIntegrationTest {
   }
 
   @Test
-  public void testPaths_toUri_unix() {
-    ASSERT.that(unix.getPath("/").toUri()).is(URI.create("jimfs://unix/"));
-    ASSERT.that(unix.getPath("/foo").toUri()).is(URI.create("jimfs://unix/foo"));
-    ASSERT.that(unix.getPath("/foo/bar").toUri()).is(URI.create("jimfs://unix/foo/bar"));
-    ASSERT.that(unix.getPath("foo").toUri()).is(URI.create("jimfs://unix/work/foo"));
-    ASSERT.that(unix.getPath("foo/bar").toUri()).is(URI.create("jimfs://unix/work/foo/bar"));
-    ASSERT.that(unix.getPath("").toUri()).is(URI.create("jimfs://unix/work"));
-    ASSERT.that(unix.getPath("./../.").toUri()).is(URI.create("jimfs://unix/work/./../."));
+  public void testPaths_toUri() {
+    ASSERT.that(path("/").toUri()).is(URI.create("jimfs://unix/"));
+    ASSERT.that(path("/foo").toUri()).is(URI.create("jimfs://unix/foo"));
+    ASSERT.that(path("/foo/bar").toUri()).is(URI.create("jimfs://unix/foo/bar"));
+    ASSERT.that(path("foo").toUri()).is(URI.create("jimfs://unix/work/foo"));
+    ASSERT.that(path("foo/bar").toUri()).is(URI.create("jimfs://unix/work/foo/bar"));
+    ASSERT.that(path("").toUri()).is(URI.create("jimfs://unix/work"));
+    ASSERT.that(path("./../.").toUri()).is(URI.create("jimfs://unix/work/./../."));
   }
 
   @Test
-  public void testPaths_toUri_windows() {
-    ASSERT.that(win.getPath("C:\\").toUri()).is(URI.create("jimfs://win/C:/"));
-    ASSERT.that(win.getPath("C:\\foo").toUri()).is(URI.create("jimfs://win/C:/foo"));
-    ASSERT.that(win.getPath("C:\\foo\\bar").toUri()).is(URI.create("jimfs://win/C:/foo/bar"));
-    ASSERT.that(win.getPath("foo").toUri()).is(URI.create("jimfs://win/C:/work/foo"));
-    ASSERT.that(win.getPath("foo\\bar").toUri()).is(URI.create("jimfs://win/C:/work/foo/bar"));
-    ASSERT.that(win.getPath("").toUri()).is(URI.create("jimfs://win/C:/work"));
-    ASSERT.that(win.getPath(".\\..\\.").toUri()).is(URI.create("jimfs://win/C:/work/./../."));
-  }
-
-  @Test
-  public void testPaths_toUri_windows_unc() {
-    ASSERT.that(win.getPath("\\\\host\\share\\").toUri())
-        .is(URI.create("jimfs://win//host/share/"));
-    ASSERT.that(win.getPath("\\\\host\\share\\foo").toUri())
-        .is(URI.create("jimfs://win//host/share/foo"));
-    ASSERT.that(win.getPath("\\\\host\\share\\foo\\bar").toUri())
-        .is(URI.create("jimfs://win//host/share/foo/bar"));
-  }
-
-  @Test
-  public void testPaths_getFromUri_unix() {
+  public void testPaths_getFromUri() {
     ASSERT.that(Paths.get(URI.create("jimfs://unix/")))
-        .isEqualTo(unix.getPath("/"));
+        .isEqualTo(path("/"));
     ASSERT.that(Paths.get(URI.create("jimfs://unix/foo")))
-        .isEqualTo(unix.getPath("/foo"));
+        .isEqualTo(path("/foo"));
     ASSERT.that(Paths.get(URI.create("jimfs://unix/foo%20bar")))
-        .isEqualTo(unix.getPath("/foo bar"));
+        .isEqualTo(path("/foo bar"));
     ASSERT.that(Paths.get(URI.create("jimfs://unix/foo/./bar")))
-        .isEqualTo(unix.getPath("/foo/./bar"));
+        .isEqualTo(path("/foo/./bar"));
     ASSERT.that(Paths.get(URI.create("jimfs://unix/foo/bar/")))
-        .isEqualTo(unix.getPath("/foo/bar"));
-  }
-
-  @Test
-  public void testPaths_getFromUri_windows() {
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/")))
-        .isEqualTo(win.getPath("C:\\"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo")))
-        .isEqualTo(win.getPath("C:\\foo"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo%20bar")))
-        .isEqualTo(win.getPath("C:\\foo bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo/./bar")))
-        .isEqualTo(win.getPath("C:\\foo\\.\\bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo/bar/")))
-        .isEqualTo(win.getPath("C:\\foo\\bar"));
-  }
-
-  @Test
-  public void testPaths_getFromUri_windows_unc() {
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/")))
-        .isEqualTo(win.getPath("\\\\host\\share\\"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo")))
-        .isEqualTo(win.getPath("\\\\host\\share\\foo"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo%20bar")))
-        .isEqualTo(win.getPath("\\\\host\\share\\foo bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo/./bar")))
-        .isEqualTo(win.getPath("\\\\host\\share\\foo\\.\\bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo/bar/")))
-        .isEqualTo(win.getPath("\\\\host\\share\\foo\\bar"));
+        .isEqualTo(path("/foo/bar"));
   }
 
   @Test
@@ -336,7 +269,7 @@ public class JimfsIntegrationTest {
     assertThat("/foo/bar/baz/Stuff.java").matches("glob:**/*.*");
 
     try {
-      unix.getPathMatcher("glob:**/*.{java,class");
+      fs.getPathMatcher("glob:**/*.{java,class");
       fail();
     } catch (PatternSyntaxException expected) {
     }
@@ -345,13 +278,13 @@ public class JimfsIntegrationTest {
   @Test
   public void testPathMatchers_invalid() {
     try {
-      unix.getPathMatcher("glob");
+      fs.getPathMatcher("glob");
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      unix.getPathMatcher("foo:foo");
+      fs.getPathMatcher("foo:foo");
       fail();
     } catch (UnsupportedOperationException expected) {
       ASSERT.that(expected.getMessage()).contains("syntax");
@@ -812,12 +745,12 @@ public class JimfsIntegrationTest {
   @Test
   public void testWriteFile_succeeds() throws IOException {
     Files.createFile(path("/test"));
-    Files.write(path("/test"), new byte[]{0, 1, 2, 3});
+    Files.write(path("/test"), new byte[] {0, 1, 2, 3});
   }
 
   @Test
   public void testSize_forFileAfterWrite_isNumberOfBytesWritten() throws IOException {
-    Files.write(path("/test"), new byte[]{0, 1, 2, 3});
+    Files.write(path("/test"), new byte[] {0, 1, 2, 3});
 
     assertThat("/test").hasSize(4);
   }
@@ -921,7 +854,7 @@ public class JimfsIntegrationTest {
     // succeeds, ok for file to already exist
     Files.write(test, ImmutableList.of("foo"), UTF_8, CREATE);
     // did not truncate or append, so overwrote
-    if ("\r\n".equals(System.getProperty("line.separator"))) {
+    if (System.getProperty("line.separator").length() == 2) {
       // on Windows, an extra character is overwritten by the \r\n line separator
       assertThat(test).containsLines("foo", "", "world");
     } else {
@@ -1967,68 +1900,5 @@ public class JimfsIntegrationTest {
 
   // helpers
 
-  private Path path(String first, String... more) {
-    return unix.getPath(first, more);
-  }
 
-  private Object getFileKey(String path, LinkOption... options) throws IOException {
-    return Files.getAttribute(path(path), "fileKey", options);
-  }
-
-  private PathSubject assertThat(String path, LinkOption... options) {
-    return assertThat(path(path), options);
-  }
-
-  private static PathSubject assertThat(Path path, LinkOption... options) {
-    PathSubject subject = ASSERT.about(paths()).that(path);
-    if (options.length != 0) {
-      subject = subject.noFollowLinks();
-    }
-    return subject;
-  }
-
-  /**
-   * Tester for testing changes in file times.
-   */
-  private static final class FileTimeTester {
-
-    private final Path path;
-
-    private FileTime accessTime;
-    private FileTime modifiedTime;
-
-    private FileTimeTester(Path path) throws IOException {
-      this.path = path;
-
-      BasicFileAttributes attrs = attrs();
-      accessTime = attrs.lastAccessTime();
-      modifiedTime = attrs.lastModifiedTime();
-    }
-
-    private BasicFileAttributes attrs() throws IOException {
-      return Files.readAttributes(path, BasicFileAttributes.class);
-    }
-
-    public void assertAccessTimeChanged() throws IOException {
-      FileTime t = attrs().lastAccessTime();
-      ASSERT.that(t).isNotEqualTo(accessTime);
-      accessTime = t;
-    }
-
-    public void assertAccessTimeDidNotChange() throws IOException {
-      FileTime t = attrs().lastAccessTime();
-      ASSERT.that(t).isEqualTo(accessTime);
-    }
-
-    public void assertModifiedTimeChanged() throws IOException {
-      FileTime t = attrs().lastModifiedTime();
-      ASSERT.that(t).isNotEqualTo(modifiedTime);
-      modifiedTime = t;
-    }
-
-    public void assertModifiedTimeDidNotChange() throws IOException {
-      FileTime t = attrs().lastModifiedTime();
-      ASSERT.that(t).isEqualTo(modifiedTime);
-    }
-  }
 }
