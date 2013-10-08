@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Colin Decker
  */
-public class UnixAttributeProvider extends AbstractAttributeProvider {
+public final class UnixAttributeProvider extends AbstractAttributeProvider {
 
   public static final String VIEW = "unix";
 

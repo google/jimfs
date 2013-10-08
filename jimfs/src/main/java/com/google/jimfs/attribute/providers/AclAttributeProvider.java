@@ -39,7 +39,7 @@ import java.util.List;
  *
  * @author Colin Decker
  */
-public class AclAttributeProvider extends AbstractAttributeProvider
+public final class AclAttributeProvider extends AbstractAttributeProvider
     implements AttributeViewProvider<AclFileAttributeView> {
 
   public static final String VIEW = "acl";

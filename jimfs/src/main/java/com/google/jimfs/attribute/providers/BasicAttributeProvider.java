@@ -38,7 +38,7 @@ import java.nio.file.attribute.FileTime;
  *
  * @author Colin Decker
  */
-public class BasicAttributeProvider extends AbstractAttributeProvider implements
+public final class BasicAttributeProvider extends AbstractAttributeProvider implements
     AttributeViewProvider<BasicFileAttributeView>, AttributeReader<BasicFileAttributes> {
 
   public static final String VIEW = "basic";
