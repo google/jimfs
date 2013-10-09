@@ -1012,12 +1012,53 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   }
 
   @Test
+  public void testDelete_directory_canDeleteWorkingDirectoryByAbsolutePath() throws IOException {
+    assertThat("/work").exists();
+    assertThat("").exists();
+    assertThat(".").exists();
+
+    Files.delete(path("/work"));
+
+    assertThat("/work").doesNotExist();
+    assertThat("").doesNotExist();
+    assertThat(".").doesNotExist();
+  }
+
+  @Test
+  public void testDelete_directory_cantDeleteWorkingDirectoryByRelativePath() throws IOException {
+    try {
+      Files.delete(path(""));
+      fail();
+    } catch (FileSystemException expected) {
+      ASSERT.that(expected.getFile()).is("");
+    }
+
+    try {
+      Files.delete(path("."));
+      fail();
+    } catch (FileSystemException expected) {
+      ASSERT.that(expected.getFile()).is(".");
+    }
+
+    try {
+      Files.delete(path("../../work"));
+      fail();
+    } catch (FileSystemException expected) {
+      ASSERT.that(expected.getFile()).is("../../work");
+    }
+
+    try {
+      Files.delete(path("./../work/.././../work/."));
+      fail();
+    } catch (FileSystemException expected) {
+      ASSERT.that(expected.getFile()).is("./../work/.././../work/.");
+    }
+  }
+
+  @Test
   public void testDelete_directory_cantDeleteRoot() throws IOException {
     // delete working directory so that root is empty
     // don't want to just be testing the "can't delete when not empty" logic
-    // TODO(cgdecker): it's possible that deleting the working directory should also fail
-    // it seems to fail in the default file system, and deleting it does permanently cause all
-    // relative path operations to fail even if a new directory is created at the same path
     Files.delete(path("/work"));
 
     try {

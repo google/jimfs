@@ -515,21 +515,30 @@ final class FileSystemView {
    * Checks that the given file can be deleted, throwing an exception if it can't.
    */
   private void checkDeletable(
-      File file, DeleteMode mode, Path pathForException) throws IOException {
+      File file, DeleteMode mode, Path path) throws IOException {
     if (file.isRootDirectory()) {
       throw new FileSystemException(
-          pathForException.toString(), null, "can't delete root directory");
+          path.toString(), null, "can't delete root directory");
     }
+
     if (file.isDirectory()) {
       if (mode == DeleteMode.NON_DIRECTORY_ONLY) {
         throw new FileSystemException(
-            pathForException.toString(), null, "can't delete: is a directory");
+            path.toString(), null, "can't delete: is a directory");
       }
 
-      checkEmpty(file, pathForException);
+      checkEmpty(file, path);
     } else if (mode == DeleteMode.DIRECTORY_ONLY) {
       throw new FileSystemException(
-          pathForException.toString(), null, "can't delete: is not a directory");
+          path.toString(), null, "can't delete: is not a directory");
+    }
+
+    if (file == workingDirectory && !path.isAbsolute()) {
+      // this is weird, but on Unix at least, the file system seems to be happy to delete the
+      // working directory if you give the absolute path to it but fail if you use a relative path
+      // that resolves to the working directory (e.g. "" or ".")
+      throw new FileSystemException(
+          path.toString(), null, "invalid argument");
     }
   }
 

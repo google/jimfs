@@ -351,11 +351,14 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
   }
 
   @Test
-  public void testDelete_ofExistingRootDirectory_fails() throws IOException {
+  public void testDelete_directory_cantDeleteRoot() throws IOException {
+    // test with E:\ because it is empty
     try {
       Files.delete(path("E:\\"));
       fail();
     } catch (FileSystemException expected) {
+      ASSERT.that(expected.getFile()).is("E:\\");
+      ASSERT.that(expected.getMessage()).contains("root");
     }
   }
 
@@ -413,6 +416,21 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
       Files.move(path("bar"), path("E:\\"), REPLACE_EXISTING);
       fail();
     } catch (IOException expected) {
+    }
+  }
+
+  @Test
+  public void testMove_rootDirectory_fails() throws IOException {
+    try {
+      Files.move(path("E:\\"), path("Z:\\"));
+      fail();
+    } catch (FileSystemException expected) {
+    }
+
+    try {
+      Files.move(path("E:\\"), path("C:\\bar"));
+      fail();
+    } catch (FileSystemException expected) {
     }
   }
 }
