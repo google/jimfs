@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.FileFactoryTest.fakePath;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.testing.EqualsTester;
@@ -60,7 +61,7 @@ public class FileTest {
 
   @Test
   public void testSymbolicLink() {
-    File file = new File(0L, new TestPathService(PathType.unix()).emptyPath());
+    File file = new File(0L, fakePath());
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isTrue();

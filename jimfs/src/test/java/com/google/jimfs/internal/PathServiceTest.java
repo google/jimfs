@@ -24,6 +24,16 @@ import com.google.jimfs.path.PathType;
 
 import org.junit.Test;
 
+import java.io.IOException;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.WatchService;
+import java.nio.file.attribute.UserPrincipalLookupService;
+import java.nio.file.spi.FileSystemProvider;
+import java.util.Set;
+
 /**
  * Tests for {@link PathService}.
  *
@@ -31,13 +41,12 @@ import org.junit.Test;
  */
 public class PathServiceTest {
 
-  private final PathType type = PathType.unix();
-  private final TestPathService service = new TestPathService(type);
+  private final PathService service = fakeUnixPathService();
 
   @Test
   public void testBasicProperties() {
     ASSERT.that(service.getSeparator()).is("/");
-    ASSERT.that(new TestPathService(PathType.windows()).getSeparator()).is("\\");
+    ASSERT.that(fakeWindowsPathService().getSeparator()).is("\\");
   }
 
   @Test
@@ -88,11 +97,11 @@ public class PathServiceTest {
   @Test
   public void testToString() {
     // not much to test for this since it just delegates to PathType anyway
-    JimfsPath path = new TestPath(
+    JimfsPath path = new JimfsPath(
         service, null, ImmutableList.of(Name.simple("foo"), Name.simple("bar")));
     ASSERT.that(service.toString(path)).is("foo/bar");
 
-    path = new TestPath(service, Name.simple("/"), ImmutableList.of(Name.simple("foo")));
+    path = new JimfsPath(service, Name.simple("/"), ImmutableList.of(Name.simple("foo")));
     ASSERT.that(service.toString(path)).is("/foo");
   }
 
@@ -101,4 +110,79 @@ public class PathServiceTest {
     ASSERT.that(service.createPathMatcher("regex:foo")).isA(PathMatchers.RegexPathMatcher.class);
     ASSERT.that(service.createPathMatcher("glob:foo")).isA(PathMatchers.RegexPathMatcher.class);
   }
+
+  public static PathService fakeUnixPathService() {
+    return fakePathService(PathType.unix());
+  }
+
+  public static PathService fakeWindowsPathService() {
+    return fakePathService(PathType.windows());
+  }
+
+  public static PathService fakePathService(PathType type) {
+    PathService service = new PathService(type);
+    service.setFileSystem(FAKE_FILE_SYSTEM);
+    return service;
+  }
+
+  private static final FileSystem FAKE_FILE_SYSTEM = new FileSystem() {
+    @Override
+    public FileSystemProvider provider() {
+      return null;
+    }
+
+    @Override
+    public void close() throws IOException {
+    }
+
+    @Override
+    public boolean isOpen() {
+      return false;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return false;
+    }
+
+    @Override
+    public String getSeparator() {
+      return null;
+    }
+
+    @Override
+    public Iterable<Path> getRootDirectories() {
+      return null;
+    }
+
+    @Override
+    public Iterable<FileStore> getFileStores() {
+      return null;
+    }
+
+    @Override
+    public Set<String> supportedFileAttributeViews() {
+      return null;
+    }
+
+    @Override
+    public Path getPath(String first, String... more) {
+      return null;
+    }
+
+    @Override
+    public PathMatcher getPathMatcher(String syntaxAndPattern) {
+      return null;
+    }
+
+    @Override
+    public UserPrincipalLookupService getUserPrincipalLookupService() {
+      return null;
+    }
+
+    @Override
+    public WatchService newWatchService() throws IOException {
+      return null;
+    }
+  };
 }

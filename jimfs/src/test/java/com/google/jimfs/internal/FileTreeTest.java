@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.jimfs.internal.PathServiceTest.fakePathService;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
@@ -71,7 +72,7 @@ public class FileTreeTest {
    * This path service is for unix-like paths, with the exception that it recognizes $ as a root in
    * addition to /, allowing for two roots.
    */
-  private final PathService pathService = new TestPathService(
+  private final PathService pathService = fakePathService(
       new PathType(CaseSensitivity.CASE_SENSITIVE, true, '/') {
         @Override
         public PathType withCaseSensitivity(CaseSensitivity caseSensitivity) {

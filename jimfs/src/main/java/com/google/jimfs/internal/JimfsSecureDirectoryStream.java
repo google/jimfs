@@ -39,23 +39,23 @@ import java.util.Set;
 final class JimfsSecureDirectoryStream
     extends JimfsDirectoryStream implements SecureDirectoryStream<Path> {
 
-  private final FileSystemView service;
+  private final FileSystemView view;
 
-  public JimfsSecureDirectoryStream(FileSystemView service, Filter<? super Path> filter) {
-    super(service.getWorkingDirectoryPath(), filter);
-    this.service = service;
+  public JimfsSecureDirectoryStream(FileSystemView view, Filter<? super Path> filter) {
+    super(view.getWorkingDirectoryPath(), filter);
+    this.view = view;
   }
 
   @Override
   protected Iterable<String> snapshotEntryNames() throws IOException {
-    return service.snapshotBaseEntries();
+    return view.snapshotBaseEntries();
   }
 
   @Override
   public SecureDirectoryStream<Path> newDirectoryStream(Path path, LinkOption... options)
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    return service.newSecureDirectoryStream(
+    return view.newSecureDirectoryStream(
         checkedPath, ALWAYS_TRUE_FILTER, LinkOptions.from(options),
         path().resolve(checkedPath));
   }
@@ -65,19 +65,19 @@ final class JimfsSecureDirectoryStream
       FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     OpenOptions opts = OpenOptions.from(getOptionsForChannel(options));
-    return new JimfsFileChannel(service.getRegularFile(checkedPath, opts), opts);
+    return new JimfsFileChannel(view.getRegularFile(checkedPath, opts), opts);
   }
 
   @Override
   public void deleteFile(Path path) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    service.deleteFile(checkedPath, DeleteMode.NON_DIRECTORY_ONLY);
+    view.deleteFile(checkedPath, DeleteMode.NON_DIRECTORY_ONLY);
   }
 
   @Override
   public void deleteDirectory(Path path) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    service.deleteFile(checkedPath, DeleteMode.DIRECTORY_ONLY);
+    view.deleteFile(checkedPath, DeleteMode.DIRECTORY_ONLY);
   }
 
   @Override
@@ -93,8 +93,8 @@ final class JimfsSecureDirectoryStream
 
     JimfsSecureDirectoryStream checkedTargetDir = (JimfsSecureDirectoryStream) targetDir;
 
-    service.copy(
-        checkedSrcPath, checkedTargetDir.service, checkedTargetPath, CopyOptions.move());
+    view.copy(
+        checkedSrcPath, checkedTargetDir.view, checkedTargetPath, CopyOptions.move());
   }
 
   @Override
@@ -106,7 +106,7 @@ final class JimfsSecureDirectoryStream
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
       LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
-    return service.getFileAttributeView(checkedPath, type, LinkOptions.from(options));
+    return view.getFileAttributeView(checkedPath, type, LinkOptions.from(options));
   }
 
   private static JimfsPath checkPath(Path path) {

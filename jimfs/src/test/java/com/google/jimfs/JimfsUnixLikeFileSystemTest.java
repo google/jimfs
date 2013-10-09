@@ -45,12 +45,14 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.attribute.BasicFileAttribute;
+import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import org.junit.Test;
 
@@ -70,6 +72,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileSystems;
@@ -108,6 +111,30 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         .setName("unix")
         .setAttributeViews(AttributeViews.unix())
         .createFileSystem();
+  }
+
+  @Test
+  public void testFileSystem() {
+    ASSERT.that(fs.getSeparator()).is("/");
+    ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("/")));
+    ASSERT.that(fs.isOpen()).isTrue();
+    ASSERT.that(fs.isReadOnly()).isFalse();
+    ASSERT.that(fs.supportedFileAttributeViews()).has()
+        .exactly("basic", "owner", "posix", "unix");
+    ASSERT.that(fs.provider()).isA(JimfsFileSystemProvider.class);
+  }
+
+  @Test
+  public void testFileStore() throws IOException {
+    FileStore fileStore = Iterables.getOnlyElement(fs.getFileStores());
+    ASSERT.that(fileStore.name()).is("jimfs");
+    ASSERT.that(fileStore.type()).is("jimfs");
+    ASSERT.that(fileStore.isReadOnly()).isFalse();
+
+    // no regular files have been created and written to, so no blocks have been allocated yet
+    ASSERT.that(fileStore.getTotalSpace()).is(0);
+    ASSERT.that(fileStore.getUnallocatedSpace()).is(0);
+    ASSERT.that(fileStore.getUsableSpace()).is(0);
   }
 
   @Test

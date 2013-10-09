@@ -16,6 +16,8 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.PathServiceTest.fakeUnixPathService;
+import static com.google.jimfs.internal.PathServiceTest.fakeWindowsPathService;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -26,6 +28,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 /**
@@ -33,7 +36,7 @@ import java.nio.file.Path;
  */
 public class JimfsPathTest {
 
-  private final PathService pathService = TestPathService.UNIX;
+  private final PathService pathService = fakeUnixPathService();
 
   @Test
   public void testPathParsing() {
@@ -60,7 +63,7 @@ public class JimfsPathTest {
 
   @Test
   public void testPathParsing_windowsStylePaths() throws IOException {
-    TestPathService windowsPathService = TestPathService.WINDOWS;
+    PathService windowsPathService = fakeWindowsPathService();
     assertEquals("C:\\", pathService.parsePath("C:\\").toString());
     assertEquals("C:\\foo", windowsPathService.parsePath("C:\\foo").toString());
     assertEquals("C:\\foo", windowsPathService.parsePath("C:\\", "foo").toString());
@@ -71,7 +74,7 @@ public class JimfsPathTest {
 
   @Test
   public void testParsing_windowsStylePaths_invalidPaths() {
-    TestPathService windowsPathService = TestPathService.WINDOWS;
+    PathService windowsPathService = fakeWindowsPathService();
 
     try {
       // The actual windows implementation seems to allow "C:" but treat it as a *name*, not a root
@@ -101,7 +104,7 @@ public class JimfsPathTest {
   @Test
   public void testPathParsing_withAlternateSeparator() {
     // windows recognizes / as an alternate separator
-    TestPathService windowsPathService = TestPathService.WINDOWS;
+    PathService windowsPathService = fakeWindowsPathService();
     assertEquals(windowsPathService.parsePath("foo\\bar\\baz"),
         windowsPathService.parsePath("foo/bar/baz"));
     assertEquals(windowsPathService.parsePath("C:\\foo\\bar"),
@@ -317,8 +320,12 @@ public class JimfsPathTest {
   }
 
   @Test
-  public void testNullPointerExceptions() {
-    NullPointerTester tester = new NullPointerTester();
+  public void testNullPointerExceptions() throws NoSuchMethodException {
+    NullPointerTester tester = new NullPointerTester()
+        .ignore(JimfsPath.class.getMethod("toRealPath", LinkOption[].class));
+    // ignore toRealPath because the pathService creates fake paths that do not have a
+    // JimfsFileSystem instance, causing it to fail since it needs to access the file system
+
     tester.testAllPublicInstanceMethods(pathService.parsePath("/"));
     tester.testAllPublicInstanceMethods(pathService.parsePath(""));
     tester.testAllPublicInstanceMethods(pathService.parsePath("/foo"));

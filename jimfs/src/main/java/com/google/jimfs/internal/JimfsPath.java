@@ -30,12 +30,18 @@ import com.google.common.collect.Ordering;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
@@ -50,7 +56,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-abstract class JimfsPath implements Path, FileContent {
+final class JimfsPath implements Path, FileContent {
 
   @Nullable
   private final Name root;
@@ -136,6 +142,21 @@ abstract class JimfsPath implements Path, FileContent {
    */
   public boolean isEmptyPath() {
     return root == null && names.size() == 1 && names.get(0).toString().equals("");
+  }
+
+  @Override
+  public FileSystem getFileSystem() {
+    return pathService.getFileSystem();
+  }
+
+  /**
+   * Equivalent to {@link #getFileSystem()} but with a return type of {@code JimfsFileSystem}.
+   * {@code getFileSystem()}'s return type is left as {@code FileSystem} to make testing paths
+   * easier (as long as methods that access the file system in some way are not called, the file
+   * system can be a fake file system instance).
+   */
+  public JimfsFileSystem getJimfsFileSystem() {
+    return (JimfsFileSystem) pathService.getFileSystem();
   }
 
   @Override
@@ -340,10 +361,40 @@ abstract class JimfsPath implements Path, FileContent {
   }
 
   @Override
-  public abstract JimfsPath toAbsolutePath();
+  public JimfsPath toAbsolutePath() {
+    return isAbsolute() ? this : getJimfsFileSystem().getWorkingDirectory().resolve(this);
+  }
 
   @Override
-  public abstract JimfsPath toRealPath(LinkOption... options) throws IOException;
+  public JimfsPath toRealPath(LinkOption... options) throws IOException {
+    return getJimfsFileSystem().getDefaultView()
+        .toRealPath(this, pathService, LinkOptions.from(options));
+  }
+
+  @Override
+  public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events,
+      WatchEvent.Modifier... modifiers) throws IOException {
+    checkNotNull(modifiers);
+    return register(watcher, events);
+  }
+
+  @Override
+  public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) throws IOException {
+    checkNotNull(watcher);
+    checkNotNull(events);
+    if (!(watcher instanceof AbstractWatchService)) {
+      throw new IllegalArgumentException(
+          "watcher (" + watcher + ") is not associated with this file system");
+    }
+
+    AbstractWatchService service = (AbstractWatchService) watcher;
+    return service.register(this, Arrays.asList(events));
+  }
+
+  @Override
+  public URI toUri() {
+    return getJimfsFileSystem().toUri(this);
+  }
 
   @Override
   public File toFile() {

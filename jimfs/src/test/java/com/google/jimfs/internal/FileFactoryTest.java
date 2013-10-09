@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.PathServiceTest.fakeUnixPathService;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.jimfs.path.PathType;
@@ -82,7 +83,7 @@ public class FileFactoryTest {
     ASSERT.that(file.isSymbolicLink()).isTrue();
   }
 
-  private static JimfsPath fakePath() {
-    return new TestPathService(PathType.unix()).emptyPath();
+  static JimfsPath fakePath() {
+    return fakeUnixPathService().emptyPath();
   }
 }

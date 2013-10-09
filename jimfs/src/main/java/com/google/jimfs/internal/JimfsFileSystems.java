@@ -34,7 +34,7 @@ final class JimfsFileSystems {
    */
   public static JimfsFileSystem newFileSystem(
       JimfsFileSystemProvider provider, URI uri, Jimfs.Configuration config) throws IOException {
-    PathService pathService = new RealPathService(config.getPathType());
+    PathService pathService = new PathService(config.getPathType());
 
     JimfsFileStore fileStore = createFileStore(config, pathService);
     FileSystemView defaultView = createDefaultView(config, fileStore, pathService);

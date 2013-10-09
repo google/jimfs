@@ -18,6 +18,7 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.jimfs.path.PathType.ParseResult;
 
 import com.google.common.base.Function;
@@ -42,12 +43,15 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-abstract class PathService {
+final class PathService {
 
   private final PathType type;
   private final NameFactory nameFactory;
 
-  protected PathService(PathType type) {
+  private volatile FileSystem fileSystem;
+  private volatile JimfsPath emptyPath;
+
+  PathService(PathType type) {
     this.type = checkNotNull(type);
     switch (type.getCaseSensitivity()) {
       case CASE_SENSITIVE:
@@ -64,12 +68,21 @@ abstract class PathService {
     }
   }
 
-  private volatile JimfsPath emptyPath;
-
   /**
    * Sets the file system to use for created paths.
    */
-  public abstract void setFileSystem(JimfsFileSystem fileSystem);
+  public void setFileSystem(FileSystem fileSystem) {
+    // allowed to not be JimfsFileSystem for testing purposes only
+    checkState(this.fileSystem == null, "may not set fileSystem twice");
+    this.fileSystem = checkNotNull(fileSystem);
+  }
+
+  /**
+   * Returns the file system this service is for.
+   */
+  public FileSystem getFileSystem() {
+    return fileSystem;
+  }
 
   /**
    * Returns the default path separator.
@@ -143,7 +156,9 @@ abstract class PathService {
   /**
    * Returns a path with the given root (or no root, if null) and the given names.
    */
-  protected abstract JimfsPath createPathInternal(@Nullable Name root, Iterable<Name> names);
+  protected final JimfsPath createPathInternal(@Nullable Name root, Iterable<Name> names) {
+    return new JimfsPath(this, root, names);
+  }
 
   /**
    * Parses the given strings as a path.
