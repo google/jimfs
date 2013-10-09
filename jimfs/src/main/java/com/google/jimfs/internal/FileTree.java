@@ -38,6 +38,8 @@ final class FileTree {
 
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
 
+  private static final ImmutableList<Name> EMPTY_PATH_NAMES = ImmutableList.of(Name.SELF);
+
   /**
    * Special directory linking root names to root directories.
    */
@@ -80,19 +82,7 @@ final class FileTree {
     checkNotNull(path);
     checkNotNull(options);
 
-    File base;
-    Iterable<Name> names = path.path();
-    if (path.isAbsolute()) {
-      base = superRoot;
-    } else {
-      base = workingDirectory;
-      if (isEmpty(path)) {
-        // empty path is equivalent to "." in a lookup
-        names = ImmutableList.of(Name.SELF);
-      }
-    }
-
-    DirectoryEntry result = lookup(base, names, options, 0);
+    DirectoryEntry result = lookup(workingDirectory, path, options, 0);
     if (result == null) {
       // an intermediate file in the path did not exist or was not a directory
       throw new NoSuchFileException(path.toString());
@@ -102,15 +92,33 @@ final class FileTree {
 
   private DirectoryEntry lookup(
       File dir, JimfsPath path, LinkOptions options, int linkDepth) throws IOException {
-    Iterable<Name> names = path.path();
+    ImmutableList<Name> names = path.names();
+
     if (path.isAbsolute()) {
-      dir = superRoot;
-    } else if (isEmpty(path)) {
-      // empty path is equivalent to "." in a lookup
-      names = ImmutableList.of(Name.SELF);
+      // lookup the root directory
+      DirectoryEntry entry = superRoot.asDirectoryTable().get(path.root());
+      if (entry == null) {
+        // root not found
+        return !names.isEmpty()
+            ? null
+            : new DirectoryEntry(superRoot, path.root(), null);
+      } else if (names.isEmpty()) {
+        // root found, no more names to look up
+        return entry;
+      } else {
+        // root found, more names to look up; set dir to the root directory for the path
+        dir = entry.file();
+      }
+    } else if (isEmpty(names)) {
+      // set names to the canonical list of names for an empty path (singleton list of ".")
+      names = EMPTY_PATH_NAMES;
     }
 
     return lookup(dir, names, options, linkDepth);
+  }
+
+  private boolean isEmpty(ImmutableList<Name> names) {
+    return names.isEmpty() || names.size() == 1 && names.get(0).toString().equals("");
   }
 
   /**
@@ -212,14 +220,5 @@ final class FileTree {
     }
 
     return null;
-  }
-
-  /**
-   * Returns true if path has no root component (is not absolute) and either has no name components
-   * or only has a single name component, the empty string.
-   */
-  private static boolean isEmpty(JimfsPath path) {
-    return !path.isAbsolute() && (path.getNameCount() == 0
-        || path.getNameCount() == 1 && path.getName(0).toString().equals(""));
   }
 }

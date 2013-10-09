@@ -112,32 +112,6 @@ final class JimfsPath implements Path, FileContent {
   }
 
   /**
-   * Returns a view of this path as an immutable iterable of name objects (including the root).
-   */
-  public Iterable<Name> path() {
-    return new Iterable<Name>() {
-      @Override
-      public Iterator<Name> iterator() {
-        return new AbstractIterator<Name>() {
-          private Iterator<Name> nameIterator;
-
-          @Override
-          protected Name computeNext() {
-            if (nameIterator == null) {
-              nameIterator = names.iterator();
-              if (root != null) {
-                return root;
-              }
-            }
-
-            return nameIterator.hasNext() ? nameIterator.next() : endOfData();
-          }
-        };
-      }
-    };
-  }
-
-  /**
    * Returns whether or not this is the empty path, with no root and a single, empty string, name.
    */
   public boolean isEmptyPath() {
