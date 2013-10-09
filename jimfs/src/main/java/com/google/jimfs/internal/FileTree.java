@@ -98,10 +98,9 @@ final class FileTree {
       // lookup the root directory
       DirectoryEntry entry = superRoot.asDirectoryTable().get(path.root());
       if (entry == null) {
-        // root not found
-        return !names.isEmpty()
-            ? null
-            : new DirectoryEntry(superRoot, path.root(), null);
+        // root not found; always return null as no real parent directory exists
+        // this prevents new roots from being created in file systems supporting multiple roots
+        return null;
       } else if (names.isEmpty()) {
         // root found, no more names to look up
         return entry;

@@ -69,8 +69,8 @@ public class FileTreeTest {
    */
 
   /**
-   * This path service is for unix-like paths, with the exception that it recognizes $ as a root in
-   * addition to /, allowing for two roots.
+   * This path service is for unix-like paths, with the exception that it recognizes $ and ! as
+   * roots in addition to /, allowing for up to three roots.
    */
   private final PathService pathService = fakePathService(
       new PathType(CaseSensitivity.CASE_SENSITIVE, true, '/') {
@@ -82,7 +82,7 @@ public class FileTreeTest {
         @Override
         public ParseResult parsePath(String path) {
           String root = null;
-          if (path.startsWith("/") || path.startsWith("$")) {
+          if (path.matches("^[/$!].*")) {
             root = path.substring(0, 1);
             path = path.substring(1);
           }
@@ -103,8 +103,8 @@ public class FileTreeTest {
 
         @Override
         public ParseResult parseUriPath(String uriPath) {
-          checkArgument(uriPath.startsWith("//") || uriPath.startsWith("/$"),
-              "uriPath (%s) must start with // or /$");
+          checkArgument(uriPath.matches("^/[/$!].*"),
+              "uriPath (%s) must start with // or /$ or /!");
           return parsePath(uriPath.substring(1)); // skip leading /
         }
       });
@@ -160,6 +160,21 @@ public class FileTreeTest {
   public void testLookup_root() throws IOException {
     assertExists(lookup("/"), "SUPER_ROOT", "/");
     assertExists(lookup("$"), "SUPER_ROOT", "$");
+  }
+
+  @Test
+  public void testLookup_nonExistentRoot() throws IOException {
+    try {
+      lookup("!");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
+
+    try {
+      lookup("!a");
+      fail();
+    } catch (NoSuchFileException expected) {
+    }
   }
 
   @Test

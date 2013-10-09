@@ -274,4 +274,61 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
     } catch (UnsupportedOperationException expected) {
     }
   }
+
+  @Test
+  public void testCreateFileOrDirectory_forRootPath_fails() throws IOException {
+    try {
+      Files.createDirectory(path("Z:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      Files.createFile(path("Z:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      Files.createSymbolicLink(path("Z:\\"), path("foo"));
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Test
+  public void testCopyFile_toRootPath_fails() throws IOException {
+    Files.createFile(path("foo"));
+    Files.createDirectory(path("bar"));
+
+    try {
+      Files.copy(path("foo"), path("Z:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      Files.copy(path("bar"), path("Z:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Test
+  public void testMoveFile_toRootPath_fails() throws IOException {
+    Files.createFile(path("foo"));
+    Files.createDirectory(path("bar"));
+
+    try {
+      Files.move(path("foo"), path("Z:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      Files.move(path("bar"), path("Z:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+  }
 }
