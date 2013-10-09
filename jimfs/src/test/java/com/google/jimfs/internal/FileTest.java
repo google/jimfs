@@ -20,7 +20,6 @@ import static com.google.jimfs.internal.FileFactoryTest.fakePath;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.testing.EqualsTester;
-import com.google.jimfs.path.PathType;
 
 import org.junit.Test;
 

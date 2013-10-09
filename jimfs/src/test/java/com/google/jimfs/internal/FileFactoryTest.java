@@ -19,8 +19,6 @@ package com.google.jimfs.internal;
 import static com.google.jimfs.internal.PathServiceTest.fakeUnixPathService;
 import static org.truth0.Truth.ASSERT;
 
-import com.google.jimfs.path.PathType;
-
 import org.junit.Before;
 import org.junit.Test;
 
