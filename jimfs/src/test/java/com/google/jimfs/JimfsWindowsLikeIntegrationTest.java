@@ -16,16 +16,22 @@
 
 package com.google.jimfs;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -39,8 +45,20 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
   protected FileSystem createFileSystem() {
     return Jimfs.newWindowsLikeConfiguration()
         .setName("win")
+        .addRoots("E:\\")
         .setAttributeViews(AttributeViews.windows())
         .createFileSystem();
+  }
+
+  @Test
+  public void testFileSystem() {
+    ASSERT.that(fs.getSeparator()).is("\\");
+    ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("C:\\"), path("E:\\")));
+    ASSERT.that(fs.isOpen()).isTrue();
+    ASSERT.that(fs.isReadOnly()).isFalse();
+    ASSERT.that(fs.supportedFileAttributeViews())
+        .has().exactly("basic", "owner", "dos", "acl", "user");
+    ASSERT.that(fs.provider()).isA(JimfsFileSystemProvider.class);
   }
 
   @Test
@@ -276,7 +294,7 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
   }
 
   @Test
-  public void testCreateFileOrDirectory_forRootPath_fails() throws IOException {
+  public void testCreateFileOrDirectory_forNonExistentRootPath_fails() throws IOException {
     try {
       Files.createDirectory(path("Z:\\"));
       fail();
@@ -297,7 +315,7 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
   }
 
   @Test
-  public void testCopyFile_toRootPath_fails() throws IOException {
+  public void testCopyFile_toNonExistentRootPath_fails() throws IOException {
     Files.createFile(path("foo"));
     Files.createDirectory(path("bar"));
 
@@ -315,7 +333,7 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
   }
 
   @Test
-  public void testMoveFile_toRootPath_fails() throws IOException {
+  public void testMoveFile_toNonExistentRootPath_fails() throws IOException {
     Files.createFile(path("foo"));
     Files.createDirectory(path("bar"));
 
@@ -327,6 +345,72 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
 
     try {
       Files.move(path("bar"), path("Z:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Test
+  public void testDelete_ofExistingRootDirectory_fails() throws IOException {
+    try {
+      Files.delete(path("E:\\"));
+      fail();
+    } catch (FileSystemException expected) {
+    }
+  }
+
+  @Test
+  public void testCreateFileOrDirectory_forExistingRootPath_fails() throws IOException {
+    try {
+      Files.createDirectory(path("E:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      Files.createFile(path("E:\\"));
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      Files.createSymbolicLink(path("E:\\"), path("foo"));
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Test
+  public void testCopyFile_toExistingRootPath_fails() throws IOException {
+    Files.createFile(path("foo"));
+    Files.createDirectory(path("bar"));
+
+    try {
+      Files.copy(path("foo"), path("E:\\"), REPLACE_EXISTING);
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      Files.copy(path("bar"), path("E:\\"), REPLACE_EXISTING);
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Test
+  public void testMoveFile_toExistingRootPath_fails() throws IOException {
+    Files.createFile(path("foo"));
+    Files.createDirectory(path("bar"));
+
+    try {
+      Files.move(path("foo"), path("E:\\"), REPLACE_EXISTING);
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      Files.move(path("bar"), path("E:\\"), REPLACE_EXISTING);
       fail();
     } catch (IOException expected) {
     }
