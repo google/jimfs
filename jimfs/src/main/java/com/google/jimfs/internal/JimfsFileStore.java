@@ -22,6 +22,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.jimfs.Jimfs;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.common.IoSupplier;
 
@@ -32,6 +33,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -56,15 +58,18 @@ final class JimfsFileStore extends FileStore {
   private final AttributeService attributes;
   private final FileFactory factory;
 
+  private final ImmutableSet<Jimfs.Feature> supportedFeatures;
+
   private final Lock readLock;
   private final Lock writeLock;
 
-  public JimfsFileStore(
-      FileTree tree, FileFactory factory, RegularFileStorage storage, AttributeService attributes) {
+  public JimfsFileStore(FileTree tree, FileFactory factory, RegularFileStorage storage,
+      AttributeService attributes, Set<Jimfs.Feature> supportedFeatures) {
     this.tree = checkNotNull(tree);
     this.factory = checkNotNull(factory);
     this.storage = checkNotNull(storage);
     this.attributes = checkNotNull(attributes);
+    this.supportedFeatures = ImmutableSet.copyOf(supportedFeatures);
 
     ReadWriteLock lock = new ReentrantReadWriteLock();
     this.readLock = lock.readLock();
@@ -92,6 +97,24 @@ final class JimfsFileStore extends FileStore {
    */
   ImmutableSortedSet<Name> getRootDirectoryNames() {
     return tree.getRootDirectoryNames();
+  }
+
+  /**
+   * Returns whether or not the given feature is supported.
+   */
+  boolean supports(Jimfs.Feature feature) {
+    return supportedFeatures.contains(feature);
+  }
+
+  /**
+   * Checks that the given feature is supported.
+   *
+   * @throws UnsupportedOperationException if the feature is not supported
+   */
+  void checkSupported(Jimfs.Feature feature) {
+    if (!supports(feature)) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   /**

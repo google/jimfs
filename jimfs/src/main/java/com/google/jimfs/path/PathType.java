@@ -39,7 +39,8 @@ public abstract class PathType {
 
   /**
    * Returns a Unix-style path type. "/" is both the root and the only separator. Any path starting
-   * with "/" is considered absolute. Paths are case sensitive.
+   * with "/" is considered absolute. Paths are case sensitive. The nul character ('\0') is
+   * disallowed in paths.
    */
   public static PathType unix() {
     return UnixPathType.INSTANCE;

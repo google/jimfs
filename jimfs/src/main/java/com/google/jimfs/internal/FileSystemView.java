@@ -25,6 +25,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
+import com.google.jimfs.Jimfs;
 import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
@@ -282,6 +283,7 @@ final class FileSystemView {
    */
   public File createSymbolicLink(
       JimfsPath path, JimfsPath target, FileAttribute<?>... attrs) throws IOException {
+    store.checkSupported(Jimfs.Feature.SYMBOLIC_LINKS);
     return createFile(path, store.createSymbolicLink(target), false, attrs);
   }
 
@@ -420,6 +422,8 @@ final class FileSystemView {
     checkNotNull(link);
     checkNotNull(existingView);
     checkNotNull(existing);
+
+    store.checkSupported(Jimfs.Feature.LINKS);
 
     if (!isSameFileSystem(existingView)) {
       throw new FileSystemException(link.toString(), existing.toString(),

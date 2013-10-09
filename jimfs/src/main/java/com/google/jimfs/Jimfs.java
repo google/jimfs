@@ -31,6 +31,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,12 +65,19 @@ public final class Jimfs {
   /**
    * Returns a new in-memory file system with semantics similar to UNIX.
    *
-   * <p>The returned file system has a single root, "/", and uses "/" as a separator. It supports
-   * symbolic and hard links. File lookup is case-sensitive. Only the "basic" file attribute view
-   * is supported. The working directory for the file system is "/work".
+   * <p>The returned file system:
+   *
+   * <ul>
+   *   <li>uses "/" as the path name separator (see {@link PathType#unix()} for more information on
+   *   the path format)</li>
+   *   <li>has root "/" and working directory "/work"</li>
+   *   <li>supports symbolic links and hard links</li>
+   *   <li>does case-sensitive lookup</li>
+   *   <li>supports only the "basic" file attribute view</li>
+   * </ul>
    *
    * <p>For more advanced configuration, including changing the working directory, supported
-   * attribute views or type of storage to use or for setting the host name to be used in the file
+   * attribute views or supported features or for setting the host name to be used in the file
    * system's URI, use {@link #newUnixLikeConfiguration()}.
    */
   public static FileSystem newUnixLikeFileSystem() {
@@ -74,7 +87,8 @@ public final class Jimfs {
   /**
    * Returns a new {@link Configuration} instance with defaults for a UNIX-like file
    * system. If no changes are made to the configuration, the file system it creates will be
-   * identical to that created by {@link #newUnixLikeFileSystem()}.
+   * identical to that created by {@link #newUnixLikeFileSystem()}. Legal paths are described by
+   * {@link PathType#unix()}. Only one root, "/", is allowed.
    *
    * <p>Example usage:
    *
@@ -90,19 +104,27 @@ public final class Jimfs {
   public static Configuration newUnixLikeConfiguration() {
     return newConfiguration(PathType.unix())
         .addRoots("/")
-        .setWorkingDirectory("/work");
+        .setWorkingDirectory("/work")
+        .setSupportedFeatures(Feature.LINKS, Feature.SYMBOLIC_LINKS);
+
   }
 
   /**
    * Returns a new in-memory file system with semantics similar to Windows.
    *
-   * <p>The returned file system has a single root, "C:\", and uses "\" as a separator. It also
-   * recognizes "/" as a separator when parsing paths. It supports symbolic and hard links. File
-   * lookup is not case-sensitive. Only the "basic" file attribute view is supported. The working
-   * directory for the file system is "C:\work".
+   * <p>The returned file system:
+   *
+   * <ul>
+   *   <li>uses "\" as the path name separator and recognizes "/" as a separator when parsing
+   *   paths (see {@link PathType#windows()} for more information on path format)</li>
+   *   <li>has root "C:\" and working directory "C:\work"</li>
+   *   <li>supports symbolic links but not hard links</li>
+   *   <li>does case-insensitive lookup (for ASCII characters only)</li>
+   *   <li>supports only the "basic" file attribute view</li>
+   * </ul>
    *
    * <p>For more advanced configuration, including changing the working directory, supported
-   * attribute views or type of storage to use or for setting the host name to be used in the file
+   * attribute views or supported features or for setting the host name to be used in the file
    * system's URI, use {@link #newWindowsLikeConfiguration()}.
    */
   public static FileSystem newWindowsLikeFileSystem() {
@@ -112,7 +134,8 @@ public final class Jimfs {
   /**
    * Returns a new {@link Configuration} instance with defaults for a Windows-like file system. If
    * no changes are made to the configuration, the file system it creates will be identical to that
-   * created by {@link #newWindowsLikeFileSystem()}.
+   * created by {@link #newWindowsLikeFileSystem()}. Legal roots and paths are described by
+   * {@link PathType#windows()}.
    *
    * <p>Example usage:
    *
@@ -130,7 +153,8 @@ public final class Jimfs {
   public static Configuration newWindowsLikeConfiguration() {
     return newConfiguration(PathType.windows())
         .addRoots("C:\\")
-        .setWorkingDirectory("C:\\work");
+        .setWorkingDirectory("C:\\work")
+        .setSupportedFeatures(Feature.SYMBOLIC_LINKS);
   }
 
   /**
@@ -168,6 +192,7 @@ public final class Jimfs {
     private String workingDirectory;
 
     private AttributeViews attributes = AttributeViews.basic();
+    private final Set<Feature> supportedFeatures = new HashSet<>();
 
     private Configuration(PathType pathType) {
       this.pathType = checkNotNull(pathType);
@@ -210,6 +235,13 @@ public final class Jimfs {
      */
     public AttributeViews getAttributeViews() {
       return attributes;
+    }
+
+    /**
+     * Returns the configured set of optional features the file system should support.
+     */
+    public Set<Feature> getSupportedFeatures() {
+      return Collections.unmodifiableSet(supportedFeatures);
     }
 
     /**
@@ -276,10 +308,37 @@ public final class Jimfs {
     }
 
     /**
+     * Sets the optional features the file system should support. Any supported features that were
+     * previously set are replaced.
+     */
+    public Configuration setSupportedFeatures(Feature... features) {
+      supportedFeatures.clear();
+      supportedFeatures.addAll(Arrays.asList(features));
+      return this;
+    }
+
+    /**
      * Creates a new file system using this configuration.
      */
     public FileSystem createFileSystem() {
       return newFileSystem(URI.create(URI_SCHEME + "://" + getName()), this);
     }
+  }
+
+  /**
+   * Optional features that may or may not be supported by a file system.
+   */
+  public static enum Feature {
+    /**
+     * Controls whether or not {@linkplain Files#createLink(Path, Path) hard links to regular files}
+     * are supported.
+     */
+    LINKS,
+
+    /**
+     * Controls whether or not {@linkplain Files#createSymbolicLink(Path, Path, FileAttribute[])
+     * symbolic links} are supported.
+     */
+    SYMBOLIC_LINKS
   }
 }

@@ -237,4 +237,41 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
     } catch (PatternSyntaxException expected) {
     }
   }
+
+  @Test
+  public void testPathMatchers_glob_alternateSeparators() {
+    // only need to test / in the glob pattern; tests above check that / in a path is changed to
+    // \ automatically
+    assertThat("C:\\foo").doesNotMatch("glob:*");
+    assertThat("C:\\foo\\bar").doesNotMatch("glob:*");
+    assertThat("C:\\foo\\bar").matches("glob:**");
+    assertThat("C:\\foo\\bar").matches("glob:C:/**");
+    assertThat("foo\\bar").doesNotMatch("glob:C:/**");
+    assertThat("C:\\foo\\bar\\baz\\stuff").matches("glob:C:/foo/**");
+    assertThat("C:\\foo\\bar\\baz\\stuff").matches("glob:C:/**/stuff");
+    assertThat("C:\\foo").matches("glob:C:/[a-z]*");
+    assertThat("C:\\Foo").doesNotMatch("glob:C:/[a-z]*");
+    assertThat("C:\\foo\\bar\\baz\\Stuff.java").matches("glob:**/*.java");
+    assertThat("C:\\foo\\bar\\baz\\Stuff.java").matches("glob:**/*.{java,class}");
+    assertThat("C:\\foo\\bar\\baz\\Stuff.class").matches("glob:**/*.{java,class}");
+    assertThat("C:\\foo\\bar\\baz\\Stuff.java").matches("glob:**/*.*");
+
+    try {
+      fs.getPathMatcher("glob:**/*.{java,class");
+      fail();
+    } catch (PatternSyntaxException expected) {
+    }
+  }
+
+  @Test
+  public void testCreateLink_unsupported() throws IOException {
+    // default Windows configuration does not support Feature.LINKS
+    Files.createFile(path("foo"));
+
+    try {
+      Files.createLink(path("link"), path("foo"));
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
+  }
 }

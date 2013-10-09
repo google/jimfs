@@ -1238,14 +1238,25 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       while (buf1.hasRemaining() || buf2.hasRemaining()) {
         channel.write(new ByteBuffer[]{buf1, buf2});
       }
+
+      assertEquals(11, channel.position());
+      assertEquals(11, channel.size());
+
+      channel.write(UTF_8.encode("!"));
+
+      assertEquals(12, channel.position());
+      assertEquals(12, channel.size());
     }
 
     try (SeekableByteChannel channel = Files.newByteChannel(path("/test.txt"), READ)) {
+      assertEquals(0, channel.position());
+      assertEquals(12, channel.size());
+
       ByteBuffer buffer = ByteBuffer.allocate(100);
       while (channel.read(buffer) != -1) {
       }
       buffer.flip();
-      assertEquals("hello world", UTF_8.decode(buffer).toString());
+      assertEquals("hello world!", UTF_8.decode(buffer).toString());
     }
 
     byte[] bytes = preFilledBytes(100);
@@ -1269,7 +1280,6 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       byte[] expected = concat(preFilledBytes(50), preFilledBytes(50), preFilledBytes(50));
 
       assertArrayEquals(expected, readBuffer.array());
-
     }
 
     try (FileChannel channel = FileChannel.open(path("/test"), READ, WRITE)) {
@@ -1897,8 +1907,4 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     tester.assertAccessTimeDidNotChange();
     tester.assertModifiedTimeDidNotChange();
   }
-
-  // helpers
-
-
 }
