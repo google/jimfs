@@ -94,7 +94,7 @@ final class File implements AttributeStore {
   }
 
   /**
-   * Returns a view of this file as a byte store
+   * Returns a view of this file as a byte store.
    */
   public ByteStore asByteStore() {
     return (ByteStore) content;

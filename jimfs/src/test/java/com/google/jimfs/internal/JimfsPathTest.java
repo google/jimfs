@@ -228,6 +228,28 @@ public class JimfsPathTest {
   }
 
   @Test
+  public void testResolveSibling_givenEmptyPath() {
+    Path path = pathService.parsePath("foo/bar");
+    Path resolved = path.resolveSibling("");
+    assertPathEquals("foo", resolved);
+
+    path = pathService.parsePath("foo");
+    resolved = path.resolveSibling("");
+    assertPathEquals("", resolved);
+  }
+
+  @Test
+  public void testResolveSibling_againstEmptyPath() {
+    Path path = pathService.parsePath("");
+    Path resolved = path.resolveSibling("foo");
+    assertPathEquals("foo", resolved);
+
+    path = pathService.parsePath("");
+    resolved = path.resolveSibling("");
+    assertPathEquals("", resolved);
+  }
+
+  @Test
   public void testRelativize_bothAbsolute() {
     // TODO(cgdecker): When the paths have different roots, how should this work?
     // Should it work at all?

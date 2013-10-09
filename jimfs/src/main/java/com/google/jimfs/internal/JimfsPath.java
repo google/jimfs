@@ -22,7 +22,6 @@ import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -221,11 +220,7 @@ final class JimfsPath implements Path, FileContent {
 
   @Override
   public JimfsPath normalize() {
-    if (!isAbsolute()) {
-      if (getNameCount() <= 1) {
-        return this;
-      }
-    } else if (getNameCount() == 0) {
+    if (isNormal()) {
       return this;
     }
 
@@ -245,6 +240,35 @@ final class JimfsPath implements Path, FileContent {
     }
 
     return newNames.equals(names) ? this : pathService.createPath(root, newNames);
+  }
+
+  /**
+   * Returns whether or not this path is in a normalized form. It's normal if it both contains no
+   * "." names and contains no ".." names in a location other than the start of the path.
+   */
+  private boolean isNormal() {
+    if (getNameCount() == 0 || getNameCount() == 1 && !isAbsolute()) {
+      return true;
+    }
+
+    boolean foundNonParentName = isAbsolute(); // if there's a root, the path doesn't start with ..
+    boolean normal = true;
+    for (Name name : names) {
+      if (name.equals(PARENT)) {
+        if (foundNonParentName) {
+          normal = false;
+          break;
+        }
+      } else {
+        if (name.equals(SELF)) {
+          normal = false;
+          break;
+        }
+
+        foundNonParentName = true;
+      }
+    }
+    return normal;
   }
 
   @Override
@@ -320,11 +344,11 @@ final class JimfsPath implements Path, FileContent {
 
     int extraNamesInThis = Math.max(0, getNameCount() - sharedSubsequenceLength);
 
-    Iterable<Name> extraNamesInOther = (otherNames.size() <= sharedSubsequenceLength)
+    ImmutableList<Name> extraNamesInOther = (otherNames.size() <= sharedSubsequenceLength)
         ? ImmutableList.<Name>of()
         : otherNames.subList(sharedSubsequenceLength, otherNames.size());
 
-    List<Name> parts = new ArrayList<>();
+    List<Name> parts = new ArrayList<>(extraNamesInThis + extraNamesInOther.size());
 
     // add .. for each extra name in this path
     Iterables.addAll(parts, Collections.nCopies(extraNamesInThis, PARENT));
