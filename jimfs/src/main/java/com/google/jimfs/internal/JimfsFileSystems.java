@@ -68,6 +68,8 @@ final class JimfsFileSystems {
       Name rootName = path.root();
 
       File rootDir = fileFactory.createDirectory();
+      attributeService.setInitialAttributes(rootDir);
+
       superRoot.asDirectoryTable().link(rootName, rootDir);
       rootDir.asDirectoryTable().setRoot();
     }
