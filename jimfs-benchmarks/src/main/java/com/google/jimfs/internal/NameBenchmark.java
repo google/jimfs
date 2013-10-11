@@ -22,7 +22,7 @@ import com.google.caliper.Param;
 import com.google.caliper.runner.CaliperMain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.jimfs.path.Normalization;
+import com.google.jimfs.Normalization;
 
 import java.util.Iterator;
 import java.util.Random;

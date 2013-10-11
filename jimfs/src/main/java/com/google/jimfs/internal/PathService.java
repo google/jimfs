@@ -19,15 +19,15 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.jimfs.path.PathType.ParseResult;
+import static com.google.jimfs.PathType.ParseResult;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.jimfs.path.Normalization;
-import com.google.jimfs.path.PathType;
+import com.google.jimfs.Normalization;
+import com.google.jimfs.PathType;
 
 import java.net.URI;
 import java.nio.file.FileSystem;

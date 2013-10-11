@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.path;
+package com.google.jimfs;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.Objects;

@@ -22,8 +22,6 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.jimfs.path.Normalization;
-import com.google.jimfs.path.PathType;
 
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.util.Collections;

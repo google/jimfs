@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.path;
+package com.google.jimfs;
 
 import java.nio.file.InvalidPathException;
 import java.util.Iterator;

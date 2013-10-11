@@ -24,7 +24,7 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-import com.google.jimfs.path.Normalization;
+import com.google.jimfs.Normalization;
 
 import org.junit.Before;
 import org.junit.Test;

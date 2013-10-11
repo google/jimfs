@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.path;
+package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.jimfs.path.PathType.ParseResult;
+import static com.google.jimfs.PathType.ParseResult;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
