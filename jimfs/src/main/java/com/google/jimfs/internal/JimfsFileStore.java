@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.jimfs.Jimfs;
 import com.google.jimfs.attribute.AttributeStore;
-import com.google.jimfs.common.IoSupplier;
+import com.google.jimfs.attribute.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.FileStore;

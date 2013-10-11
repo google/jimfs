@@ -22,7 +22,7 @@ import com.google.jimfs.attribute.AbstractAttributeView;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.common.IoSupplier;
+import com.google.jimfs.attribute.IoSupplier;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

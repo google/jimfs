@@ -17,7 +17,6 @@
 package com.google.jimfs.attribute;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.common.IoSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;

@@ -16,8 +16,6 @@
 
 package com.google.jimfs.attribute;
 
-import com.google.jimfs.common.IoSupplier;
-
 import java.nio.file.attribute.FileAttributeView;
 
 /**

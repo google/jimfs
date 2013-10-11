@@ -20,7 +20,6 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.common.IoSupplier;
 
 import org.junit.Before;
 import org.junit.Test;

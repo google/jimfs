@@ -28,7 +28,7 @@ import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeReader;
 import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.common.IoSupplier;
+import com.google.jimfs.attribute.IoSupplier;
 
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;

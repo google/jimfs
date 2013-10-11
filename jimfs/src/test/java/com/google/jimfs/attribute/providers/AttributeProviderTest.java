@@ -22,8 +22,8 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.collect.ImmutableMap;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.attribute.IoSupplier;
 import com.google.jimfs.attribute.TestAttributeStore;
-import com.google.jimfs.common.IoSupplier;
 
 import org.junit.Before;
 

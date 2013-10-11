@@ -18,8 +18,6 @@ package com.google.jimfs.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.jimfs.common.IoSupplier;
-
 import java.io.IOException;
 import java.nio.file.attribute.FileAttributeView;
 

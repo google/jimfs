@@ -14,10 +14,31 @@
  * limitations under the License.
  */
 
-/**
- * Package containing common interfaces and classes that don't belong anywhere else.
- */
-@ParametersAreNonnullByDefault
-package com.google.jimfs.common;
+package com.google.jimfs.attribute;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import java.io.IOException;
+
+/**
+ * Supplier that may throw {@link IOException}.
+ *
+ * @author Colin Decker
+ */
+public abstract class IoSupplier<T> {
+
+  /**
+   * Gets an object, throwing an exception if the object can't be retrieved for any reason.
+   */
+  public abstract T get() throws IOException;
+
+  /**
+   * Returns a supplier that always returns the given instance.
+   */
+  public static <T> IoSupplier<T> of(final T instance) {
+    return new IoSupplier<T>() {
+      @Override
+      public T get() {
+        return instance;
+      }
+    };
+  }
+}

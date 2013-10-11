@@ -23,12 +23,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.AttributeViews;
 import com.google.jimfs.attribute.BasicFileAttribute;
+import com.google.jimfs.attribute.IoSupplier;
 import com.google.jimfs.attribute.TestAttributeProvider;
 import com.google.jimfs.attribute.TestAttributeView;
 import com.google.jimfs.attribute.TestAttributes;
 import com.google.jimfs.attribute.providers.BasicAttributeProvider;
 import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
-import com.google.jimfs.common.IoSupplier;
 
 import org.junit.Before;
 import org.junit.Test;
