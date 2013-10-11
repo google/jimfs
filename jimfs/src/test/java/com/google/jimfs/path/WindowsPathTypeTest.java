@@ -16,7 +16,6 @@
 
 package com.google.jimfs.path;
 
-import static com.google.jimfs.path.CaseSensitivity.CASE_INSENSITIVE_ASCII;
 import static com.google.jimfs.path.PathType.windows;
 import static com.google.jimfs.path.PathTypeTest.assertParseResult;
 import static com.google.jimfs.path.PathTypeTest.assertUriRoundTripsCorrectly;
@@ -43,7 +42,7 @@ public class WindowsPathTypeTest {
     PathType windows = PathType.windows();
     ASSERT.that(windows.getSeparator()).is("\\");
     ASSERT.that(windows.getOtherSeparators()).is("/");
-    ASSERT.that(windows.getCaseSensitivity()).is(CASE_INSENSITIVE_ASCII);
+    ASSERT.that(windows.lookupNormalization()).is(Normalization.normalizedCaseInsensitiveAscii());
 
     // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
     PathType.ParseResult path = windows.parsePath("C:\\\\foo\\bar");

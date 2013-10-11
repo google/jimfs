@@ -16,8 +16,6 @@
 
 package com.google.jimfs.path;
 
-import static com.google.jimfs.path.CaseSensitivity.CASE_INSENSITIVE_ASCII;
-
 import java.nio.file.InvalidPathException;
 import java.util.Iterator;
 import java.util.regex.Matcher;
@@ -33,10 +31,11 @@ import javax.annotation.Nullable;
 final class WindowsPathType extends PathType {
 
   /**
-   * Default Windows path type, with ASCII case insensitive names, as Windows is case insensitive
-   * by default and ASCII case insensitivity should be fine for most usages.
+   * Default Windows path type, with normalized, ASCII case insensitive names. Windows is case
+   * insensitive by default and ASCII case insensitivity is probably fine for most usages.
    */
-  static final WindowsPathType INSTANCE = new WindowsPathType(CASE_INSENSITIVE_ASCII);
+  static final WindowsPathType INSTANCE =
+      new WindowsPathType(Normalization.normalizedCaseInsensitiveAscii(), Normalization.none());
 
   /**
    * Matches the C:foo\bar path format, which has a root (C:) and names (foo\bar) and matches
@@ -60,13 +59,18 @@ final class WindowsPathType extends PathType {
    */
   private static final Pattern TRAILING_SPACES = Pattern.compile("[ ]+(\\\\|$)");
 
-  WindowsPathType(CaseSensitivity caseSensitivity) {
-    super(caseSensitivity, true, '\\', '/');
+  WindowsPathType(Normalization lookupNormalization, Normalization pathNormalization) {
+    super(lookupNormalization, pathNormalization, true, '\\', '/');
   }
 
   @Override
-  public PathType withCaseSensitivity(CaseSensitivity caseSensitivity) {
-    return new WindowsPathType(caseSensitivity);
+  public PathType lookupNormalization(Normalization normalization) {
+    return new WindowsPathType(normalization, pathNormalization());
+  }
+
+  @Override
+  public PathType pathNormalization(Normalization normalization) {
+    return new WindowsPathType(lookupNormalization(), normalization);
   }
 
   @Override

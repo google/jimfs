@@ -43,15 +43,17 @@ public abstract class PathType {
    * disallowed in paths.
    */
   public static PathType unix() {
-    return UnixPathType.INSTANCE;
+    return UnixPathType.UNIX;
   }
 
   /**
-   * Returns a Unix-style path type. "/" is both the root and the only separator. Any path starting
-   * with "/" is considered absolute. Paths use the given case sensitivity setting.
+   * Returns a Mac OS X style path type. This path type is the same as the {@linkplain #unix() Unix}
+   * path type, but does Unicode normalization and uses case-insensitive lookup for ASCII
+   * characters. Additionally, names in {@code Path} objects are Unicode NFC normalized in an
+   * attempt to match the behavior of the real OS X {@code FileSystem} implementation.
    */
-  public static PathType unix(CaseSensitivity caseSensitivity) {
-    return new UnixPathType(caseSensitivity);
+  public static PathType osx() {
+    return UnixPathType.OS_X;
   }
 
   /**
@@ -73,26 +75,8 @@ public abstract class PathType {
     return WindowsPathType.INSTANCE;
   }
 
-  /**
-   * Returns a Windows-style path type. The canonical separator character is "\". "/" is also
-   * treated as a separator when parsing paths. Paths use the given case sensitivity setting.
-   *
-   * <p>As much as possible, this implementation follows the information provided in
-   * <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx">
-   * this article</a>. Paths with drive-letter roots (e.g. "C:\") and paths with UNC roots (e.g.
-   * "\\host\share\") are supported.
-   *
-   * <p>One thing in particular is not currently supported: relative paths containing a drive-letter
-   * root, for example "C:" or "C:foo\bar". Such paths have a root component and optionally have
-   * names, but are <i>relative</i> paths, relative to the working directory of the drive identified
-   * by the root. This has some fundamental conflicts with how JIMFS handles paths and file lookups,
-   * and so is not currently supported.
-   */
-  public static PathType windows(CaseSensitivity caseSensitivity) {
-    return new WindowsPathType(caseSensitivity);
-  }
-
-  private final CaseSensitivity caseSensitivity;
+  private final Normalization lookupNormalization;
+  private final Normalization pathNormalization;
   private final boolean allowsMultipleRoots;
   private final String separator;
   private final String otherSeparators;
@@ -100,15 +84,29 @@ public abstract class PathType {
   private final Splitter splitter;
 
   protected PathType(
-      CaseSensitivity caseSensitivity, boolean allowsMultipleRoots,
+      Normalization lookupNormalization, Normalization pathNormalization,
+      boolean allowsMultipleRoots,
       char separator, char... otherSeparators) {
-    this.caseSensitivity = checkNotNull(caseSensitivity);
+    this.lookupNormalization = checkNotNull(lookupNormalization);
+    this.pathNormalization = checkNotNull(pathNormalization);
     this.separator = String.valueOf(separator);
     this.allowsMultipleRoots = allowsMultipleRoots;
     this.otherSeparators = String.valueOf(otherSeparators);
     this.joiner = Joiner.on(separator);
     this.splitter = createSplitter(separator, otherSeparators);
   }
+
+  /**
+   * Returns a new path type identical to this one except using the given normalization settings
+   * for file lookups.
+   */
+  public abstract PathType lookupNormalization(Normalization normalization);
+
+  /**
+   * Returns a new path type identical to this one except using the given normalization settings
+   * for {@code Path} objects.
+   */
+  public abstract PathType pathNormalization(Normalization normalization);
 
   private static final char[] regexReservedChars = "^$.?+*\\[]{}()".toCharArray();
   static {
@@ -180,16 +178,21 @@ public abstract class PathType {
   }
 
   /**
-   * Returns the case sensitivity setting of paths of this type.
+   * Returns the normalization setting to be used for file lookups. This normalization does not
+   * affect the equality, sort ordering or {@code toString()} form of {@code Path} objects.
    */
-  public final CaseSensitivity getCaseSensitivity() {
-    return caseSensitivity;
+  public final Normalization lookupNormalization() {
+    return lookupNormalization;
   }
 
   /**
-   * Returns a new path type identical to this one except using the given case sensitivity.
+   * Returns the normalization setting to be used for {@code Path} objects. This normalization does
+   * affect the equality, sort ordering and {@code toString()} form of {@code Path} objects but
+   * does not affect lookup.
    */
-  public abstract PathType withCaseSensitivity(CaseSensitivity caseSensitivity);
+  public final Normalization pathNormalization() {
+    return pathNormalization;
+  }
 
   /**
    * Returns an empty path.

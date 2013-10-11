@@ -74,7 +74,7 @@ final class DirectoryTable implements FileContent {
    */
   public void setSuperRoot(File file) {
     // just set this table's entry to include the file
-    this.entry = new DirectoryEntry(file, Name.simple(""), file);
+    this.entry = new DirectoryEntry(file, Name.EMPTY, file);
   }
 
   /**

@@ -17,6 +17,7 @@
 package com.google.jimfs.path;
 
 import com.google.common.base.Ascii;
+import com.google.common.base.Objects;
 
 import com.ibm.icu.lang.UCharacter;
 
@@ -38,11 +39,24 @@ public final class Normalization {
    * affect anything returned to the user.
    */
 
+  private static final Normalization NONE
+      = new Normalization(null, null);
+  private static final Normalization CASE_INSENSITIVE
+      = new Normalization(null, CaseFolding.ICU4J);
+  private static final Normalization CASE_INSENSITIVE_ASCII
+      = new Normalization(null, CaseFolding.ASCII);
+  private static final Normalization NORMALIZED
+      = new Normalization(Normalizer.Form.NFC, null);
+  private static final Normalization NORMALIZED_CASE_INSENSITIVE
+      = new Normalization(Normalizer.Form.NFC, CaseFolding.ICU4J);
+  private static final Normalization NORMALIZED_CASE_INSENSITIVE_ASCII
+      = new Normalization(Normalizer.Form.NFC, CaseFolding.ASCII);
+
   /**
    * No normalization is done on paths. Paths are case sensitive.
    */
   public static Normalization none() {
-    return new Normalization(null, null);
+    return NONE;
   }
 
   /**
@@ -51,7 +65,7 @@ public final class Normalization {
    * <p>Requires ICU4J for case folding.
    */
   public static Normalization caseInsensitive() {
-    return new Normalization(null, CaseFolding.ICU4J);
+    return CASE_INSENSITIVE;
   }
 
   /**
@@ -63,21 +77,21 @@ public final class Normalization {
    * primarily to allow simple case insensitivity without that dependency.
    */
   public static Normalization caseInsensitiveAscii() {
-    return new Normalization(null, CaseFolding.ASCII);
+    return CASE_INSENSITIVE_ASCII;
   }
 
   /**
    * Paths are normalized with Unicode NFC normalization and are case sensitive.
    */
   public static Normalization normalized() {
-    return new Normalization(Normalizer.Form.NFC, null);
+    return NORMALIZED;
   }
 
   /**
    * Paths are normalized with Unicode NFC normalization and are case insensitive.
    */
   public static Normalization normalizedCaseInsensitive() {
-    return new Normalization(Normalizer.Form.NFC, CaseFolding.ICU4J);
+    return NORMALIZED_CASE_INSENSITIVE;
   }
 
   /**
@@ -90,7 +104,7 @@ public final class Normalization {
    * This option is provided primarily to allow simple case insensitivity without that dependency.
    */
   public static Normalization normalizedCaseInsensitiveAscii() {
-    return new Normalization(Normalizer.Form.NFC, CaseFolding.ASCII);
+    return NORMALIZED_CASE_INSENSITIVE_ASCII;
   }
 
   @Nullable
@@ -141,6 +155,28 @@ public final class Normalization {
     }
 
     return Pattern.compile(regex, flags);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof Normalization) {
+      Normalization other = (Normalization) obj;
+      return Objects.equal(form, other.form) && Objects.equal(folding, other.folding);
+    }
+    return false;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(form, folding);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("form", form)
+        .add("folding", folding)
+        .toString();
   }
 
   /**

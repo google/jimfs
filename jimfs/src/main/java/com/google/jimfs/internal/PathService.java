@@ -21,20 +21,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.jimfs.path.PathType.ParseResult;
 
-import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.jimfs.path.CaseSensitivity;
 import com.google.jimfs.path.PathType;
-
-import com.ibm.icu.text.Normalizer2;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.PathMatcher;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -46,26 +44,12 @@ import javax.annotation.Nullable;
 final class PathService {
 
   private final PathType type;
-  private final NameFactory nameFactory;
 
   private volatile FileSystem fileSystem;
   private volatile JimfsPath emptyPath;
 
   PathService(PathType type) {
     this.type = checkNotNull(type);
-    switch (type.getCaseSensitivity()) {
-      case CASE_SENSITIVE:
-        this.nameFactory = NameFactory.CASE_SENSITIVE;
-        break;
-      case CASE_INSENSITIVE_ASCII:
-        this.nameFactory = NameFactory.CASE_INSENSITIVE_ASCII;
-        break;
-      case CASE_INSENSITIVE_UNICODE:
-        this.nameFactory = NameFactory.CASE_INSENSITIVE_UNICODE;
-        break;
-      default:
-        throw new AssertionError();
-    }
   }
 
   /**
@@ -98,7 +82,7 @@ final class PathService {
     JimfsPath result = emptyPath;
     if (result == null) {
       // use createPathInternal to avoid recursive call from createPath()
-      result = createPathInternal(null, ImmutableList.of(nameFactory.name("")));
+      result = createPathInternal(null, ImmutableList.of(Name.EMPTY));
       emptyPath = result;
       return result;
     }
@@ -109,14 +93,18 @@ final class PathService {
    * Returns the {@link Name} form of the given string.
    */
   public Name name(String name) {
-    return nameFactory.name(name);
+    return Name.normalized(name, type.pathNormalization(), type.lookupNormalization());
   }
 
   /**
    * Returns the {@link Name} forms of the given strings.
    */
   public Iterable<Name> names(Iterable<String> names) {
-    return nameFactory.names(names);
+    List<Name> result = new ArrayList<>();
+    for (String name : names) {
+      result.add(name(name));
+    }
+    return result;
   }
 
   /**
@@ -170,8 +158,8 @@ final class PathService {
   }
 
   private JimfsPath toPath(ParseResult parsed) {
-    Name root = parsed.root() == null ? null : nameFactory.name(parsed.root());
-    Iterable<Name> names = nameFactory.names(parsed.names());
+    Name root = parsed.root() == null ? null : name(parsed.root());
+    Iterable<Name> names = names(parsed.names());
     return createPath(root, names);
   }
 
@@ -218,40 +206,4 @@ final class PathService {
       return !input.toString().isEmpty();
     }
   };
-
-  /**
-   * Equivalents to {@link CaseSensitivity} values that implement the creation of name objects for
-   * the case sensitivity setting.
-   */
-  private enum NameFactory implements Function<String, Name> {
-    CASE_SENSITIVE {
-      @Override
-      public Name name(String string) {
-        return Name.simple(string);
-      }
-    },
-    CASE_INSENSITIVE_ASCII {
-      @Override
-      public Name name(String string) {
-        return Name.caseInsensitiveAscii(string);
-      }
-    },
-    CASE_INSENSITIVE_UNICODE {
-      @Override
-      public Name name(String string) {
-        return Name.normalizing(string, Normalizer2.getNFKCCasefoldInstance());
-      }
-    };
-
-    public abstract Name name(String string);
-
-    @Override
-    public final Name apply(String string) {
-      return name(string);
-    }
-
-    public final Iterable<Name> names(Iterable<String> strings) {
-      return Iterables.transform(strings, this);
-    }
-  }
 }

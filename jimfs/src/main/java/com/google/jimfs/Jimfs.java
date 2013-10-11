@@ -24,7 +24,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.jimfs.path.CaseSensitivity;
 import com.google.jimfs.path.PathType;
 
 import java.io.IOException;
@@ -254,14 +253,6 @@ public final class Jimfs {
      */
     public Configuration setName(String name) {
       this.name = checkNotNull(name);
-      return this;
-    }
-
-    /**
-     * Sets the case sensitivity that should be used in file lookups for the file system.
-     */
-    public Configuration setPathCaseSensitivity(CaseSensitivity caseSensitivity) {
-      pathType = pathType.withCaseSensitivity(caseSensitivity);
       return this;
     }
 

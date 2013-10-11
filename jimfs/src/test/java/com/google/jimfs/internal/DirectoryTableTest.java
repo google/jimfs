@@ -24,8 +24,7 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-
-import com.ibm.icu.text.Normalizer2;
+import com.google.jimfs.path.Normalization;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -273,6 +272,6 @@ public class DirectoryTableTest {
   }
 
   private static Name caseInsensitive(String name) {
-    return Name.normalizing(name, Normalizer2.getNFKCCasefoldInstance());
+    return Name.normalized(name, Normalization.none(), Normalization.caseInsensitive());
   }
 }

@@ -17,7 +17,6 @@
 package com.google.jimfs.path;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.jimfs.path.CaseSensitivity.CASE_SENSITIVE;
 
 import java.nio.file.InvalidPathException;
 
@@ -31,17 +30,29 @@ import javax.annotation.Nullable;
 final class UnixPathType extends PathType {
 
   /**
-   * Default Unix path type, with case sensitive names as in Linux.
+   * Default Unix path type, with non-normalized, case sensitive names as in Linux.
    */
-  static final UnixPathType INSTANCE = new UnixPathType(CASE_SENSITIVE);
+  static final PathType UNIX =
+      new UnixPathType(Normalization.none(), Normalization.none());
 
-  UnixPathType(CaseSensitivity caseSensitivity) {
-    super(caseSensitivity, false, '/');
+  /**
+   * Unix path type with normalized, case insensitive (ASCII) names as in Mac OS X.
+   */
+  static final PathType OS_X = new UnixPathType(
+      Normalization.normalizedCaseInsensitiveAscii(), Normalization.normalized());
+
+  UnixPathType(Normalization lookupNormalization, Normalization pathNormalization) {
+    super(lookupNormalization, pathNormalization, false, '/');
   }
 
   @Override
-  public PathType withCaseSensitivity(CaseSensitivity caseSensitivity) {
-    return new UnixPathType(caseSensitivity);
+  public PathType lookupNormalization(Normalization normalization) {
+    return new UnixPathType(normalization, pathNormalization());
+  }
+
+  @Override
+  public PathType pathNormalization(Normalization normalization) {
+    return new UnixPathType(lookupNormalization(), normalization);
   }
 
   @Override

@@ -16,7 +16,6 @@
 
 package com.google.jimfs.path;
 
-import static com.google.jimfs.path.CaseSensitivity.CASE_SENSITIVE;
 import static com.google.jimfs.path.PathTypeTest.assertParseResult;
 import static com.google.jimfs.path.PathTypeTest.assertUriRoundTripsCorrectly;
 import static com.google.jimfs.path.PathTypeTest.fileSystemUri;
@@ -43,7 +42,7 @@ public class UnixPathTypeTest {
     PathType unix = PathType.unix();
     ASSERT.that(unix.getSeparator()).is("/");
     ASSERT.that(unix.getOtherSeparators()).is("");
-    ASSERT.that(unix.getCaseSensitivity()).is(CASE_SENSITIVE);
+    ASSERT.that(unix.lookupNormalization()).is(Normalization.none());
 
     // "//foo/bar" is what will be passed to parsePath if "/", "foo", "bar" is passed to getPath
     PathType.ParseResult path = unix.parsePath("//foo/bar");

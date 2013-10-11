@@ -25,7 +25,7 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.jimfs.path.CaseSensitivity;
+import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
 import org.junit.Before;
@@ -73,10 +73,15 @@ public class FileTreeTest {
    * roots in addition to /, allowing for up to three roots.
    */
   private final PathService pathService = fakePathService(
-      new PathType(CaseSensitivity.CASE_SENSITIVE, true, '/') {
+      new PathType(Normalization.none(), Normalization.none(), true, '/') {
         @Override
-        public PathType withCaseSensitivity(CaseSensitivity caseSensitivity) {
-          return this; // ignore
+        public PathType lookupNormalization(Normalization normalization) {
+          return null; // unneeded
+        }
+
+        @Override
+        public PathType pathNormalization(Normalization normalization) {
+          return null; // unneeded
         }
 
         @Override

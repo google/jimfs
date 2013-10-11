@@ -18,47 +18,42 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Ascii;
-
-import com.ibm.icu.text.Normalizer2;
-
-import java.text.CollationKey;
-import java.text.Collator;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.jimfs.path.Normalization;
 
 /**
  * Immutable representation of a file name. Used both for the name components of paths and as the
  * keys for directory entries.
  *
- * <p>A name's string representation (returned by {@code toString()} is always the original string
- * it was created from. A {@linkplain #simple} name just contains the string itself. Other names
- * also have a normalized (in some way) canonical form which is used for determining the equality
- * of two names but never displayed or used for anything else.
+ * <p>A name has both a display string (used in the {@code toString()} form of a {@code Path} as
+ * well as for {@code Path} equality and sort ordering) and a canonical string, which is used for
+ * determining equality of the name during file lookup.
  *
- * <p>Different types of names (with different canonical forms) may not equal one another even if
- * they effectively have the same canonical form, as the canonical form is not required to be a
- * string.
- *
- * <p>Note: all factory methods return a constant simple name instance when given the original
- * string "." or "..", ensuring that those names can be accessed statically elsewhere in the code
- * while still being equal to any names created for those values, regardless of case sensitivity
- * settings.
+ * <p>Note: all factory methods return a constant name instance when given the original string "."
+ * or "..", ensuring that those names can be accessed statically elsewhere in the code while still
+ * being equal to any names created for those values, regardless of normalization settings.
  *
  * @author Colin Decker
  */
-abstract class Name {
+final class Name {
 
   /**
-   * Returns the name to use for a link to the same directory.
+   * The empty name.
    */
-  public static final Name SELF = new SimpleName(".");
+  public static final Name EMPTY = new Name("", "");
 
   /**
-   * Returns the name to use for a link to a parent directory.
+   * The name to use for a link from a directory to itself.
    */
-  public static final Name PARENT = new SimpleName("..");
+  public static final Name SELF = new Name(".", ".");
 
   /**
-   * Creates a new name with the name itself as the canonical form.
+   * The name to use for a link from a directory to its parent directory.
+   */
+  public static final Name PARENT = new Name("..", "..");
+
+  /**
+   * Creates a new name with no normalization done on the given string.
    */
   public static Name simple(String name) {
     switch (name) {
@@ -67,82 +62,47 @@ abstract class Name {
       case "..":
         return PARENT;
       default:
-        return new SimpleName(name);
+        return new Name(name, name);
     }
   }
 
   /**
-   * Creates a new name with a {@link CollationKey} created from it by the given collator as the
-   * canonical form.
+   * Creates a new name that is normalized with the given normalization settings. The string form
+   * of the name is normalized with the given {@code displayNormalization} while the canonical form
+   * is normalized with the given {@code canonicalNormalization}.
    */
-  public static Name collating(String name, Collator collator) {
+  public static Name normalized(String name,
+      Normalization displayNormalization,
+      Normalization canonicalNormalization) {
     switch (name) {
       case ".":
         return SELF;
       case "..":
         return PARENT;
       default:
-        return new CanonicalFormName(name, collator.getCollationKey(name));
+        return new Name(
+            displayNormalization.normalize(name), canonicalNormalization.normalize(name));
     }
   }
 
-  /**
-   * Creates a new name with a canonical form created by normalizing it with the given normalizer.
-   */
-  public static Name normalizing(String name, Normalizer2 normalizer) {
-    switch (name) {
-      case ".":
-        return SELF;
-      case "..":
-        return PARENT;
-      default:
-        return new CanonicalFormName(name, normalizer.normalize(name));
-    }
-  }
-
-  /**
-   * Creates a new name with itself with all upper-case ASCII characters normalized to lower-case
-   * as the canonical form.
-   */
-  public static Name caseInsensitiveAscii(String name) {
-    switch (name) {
-      case ".":
-        return SELF;
-      case "..":
-        return PARENT;
-      default:
-        return new CanonicalFormName(name, Ascii.toLowerCase(name));
-    }
-  }
-
-  /**
-   * Creates a new name with the given original string value and the given canonical value.
-   */
-  public static Name create(String original, Object canonical) {
-    switch (original) {
-      case ".":
-        return SELF;
-      case "..":
-        return PARENT;
-      default:
-        return new CanonicalFormName(original, canonical);
-    }
-  }
-
-  protected final String string;
+  private final String display;
+  private final String canonical;
   private final int hashCode;
 
-  private Name(String string, int hashCode) {
-    this.string = checkNotNull(string);
-    this.hashCode = hashCode;
+  @VisibleForTesting
+  Name(String display, String canonical) {
+    this.display = checkNotNull(display);
+    this.canonical = checkNotNull(canonical);
+    this.hashCode = canonical.hashCode();
   }
 
-  /**
-   * Returns the original string form of this name.
-   */
   @Override
-  public final String toString() {
-    return string;
+  public boolean equals(Object obj) {
+    if (obj instanceof Name) {
+      Name other = (Name) obj;
+      return canonical.equals(other.canonical);
+    }
+    return false;
   }
 
   @Override
@@ -150,40 +110,8 @@ abstract class Name {
     return hashCode;
   }
 
-  /**
-   * Simple name wrapping a string.
-   */
-  private static final class SimpleName extends Name {
-
-    private SimpleName(String string) {
-      super(string, string.hashCode());
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof SimpleName && ((SimpleName) obj).string.equals(string);
-    }
-  }
-
-  /**
-   * A name that uses a separate canonical form field for equality.
-   */
-  private static final class CanonicalFormName extends Name {
-
-    private final Object canonical;
-
-    private CanonicalFormName(String string, Object canonical) {
-      super(string, canonical.hashCode());
-      this.canonical = canonical;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (obj instanceof CanonicalFormName) {
-        CanonicalFormName other = (CanonicalFormName) obj;
-        return canonical.equals(other.canonical);
-      }
-      return false;
-    }
+  @Override
+  public final String toString() {
+    return display;
   }
 }

@@ -22,12 +22,9 @@ import com.google.caliper.Param;
 import com.google.caliper.runner.CaliperMain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.jimfs.path.Normalization;
 
-import com.ibm.icu.text.Normalizer2;
-
-import java.text.Collator;
 import java.util.Iterator;
-import java.util.Locale;
 import java.util.Random;
 
 /**
@@ -38,13 +35,6 @@ public class NameBenchmark {
   private static final int CHAR_RANGE_START = '.';
   private static final int CHAR_RANGE_END = 'z';
   private static final int CHAR_RANGE_LENGTH = CHAR_RANGE_END - CHAR_RANGE_START;
-
-  private static final Collator COLLATOR = Collator.getInstance(Locale.US);
-  private static final Normalizer2 NORMALIZER = Normalizer2.getNFKCCasefoldInstance();
-
-  static {
-    COLLATOR.setStrength(Collator.SECONDARY);
-  }
 
   @Param
   private NameImpl implementation;
@@ -91,7 +81,7 @@ public class NameBenchmark {
     Iterator<String> iterator = strings.iterator();
     int result = 0;
     for (int i = 0; i < reps; i++) {
-      result ^= implementation.create(iterator.next()).toString().length();
+      result ^= implementation.create(iterator.next()).hashCode();
     }
     return result;
   }
@@ -117,31 +107,55 @@ public class NameBenchmark {
 
   @SuppressWarnings("unused")
   private enum NameImpl {
-    SIMPLE {
+    NONE {
       @Override
       Name create(String string) {
-        return Name.simple(string);
+        return Name.normalized(string, Normalization.none(), Normalization.none());
       }
     },
 
-    COLLATING {
+    NORMALIZED {
       @Override
       Name create(String string) {
-        return Name.collating(string, COLLATOR);
+        return Name.normalized(string, Normalization.none(), Normalization.normalized());
       }
     },
 
-    NORMALIZING {
+    CASE_INSENSITIVE {
       @Override
       Name create(String string) {
-        return Name.normalizing(string, NORMALIZER);
+        return Name.normalized(string, Normalization.none(), Normalization.caseInsensitive());
       }
     },
 
     CASE_INSENSITIVE_ASCII {
       @Override
       Name create(String string) {
-        return Name.caseInsensitiveAscii(string);
+        return Name.normalized(string, Normalization.none(), Normalization.caseInsensitiveAscii());
+      }
+    },
+
+    NORMALIZED_CASE_INSENSITIVE {
+      @Override
+      Name create(String string) {
+        return Name.normalized(string,
+            Normalization.none(), Normalization.normalizedCaseInsensitive());
+      }
+    },
+
+    NORMALIZED_CASE_INSENSITIVE_ASCII {
+      @Override
+      Name create(String string) {
+        return Name.normalized(string,
+            Normalization.none(), Normalization.normalizedCaseInsensitiveAscii());
+      }
+    },
+
+    NORMALIZED_CASE_INSENSITIVE_ASCII_WITH_PATH_NORMALIZED {
+      @Override
+      Name create(String string) {
+        return Name.normalized(string,
+            Normalization.normalized(), Normalization.normalizedCaseInsensitiveAscii());
       }
     };
 
