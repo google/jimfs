@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.AttributeViews;
 import com.google.jimfs.attribute.BasicFileAttribute;
-import com.google.jimfs.attribute.IoSupplier;
+import com.google.jimfs.attribute.FileMetadataSupplier;
 import com.google.jimfs.attribute.TestAttributeProvider;
 import com.google.jimfs.attribute.TestAttributeView;
 import com.google.jimfs.attribute.TestAttributes;
@@ -240,7 +240,7 @@ public class AttributeServiceTest {
     File file = new File(0L, new StubByteStore(0));
     service.setInitialAttributes(file);
 
-    IoSupplier<File> fileSupplier = IoSupplier.of(file);
+    FileMetadataSupplier fileSupplier = FileMetadataSupplier.of(file);
 
     ASSERT.that(service.getFileAttributeView(fileSupplier, TestAttributeView.class))
         .isNotNull();
@@ -257,7 +257,7 @@ public class AttributeServiceTest {
   @Test
   public void testGetFileAttributeView_isNullForUnsupportedView() {
     File file = new File(0L, new StubByteStore(0));
-    IoSupplier<File> fileSupplier = IoSupplier.of(file);
+    FileMetadataSupplier fileSupplier = FileMetadataSupplier.of(file);
     ASSERT.that(service.getFileAttributeView(fileSupplier, PosixFileAttributeView.class))
         .isNull();
   }

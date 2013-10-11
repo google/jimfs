@@ -46,7 +46,7 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
   @Test
   public void testInitialAttributes() {
     for (String attribute : DOS_ATTRIBUTES) {
-      ASSERT.that(provider.get(store, attribute)).is(false);
+      ASSERT.that(provider.get(metadata, attribute)).is(false);
     }
   }
 
@@ -60,7 +60,7 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
 
   @Test
   public void testView() throws IOException {
-    DosFileAttributeView view = provider.getView(attributeStoreSupplier());
+    DosFileAttributeView view = provider.getView(metadataSupplier());
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("dos");
@@ -93,15 +93,15 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
 
   @Test
   public void testAttributes() {
-    DosFileAttributes attrs = provider.read(store);
+    DosFileAttributes attrs = provider.read(metadata);
     ASSERT.that(attrs.isHidden()).isFalse();
     ASSERT.that(attrs.isArchive()).isFalse();
     ASSERT.that(attrs.isReadOnly()).isFalse();
     ASSERT.that(attrs.isSystem()).isFalse();
 
-    store.setAttribute("dos:hidden", true);
+    metadata.setAttribute("dos:hidden", true);
 
-    attrs = provider.read(store);
+    attrs = provider.read(metadata);
     ASSERT.that(attrs.isHidden()).isTrue();
     ASSERT.that(attrs.isArchive()).isFalse();
     ASSERT.that(attrs.isReadOnly()).isFalse();

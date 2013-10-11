@@ -19,25 +19,26 @@ package com.google.jimfs.attribute;
 import java.io.IOException;
 
 /**
- * Supplier that may throw {@link IOException}.
+ * Supplier for retrieving {@link FileMetadata}, either by looking up the file or by just returning
+ * the already located metadata.
  *
  * @author Colin Decker
  */
-public abstract class IoSupplier<T> {
+public abstract class FileMetadataSupplier {
 
   /**
-   * Gets an object, throwing an exception if the object can't be retrieved for any reason.
+   * Gets the file metadata, throwing an exception if it can't be retrieved for any reason.
    */
-  public abstract T get() throws IOException;
+  public abstract FileMetadata getMetadata() throws IOException;
 
   /**
-   * Returns a supplier that always returns the given instance.
+   * Returns a supplier that always returns the given metadata.
    */
-  public static <T> IoSupplier<T> of(final T instance) {
-    return new IoSupplier<T>() {
+  public static FileMetadataSupplier of(final FileMetadata metadata) {
+    return new FileMetadataSupplier() {
       @Override
-      public T get() {
-        return instance;
+      public FileMetadata getMetadata() {
+        return metadata;
       }
     };
   }

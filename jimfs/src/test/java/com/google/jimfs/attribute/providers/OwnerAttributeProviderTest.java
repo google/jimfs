@@ -38,7 +38,7 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(store, "owner")).isEqualTo(createUserPrincipal("user"));
+    ASSERT.that(provider.get(metadata, "owner")).isEqualTo(createUserPrincipal("user"));
   }
 
   @Test
@@ -49,7 +49,7 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
   @Test
   public void testView() throws IOException {
-    FileOwnerAttributeView view = provider.getView(attributeStoreSupplier());
+    FileOwnerAttributeView view = provider.getView(metadataSupplier());
     assert view != null;
 
     ASSERT.that(view.name()).is("owner");
@@ -57,6 +57,6 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
     view.setOwner(createUserPrincipal("root"));
     ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("root"));
-    ASSERT.that(store.getAttribute("owner:owner")).isEqualTo(createUserPrincipal("root"));
+    ASSERT.that(metadata.getAttribute("owner:owner")).isEqualTo(createUserPrincipal("root"));
   }
 }

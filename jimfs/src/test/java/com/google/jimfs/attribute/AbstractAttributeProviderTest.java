@@ -39,11 +39,11 @@ public class AbstractAttributeProviderTest {
 
   private static final TestAttributeProvider PROVIDER = new TestAttributeProvider();
 
-  private AttributeStore store;
+  private FileMetadata store;
 
   @Before
   public void setUp() {
-    store = new TestAttributeStore(0, TestAttributeStore.Type.REGULAR_FILE);
+    store = new TestFileMetadata(0, TestFileMetadata.Type.REGULAR_FILE);
   }
 
   @Test
@@ -134,7 +134,7 @@ public class AbstractAttributeProviderTest {
 
     PROVIDER.setInitial(store);
 
-    TestAttributeView view = PROVIDER.getView(IoSupplier.of(store));
+    TestAttributeView view = PROVIDER.getView(FileMetadataSupplier.of(store));
 
     ASSERT.that(view.name()).is("test");
 

@@ -21,9 +21,9 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.AttributeStore;
-import com.google.jimfs.attribute.IoSupplier;
-import com.google.jimfs.attribute.TestAttributeStore;
+import com.google.jimfs.attribute.FileMetadata;
+import com.google.jimfs.attribute.FileMetadataSupplier;
+import com.google.jimfs.attribute.TestFileMetadata;
 
 import org.junit.Before;
 
@@ -37,7 +37,7 @@ import java.util.Map;
 public abstract class AttributeProviderTest<P extends AttributeProvider> {
 
   protected P provider;
-  protected TestAttributeStore store;
+  protected TestFileMetadata metadata;
 
   /**
    * Create the needed providers, including the provider being tested.
@@ -47,16 +47,16 @@ public abstract class AttributeProviderTest<P extends AttributeProvider> {
   @Before
   public void setUp() {
     this.provider = createProvider();
-    this.store = new TestAttributeStore(0, TestAttributeStore.Type.DIRECTORY);
-    provider.setInitial(store);
+    this.metadata = new TestFileMetadata(0, TestFileMetadata.Type.DIRECTORY);
+    provider.setInitial(metadata);
   }
 
-  protected IoSupplier<AttributeStore> attributeStoreSupplier() {
-    return IoSupplier.<AttributeStore>of(store);
+  protected FileMetadataSupplier metadataSupplier() {
+    return FileMetadataSupplier.of(metadata);
   }
 
   protected void assertContainsAll(
-      AttributeStore store, ImmutableMap<String, Object> expectedAttributes) {
+      FileMetadata store, ImmutableMap<String, Object> expectedAttributes) {
     for (Map.Entry<String, Object> entry : expectedAttributes.entrySet()) {
       String attribute = entry.getKey();
       Object value = entry.getValue();
@@ -66,13 +66,13 @@ public abstract class AttributeProviderTest<P extends AttributeProvider> {
   }
 
   protected void assertSetAndGetSucceeds(String attribute, Object value) {
-    ASSERT.that(provider.isSettable(store, attribute));
-    provider.set(store, attribute, value);
-    ASSERT.that(provider.get(store, attribute)).is(value);
+    ASSERT.that(provider.isSettable(metadata, attribute));
+    provider.set(metadata, attribute, value);
+    ASSERT.that(provider.get(metadata, attribute)).is(value);
   }
 
   protected void assertCannotSet(String attribute) {
-    ASSERT.that(provider.isSettable(store, attribute)).isFalse();
+    ASSERT.that(provider.isSettable(metadata, attribute)).isFalse();
   }
 
   @SuppressWarnings("EmptyCatchBlock")
@@ -89,7 +89,7 @@ public abstract class AttributeProviderTest<P extends AttributeProvider> {
       // if the value was one of the accepted types, need to try setting it to see if there are any
       // further checks that cause it to fail
       try {
-        provider.set(store, attribute, value);
+        provider.set(metadata, attribute, value);
         fail();
       } catch (Exception expected) {
       }

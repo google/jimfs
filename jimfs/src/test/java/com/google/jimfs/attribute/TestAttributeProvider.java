@@ -56,26 +56,26 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public void set(AttributeStore store, String attribute, Object value) {
+  public void set(FileMetadata metadata, String attribute, Object value) {
     if (attribute.equals("bar")) {
-      store.setAttribute(BAR.key(), ((Number) value).longValue());
+      metadata.setAttribute(BAR.key(), ((Number) value).longValue());
     } else {
-      super.set(store, attribute, value);
+      super.set(metadata, attribute, value);
     }
   }
 
   @Override
-  public void setInitial(AttributeStore store) {
-    store.setAttribute(BAR.key(), 0L);
-    store.setAttribute(BAZ.key(), 1);
+  public void setInitial(FileMetadata metadata) {
+    metadata.setAttribute(BAR.key(), 0L);
+    metadata.setAttribute(BAZ.key(), 1);
   }
 
   @Override
-  public Object get(AttributeStore store, String attribute) {
+  public Object get(FileMetadata metadata, String attribute) {
     if (attribute.equals("foo")) {
       return "hello";
     }
-    return super.get(store, attribute);
+    return super.get(metadata, attribute);
   }
 
   @Override
@@ -84,9 +84,9 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public TestAttributes read(AttributeStore store) {
+  public TestAttributes read(FileMetadata metadata) {
     try {
-      return getView(IoSupplier.of(store)).readAttributes();
+      return getView(FileMetadataSupplier.of(metadata)).readAttributes();
     } catch (IOException unexpected) {
       throw new AssertionError(unexpected);
     }
@@ -98,14 +98,14 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public TestAttributeView getView(IoSupplier<? extends AttributeStore> fileProvider) {
-    return new View(this, fileProvider);
+  public TestAttributeView getView(FileMetadataSupplier supplier) {
+    return new View(this, supplier);
   }
 
   public static final class View extends AbstractAttributeView implements TestAttributeView {
 
-    public View(AttributeProvider attributeProvider, IoSupplier<? extends AttributeStore> fileProvider) {
-      super(attributeProvider, fileProvider);
+    public View(AttributeProvider attributeProvider, FileMetadataSupplier supplier) {
+      super(attributeProvider, supplier);
     }
 
     @Override

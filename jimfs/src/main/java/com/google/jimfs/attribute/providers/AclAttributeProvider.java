@@ -23,9 +23,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
 import com.google.jimfs.attribute.Attribute;
-import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.attribute.IoSupplier;
+import com.google.jimfs.attribute.FileMetadata;
+import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.AclEntry;
@@ -74,12 +74,12 @@ public final class AclAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public void setInitial(AttributeStore store) {
-    set(store, ACL, defaultAcl);
+  public void setInitial(FileMetadata metadata) {
+    set(metadata, ACL, defaultAcl);
   }
 
   @Override
-  public void set(AttributeStore store, String attribute, Object value) {
+  public void set(FileMetadata metadata, String attribute, Object value) {
     switch (attribute) {
       case ACL:
         List<?> list = (List<?>) value;
@@ -91,10 +91,10 @@ public final class AclAttributeProvider extends AbstractAttributeProvider
                 + obj.getClass());
           }
         }
-        super.set(store, attribute, ImmutableList.copyOf(list));
+        super.set(metadata, attribute, ImmutableList.copyOf(list));
         break;
       default:
-        super.set(store, attribute, value);
+        super.set(metadata, attribute, value);
     }
   }
 
@@ -104,7 +104,7 @@ public final class AclAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public AclFileAttributeView getView(IoSupplier<? extends AttributeStore> supplier) {
+  public AclFileAttributeView getView(FileMetadataSupplier supplier) {
     return new View(this, supplier);
   }
 
@@ -113,7 +113,7 @@ public final class AclAttributeProvider extends AbstractAttributeProvider
     private final FileOwnerAttributeView ownerView;
 
     public View(
-        AclAttributeProvider attributeProvider, IoSupplier<? extends AttributeStore> supplier) {
+        AclAttributeProvider attributeProvider, FileMetadataSupplier supplier) {
       super(attributeProvider, supplier);
       this.ownerView = attributeProvider.owner.getView(supplier);
     }

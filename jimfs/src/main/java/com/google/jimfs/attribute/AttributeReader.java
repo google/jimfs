@@ -34,7 +34,7 @@ public interface AttributeReader<A extends BasicFileAttributes> extends Attribut
 
   /**
    * Returns an immutable attributes object containing the current value of one or more attributes
-   * from the given store.
+   * from the given metadata.
    */
-  A read(AttributeStore store);
+  A read(FileMetadata metadata);
 }

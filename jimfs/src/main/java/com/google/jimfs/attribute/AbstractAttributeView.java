@@ -29,10 +29,10 @@ import java.nio.file.attribute.FileAttributeView;
 public abstract class AbstractAttributeView implements FileAttributeView {
 
   private final AttributeProvider attributeProvider;
-  private final IoSupplier<? extends AttributeStore> supplier;
+  private final FileMetadataSupplier supplier;
 
-  public AbstractAttributeView(AttributeProvider attributeProvider,
-      IoSupplier<? extends AttributeStore> supplier) {
+  public AbstractAttributeView(
+      AttributeProvider attributeProvider, FileMetadataSupplier supplier) {
     this.attributeProvider = checkNotNull(attributeProvider);
     this.supplier = checkNotNull(supplier);
   }
@@ -43,10 +43,10 @@ public abstract class AbstractAttributeView implements FileAttributeView {
   }
 
   /**
-   * Gets the attribute store to get or set attributes on.
+   * Gets the file metadata object to get or set attributes on.
    */
-  public final AttributeStore store() throws IOException {
-    return supplier.get();
+  public final FileMetadata getFileMetadata() throws IOException {
+    return supplier.getMetadata();
   }
 
   /**
@@ -61,13 +61,13 @@ public abstract class AbstractAttributeView implements FileAttributeView {
    */
   @SuppressWarnings("unchecked")
   public final <V> V get(String attribute) throws IOException {
-    return (V) attributeProvider.get(store(), attribute);
+    return (V) attributeProvider.get(getFileMetadata(), attribute);
   }
 
   /**
    * Sets the value of the given attribute for the file located by this view.
    */
   public final void set(String attribute, Object value) throws IOException {
-    attributeProvider.set(store(), attribute, value);
+    attributeProvider.set(getFileMetadata(), attribute, value);
   }
 }

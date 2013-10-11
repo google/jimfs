@@ -41,12 +41,12 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Test
   public void testInitialAttributes() {
-    long time = store.getCreationTime();
+    long time = metadata.getCreationTime();
     ASSERT.that(time).isNotEqualTo(0L);
-    ASSERT.that(time).isEqualTo(store.getLastAccessTime());
-    ASSERT.that(time).isEqualTo(store.getLastModifiedTime());
+    ASSERT.that(time).isEqualTo(metadata.getLastAccessTime());
+    ASSERT.that(time).isEqualTo(metadata.getLastModifiedTime());
 
-    assertContainsAll(store,
+    assertContainsAll(metadata,
         ImmutableMap.<String, Object>builder()
             .put("fileKey", 0L)
             .put("size", 0L)
@@ -74,7 +74,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Test
   public void testView() throws IOException {
-    BasicFileAttributeView view = provider.getView(attributeStoreSupplier());
+    BasicFileAttributeView view = provider.getView(metadataSupplier());
     assert view != null;
     ASSERT.that(view.name()).is("basic");
 
@@ -102,7 +102,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Test
   public void testAttributes() {
-    BasicFileAttributes attrs = provider.read(store);
+    BasicFileAttributes attrs = provider.read(metadata);
     ASSERT.that(attrs.fileKey()).is(0L);
     ASSERT.that(attrs.isDirectory()).isTrue();
     ASSERT.that(attrs.isRegularFile()).isFalse();

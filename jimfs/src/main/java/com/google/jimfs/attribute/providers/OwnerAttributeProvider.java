@@ -22,9 +22,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
 import com.google.jimfs.attribute.Attribute;
-import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.attribute.IoSupplier;
+import com.google.jimfs.attribute.FileMetadata;
+import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileOwnerAttributeView;
@@ -68,8 +68,8 @@ public final class OwnerAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public void setInitial(AttributeStore store) {
-    set(store, OWNER, defaultOwner);
+  public void setInitial(FileMetadata metadata) {
+    set(metadata, OWNER, defaultOwner);
   }
 
   @Override
@@ -78,13 +78,13 @@ public final class OwnerAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public FileOwnerAttributeView getView(IoSupplier<? extends AttributeStore> supplier) {
+  public FileOwnerAttributeView getView(FileMetadataSupplier supplier) {
     return new View(supplier);
   }
 
   private class View extends AbstractAttributeView implements FileOwnerAttributeView {
 
-    public View(IoSupplier<? extends AttributeStore> supplier) {
+    public View(FileMetadataSupplier supplier) {
       super(OwnerAttributeProvider.this, supplier);
     }
 

@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
-import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.attribute.FileMetadata;
 
 import java.util.Collections;
 import java.util.Set;
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * @author Colin Decker
  */
-final class File implements AttributeStore {
+final class File implements FileMetadata {
 
   private final long id;
 

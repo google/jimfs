@@ -21,9 +21,9 @@ import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.AbstractAttributeView;
 import com.google.jimfs.attribute.Attribute;
 import com.google.jimfs.attribute.AttributeReader;
-import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.attribute.IoSupplier;
+import com.google.jimfs.attribute.FileMetadata;
+import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -74,11 +74,11 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
   }
 
   @Override
-  public void setInitial(AttributeStore store) {
-    set(store, READ_ONLY, false);
-    set(store, HIDDEN, false);
-    set(store, ARCHIVE, false);
-    set(store, SYSTEM, false);
+  public void setInitial(FileMetadata metadata) {
+    set(metadata, READ_ONLY, false);
+    set(metadata, HIDDEN, false);
+    set(metadata, ARCHIVE, false);
+    set(metadata, SYSTEM, false);
   }
 
   @Override
@@ -87,7 +87,7 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
   }
 
   @Override
-  public DosFileAttributeView getView(IoSupplier<? extends AttributeStore> supplier) {
+  public DosFileAttributeView getView(FileMetadataSupplier supplier) {
     return new View(this, supplier);
   }
 
@@ -97,9 +97,9 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
   }
 
   @Override
-  public DosFileAttributes read(AttributeStore store) {
+  public DosFileAttributes read(FileMetadata metadata) {
     try {
-      return getView(IoSupplier.of(store)).readAttributes();
+      return getView(FileMetadataSupplier.of(metadata)).readAttributes();
     } catch (IOException e) {
       throw new AssertionError(e); // IoSupplier.of doesn't throw IOException
     }
@@ -113,7 +113,7 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
     private final BasicFileAttributeView basicView;
 
     public View(
-        DosAttributeProvider attributeProvider, IoSupplier<? extends AttributeStore> supplier) {
+        DosAttributeProvider attributeProvider, FileMetadataSupplier supplier) {
       super(attributeProvider, supplier);
       this.basicView = BasicAttributeProvider.INSTANCE.getView(supplier);
     }

@@ -41,25 +41,26 @@ public interface AttributeProvider {
   ImmutableSet<String> inherits();
 
   /**
-   * Reads all of the attributes associated with this provider from the given store into the given
-   * map.
+   * Reads all of the attributes associated with this provider from the given metadata into the
+   * given map.
    */
-  void readAll(AttributeStore attributes, Map<String, Object> map);
+  void readAll(FileMetadata metadata, Map<String, Object> map);
 
   /**
-   * Sets any initial attributes in the given store.
+   * Sets any initial attributes in the given metadata.
    */
-  void setInitial(AttributeStore store);
+  void setInitial(FileMetadata metadata);
 
   /**
-   * Returns whether or not it's currently possible to get the given attribute from the given store.
+   * Returns whether or not it's currently possible to get the given attribute from the given
+   * metadata.
    */
-  boolean isGettable(AttributeStore store, String attribute);
+  boolean isGettable(FileMetadata metadata, String attribute);
 
   /**
-   * Returns the value of the given attribute in the given store.
+   * Returns the value of the given attribute in the given metadata.
    */
-  Object get(AttributeStore store, String attribute);
+  Object get(FileMetadata metadata, String attribute);
 
   /**
    * Returns the types that are accepted when setting the given attribute.
@@ -67,20 +68,21 @@ public interface AttributeProvider {
   ImmutableSet<Class<?>> acceptedTypes(String attribute);
 
   /**
-   * Returns whether or not it's possible for a user to set the given attribute in the given store.
+   * Returns whether or not it's possible for a user to set the given attribute in the given
+   * metadata.
    */
-  boolean isSettable(AttributeStore store, String attribute);
+  boolean isSettable(FileMetadata metadata, String attribute);
 
   /**
    * Returns whether or not it's possible for a user to set the given attribute during file
    * creation (e.g. by passing a {@link FileAttribute} to
    * {@link Files#createFile(Path, FileAttribute[])}). Only called if
-   * {@link #isSettable(AttributeStore, String)} already returned true.
+   * {@link #isSettable(FileMetadata, String)} already returned true.
    */
   boolean isSettableOnCreate(String attribute);
 
   /**
-   * Sets the value of the given attribute in the given store.
+   * Sets the value of the given attribute in the given metadata.
    */
-  void set(AttributeStore store, String attribute, Object value);
+  void set(FileMetadata metadata, String attribute, Object value);
 }

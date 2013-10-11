@@ -48,7 +48,7 @@ public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttri
 
   @Test
   public void testInitialAttributes() {
-    assertContainsAll(store,
+    assertContainsAll(metadata,
         ImmutableMap.of(
             "group", createGroupPrincipal("group"),
             "permissions", PosixFilePermissions.fromString("rw-r--r--")));
@@ -66,9 +66,9 @@ public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttri
 
   @Test
   public void testView() throws IOException {
-    store.setAttribute("owner:owner", createUserPrincipal("user"));
+    metadata.setAttribute("owner:owner", createUserPrincipal("user"));
 
-    PosixFileAttributeView view = provider.getView(attributeStoreSupplier());
+    PosixFileAttributeView view = provider.getView(metadataSupplier());
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("posix");
@@ -82,22 +82,22 @@ public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttri
 
     view.setOwner(createUserPrincipal("root"));
     ASSERT.that(view.getOwner()).is(createUserPrincipal("root"));
-    ASSERT.that(store.getAttribute("owner:owner")).is(createUserPrincipal("root"));
+    ASSERT.that(metadata.getAttribute("owner:owner")).is(createUserPrincipal("root"));
 
     view.setGroup(createGroupPrincipal("root"));
     ASSERT.that(view.readAttributes().group()).is(createGroupPrincipal("root"));
-    ASSERT.that(store.getAttribute("posix:group")).is(createGroupPrincipal("root"));
+    ASSERT.that(metadata.getAttribute("posix:group")).is(createGroupPrincipal("root"));
 
     view.setPermissions(PosixFilePermissions.fromString("rwx------"));
     ASSERT.that(view.readAttributes().permissions())
         .is(PosixFilePermissions.fromString("rwx------"));
-    ASSERT.that(store.getAttribute("posix:permissions"))
+    ASSERT.that(metadata.getAttribute("posix:permissions"))
         .is(PosixFilePermissions.fromString("rwx------"));
   }
 
   @Test
   public void testAttributes() {
-    PosixFileAttributes attrs = provider.read(store);
+    PosixFileAttributes attrs = provider.read(metadata);
     ASSERT.that(attrs.permissions()).is(PosixFilePermissions.fromString("rw-r--r--"));
     ASSERT.that(attrs.group()).is(createGroupPrincipal("group"));
     ASSERT.that(attrs.fileKey()).is(0L);

@@ -26,9 +26,8 @@ import com.google.common.collect.ListMultimap;
 import com.google.jimfs.AttributeViews;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.AttributeReader;
-import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.attribute.IoSupplier;
+import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -222,13 +221,13 @@ final class AttributeService {
   }
 
   /**
-   * Returns an attribute view of the given type for the given file provider, or {@code null} if the
-   * view type is not supported.
+   * Returns an attribute view of the given type for the given file metadata supplier, or
+   * {@code null} if the view type is not supported.
    */
   @SuppressWarnings("unchecked")
   @Nullable
   public <V extends FileAttributeView> V getFileAttributeView(
-      IoSupplier<? extends AttributeStore> supplier, Class<V> type) {
+      FileMetadataSupplier supplier, Class<V> type) {
     if (supportsFileAttributeView(type)) {
       return ((AttributeViewProvider<V>) viewProviders.get(type)).getView(supplier);
     }

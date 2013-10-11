@@ -66,7 +66,7 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(store, "acl")).is(defaultAcl);
+    ASSERT.that(provider.get(metadata, "acl")).is(defaultAcl);
   }
 
   @Test
@@ -79,7 +79,7 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
 
   @Test
   public void testView() throws IOException {
-    AclFileAttributeView view = provider.getView(attributeStoreSupplier());
+    AclFileAttributeView view = provider.getView(metadataSupplier());
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("acl");
@@ -92,6 +92,6 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
     ASSERT.that(view.getAcl()).is(ImmutableList.<AclEntry>of());
     ASSERT.that(view.getOwner()).is(FOO);
 
-    ASSERT.that(store.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
+    ASSERT.that(metadata.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
   }
 }

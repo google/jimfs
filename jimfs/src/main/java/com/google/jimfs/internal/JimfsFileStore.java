@@ -23,8 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.jimfs.Jimfs;
-import com.google.jimfs.attribute.AttributeStore;
-import com.google.jimfs.attribute.IoSupplier;
+import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -194,7 +193,7 @@ final class JimfsFileStore extends FileStore {
    */
   @Nullable
   <V extends FileAttributeView> V getFileAttributeView(
-      IoSupplier<? extends AttributeStore> supplier, Class<V> type) {
+      FileMetadataSupplier supplier, Class<V> type) {
     return attributes.getFileAttributeView(supplier, type);
   }
 

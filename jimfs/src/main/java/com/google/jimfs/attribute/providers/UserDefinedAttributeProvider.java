@@ -19,10 +19,9 @@ package com.google.jimfs.attribute.providers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.AttributeStore;
 import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.attribute.IoSupplier;
+import com.google.jimfs.attribute.FileMetadata;
+import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -38,8 +37,8 @@ import java.util.Map;
  *
  * @author Colin Decker
  */
-public final class UserDefinedAttributeProvider implements AttributeProvider,
-    AttributeViewProvider<UserDefinedFileAttributeView> {
+public final class UserDefinedAttributeProvider
+    implements AttributeViewProvider<UserDefinedFileAttributeView> {
 
   /**
    * The singleton instance of {@link UserDefinedAttributeProvider}.
@@ -61,16 +60,16 @@ public final class UserDefinedAttributeProvider implements AttributeProvider,
   }
 
   @Override
-  public void readAll(AttributeStore store, Map<String, Object> map) {
-    for (String attribute : store.getAttributeKeys()) {
+  public void readAll(FileMetadata metadata, Map<String, Object> map) {
+    for (String attribute : metadata.getAttributeKeys()) {
       if (attribute.startsWith("user:")) {
         String attributeName = attribute.substring(5);
-        map.put(attributeName, get(store, attributeName));
+        map.put(attributeName, get(metadata, attributeName));
       }
     }
   }
 
-  private ImmutableList<String> userDefinedAttributes(AttributeStore store) {
+  private ImmutableList<String> userDefinedAttributes(FileMetadata store) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     for (String attribute : store.getAttributeKeys()) {
       if (attribute.startsWith("user:")) {
@@ -81,17 +80,17 @@ public final class UserDefinedAttributeProvider implements AttributeProvider,
   }
 
   @Override
-  public void setInitial(AttributeStore store) {
+  public void setInitial(FileMetadata metadata) {
   }
 
   @Override
-  public boolean isGettable(AttributeStore store, String attribute) {
-    return store.getAttribute(name() + ":" + attribute) != null;
+  public boolean isGettable(FileMetadata metadata, String attribute) {
+    return metadata.getAttribute(name() + ":" + attribute) != null;
   }
 
   @Override
-  public Object get(AttributeStore store, String attribute) {
-    byte[] bytes = (byte[]) store.getAttribute(name() + ":" + attribute);
+  public Object get(FileMetadata metadata, String attribute) {
+    byte[] bytes = (byte[]) metadata.getAttribute(name() + ":" + attribute);
     return bytes.clone();
   }
 
@@ -101,7 +100,7 @@ public final class UserDefinedAttributeProvider implements AttributeProvider,
   }
 
   @Override
-  public boolean isSettable(AttributeStore store, String attribute) {
+  public boolean isSettable(FileMetadata metadata, String attribute) {
     return true;
   }
 
@@ -111,7 +110,7 @@ public final class UserDefinedAttributeProvider implements AttributeProvider,
   }
 
   @Override
-  public void set(AttributeStore store, String attribute, Object value) {
+  public void set(FileMetadata metadata, String attribute, Object value) {
     byte[] bytes;
     if (value instanceof byte[]) {
       bytes = ((byte[]) value).clone();
@@ -122,7 +121,7 @@ public final class UserDefinedAttributeProvider implements AttributeProvider,
       buffer.get(bytes);
     }
 
-    store.setAttribute(name() + ":" + attribute, bytes);
+    metadata.setAttribute(name() + ":" + attribute, bytes);
   }
 
   @Override
@@ -131,7 +130,7 @@ public final class UserDefinedAttributeProvider implements AttributeProvider,
   }
 
   @Override
-  public UserDefinedFileAttributeView getView(IoSupplier<? extends AttributeStore> supplier) {
+  public UserDefinedFileAttributeView getView(FileMetadataSupplier supplier) {
     return new View(this, supplier);
   }
 
@@ -140,18 +139,17 @@ public final class UserDefinedAttributeProvider implements AttributeProvider,
    */
   private static class View extends AbstractAttributeView implements UserDefinedFileAttributeView {
 
-    public View(UserDefinedAttributeProvider attributeProvider,
-        IoSupplier<? extends AttributeStore> supplier) {
+    public View(UserDefinedAttributeProvider attributeProvider, FileMetadataSupplier supplier) {
       super(attributeProvider, supplier);
     }
 
     @Override
     public List<String> list() throws IOException {
-      return ((UserDefinedAttributeProvider) provider()).userDefinedAttributes(store());
+      return ((UserDefinedAttributeProvider) provider()).userDefinedAttributes(getFileMetadata());
     }
 
     private byte[] getStoredBytes(String name) throws IOException {
-      byte[] bytes = (byte[]) store().getAttribute(name() + ":" + name);
+      byte[] bytes = (byte[]) getFileMetadata().getAttribute(name() + ":" + name);
       if (bytes == null) {
         throw new IllegalArgumentException("attribute '" + name() + ":" + name + "' is not set");
       }
@@ -174,13 +172,13 @@ public final class UserDefinedAttributeProvider implements AttributeProvider,
     public int write(String name, ByteBuffer src) throws IOException {
       byte[] bytes = new byte[src.remaining()];
       src.get(bytes);
-      store().setAttribute(name() + ":" + name, bytes);
+      getFileMetadata().setAttribute(name() + ":" + name, bytes);
       return bytes.length;
     }
 
     @Override
     public void delete(String name) throws IOException {
-      store().deleteAttribute(name() + ":" + name);
+      getFileMetadata().deleteAttribute(name() + ":" + name);
     }
   }
 }

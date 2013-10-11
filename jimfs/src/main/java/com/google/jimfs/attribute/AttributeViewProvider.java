@@ -33,7 +33,7 @@ public interface AttributeViewProvider<V extends FileAttributeView> extends Attr
   Class<V> viewType();
 
   /**
-   * Returns an attribute view for the given attribute store supplier.
+   * Returns a view of the file metadata located by the given supplier.
    */
-  V getView(IoSupplier<? extends AttributeStore> supplier);
+  V getView(FileMetadataSupplier supplier);
 }

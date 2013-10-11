@@ -19,11 +19,11 @@ package com.google.jimfs.attribute;
 import java.util.Set;
 
 /**
- * An object that stores the attributes of a file.
+ * Metadata for a file.
  *
  * @author Colin Decker
  */
-public interface AttributeStore {
+public interface FileMetadata {
 
   /**
    * Returns the ID of the file.

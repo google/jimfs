@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AbstractAttributeProvider;
 import com.google.jimfs.attribute.Attribute;
-import com.google.jimfs.attribute.AttributeStore;
+import com.google.jimfs.attribute.FileMetadata;
 
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
@@ -83,7 +83,7 @@ public final class UnixAttributeProvider extends AbstractAttributeProvider {
   }
 
   @Override
-  public void setInitial(AttributeStore store) {
+  public void setInitial(FileMetadata metadata) {
     // doesn't actually set anything in the attribute map
   }
 
@@ -104,30 +104,30 @@ public final class UnixAttributeProvider extends AbstractAttributeProvider {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object get(AttributeStore store, String attribute) {
+  public Object get(FileMetadata metadata, String attribute) {
     switch (attribute) {
       case UID:
-        UserPrincipal user = (UserPrincipal) owner.get(store, OwnerAttributeProvider.OWNER);
+        UserPrincipal user = (UserPrincipal) owner.get(metadata, OwnerAttributeProvider.OWNER);
         return getUniqueId(user);
       case GID:
-        GroupPrincipal group = (GroupPrincipal) posix.get(store, PosixAttributeProvider.GROUP);
+        GroupPrincipal group = (GroupPrincipal) posix.get(metadata, PosixAttributeProvider.GROUP);
         return getUniqueId(group);
       case MODE:
         Set<PosixFilePermission> permissions
-            = (Set<PosixFilePermission>) posix.get(store, PosixAttributeProvider.PERMISSIONS);
+            = (Set<PosixFilePermission>) posix.get(metadata, PosixAttributeProvider.PERMISSIONS);
         return toMode(permissions);
       case CTIME:
-        return BasicAttributeProvider.INSTANCE.get(store, BasicAttributeProvider.CREATION_TIME);
+        return BasicAttributeProvider.INSTANCE.get(metadata, BasicAttributeProvider.CREATION_TIME);
       case RDEV:
         return 0L;
       case DEV:
         return 1L;
       case INO:
-        return getUniqueId(store);
+        return getUniqueId(metadata);
       case NLINK:
-        return store.links();
+        return metadata.links();
     }
-    return super.get(store, attribute);
+    return super.get(metadata, attribute);
   }
 
   @SuppressWarnings("OctalInteger")

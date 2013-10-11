@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * @author Colin Decker
  */
-public class TestAttributeStore implements AttributeStore {
+public class TestFileMetadata implements FileMetadata {
 
   private final long id;
   private final Type type;
@@ -33,7 +33,7 @@ public class TestAttributeStore implements AttributeStore {
   private int links;
   private long creationTime;
 
-  public TestAttributeStore(long id, Type type) {
+  public TestFileMetadata(long id, Type type) {
     this.id = id;
     this.type = checkNotNull(type);
   }

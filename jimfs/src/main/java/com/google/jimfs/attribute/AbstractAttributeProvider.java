@@ -39,20 +39,20 @@ public abstract class AbstractAttributeProvider implements AttributeProvider {
   }
 
   @Override
-  public void readAll(AttributeStore store, Map<String, Object> map) {
+  public void readAll(FileMetadata metadata, Map<String, Object> map) {
     for (String attribute : attributes.keySet()) {
-      map.put(attribute, get(store, attribute));
+      map.put(attribute, get(metadata, attribute));
     }
   }
 
   @Override
-  public boolean isGettable(AttributeStore store, String attribute) {
+  public boolean isGettable(FileMetadata metadata, String attribute) {
     return attributes.containsKey(attribute);
   }
 
   @Override
-  public Object get(AttributeStore store, String attribute) {
-    return store.getAttribute(attributes.get(attribute).key());
+  public Object get(FileMetadata metadata, String attribute) {
+    return metadata.getAttribute(attributes.get(attribute).key());
   }
 
   @Override
@@ -61,7 +61,7 @@ public abstract class AbstractAttributeProvider implements AttributeProvider {
   }
 
   @Override
-  public boolean isSettable(AttributeStore store, String attribute) {
+  public boolean isSettable(FileMetadata metadata, String attribute) {
     return attributes.containsKey(attribute) &&
         attributes.get(attribute).isUserSettable();
   }
@@ -72,7 +72,7 @@ public abstract class AbstractAttributeProvider implements AttributeProvider {
   }
 
   @Override
-  public void set(AttributeStore store, String attribute, Object value) {
-    store.setAttribute(attributes.get(attribute).key(), value);
+  public void set(FileMetadata metadata, String attribute, Object value) {
+    metadata.setAttribute(attributes.get(attribute).key(), value);
   }
 }

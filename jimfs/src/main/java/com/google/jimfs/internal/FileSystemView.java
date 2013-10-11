@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.jimfs.Jimfs;
-import com.google.jimfs.attribute.IoSupplier;
+import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.DirectoryNotEmptyException;
@@ -121,12 +121,12 @@ final class FileSystemView {
    * Returns a supplier that suppliers a file by looking up the given path in this view, using
    * the given link handling option.
    */
-  public IoSupplier<File> lookupFileSupplier(final JimfsPath path, final LinkOptions options) {
+  public FileMetadataSupplier lookupFileSupplier(final JimfsPath path, final LinkOptions options) {
     checkNotNull(path);
     checkNotNull(options);
-    return new IoSupplier<File>() {
+    return new FileMetadataSupplier() {
       @Override
-      public File get() throws IOException {
+      public File getMetadata() throws IOException {
         return lookupWithLock(path, options)
             .requireExists(path)
             .file();
