@@ -17,9 +17,13 @@
 package com.google.jimfs.path;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import java.util.regex.Pattern;
 
 /**
  * Tests for {@link Normalization}.
@@ -41,6 +45,7 @@ public class NormalizationTest {
   }
 
   private static final String[][] CASE_INSENSITIVITY_TEST_DATA = {
+      {"foo", "fOo", "foO", "Foo", "FOO"},
       {"eﬃcient", "efficient", "eﬃcient", "Eﬃcient", "EFFICIENT"},
       {"ﬂour", "flour", "ﬂour", "Flour", "FLOUR"},
       {"poſt", "post", "poſt", "Poſt", "POST"},
@@ -138,6 +143,80 @@ public class NormalizationTest {
     }
   }
 
+  // regex patterns offer loosely similar matching, but that's all
+
+  @Test
+  public void testNone_pattern() {
+    normalizer = Normalization.none();
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternDoesNotMatch("foo", "FOO");
+    assertNormalizedPatternDoesNotMatch("FOO", "foo");
+  }
+
+  @Test
+  public void testCaseInsensitive_pattern() {
+    normalizer = Normalization.caseInsensitive();
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternMatches("foo", "FOO");
+    assertNormalizedPatternMatches("FOO", "foo");
+    assertNormalizedPatternMatches("Am\u00e9lie", "AM\u00c9LIE");
+    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternDoesNotMatch("AM\u00c9LIE", "AME\u0301LIE");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AME\u0301LIE");
+  }
+
+  @Test
+  public void testCaseInsensitiveAscii_pattern() {
+    normalizer = Normalization.caseInsensitiveAscii();
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternMatches("foo", "FOO");
+    assertNormalizedPatternMatches("FOO", "foo");
+    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AM\u00c9LIE");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternDoesNotMatch("AM\u00c9LIE", "AME\u0301LIE");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AME\u0301LIE");
+  }
+
+  @Test
+  public void testNormalized_pattern() {
+    normalizer = Normalization.normalized();
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternDoesNotMatch("foo", "FOO");
+    assertNormalizedPatternDoesNotMatch("FOO", "foo");
+    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AME\u0301LIE");
+  }
+
+  @Test
+  public void testNormalizedCaseInsensitive_pattern() {
+    normalizer = Normalization.normalizedCaseInsensitive();
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternMatches("foo", "FOO");
+    assertNormalizedPatternMatches("FOO", "foo");
+    assertNormalizedPatternMatches("Am\u00e9lie", "AM\u00c9LIE");
+    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
+    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
+    assertNormalizedPatternMatches("Am\u00e9lie", "AME\u0301LIE");
+  }
+
+  @Test
+  public void testNormalizedCaseInsensitiveAscii_pattern() {
+    normalizer = Normalization.normalizedCaseInsensitiveAscii();
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternMatches("foo", "FOO");
+    assertNormalizedPatternMatches("FOO", "foo");
+
+    // these are all a bit fuzzy as when CASE_INSENSITIVE is present but not UNICODE_CASE, ASCII
+    // only strings are expected
+    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AM\u00c9LIE");
+    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
+  }
+
   /**
    * Asserts that the given strings normalize to the same string using the current normalizer.
    */
@@ -150,5 +229,33 @@ public class NormalizationTest {
    */
   private void assertNormalizedUnequal(String first, String second) {
     assertNotEquals(normalizer.normalize(first), normalizer.normalize(second));
+  }
+
+  /**
+   * Asserts that the given strings match when one is compiled as a regex pattern using the current
+   * normalizer and matched against the other.
+   */
+  private void assertNormalizedPatternMatches(String first, String second) {
+    Pattern pattern = normalizer.compilePattern(first);
+    assertTrue("pattern '" + pattern + "' does not match '" + second + "'",
+        pattern.matcher(second).matches());
+
+    pattern = normalizer.compilePattern(second);
+    assertTrue("pattern '" + pattern + "' does not match '" + first + "'",
+        pattern.matcher(first).matches());
+  }
+
+  /**
+   * Asserts that the given strings do not match when one is compiled as a regex pattern using the
+   * current normalizer and matched against the other.
+   */
+  private void assertNormalizedPatternDoesNotMatch(String first, String second) {
+    Pattern pattern = normalizer.compilePattern(first);
+    assertFalse("pattern '" + pattern + "' should not match '" + second + "'",
+        pattern.matcher(second).matches());
+
+    pattern = normalizer.compilePattern(second);
+    assertFalse("pattern '" + pattern + "' should not match '" + first + "'",
+        pattern.matcher(first).matches());
   }
 }
