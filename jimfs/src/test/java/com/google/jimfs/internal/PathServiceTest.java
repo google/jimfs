@@ -20,6 +20,7 @@ import static com.google.jimfs.testing.PathSubject.paths;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
+import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
 import org.junit.Test;
@@ -120,7 +121,7 @@ public class PathServiceTest {
   }
 
   public static PathService fakePathService(PathType type) {
-    PathService service = new PathService(type);
+    PathService service = new PathService(type, Normalization.none(), Normalization.none());
     service.setFileSystem(FAKE_FILE_SYSTEM);
     return service;
   }

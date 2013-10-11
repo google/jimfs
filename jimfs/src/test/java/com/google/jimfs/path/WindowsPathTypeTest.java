@@ -42,7 +42,6 @@ public class WindowsPathTypeTest {
     PathType windows = PathType.windows();
     ASSERT.that(windows.getSeparator()).is("\\");
     ASSERT.that(windows.getOtherSeparators()).is("/");
-    ASSERT.that(windows.lookupNormalization()).is(Normalization.normalizedCaseInsensitiveAscii());
 
     // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
     PathType.ParseResult path = windows.parsePath("C:\\\\foo\\bar");

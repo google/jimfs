@@ -31,7 +31,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -43,11 +42,10 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
 
   @Override
   protected FileSystem createFileSystem() {
-    return Jimfs.newWindowsLikeConfiguration()
-        .setName("win")
-        .addRoots("E:\\")
-        .setAttributeViews(AttributeViews.windows())
-        .createFileSystem();
+    return Jimfs.newFileSystem("win",
+        Configuration.windows()
+            .addRoots("E:\\")
+            .setAttributeViews(AttributeViews.windows()));
   }
 
   @Test
@@ -278,18 +276,6 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
       fs.getPathMatcher("glob:**/*.{java,class");
       fail();
     } catch (PatternSyntaxException expected) {
-    }
-  }
-
-  @Test
-  public void testCreateLink_unsupported() throws IOException {
-    // default Windows configuration does not support Feature.LINKS
-    Files.createFile(path("foo"));
-
-    try {
-      Files.createLink(path("link"), path("foo"));
-      fail();
-    } catch (UnsupportedOperationException expected) {
     }
   }
 

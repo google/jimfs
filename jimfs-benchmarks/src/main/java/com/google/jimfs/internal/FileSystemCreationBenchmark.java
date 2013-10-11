@@ -4,7 +4,7 @@ import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.runner.CaliperMain;
 import com.google.jimfs.AttributeViews;
-import com.google.jimfs.Jimfs;
+import com.google.jimfs.Configuration;
 
 import java.io.IOException;
 import java.net.URI;
@@ -39,34 +39,34 @@ public class FileSystemCreationBenchmark {
   private enum Config {
     UNIX_DEFAULT {
       @Override
-      Jimfs.Configuration createConfiguration() {
-        return Jimfs.newUnixLikeConfiguration();
+      Configuration createConfiguration() {
+        return Configuration.unix();
       }
     },
 
     WINDOWS_DEFAULT {
       @Override
-      Jimfs.Configuration createConfiguration() {
-        return Jimfs.newWindowsLikeConfiguration();
+      Configuration createConfiguration() {
+        return Configuration.windows();
       }
     },
 
     UNIX_FULL_ATTRIBUTES {
       @Override
-      Jimfs.Configuration createConfiguration() {
-        return Jimfs.newUnixLikeConfiguration()
+      Configuration createConfiguration() {
+        return Configuration.unix()
             .setAttributeViews(AttributeViews.unix());
       }
     },
 
     WINDOWS_FULL_ATTRIBUTES {
       @Override
-      Jimfs.Configuration createConfiguration() {
-        return Jimfs.newWindowsLikeConfiguration()
+      Configuration createConfiguration() {
+        return Configuration.windows()
             .setAttributeViews(AttributeViews.windows());
       }
     };
 
-    abstract Jimfs.Configuration createConfiguration();
+    abstract Configuration createConfiguration();
   }
 }

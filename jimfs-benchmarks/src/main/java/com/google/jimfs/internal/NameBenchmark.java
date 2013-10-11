@@ -107,58 +107,36 @@ public class NameBenchmark {
 
   @SuppressWarnings("unused")
   private enum NameImpl {
-    NONE {
-      @Override
-      Name create(String string) {
-        return Name.normalized(string, Normalization.none(), Normalization.none());
-      }
-    },
+    NONE(Normalization.none(), Normalization.none()),
 
-    NORMALIZED {
-      @Override
-      Name create(String string) {
-        return Name.normalized(string, Normalization.none(), Normalization.normalized());
-      }
-    },
+    NORMALIZED(Normalization.none(), Normalization.normalized()),
 
-    CASE_INSENSITIVE {
-      @Override
-      Name create(String string) {
-        return Name.normalized(string, Normalization.none(), Normalization.caseInsensitive());
-      }
-    },
+    CASE_INSENSITIVE(Normalization.none(), Normalization.caseInsensitive()),
 
-    CASE_INSENSITIVE_ASCII {
-      @Override
-      Name create(String string) {
-        return Name.normalized(string, Normalization.none(), Normalization.caseInsensitiveAscii());
-      }
-    },
+    CASE_INSENSITIVE_ASCII(Normalization.none(), Normalization.caseInsensitiveAscii()),
 
-    NORMALIZED_CASE_INSENSITIVE {
-      @Override
-      Name create(String string) {
-        return Name.normalized(string,
-            Normalization.none(), Normalization.normalizedCaseInsensitive());
-      }
-    },
+    NORMALIZED_CASE_INSENSITIVE(
+        Normalization.none(), Normalization.normalizedCaseInsensitive()),
 
-    NORMALIZED_CASE_INSENSITIVE_ASCII {
-      @Override
-      Name create(String string) {
-        return Name.normalized(string,
-            Normalization.none(), Normalization.normalizedCaseInsensitiveAscii());
-      }
-    },
+    NORMALIZED_CASE_INSENSITIVE_ASCII(
+        Normalization.none(), Normalization.normalizedCaseInsensitiveAscii()),
 
-    NORMALIZED_CASE_INSENSITIVE_ASCII_WITH_PATH_NORMALIZED {
-      @Override
-      Name create(String string) {
-        return Name.normalized(string,
-            Normalization.normalized(), Normalization.normalizedCaseInsensitiveAscii());
-      }
-    };
+    NORMALIZED_CASE_INSENSITIVE_ASCII_WITH_PATH_NORMALIZED(
+        Normalization.normalized(), Normalization.normalizedCaseInsensitiveAscii());
 
-    abstract Name create(String string);
+    private final Normalization displayNormalization;
+    private final Normalization lookupNormalization;
+
+    private NameImpl(Normalization displayNormalization,
+        Normalization lookupNormalization) {
+      this.displayNormalization = displayNormalization;
+      this.lookupNormalization = lookupNormalization;
+    }
+
+    Name create(String string) {
+      String display = displayNormalization.normalize(string);
+      String canonical = lookupNormalization.normalize(string);
+      return Name.create(display, canonical);
+    }
   }
 }

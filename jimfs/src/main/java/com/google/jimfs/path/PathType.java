@@ -39,74 +39,48 @@ public abstract class PathType {
 
   /**
    * Returns a Unix-style path type. "/" is both the root and the only separator. Any path starting
-   * with "/" is considered absolute. Paths are case sensitive. The nul character ('\0') is
-   * disallowed in paths.
+   * with "/" is considered absolute. The nul character ('\0') is disallowed in paths.
    */
   public static PathType unix() {
-    return UnixPathType.UNIX;
-  }
-
-  /**
-   * Returns a Mac OS X style path type. This path type is the same as the {@linkplain #unix() Unix}
-   * path type, but does Unicode normalization and uses case-insensitive lookup for ASCII
-   * characters. Additionally, names in {@code Path} objects are Unicode NFC normalized in an
-   * attempt to match the behavior of the real OS X {@code FileSystem} implementation.
-   */
-  public static PathType osx() {
-    return UnixPathType.OS_X;
+    return UnixPathType.INSTANCE;
   }
 
   /**
    * Returns a Windows-style path type. The canonical separator character is "\". "/" is also
-   * treated as a separator when parsing paths. Paths are case insensitive for ASCII characters.
+   * treated as a separator when parsing paths.
    *
    * <p>As much as possible, this implementation follows the information provided in
    * <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx">
    * this article</a>. Paths with drive-letter roots (e.g. "C:\") and paths with UNC roots (e.g.
    * "\\host\share\") are supported.
    *
-   * <p>One thing in particular is not currently supported: relative paths containing a drive-letter
-   * root, for example "C:" or "C:foo\bar". Such paths have a root component and optionally have
-   * names, but are <i>relative</i> paths, relative to the working directory of the drive identified
-   * by the root. This has some fundamental conflicts with how JIMFS handles paths and file lookups,
-   * and so is not currently supported.
+   * <p>Two Windows path features are not currently supported as they are too Windows-specific:
+   *
+   * <ul>
+   *   <li>Relative paths containing a drive-letter root, for example "C:" or "C:foo\bar". Such
+   *   paths have a root component and optionally have names, but are <i>relative</i> paths,
+   *   relative to the working directory of the drive identified by the root.</li>
+   *   <li>Absolute paths with no root, for example "\foo\bar". Such paths are absolute paths on
+   *   the current drive.</li>
+   * </ul>
    */
   public static PathType windows() {
     return WindowsPathType.INSTANCE;
   }
 
-  private final Normalization lookupNormalization;
-  private final Normalization pathNormalization;
   private final boolean allowsMultipleRoots;
   private final String separator;
   private final String otherSeparators;
   private final Joiner joiner;
   private final Splitter splitter;
 
-  protected PathType(
-      Normalization lookupNormalization, Normalization pathNormalization,
-      boolean allowsMultipleRoots,
-      char separator, char... otherSeparators) {
-    this.lookupNormalization = checkNotNull(lookupNormalization);
-    this.pathNormalization = checkNotNull(pathNormalization);
+  protected PathType(boolean allowsMultipleRoots, char separator, char... otherSeparators) {
     this.separator = String.valueOf(separator);
     this.allowsMultipleRoots = allowsMultipleRoots;
     this.otherSeparators = String.valueOf(otherSeparators);
     this.joiner = Joiner.on(separator);
     this.splitter = createSplitter(separator, otherSeparators);
   }
-
-  /**
-   * Returns a new path type identical to this one except using the given normalization settings
-   * for file lookups.
-   */
-  public abstract PathType lookupNormalization(Normalization normalization);
-
-  /**
-   * Returns a new path type identical to this one except using the given normalization settings
-   * for {@code Path} objects.
-   */
-  public abstract PathType pathNormalization(Normalization normalization);
 
   private static final char[] regexReservedChars = "^$.?+*\\[]{}()".toCharArray();
   static {
@@ -175,23 +149,6 @@ public abstract class PathType {
    */
   public final Splitter splitter() {
     return splitter;
-  }
-
-  /**
-   * Returns the normalization setting to be used for file lookups. This normalization does not
-   * affect the equality, sort ordering or {@code toString()} form of {@code Path} objects.
-   */
-  public final Normalization lookupNormalization() {
-    return lookupNormalization;
-  }
-
-  /**
-   * Returns the normalization setting to be used for {@code Path} objects. This normalization does
-   * affect the equality, sort ordering and {@code toString()} form of {@code Path} objects but
-   * does not affect lookup.
-   */
-  public final Normalization pathNormalization() {
-    return pathNormalization;
   }
 
   /**

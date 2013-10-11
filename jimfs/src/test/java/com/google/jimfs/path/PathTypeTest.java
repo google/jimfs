@@ -35,30 +35,13 @@ import javax.annotation.Nullable;
  */
 public class PathTypeTest {
 
-  private static final FakePathType type =
-      new FakePathType(Normalization.none(), Normalization.none());
+  private static final FakePathType type = new FakePathType();
   static final URI fileSystemUri = URI.create("jimfs://foo");
 
   @Test
   public void testBasicProperties() {
     ASSERT.that(type.getSeparator()).is("/");
     ASSERT.that(type.getOtherSeparators()).is("\\");
-    ASSERT.that(type.lookupNormalization()).is(Normalization.none());
-
-    ASSERT.that(PathType.unix().lookupNormalization())
-        .is(Normalization.none());
-    ASSERT.that(PathType.windows().lookupNormalization())
-        .is(Normalization.normalizedCaseInsensitiveAscii());
-
-    PathType caseInsensitiveAsciiUnix = PathType.unix()
-        .lookupNormalization(Normalization.caseInsensitiveAscii());
-    ASSERT.that(caseInsensitiveAsciiUnix.lookupNormalization())
-        .is(Normalization.caseInsensitiveAscii());
-
-    PathType caseInsensitiveWindows = PathType.windows()
-        .lookupNormalization(Normalization.caseInsensitive());
-    ASSERT.that(caseInsensitiveWindows.lookupNormalization())
-        .is(Normalization.caseInsensitive());
   }
 
   @Test
@@ -126,18 +109,8 @@ public class PathTypeTest {
    */
   private static final class FakePathType extends PathType {
 
-    protected FakePathType(Normalization lookupNormalization, Normalization pathNormalization) {
-      super(lookupNormalization, pathNormalization, false, '/', '\\');
-    }
-
-    @Override
-    public PathType lookupNormalization(Normalization normalization) {
-      return new FakePathType(normalization, pathNormalization());
-    }
-
-    @Override
-    public PathType pathNormalization(Normalization normalization) {
-      return new FakePathType(lookupNormalization(), normalization);
+    protected FakePathType() {
+      super(false, '/', '\\');
     }
 
     @Override

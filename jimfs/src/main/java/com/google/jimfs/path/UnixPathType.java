@@ -30,29 +30,12 @@ import javax.annotation.Nullable;
 final class UnixPathType extends PathType {
 
   /**
-   * Default Unix path type, with non-normalized, case sensitive names as in Linux.
+   * Unix path type.
    */
-  static final PathType UNIX =
-      new UnixPathType(Normalization.none(), Normalization.none());
+  static final PathType INSTANCE = new UnixPathType();
 
-  /**
-   * Unix path type with normalized, case insensitive (ASCII) names as in Mac OS X.
-   */
-  static final PathType OS_X = new UnixPathType(
-      Normalization.normalizedCaseInsensitiveAscii(), Normalization.normalized());
-
-  UnixPathType(Normalization lookupNormalization, Normalization pathNormalization) {
-    super(lookupNormalization, pathNormalization, false, '/');
-  }
-
-  @Override
-  public PathType lookupNormalization(Normalization normalization) {
-    return new UnixPathType(normalization, pathNormalization());
-  }
-
-  @Override
-  public PathType pathNormalization(Normalization normalization) {
-    return new UnixPathType(lookupNormalization(), normalization);
+  private UnixPathType() {
+    super(false, '/');
   }
 
   @Override

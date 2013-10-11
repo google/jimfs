@@ -16,7 +16,7 @@
 
 package com.google.jimfs.internal;
 
-import com.google.jimfs.Jimfs;
+import com.google.jimfs.Configuration;
 
 import java.io.IOException;
 import java.net.URI;
@@ -33,8 +33,9 @@ final class JimfsFileSystems {
    * configuration.
    */
   public static JimfsFileSystem newFileSystem(
-      JimfsFileSystemProvider provider, URI uri, Jimfs.Configuration config) throws IOException {
-    PathService pathService = new PathService(config.getPathType());
+      JimfsFileSystemProvider provider, URI uri, Configuration config) throws IOException {
+    PathService pathService = new PathService(
+        config.getPathType(), config.getDisplayNormalization(), config.getLookupNormalization());
 
     JimfsFileStore fileStore = createFileStore(config, pathService);
     FileSystemView defaultView = createDefaultView(config, fileStore, pathService);
@@ -50,7 +51,7 @@ final class JimfsFileSystems {
    * Creates the file store for the file system.
    */
   private static JimfsFileStore createFileStore(
-      Jimfs.Configuration config, PathService pathService) {
+      Configuration config, PathService pathService) {
     AttributeService attributeService = new AttributeService(config.getAttributeViews());
     RegularFileStorage storage = new HeapDisk();
     FileFactory fileFactory = new FileFactory(storage);
@@ -81,7 +82,7 @@ final class JimfsFileSystems {
   /**
    * Creates the default view of the file system using the given working directory.
    */
-  private static FileSystemView createDefaultView(Jimfs.Configuration config,
+  private static FileSystemView createDefaultView(Configuration config,
       JimfsFileStore fileStore, PathService pathService) throws IOException {
     JimfsPath workingDirPath = pathService.parsePath(config.getWorkingDirectory());
 

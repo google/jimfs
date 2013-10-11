@@ -51,7 +51,7 @@ enum FileSystemImpl {
   JIMFS {
     @Override
     public FileSystem getFileSystem() {
-      return Jimfs.newUnixLikeFileSystem();
+      return Jimfs.newFileSystem(Configuration.unix());
     }
 
     @Override

@@ -327,9 +327,9 @@ public class JimfsPathTest {
 
   @Test
   public void testEqualityBasedOnStringNotName() {
-    Name a1 = new Name("a", "a");
-    Name a2 = new Name("A", "a");
-    Name a3 = new Name("a", "A");
+    Name a1 = Name.create("a", "a");
+    Name a2 = Name.create("A", "a");
+    Name a3 = Name.create("a", "A");
 
     Path path1 = pathService.createFileName(a1);
     Path path2 = pathService.createFileName(a2);

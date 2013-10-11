@@ -42,7 +42,6 @@ public class UnixPathTypeTest {
     PathType unix = PathType.unix();
     ASSERT.that(unix.getSeparator()).is("/");
     ASSERT.that(unix.getOtherSeparators()).is("");
-    ASSERT.that(unix.lookupNormalization()).is(Normalization.none());
 
     // "//foo/bar" is what will be passed to parsePath if "/", "foo", "bar" is passed to getPath
     PathType.ParseResult path = unix.parsePath("//foo/bar");

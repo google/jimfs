@@ -107,10 +107,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Override
   protected FileSystem createFileSystem() {
-    return Jimfs.newUnixLikeConfiguration()
-        .setName("unix")
-        .setAttributeViews(AttributeViews.unix())
-        .createFileSystem();
+    return Jimfs.newFileSystem("unix",
+        Configuration.unix().setAttributeViews(AttributeViews.unix()));
   }
 
   @Test

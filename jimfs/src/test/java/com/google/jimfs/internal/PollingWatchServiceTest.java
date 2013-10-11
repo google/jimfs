@@ -25,6 +25,7 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.jimfs.Configuration;
 import com.google.jimfs.Jimfs;
 import com.google.jimfs.internal.AbstractWatchService.Event;
 import com.google.jimfs.internal.AbstractWatchService.Key;
@@ -56,7 +57,7 @@ public class PollingWatchServiceTest {
 
   @Before
   public void setUp() {
-    fs = (JimfsFileSystem) Jimfs.newUnixLikeFileSystem();
+    fs = (JimfsFileSystem) Jimfs.newFileSystem(Configuration.unix());
     watcher = new PollingWatchService(fs.getDefaultView(),
         fs.getPathService(), new ResourceManager(), 4, MILLISECONDS);
   }

@@ -19,7 +19,6 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.jimfs.path.Normalization;
 
 /**
  * Immutable representation of a file name. Used both for the name components of paths and as the
@@ -55,7 +54,8 @@ final class Name {
   /**
    * Creates a new name with no normalization done on the given string.
    */
-  public static Name simple(String name) {
+  @VisibleForTesting
+  static Name simple(String name) {
     switch (name) {
       case ".":
         return SELF;
@@ -67,30 +67,17 @@ final class Name {
   }
 
   /**
-   * Creates a new name that is normalized with the given normalization settings. The string form
-   * of the name is normalized with the given {@code displayNormalization} while the canonical form
-   * is normalized with the given {@code canonicalNormalization}.
+   * Creates a name with the given display representation and the given canonical representation.
    */
-  public static Name normalized(String name,
-      Normalization displayNormalization,
-      Normalization canonicalNormalization) {
-    switch (name) {
-      case ".":
-        return SELF;
-      case "..":
-        return PARENT;
-      default:
-        return new Name(
-            displayNormalization.normalize(name), canonicalNormalization.normalize(name));
-    }
+  public static Name create(String display, String canonical) {
+    return new Name(display, canonical);
   }
 
   private final String display;
   private final String canonical;
   private final int hashCode;
 
-  @VisibleForTesting
-  Name(String display, String canonical) {
+  private Name(String display, String canonical) {
     this.display = checkNotNull(display);
     this.canonical = checkNotNull(canonical);
     this.hashCode = canonical.hashCode();

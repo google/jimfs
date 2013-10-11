@@ -26,6 +26,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
 import java.net.URI;
@@ -44,12 +45,17 @@ import javax.annotation.Nullable;
 final class PathService {
 
   private final PathType type;
+  private final Normalization displayNormalization;
+  private final Normalization lookupNormalization;
 
   private volatile FileSystem fileSystem;
   private volatile JimfsPath emptyPath;
 
-  PathService(PathType type) {
+  PathService(
+      PathType type, Normalization displayNormalization, Normalization lookupNormalization) {
     this.type = checkNotNull(type);
+    this.displayNormalization = checkNotNull(displayNormalization);
+    this.lookupNormalization = checkNotNull(lookupNormalization);
   }
 
   /**
@@ -93,7 +99,18 @@ final class PathService {
    * Returns the {@link Name} form of the given string.
    */
   public Name name(String name) {
-    return Name.normalized(name, type.pathNormalization(), type.lookupNormalization());
+    switch (name) {
+      case "":
+        return Name.EMPTY;
+      case ".":
+        return Name.SELF;
+      case "..":
+        return Name.PARENT;
+    }
+
+    String display = displayNormalization.normalize(name);
+    String canonical = lookupNormalization.normalize(name);
+    return Name.create(display, canonical);
   }
 
   /**

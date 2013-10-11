@@ -31,11 +31,9 @@ import javax.annotation.Nullable;
 final class WindowsPathType extends PathType {
 
   /**
-   * Default Windows path type, with normalized, ASCII case insensitive names. Windows is case
-   * insensitive by default and ASCII case insensitivity is probably fine for most usages.
+   * Windows path type.
    */
-  static final WindowsPathType INSTANCE =
-      new WindowsPathType(Normalization.normalizedCaseInsensitiveAscii(), Normalization.none());
+  static final WindowsPathType INSTANCE = new WindowsPathType();
 
   /**
    * Matches the C:foo\bar path format, which has a root (C:) and names (foo\bar) and matches
@@ -59,18 +57,8 @@ final class WindowsPathType extends PathType {
    */
   private static final Pattern TRAILING_SPACES = Pattern.compile("[ ]+(\\\\|$)");
 
-  WindowsPathType(Normalization lookupNormalization, Normalization pathNormalization) {
-    super(lookupNormalization, pathNormalization, true, '\\', '/');
-  }
-
-  @Override
-  public PathType lookupNormalization(Normalization normalization) {
-    return new WindowsPathType(normalization, pathNormalization());
-  }
-
-  @Override
-  public PathType pathNormalization(Normalization normalization) {
-    return new WindowsPathType(lookupNormalization(), normalization);
+  private WindowsPathType() {
+    super(true, '\\', '/');
   }
 
   @Override
