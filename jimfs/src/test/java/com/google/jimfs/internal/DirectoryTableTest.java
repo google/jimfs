@@ -272,6 +272,6 @@ public class DirectoryTableTest {
   }
 
   private static Name caseInsensitive(String name) {
-    return Name.create(name, Normalization.caseInsensitive().normalize(name));
+    return Name.create(name, Normalization.CASE_FOLD.normalize(name));
   }
 }

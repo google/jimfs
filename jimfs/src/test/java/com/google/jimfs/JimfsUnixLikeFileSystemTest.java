@@ -47,6 +47,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Ordering;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.primitives.Bytes;
@@ -90,6 +91,7 @@ import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
@@ -147,6 +149,24 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     assertThat("/foo/bar/baz").isAbsolute()
         .and().hasRootComponent("/")
         .and().hasNameComponents("foo", "bar", "baz");
+  }
+
+  @Test
+  public void testPaths_equalityIsCaseSensitive() {
+    assertThat("foo").isNotEqualTo(path("FOO"));
+  }
+
+  @Test
+  public void testPaths_areSortedCaseSensitive() {
+    Path p1 = path("a");
+    Path p2 = path("B");
+    Path p3 = path("c");
+    Path p4 = path("D");
+
+    ASSERT.that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2)))
+        .is(ImmutableList.of(p2, p4, p1, p3));
+
+    // would be p1, p2, p3, p4 if sorting were case insensitive
   }
 
   @Test

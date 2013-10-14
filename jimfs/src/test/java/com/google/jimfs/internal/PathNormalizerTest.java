@@ -14,29 +14,36 @@
  * limitations under the License.
  */
 
-package com.google.jimfs;
+package com.google.jimfs.internal;
 
+import static com.google.jimfs.Normalization.CASE_FOLD;
+import static com.google.jimfs.Normalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.Normalization.NORMALIZE_NFC;
+import static com.google.jimfs.Normalization.NORMALIZE_NFD;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.Normalization;
 
 import org.junit.Test;
 
 import java.util.regex.Pattern;
 
 /**
- * Tests for {@link Normalization}.
+ * Tests for {@link PathNormalizer}.
  *
  * @author Colin Decker
  */
-public class NormalizationTest {
+public class PathNormalizerTest {
 
-  private Normalization normalizer;
+  private PathNormalizer normalizer;
 
   @Test
   public void testNone() {
-    normalizer = Normalization.none();
+    normalizer = PathNormalizer.none();
 
     assertNormalizedEqual("foo", "foo");
     assertNormalizedUnequal("Foo", "foo");
@@ -44,7 +51,7 @@ public class NormalizationTest {
     assertNormalizedUnequal("Am\u00e9lie", "Ame\u0301lie");
   }
 
-  private static final String[][] CASE_INSENSITIVITY_TEST_DATA = {
+  private static final String[][] CASE_FOLD_TEST_DATA = {
       {"foo", "fOo", "foO", "Foo", "FOO"},
       {"eﬃcient", "efficient", "eﬃcient", "Eﬃcient", "EFFICIENT"},
       {"ﬂour", "flour", "ﬂour", "Flour", "FLOUR"},
@@ -63,10 +70,10 @@ public class NormalizationTest {
   };
 
   @Test
-  public void testCaseInsensitive() {
-    normalizer = Normalization.caseInsensitive();
+  public void testCaseFold() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(CASE_FOLD));
 
-    for (String[] row : CASE_INSENSITIVITY_TEST_DATA) {
+    for (String[] row : CASE_FOLD_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
         for (int j = i; j < row.length; j++) {
           assertNormalizedEqual(row[i], row[j]);
@@ -77,7 +84,7 @@ public class NormalizationTest {
 
   @Test
   public void testCaseInsensitiveAscii() {
-    normalizer = Normalization.caseInsensitiveAscii();
+    normalizer = PathNormalizer.create(ImmutableSet.of(CASE_FOLD_ASCII));
 
     String[] row = {"foo", "FOO", "fOo", "Foo"};
     for (int i = 0; i < row.length; i++) {
@@ -89,16 +96,16 @@ public class NormalizationTest {
     assertNormalizedUnequal("weiß", "weiss");
   }
 
-  private static final String[][] NORMALIZED_TEST_DATA = {
+  private static final String[][] NORMALIZE_TEST_DATA = {
       {"\u00c5", "\u212b"}, // two forms of Å (one code point each)
       {"Am\u00e9lie", "Ame\u0301lie"} // two forms of Amélie (one composed, one decomposed)
   };
 
   @Test
-  public void testNormalized() {
-    normalizer = Normalization.normalized();
+  public void testNormalizeNfc() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC));
 
-    for (String[] row : NORMALIZED_TEST_DATA) {
+    for (String[] row : NORMALIZE_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
         for (int j = i; j < row.length; j++) {
           assertNormalizedEqual(row[i], row[j]);
@@ -107,16 +114,42 @@ public class NormalizationTest {
     }
   }
 
-  private static final String[][] NORMALIZED_CASE_INSENSITIVE_TEST_DATA = {
+  @Test
+  public void testNormalizeNfd() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD));
+
+    for (String[] row : NORMALIZE_TEST_DATA) {
+      for (int i = 0; i < row.length; i++) {
+        for (int j = i; j < row.length; j++) {
+          assertNormalizedEqual(row[i], row[j]);
+        }
+      }
+    }
+  }
+
+  private static final String[][] NORMALIZE_CASE_FOLD_TEST_DATA = {
       {"\u00c5", "\u00e5", "\u212b"},
       {"Am\u00e9lie", "Am\u00c9lie", "Ame\u0301lie", "AME\u0301LIE"}
   };
 
   @Test
-  public void testNormalizedCaseInsensitive() {
-    normalizer = Normalization.normalizedCaseInsensitive();
+  public void testNormalizeNfcCaseFold() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC, CASE_FOLD));
 
-    for (String[] row : NORMALIZED_CASE_INSENSITIVE_TEST_DATA) {
+    for (String[] row : NORMALIZE_CASE_FOLD_TEST_DATA) {
+      for (int i = 0; i < row.length; i++) {
+        for (int j = i; j < row.length; j++) {
+          assertNormalizedEqual(row[i], row[j]);
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testNormalizeNfdCaseFold() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD, CASE_FOLD));
+
+    for (String[] row : NORMALIZE_CASE_FOLD_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
         for (int j = i; j < row.length; j++) {
           assertNormalizedEqual(row[i], row[j]);
@@ -131,8 +164,8 @@ public class NormalizationTest {
   };
 
   @Test
-  public void testNormalizedCaseInsensitiveAscii() {
-    normalizer = Normalization.normalizedCaseInsensitiveAscii();
+  public void testNormalizeNfcCaseFoldAscii() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC, CASE_FOLD_ASCII));
 
     for (String[] row : NORMALIZED_CASE_INSENSITIVE_ASCII_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
@@ -143,19 +176,34 @@ public class NormalizationTest {
     }
   }
 
+  @Test
+  public void testNormalizeNfdCaseFoldAscii() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD, CASE_FOLD_ASCII));
+
+    for (String[] row : NORMALIZED_CASE_INSENSITIVE_ASCII_TEST_DATA) {
+      for (int i = 0; i < row.length; i++) {
+        for (int j = i + 1; j < row.length; j++) {
+          // since decomposition happens before case folding, the strings are equal when the
+          // decomposed ASCII letter is folded
+          assertNormalizedEqual(row[i], row[j]);
+        }
+      }
+    }
+  }
+
   // regex patterns offer loosely similar matching, but that's all
 
   @Test
   public void testNone_pattern() {
-    normalizer = Normalization.none();
+    normalizer = PathNormalizer.create(ImmutableSet.<Normalization>of());
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternDoesNotMatch("foo", "FOO");
     assertNormalizedPatternDoesNotMatch("FOO", "foo");
   }
 
   @Test
-  public void testCaseInsensitive_pattern() {
-    normalizer = Normalization.caseInsensitive();
+  public void testCaseFold_pattern() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(CASE_FOLD));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");
@@ -167,8 +215,8 @@ public class NormalizationTest {
   }
 
   @Test
-  public void testCaseInsensitiveAscii_pattern() {
-    normalizer = Normalization.caseInsensitiveAscii();
+  public void testCaseFoldAscii_pattern() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(CASE_FOLD_ASCII));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");
@@ -180,8 +228,8 @@ public class NormalizationTest {
   }
 
   @Test
-  public void testNormalized_pattern() {
-    normalizer = Normalization.normalized();
+  public void testNormalizeNfc_pattern() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternDoesNotMatch("foo", "FOO");
     assertNormalizedPatternDoesNotMatch("FOO", "foo");
@@ -190,8 +238,18 @@ public class NormalizationTest {
   }
 
   @Test
-  public void testNormalizedCaseInsensitive_pattern() {
-    normalizer = Normalization.normalizedCaseInsensitive();
+  public void testNormalizeNfd_pattern() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD));
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternDoesNotMatch("foo", "FOO");
+    assertNormalizedPatternDoesNotMatch("FOO", "foo");
+    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AME\u0301LIE");
+  }
+
+  @Test
+  public void testNormalizeNfcCaseFold_pattern() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC, CASE_FOLD));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");
@@ -203,8 +261,36 @@ public class NormalizationTest {
   }
 
   @Test
-  public void testNormalizedCaseInsensitiveAscii_pattern() {
-    normalizer = Normalization.normalizedCaseInsensitiveAscii();
+  public void testNormalizeNfdCaseFold_pattern() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD, CASE_FOLD));
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternMatches("foo", "FOO");
+    assertNormalizedPatternMatches("FOO", "foo");
+    assertNormalizedPatternMatches("Am\u00e9lie", "AM\u00c9LIE");
+    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
+    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
+    assertNormalizedPatternMatches("Am\u00e9lie", "AME\u0301LIE");
+  }
+
+  @Test
+  public void testNormalizeNfcCaseFoldAscii_pattern() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC, CASE_FOLD_ASCII));
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternMatches("foo", "FOO");
+    assertNormalizedPatternMatches("FOO", "foo");
+
+    // these are all a bit fuzzy as when CASE_INSENSITIVE is present but not UNICODE_CASE, ASCII
+    // only strings are expected
+    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AM\u00c9LIE");
+    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
+  }
+
+  @Test
+  public void testNormalizeNfdCaseFoldAscii_pattern() {
+    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD, CASE_FOLD_ASCII));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");

@@ -23,16 +23,19 @@ import static com.google.jimfs.PathType.ParseResult;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.jimfs.Normalization;
+import com.google.common.collect.Ordering;
+import com.google.jimfs.Configuration;
 import com.google.jimfs.PathType;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -42,20 +45,52 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class PathService {
+final class PathService implements Comparator<JimfsPath> {
+
+  private static final Ordering<Name> DISPLAY_ROOT_ORDERING =
+      Ordering.usingToString().nullsLast();
+  private static final Ordering<Iterable<Name>> DISPLAY_NAMES_ORDERING =
+      Ordering.usingToString().lexicographical();
+
+  private static final Ordering<Name> CANONICAL_ROOT_ORDERING =
+      Ordering.natural().nullsLast();
+  private static final Ordering<Iterable<Name>> CANONICAL_NAMES_ORDERING =
+      Ordering.natural().lexicographical();
 
   private final PathType type;
-  private final Normalization displayNormalization;
-  private final Normalization lookupNormalization;
+
+  private final PathNormalizer displayNormalizer;
+  private final PathNormalizer canonicalNormalizer;
+  private final boolean equalityUsesCanonicalForm;
+
+  private final Ordering<Name> rootOrdering;
+  private final Ordering<Iterable<Name>> namesOrdering;
 
   private volatile FileSystem fileSystem;
   private volatile JimfsPath emptyPath;
 
-  PathService(
-      PathType type, Normalization displayNormalization, Normalization lookupNormalization) {
+  PathService(Configuration config) {
+    this(config.getPathType(),
+        PathNormalizer.create(config.getPathDisplayNormalization()),
+        PathNormalizer.create(config.getPathCanonicalNormalization()),
+        config.getPathEqualityUsesCanonicalForm());
+  }
+
+  PathService(PathType type,
+      PathNormalizer displayNormalizer, PathNormalizer canonicalNormalizer,
+      boolean equalityUsesCanonicalForm) {
     this.type = checkNotNull(type);
-    this.displayNormalization = checkNotNull(displayNormalization);
-    this.lookupNormalization = checkNotNull(lookupNormalization);
+    this.displayNormalizer = checkNotNull(displayNormalizer);
+    this.canonicalNormalizer = checkNotNull(canonicalNormalizer);
+    this.equalityUsesCanonicalForm = equalityUsesCanonicalForm;
+
+    if (equalityUsesCanonicalForm) {
+      rootOrdering = CANONICAL_ROOT_ORDERING;
+      namesOrdering = CANONICAL_NAMES_ORDERING;
+    } else {
+      rootOrdering = DISPLAY_ROOT_ORDERING;
+      namesOrdering = DISPLAY_NAMES_ORDERING;
+    }
   }
 
   /**
@@ -108,8 +143,8 @@ final class PathService {
         return Name.PARENT;
     }
 
-    String display = displayNormalization.normalize(name);
-    String canonical = lookupNormalization.normalize(name);
+    String display = displayNormalizer.normalize(name);
+    String canonical = canonicalNormalizer.normalize(name);
     return Name.create(display, canonical);
   }
 
@@ -188,6 +223,40 @@ final class PathService {
     String rootString = root == null ? null : root.toString();
     Iterable<String> names = Iterables.transform(path.names(), Functions.toStringFunction());
     return type.toString(rootString, names);
+  }
+
+  /**
+   * Creates a hash code for the given path.
+   */
+  public int hash(JimfsPath path) {
+    int hash = 31;
+    hash = 31 * hash + getFileSystem().hashCode();
+
+    final Name root = path.root();
+    final ImmutableList<Name> names = path.names();
+
+    if (equalityUsesCanonicalForm) {
+      // use hash codes of names themselves, which are based on the canonical form
+      hash = 31 * hash + (root == null ? 0 : root.hashCode());
+      for (Name name : names) {
+        hash = 31 * hash + name.hashCode();
+      }
+    } else {
+      // use hash codes from toString() form of names
+      hash = 31 * hash + (root == null ? 0 : root.toString().hashCode());
+      for (Name name : names) {
+        hash = 31 * hash + name.toString().hashCode();
+      }
+    }
+    return hash;
+  }
+
+  @Override
+  public int compare(JimfsPath a, JimfsPath b) {
+    return ComparisonChain.start()
+        .compare(a.root(), b.root(), rootOrdering)
+        .compare(a.names(), b.names(), namesOrdering)
+        .result();
   }
 
   /**

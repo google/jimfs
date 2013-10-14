@@ -18,6 +18,9 @@ package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.jimfs.Normalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.Normalization.NORMALIZE_NFC;
+import static com.google.jimfs.Normalization.NORMALIZE_NFD;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -29,6 +32,8 @@ import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.annotation.Nullable;
 
 /**
  * Configuration for an in-memory file system instance. Instances of this class are mutable.
@@ -109,12 +114,13 @@ public final class Configuration {
    *       .setWorkingDirectory("/Users/user") // different working dir
    *
    *   // use full Unicode case insensitivity for lookups; requires ICU4J
-   *   config.setLookupNormalization(Normalization.normalizedCaseInsensitive()); </pre>
+   *   config.setPathCanonicalNormalization(
+   *       Normalization.NORMALIZE_NFD, Normalization.CASE_FOLD); </pre>
    */
   public static Configuration osx() {
     return unix()
-        .setDisplayNormalization(Normalization.normalized())
-        .setLookupNormalization(Normalization.normalizedCaseInsensitiveAscii());
+        .setPathDisplayNormalization(NORMALIZE_NFC) // matches new JDK behavior as of 1.7u40
+        .setPathCanonicalNormalization(NORMALIZE_NFD, CASE_FOLD_ASCII);
   }
 
   /**
@@ -149,13 +155,15 @@ public final class Configuration {
    *       .setWorkingDirectory("C:\\Users\dir") // different working dir
    *
    *   // use full Unicode case insensitivity for lookups; requires ICU4J
-   *   config.setLookupNormalization(Normalization.normalizedCaseInsensitive()); </pre>
+   *   config.setPathCanonicalNormalization(Normalization.CASE_FOLD); </pre>
    */
   public static Configuration windows() {
     return create(PathType.windows())
         .addRoots("C:\\")
         .setWorkingDirectory("C:\\work")
-        .setLookupNormalization(Normalization.normalizedCaseInsensitiveAscii());
+        .setPathCanonicalNormalization(CASE_FOLD_ASCII)
+        // Windows Path objects are case insensitive for equality
+        .setPathEqualityUsesCanonicalForm();
   }
 
   /**
@@ -167,8 +175,9 @@ public final class Configuration {
   }
 
   private final PathType pathType;
-  private Normalization displayNormalization = Normalization.none();
-  private Normalization lookupNormalization = Normalization.none();
+  private ImmutableSet<Normalization> pathDisplayNormalization = ImmutableSet.of();
+  private ImmutableSet<Normalization> pathCanonicalNormalization = ImmutableSet.of();
+  private boolean pathEqualityUsesCanonicalForm = false;
 
   private final Set<String> roots = new LinkedHashSet<>();
   private String workingDirectory;
@@ -191,15 +200,22 @@ public final class Configuration {
   /**
    * Returns the normalization that should be done when creating {@code Path} objects.
    */
-  public Normalization getDisplayNormalization() {
-    return displayNormalization;
+  public ImmutableSet<Normalization> getPathDisplayNormalization() {
+    return pathDisplayNormalization;
   }
 
   /**
    * Returns the normalization that should used internally for file lookups.
    */
-  public Normalization getLookupNormalization() {
-    return lookupNormalization;
+  public ImmutableSet<Normalization> getPathCanonicalNormalization() {
+    return pathCanonicalNormalization;
+  }
+
+  /**
+   * Returns whether or not path equality should use the canonical form of names or not.
+   */
+  public boolean getPathEqualityUsesCanonicalForm() {
+    return pathEqualityUsesCanonicalForm;
   }
 
   /**
@@ -235,22 +251,87 @@ public final class Configuration {
   }
 
   /**
-   * Sets the normalization that should be done on paths when creating {@code Path} objects. This
-   * normalization affects the path's {@code toString()}, equality and sort order.
+   * Sets the normalization that should should be used for {@code toString()} form of {@code Path}
+   * objects created by the file system. Unless {@link #setPathEqualityUsesCanonicalForm()} is set,
+   * the display normalization is also used for determining equality and sort order of path
+   * objects.
+   *
+   * <p>The given normalizations may include either {@link Normalization#NONE NONE} or at most one
+   * of the Unicode normalizations ({@link Normalization#NORMALIZE_NFC NORMALIZE_NFC} and
+   * {@link Normalization#NORMALIZE_NFD NORMALIZE_NFD}) and at most one of the case folding
+   * normalizations ({@link Normalization#CASE_FOLD CASE_FOLD} and
+   * {@link Normalization#CASE_FOLD_ASCII CASE_FOLD_ASCII}).
+   *
+   * @throws IllegalArgumentException if the given set of normalizations is invalid
    */
-  public Configuration setDisplayNormalization(Normalization normalization) {
-    this.displayNormalization = checkNotNull(normalization);
+  public Configuration setPathDisplayNormalization(
+      Normalization first, Normalization... more) {
+    List<Normalization> normalizations = Lists.asList(first, more);
+    checkNormalizations(normalizations);
+    this.pathDisplayNormalization = ImmutableSet.copyOf(normalizations);
     return this;
   }
 
   /**
-   * Sets the normalization that should be done on paths for file lookup. This normalization does
-   * not affect the properties of a {@code Path} object but does affect whether a name in a path
-   * matches a name linked to a file in a directory.
+   * Sets the canonical normalization of {@code Path} objects created by the file system. The
+   * canonical normalization is used to determine equality of two filenames when doing file lookup,
+   * creation, etc. It can also be used for determining equality and sort order of path objects by
+   * setting {@link #setPathEqualityUsesCanonicalForm()}.
+   *
+   * <p>The given normalizations may include either {@link Normalization#NONE NONE} or at most one
+   * of the Unicode normalizations ({@link Normalization#NORMALIZE_NFC NORMALIZE_NFC} and
+   * {@link Normalization#NORMALIZE_NFD NORMALIZE_NFD}) and at most one of the case folding
+   * normalizations ({@link Normalization#CASE_FOLD CASE_FOLD} and
+   * {@link Normalization#CASE_FOLD_ASCII CASE_FOLD_ASCII}).
+   *
+   * @throws IllegalArgumentException if the given set of normalizations is invalid
    */
-  public Configuration setLookupNormalization(Normalization normalization) {
-    this.lookupNormalization = checkNotNull(normalization);
+  public Configuration setPathCanonicalNormalization(Normalization first, Normalization... more) {
+    List<Normalization> normalizations = Lists.asList(first, more);
+    checkNormalizations(normalizations);
+    this.pathCanonicalNormalization = ImmutableSet.copyOf(normalizations);
     return this;
+  }
+
+  /**
+   * Sets the file system to use the canonical normalization of filenames to determine the
+   * equality and sort order of {@code Path} objects rather than using the string form of the path.
+   */
+  public Configuration setPathEqualityUsesCanonicalForm() {
+    pathEqualityUsesCanonicalForm = true;
+    return this;
+  }
+
+  private void checkNormalizations(List<Normalization> normalizations) {
+    Normalization none = null;
+    Normalization normalization = null;
+    Normalization caseFold = null;
+    for (Normalization n : normalizations) {
+      checkNotNull(n);
+      checkNormalizationNotSet(n, none);
+
+      switch (n) {
+        case NONE:
+          none = n;
+          break;
+        case NORMALIZE_NFC:
+        case NORMALIZE_NFD:
+          checkNormalizationNotSet(n, normalization);
+          normalization = n;
+          break;
+        case CASE_FOLD:
+        case CASE_FOLD_ASCII:
+          checkNormalizationNotSet(n, caseFold);
+          caseFold = n;
+      }
+    }
+  }
+
+  private static void checkNormalizationNotSet(Normalization n, @Nullable Normalization set) {
+    if (set != null) {
+      throw new IllegalArgumentException("can't set normalization " + n
+          + ": normalization " + set + " already set");
+    }
   }
 
   /**

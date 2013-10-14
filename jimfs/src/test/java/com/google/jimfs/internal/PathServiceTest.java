@@ -107,21 +107,82 @@ public class PathServiceTest {
   }
 
   @Test
+  public void testHash_usingDisplayForm() {
+    PathService pathService = fakePathService(PathType.unix(),
+        PathNormalizer.none(), PathNormalizer.none(), false);
+
+    JimfsPath path1 = new JimfsPath(pathService, null,
+        ImmutableList.of(Name.create("FOO", "foo")));
+    JimfsPath path2 = new JimfsPath(pathService, null,
+        ImmutableList.of(Name.create("FOO", "FOO")));
+    JimfsPath path3 = new JimfsPath(pathService, null,
+        ImmutableList.of(Name.create("FOO", "9874238974897189741")));
+
+    ASSERT.that(pathService.hash(path1)).isEqualTo(pathService.hash(path2));
+    ASSERT.that(pathService.hash(path2)).isEqualTo(pathService.hash(path3));
+  }
+
+  @Test
+  public void testHash_usingCanonicalForm() {
+    PathService pathService = fakePathService(PathType.unix(),
+        PathNormalizer.none(), PathNormalizer.none(), true);
+
+    JimfsPath path1 = new JimfsPath(pathService, null,
+        ImmutableList.of(Name.create("foo", "foo")));
+    JimfsPath path2 = new JimfsPath(pathService, null,
+        ImmutableList.of(Name.create("FOO", "foo")));
+    JimfsPath path3 = new JimfsPath(pathService, null,
+        ImmutableList.of(Name.create("28937497189478912374897", "foo")));
+
+    ASSERT.that(pathService.hash(path1)).isEqualTo(pathService.hash(path2));
+    ASSERT.that(pathService.hash(path2)).isEqualTo(pathService.hash(path3));
+  }
+
+  @Test
+  public void testCompareTo_usingDisplayForm() {
+    PathService pathService = fakePathService(PathType.unix(),
+        PathNormalizer.none(), PathNormalizer.none(), false);
+
+    JimfsPath path1 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("a", "z")));
+    JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("b", "y")));
+    JimfsPath path3 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("c", "x")));
+
+    ASSERT.that(pathService.compare(path1, path2)).is(-1);
+    ASSERT.that(pathService.compare(path2, path3)).is(-1);
+  }
+
+  @Test
+  public void testCompareTo_usingCanonicalForm() {
+    PathService pathService = fakePathService(PathType.unix(),
+        PathNormalizer.none(), PathNormalizer.none(), true);
+
+    JimfsPath path1 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("a", "z")));
+    JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("b", "y")));
+    JimfsPath path3 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("c", "x")));
+
+    ASSERT.that(pathService.compare(path1, path2)).is(1);
+    ASSERT.that(pathService.compare(path2, path3)).is(1);
+  }
+
+  @Test
   public void testPathMatcher() {
     ASSERT.that(service.createPathMatcher("regex:foo")).isA(PathMatchers.RegexPathMatcher.class);
     ASSERT.that(service.createPathMatcher("glob:foo")).isA(PathMatchers.RegexPathMatcher.class);
   }
 
   public static PathService fakeUnixPathService() {
-    return fakePathService(PathType.unix());
+    return fakePathService(PathType.unix(), PathNormalizer.none(), PathNormalizer.none(), false);
   }
 
   public static PathService fakeWindowsPathService() {
-    return fakePathService(PathType.windows());
+    return fakePathService(PathType.windows(), PathNormalizer.none(), PathNormalizer.none(), false);
   }
 
-  public static PathService fakePathService(PathType type) {
-    PathService service = new PathService(type, Normalization.none(), Normalization.none());
+  public static PathService fakePathService(PathType type,
+      PathNormalizer displayNormalizer, PathNormalizer canonicalNormalizer,
+      boolean equalityUsesCanonicalForm) {
+    PathService service = new PathService(
+        type, displayNormalizer, canonicalNormalizer, equalityUsesCanonicalForm);
     service.setFileSystem(FAKE_FILE_SYSTEM);
     return service;
   }

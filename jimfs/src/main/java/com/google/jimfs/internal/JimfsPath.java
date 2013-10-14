@@ -22,10 +22,8 @@ import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
 
 import com.google.common.base.Objects;
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Ordering;
 
 import java.io.File;
 import java.io.IOException;
@@ -419,21 +417,14 @@ final class JimfsPath implements Path, FileContent {
     };
   }
 
-  private static final Ordering<Name> ROOT_ORDERING =
-      Ordering.usingToString().nullsLast();
-  private static final Ordering<Iterable<Name>> NAMES_ORDERING =
-      Ordering.usingToString().lexicographical();
-
   @Override
   public int compareTo(Path other) {
     JimfsPath otherPath = checkPath(other);
     if (otherPath == null) {
       return -1;
     }
-    return ComparisonChain.start()
-        .compare(root, otherPath.root, ROOT_ORDERING)
-        .compare(names, otherPath.names, NAMES_ORDERING)
-        .result();
+
+    return pathService.compare(this, otherPath);
   }
 
   @Override
@@ -447,13 +438,7 @@ final class JimfsPath implements Path, FileContent {
 
   @Override
   public int hashCode() {
-    int hash = 31;
-    hash = 31 * hash + getFileSystem().hashCode();
-    hash = 31 * hash + (root == null ? 0 : root.hashCode());
-    for (Name name : names) {
-      hash = 31 * hash + name.toString().hashCode();
-    }
-    return hash;
+    return pathService.hash(this);
   }
 
   @Override

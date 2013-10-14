@@ -34,7 +34,7 @@ import com.google.common.annotations.VisibleForTesting;
  *
  * @author Colin Decker
  */
-final class Name {
+final class Name implements Comparable<Name> {
 
   /**
    * The empty name.
@@ -75,12 +75,15 @@ final class Name {
 
   private final String display;
   private final String canonical;
-  private final int hashCode;
 
   private Name(String display, String canonical) {
     this.display = checkNotNull(display);
     this.canonical = checkNotNull(canonical);
-    this.hashCode = canonical.hashCode();
+  }
+
+  @Override
+  public int compareTo(Name o) {
+    return canonical.compareTo(o.canonical);
   }
 
   @Override
@@ -94,7 +97,7 @@ final class Name {
 
   @Override
   public final int hashCode() {
-    return hashCode;
+    return canonical.hashCode();
   }
 
   @Override

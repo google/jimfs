@@ -16,13 +16,16 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.Normalization.CASE_FOLD;
+import static com.google.jimfs.Normalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.Normalization.NORMALIZE_NFC;
+
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.runner.CaliperMain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.jimfs.Normalization;
 
 import java.util.Iterator;
 import java.util.Random;
@@ -107,35 +110,36 @@ public class NameBenchmark {
 
   @SuppressWarnings("unused")
   private enum NameImpl {
-    NONE(Normalization.none(), Normalization.none()),
+    NONE(PathNormalizer.none(), PathNormalizer.none()),
 
-    NORMALIZED(Normalization.none(), Normalization.normalized()),
+    NORMALIZED(PathNormalizer.none(), PathNormalizer.create(NORMALIZE_NFC)),
 
-    CASE_INSENSITIVE(Normalization.none(), Normalization.caseInsensitive()),
+    CASE_INSENSITIVE(PathNormalizer.none(), PathNormalizer.create(CASE_FOLD)),
 
-    CASE_INSENSITIVE_ASCII(Normalization.none(), Normalization.caseInsensitiveAscii()),
+    CASE_INSENSITIVE_ASCII(PathNormalizer.none(), PathNormalizer.create(CASE_FOLD_ASCII)),
 
     NORMALIZED_CASE_INSENSITIVE(
-        Normalization.none(), Normalization.normalizedCaseInsensitive()),
+        PathNormalizer.none(), PathNormalizer.create(NORMALIZE_NFC, CASE_FOLD)),
 
     NORMALIZED_CASE_INSENSITIVE_ASCII(
-        Normalization.none(), Normalization.normalizedCaseInsensitiveAscii()),
+        PathNormalizer.none(), PathNormalizer.create(NORMALIZE_NFC, CASE_FOLD_ASCII)),
 
     NORMALIZED_CASE_INSENSITIVE_ASCII_WITH_PATH_NORMALIZED(
-        Normalization.normalized(), Normalization.normalizedCaseInsensitiveAscii());
+        PathNormalizer.create(NORMALIZE_NFC),
+        PathNormalizer.create(NORMALIZE_NFC, CASE_FOLD_ASCII));
 
-    private final Normalization displayNormalization;
-    private final Normalization lookupNormalization;
+    private final PathNormalizer displayNormalization;
+    private final PathNormalizer canonicalNormalization;
 
-    private NameImpl(Normalization displayNormalization,
-        Normalization lookupNormalization) {
+    private NameImpl(PathNormalizer displayNormalization,
+        PathNormalizer canonicalNormalization) {
       this.displayNormalization = displayNormalization;
-      this.lookupNormalization = lookupNormalization;
+      this.canonicalNormalization = canonicalNormalization;
     }
 
     Name create(String string) {
       String display = displayNormalization.normalize(string);
-      String canonical = lookupNormalization.normalize(string);
+      String canonical = canonicalNormalization.normalize(string);
       return Name.create(display, canonical);
     }
   }

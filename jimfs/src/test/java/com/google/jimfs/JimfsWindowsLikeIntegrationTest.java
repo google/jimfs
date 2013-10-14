@@ -20,7 +20,9 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Ordering;
 import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import org.junit.Test;
@@ -30,7 +32,9 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.regex.PatternSyntaxException;
 
 /**
@@ -71,6 +75,25 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
     assertThat("C:\\foo\\bar\\baz").isAbsolute()
         .and().hasRootComponent("C:\\")
         .and().hasNameComponents("foo", "bar", "baz");
+  }
+
+  @Test
+  public void testPaths_equalityIsCaseInsensitive() {
+    assertThat("C:\\").isEqualTo(path("c:\\"));
+    assertThat("foo").isEqualTo(path("FOO"));
+  }
+
+  @Test
+  public void testPaths_areSortedCaseInsensitive() {
+    Path p1 = path("a");
+    Path p2 = path("B");
+    Path p3 = path("c");
+    Path p4 = path("D");
+
+    ASSERT.that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2)))
+        .is(ImmutableList.of(p1, p2, p3, p4));
+
+    // would be p2, p4, p1, p3 if sorting were case sensitive
   }
 
   @Test
