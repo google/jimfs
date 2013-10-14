@@ -164,7 +164,7 @@ final class DirectoryTable implements FileContent {
     checkArgument(!entries.containsKey(name), "entry '%s' already exists", name);
     DirectoryEntry entry = new DirectoryEntry(self(), name, file);
     entries.put(name, entry);
-    file.linked();
+    file.incrementLinkCount();
     return entry;
   }
 
@@ -187,7 +187,7 @@ final class DirectoryTable implements FileContent {
     if (entry == null) {
       throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
     }
-    entry.file().unlinked();
+    entry.file().decrementLinkCount();
     return entry;
   }
 

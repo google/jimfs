@@ -14,32 +14,32 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute;
+package com.google.jimfs.attribute.providers;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.jimfs.attribute.FileMetadata;
 
 import java.io.IOException;
+import java.nio.file.attribute.FileAttributeView;
 
 /**
- * Supplier for retrieving {@link FileMetadata}, either by looking up the file or by just returning
- * the already located metadata.
+ * Abstract base class for {@link FileAttributeView} implementations.
  *
  * @author Colin Decker
  */
-public abstract class FileMetadataSupplier {
+abstract class AbstractAttributeView implements FileAttributeView {
+
+  private final FileMetadata.Lookup lookup;
+
+  public AbstractAttributeView(FileMetadata.Lookup lookup) {
+    this.lookup = checkNotNull(lookup);
+  }
 
   /**
-   * Gets the file metadata, throwing an exception if it can't be retrieved for any reason.
+   * Gets the file metadata object to get or set attributes on.
    */
-  public abstract FileMetadata getMetadata() throws IOException;
-
-  /**
-   * Returns a supplier that always returns the given metadata.
-   */
-  public static FileMetadataSupplier of(final FileMetadata metadata) {
-    return new FileMetadataSupplier() {
-      @Override
-      public FileMetadata getMetadata() {
-        return metadata;
-      }
-    };
+  public final FileMetadata lookupMetadata() throws IOException {
+    return lookup.lookup();
   }
 }

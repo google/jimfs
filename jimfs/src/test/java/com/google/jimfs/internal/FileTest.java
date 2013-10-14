@@ -98,40 +98,17 @@ public class FileTest {
     File file = new File(0L, new FakeFileContent());
     ASSERT.that(file.links()).is(0);
 
-    file.linked();
+    file.incrementLinkCount();
     ASSERT.that(file.links()).is(1);
 
-    file.linked();
+    file.incrementLinkCount();
     ASSERT.that(file.links()).is(2);
 
-    file.unlinked();
+    file.decrementLinkCount();
     ASSERT.that(file.links()).is(1);
 
-    file.unlinked();
+    file.decrementLinkCount();
     ASSERT.that(file.links()).is(0);
-  }
-
-  @Test
-  public void testAttributes() {
-    // these methods are basically just thin wrappers around a map, so no need to test too
-    // thoroughly
-
-    File file = new File(0L, new FakeFileContent());
-
-    ASSERT.that(file.getAttributeKeys()).isEmpty();
-    ASSERT.that(file.getAttribute("foo:foo")).isNull();
-
-    file.deleteAttribute("foo:foo"); // doesn't throw
-
-    file.setAttribute("foo:foo", "foo");
-
-    ASSERT.that(file.getAttributeKeys()).iteratesAs("foo:foo");
-    ASSERT.that(file.getAttribute("foo:foo")).is("foo");
-
-    file.deleteAttribute("foo:foo");
-
-    ASSERT.that(file.getAttributeKeys()).isEmpty();
-    ASSERT.that(file.getAttribute("foo:foo")).isNull();
   }
 
   @Test

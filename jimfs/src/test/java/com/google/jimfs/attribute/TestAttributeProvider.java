@@ -16,30 +16,32 @@
 
 package com.google.jimfs.attribute;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 /**
  * @author Colin Decker
  */
-public class TestAttributeProvider extends AbstractAttributeProvider
-    implements AttributeViewProvider<TestAttributeView>, AttributeReader<TestAttributes> {
+public final class TestAttributeProvider extends AttributeProvider<TestAttributeView> {
 
-  private static final String VIEW = "test";
-
-  private static final Attribute FOO = Attribute.unsettable(VIEW, "foo", String.class);
-  private static final Attribute BAR = Attribute.settable(VIEW, "bar", Long.class);
-  private static final Attribute BAZ = Attribute.settableOnCreate(VIEW, "baz", Integer.class);
-
-  public TestAttributeProvider() {
-    super(ImmutableSet.of(FOO, BAR, BAZ));
-  }
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
+      "foo",
+      "bar",
+      "baz");
 
   @Override
   public String name() {
-    return VIEW;
+    return "test";
   }
 
   @Override
@@ -48,26 +50,44 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public ImmutableSet<Class<?>> acceptedTypes(String attribute) {
-    if (attribute.equals("bar")) {
-      return ImmutableSet.<Class<?>>of(Number.class);
-    }
-    return super.acceptedTypes(attribute);
+  public ImmutableSet<String> fixedAttributes() {
+    return ATTRIBUTES;
   }
 
   @Override
-  public void set(FileMetadata metadata, String attribute, Object value) {
-    if (attribute.equals("bar")) {
-      metadata.setAttribute(BAR.key(), ((Number) value).longValue());
-    } else {
-      super.set(metadata, attribute, value);
+  public Map<String, ?> defaultValues(Map<String, ?> userDefaults) {
+    Map<String, Object> result = new HashMap<>();
+
+    Long bar = 0L;
+    Integer baz = 1;
+    if (userDefaults.containsKey("test:bar")) {
+      bar = checkType("test", "bar", userDefaults.get("test:bar"), Number.class).longValue();
     }
+    if (userDefaults.containsKey("test:baz")) {
+      baz = checkType("test", "baz", userDefaults.get("test:baz"), Integer.class);
+    }
+
+    result.put("test:bar", bar);
+    result.put("test:baz", baz);
+    return result;
   }
 
   @Override
-  public void setInitial(FileMetadata metadata) {
-    metadata.setAttribute(BAR.key(), 0L);
-    metadata.setAttribute(BAZ.key(), 1);
+  public void set(
+      FileMetadata metadata, String view, String attribute, Object value, boolean create) {
+    switch (attribute) {
+      case "bar":
+        checkNotCreate(view, attribute, create);
+        metadata.setAttribute("test:bar",
+            checkType(view, attribute, value, Number.class).longValue());
+        break;
+      case "baz":
+        metadata.setAttribute("test:baz",
+            checkType(view, attribute, value, Integer.class));
+        break;
+      default:
+        throw unsettable(view, attribute);
+    }
   }
 
   @Override
@@ -75,21 +95,7 @@ public class TestAttributeProvider extends AbstractAttributeProvider
     if (attribute.equals("foo")) {
       return "hello";
     }
-    return super.get(metadata, attribute);
-  }
-
-  @Override
-  public Class<TestAttributes> attributesType() {
-    return TestAttributes.class;
-  }
-
-  @Override
-  public TestAttributes read(FileMetadata metadata) {
-    try {
-      return getView(FileMetadataSupplier.of(metadata)).readAttributes();
-    } catch (IOException unexpected) {
-      throw new AssertionError(unexpected);
-    }
+    return metadata.getAttribute("test:" + attribute);
   }
 
   @Override
@@ -98,47 +104,73 @@ public class TestAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public TestAttributeView getView(FileMetadataSupplier supplier) {
-    return new View(this, supplier);
+  public TestAttributeView view(
+      FileMetadata.Lookup lookup, Map<String, FileAttributeView> inheritedViews) {
+    return new View(lookup, (BasicFileAttributeView) inheritedViews.get("basic"));
   }
 
-  public static final class View extends AbstractAttributeView implements TestAttributeView {
+  @Override
+  public Class<TestAttributes> attributesType() {
+    return TestAttributes.class;
+  }
 
-    public View(AttributeProvider attributeProvider, FileMetadataSupplier supplier) {
-      super(attributeProvider, supplier);
+  @Override
+  public TestAttributes readAttributes(FileMetadata metadata) {
+    return new Attributes(metadata);
+  }
+
+  static final class View implements TestAttributeView {
+
+    private final FileMetadata.Lookup lookup;
+    private final BasicFileAttributeView basicView;
+
+    public View(FileMetadata.Lookup lookup, BasicFileAttributeView basicView) {
+      this.lookup = checkNotNull(lookup);
+      this.basicView = checkNotNull(basicView);
+    }
+
+    @Override
+    public String name() {
+      return "test";
     }
 
     @Override
     public Attributes readAttributes() throws IOException {
-      return new Attributes(this);
+      return new Attributes(lookup.lookup());
+    }
+
+    @Override
+    public void setTimes(
+        @Nullable FileTime lastModifiedTime,
+        @Nullable FileTime lastAccessTime,
+        @Nullable FileTime createTime) throws IOException {
+      basicView.setTimes(lastModifiedTime, lastAccessTime, createTime);
     }
 
     @Override
     public void setBar(long bar) throws IOException {
-      set("bar", bar);
+      lookup.lookup().setAttribute("test:bar", bar);
     }
 
     @Override
     public void setBaz(int baz) throws IOException {
-      set("baz", baz);
+      lookup.lookup().setAttribute("test:baz", baz);
     }
   }
 
-  public static final class Attributes implements TestAttributes {
+  static final class Attributes implements TestAttributes {
 
-    private final String foo;
     private final Long bar;
     private final Integer baz;
 
-    public Attributes(View view) throws IOException {
-      this.foo = view.get("foo");
-      this.bar = view.get("bar");
-      this.baz = view.get("baz");
+    public Attributes(FileMetadata metadata) {
+      this.bar = (Long) metadata.getAttribute("test:bar");
+      this.baz = (Integer) metadata.getAttribute("test:baz");
     }
 
     @Override
     public String foo() {
-      return foo;
+      return "hello";
     }
 
     @Override

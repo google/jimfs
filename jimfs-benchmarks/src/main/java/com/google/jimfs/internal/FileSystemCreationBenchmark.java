@@ -3,7 +3,7 @@ package com.google.jimfs.internal;
 import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.runner.CaliperMain;
-import com.google.jimfs.AttributeViews;
+import com.google.jimfs.AttributeConfiguration;
 import com.google.jimfs.Configuration;
 
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class FileSystemCreationBenchmark {
       @Override
       Configuration createConfiguration() {
         return Configuration.unix()
-            .setAttributeViews(AttributeViews.unix());
+            .setAttributeConfiguration(AttributeConfiguration.unix());
       }
     },
 
@@ -63,7 +63,7 @@ public class FileSystemCreationBenchmark {
       @Override
       Configuration createConfiguration() {
         return Configuration.windows()
-            .setAttributeViews(AttributeViews.windows());
+            .setAttributeConfiguration(AttributeConfiguration.windows());
       }
     };
 

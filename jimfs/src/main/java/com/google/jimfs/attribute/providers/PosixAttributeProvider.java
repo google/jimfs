@@ -19,17 +19,15 @@ package com.google.jimfs.attribute.providers;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AbstractAttributeProvider;
-import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.Attribute;
-import com.google.jimfs.attribute.AttributeReader;
-import com.google.jimfs.attribute.AttributeViewProvider;
+import com.google.common.collect.Sets;
+import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.FileMetadata;
-import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
@@ -38,7 +36,10 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Map;
 import java.util.Set;
+
+import javax.annotation.Nullable;
 
 /**
  * Attribute provider that provides the {@link PosixFileAttributeView} ("posix") and allows reading
@@ -46,71 +47,110 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
-public final class PosixAttributeProvider extends AbstractAttributeProvider implements
-    AttributeViewProvider<PosixFileAttributeView>, AttributeReader<PosixFileAttributes> {
+final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeView> {
 
-  public static final String VIEW = "posix";
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
+      "group",
+      "permissions");
 
-  public static final String GROUP = "group";
-  public static final String PERMISSIONS = "permissions";
+  private static final ImmutableSet<String> INHERITED_VIEWS = ImmutableSet.of("basic", "owner");
 
-  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
-      Attribute.settable(VIEW, GROUP, GroupPrincipal.class),
-      Attribute.settableOnCreate(VIEW, PERMISSIONS, Set.class));
-
-  private final GroupPrincipal defaultGroup;
-  private final ImmutableSet<PosixFilePermission> defaultPermissions;
-
-  final OwnerAttributeProvider owner;
-
-  public PosixAttributeProvider(OwnerAttributeProvider owner) {
-    this("group", "rw-r--r--", owner);
-  }
-
-  public PosixAttributeProvider(
-      String defaultGroup, String defaultPermissions, OwnerAttributeProvider owner) {
-    super(ATTRIBUTES);
-    this.defaultGroup = createGroupPrincipal(defaultGroup);
-    this.defaultPermissions = ImmutableSet.copyOf(
-        PosixFilePermissions.fromString(defaultPermissions));
-    this.owner = checkNotNull(owner);
-  }
+  private static final GroupPrincipal DEFAULT_GROUP = createGroupPrincipal("group");
+  private static final ImmutableSet<PosixFilePermission> DEFAULT_PERMISSIONS =
+      Sets.immutableEnumSet(PosixFilePermissions.fromString("rw-r--r--"));
 
   @Override
   public String name() {
-    return VIEW;
+    return "posix";
   }
 
   @Override
   public ImmutableSet<String> inherits() {
-    return ImmutableSet.of("basic", "owner");
+    return INHERITED_VIEWS;
   }
 
   @Override
-  public void setInitial(FileMetadata metadata) {
-    set(metadata, GROUP, defaultGroup);
-    set(metadata, PERMISSIONS, defaultPermissions);
+  public ImmutableSet<String> fixedAttributes() {
+    return ATTRIBUTES;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public void set(FileMetadata metadata, String attribute, Object value) {
-    switch (attribute) {
-      case PERMISSIONS:
-        Set<?> set = (Set<?>) value;
-        for (Object obj : set) {
-          checkNotNull(obj);
-          if (!(obj instanceof PosixFilePermission)) {
-            throw new IllegalArgumentException("invalid element for attribute '" + name() + ":"
-                + attribute + "': should be Set<PosixFilePermission>, found element of type "
-                + obj.getClass());
-          }
-        }
+  public Map<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
+    Object userProvidedGroup = userProvidedDefaults.get("posix:group");
 
-        super.set(metadata, attribute, ImmutableSet.copyOf(set));
-        break;
-      default:
-        super.set(metadata, attribute, value);
+    UserPrincipal group = DEFAULT_GROUP;
+    if (userProvidedGroup != null) {
+      if (userProvidedGroup instanceof String) {
+        group = createGroupPrincipal((String) userProvidedGroup);
+      } else if (userProvidedGroup instanceof GroupPrincipal) {
+        group = createGroupPrincipal(userProvidedGroup.toString());
+      } else {
+        throw new IllegalArgumentException("invalid type " + userProvidedGroup.getClass()
+            + " for attribute 'posix:group': should be one of " + String.class + " or "
+            + GroupPrincipal.class);
+      }
     }
+
+    Object userProvidedPermissions = userProvidedDefaults.get("posix:permissions");
+
+    Set<PosixFilePermission> permissions = DEFAULT_PERMISSIONS;
+    if (userProvidedPermissions != null) {
+      if (userProvidedPermissions instanceof String) {
+        permissions = Sets.immutableEnumSet(
+            PosixFilePermissions.fromString((String) userProvidedPermissions));
+      } else if (userProvidedPermissions instanceof Set) {
+        permissions = toPermissions((Set<?>) userProvidedPermissions);
+      } else {
+        throw new IllegalArgumentException("invalid type " + userProvidedPermissions.getClass()
+            + " for attribute 'posix:permissions': should be one of " + String.class + " or "
+            + Set.class);
+      }
+    }
+
+    return ImmutableMap.of(
+        "posix:group", group,
+        "posix:permissions", permissions);
+  }
+
+  @Nullable
+  @Override
+  public Object get(FileMetadata metadata, String attribute) {
+    switch (attribute) {
+      case "group":
+        return metadata.getAttribute("posix:group");
+      case "permissions":
+        return metadata.getAttribute("posix:permissions");
+    }
+    return null;
+  }
+
+  @Override
+  public void set(FileMetadata metadata, String view, String attribute, Object value,
+      boolean create) {
+    switch (attribute) {
+      case "group":
+        checkNotCreate(view, attribute, create);
+        metadata.setAttribute("posix:group",
+            checkType(view, attribute, value, GroupPrincipal.class));
+        break;
+      case "permissions":
+        metadata.setAttribute("posix:permissions",
+            toPermissions(checkType(view, attribute, value, Set.class)));
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static ImmutableSet<PosixFilePermission> toPermissions(Set<?> set) {
+    for (Object obj : set) {
+      checkNotNull(obj);
+      if (!(obj instanceof PosixFilePermission)) {
+        throw new IllegalArgumentException("invalid element for attribute 'posix:permissions': "
+            + "should be Set<PosixFilePermission>, found element of type " + obj.getClass());
+      }
+    }
+
+    return Sets.immutableEnumSet((Set<PosixFilePermission>) set);
   }
 
   @Override
@@ -119,8 +159,11 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
   }
 
   @Override
-  public View getView(FileMetadataSupplier supplier) {
-    return new View(this, supplier);
+  public PosixFileAttributeView view(FileMetadata.Lookup lookup,
+      Map<String, FileAttributeView> inheritedViews) {
+    return new View(lookup,
+        (BasicFileAttributeView) inheritedViews.get("basic"),
+        (FileOwnerAttributeView) inheritedViews.get("owner"));
   }
 
   @Override
@@ -129,12 +172,8 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
   }
 
   @Override
-  public PosixFileAttributes read(FileMetadata metadata) {
-    try {
-      return new Attributes(getView(FileMetadataSupplier.of(metadata)));
-    } catch (IOException e) {
-      throw new AssertionError(e); // IoSupplier<AttributeStore>.ofFile doesn't throw IOException
-    }
+  public PosixFileAttributes readAttributes(FileMetadata metadata) {
+    return new Attributes(metadata);
   }
 
   /**
@@ -145,17 +184,21 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
     private final BasicFileAttributeView basicView;
     private final FileOwnerAttributeView ownerView;
 
-    protected View(PosixAttributeProvider provider, FileMetadataSupplier supplier) {
-      super(provider, supplier);
-      this.basicView = BasicAttributeProvider.INSTANCE.getView(supplier);
-      this.ownerView = provider.owner.getView(supplier);
+    protected View(FileMetadata.Lookup lookup,
+        BasicFileAttributeView basicView, FileOwnerAttributeView ownerView) {
+      super(lookup);
+      this.basicView = checkNotNull(basicView);
+      this.ownerView = checkNotNull(ownerView);
+    }
+
+    @Override
+    public String name() {
+      return "posix";
     }
 
     @Override
     public PosixFileAttributes readAttributes() throws IOException {
-      View view = new View((PosixAttributeProvider) provider(),
-          FileMetadataSupplier.of(getFileMetadata()));
-      return new Attributes(view);
+      return new Attributes(lookupMetadata());
     }
 
     @Override
@@ -166,12 +209,12 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
 
     @Override
     public void setPermissions(Set<PosixFilePermission> perms) throws IOException {
-      set(PERMISSIONS, perms);
+      lookupMetadata().setAttribute("posix:permissions", ImmutableSet.copyOf(perms));
     }
 
     @Override
     public void setGroup(GroupPrincipal group) throws IOException {
-      set(GROUP, group);
+      lookupMetadata().setAttribute("posix:group", checkNotNull(group));
     }
 
     @Override
@@ -188,18 +231,19 @@ public final class PosixAttributeProvider extends AbstractAttributeProvider impl
   /**
    * Implementation of {@link PosixFileAttributes}.
    */
-  public static class Attributes
-      extends BasicAttributeProvider.Attributes implements PosixFileAttributes {
+  static class Attributes extends BasicAttributeProvider.Attributes implements PosixFileAttributes {
 
     private final UserPrincipal owner;
     private final GroupPrincipal group;
     private final ImmutableSet<PosixFilePermission> permissions;
 
-    protected Attributes(View view) throws IOException {
-      super(view.basicView.readAttributes());
-      this.owner = view.ownerView.getOwner();
-      this.group = view.get(GROUP);
-      this.permissions = view.get(PERMISSIONS);
+    @SuppressWarnings("unchecked")
+    protected Attributes(FileMetadata metadata) {
+      super(metadata);
+      this.owner = (UserPrincipal) metadata.getAttribute("owner:owner");
+      this.group = (GroupPrincipal) metadata.getAttribute("posix:group");
+      this.permissions = (ImmutableSet<PosixFilePermission>)
+          metadata.getAttribute("posix:permissions");
     }
 
     @Override

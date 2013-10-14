@@ -20,39 +20,77 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AttributeProvider;
+import com.google.jimfs.internal.AttributeService;
+import com.google.jimfs.attribute.FakeFileMetadata;
 import com.google.jimfs.attribute.FileMetadata;
-import com.google.jimfs.attribute.FileMetadataSupplier;
-import com.google.jimfs.attribute.TestFileMetadata;
 
 import org.junit.Before;
 
+import java.io.IOException;
+import java.nio.file.attribute.FileAttributeView;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Base class for tests of individual {@link AttributeProvider} implementations.
  *
  * @author Colin Decker
  */
-public abstract class AttributeProviderTest<P extends AttributeProvider> {
+public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
+
+  protected static final ImmutableMap<String, FileAttributeView> NO_INHERITED_VIEWS =
+      ImmutableMap.of();
 
   protected P provider;
-  protected TestFileMetadata metadata;
+  protected FileMetadata metadata;
 
   /**
-   * Create the needed providers, including the provider being tested.
+   * Create the provider being tested.
    */
   protected abstract P createProvider();
+
+  /**
+   * Creates the set of providers the provider being tested depends on.
+   */
+  protected abstract Set<? extends AttributeProvider<?>> createInheritedProviders();
+
+  protected FileMetadata.Lookup metadataSupplier() {
+    return new FileMetadata.Lookup() {
+      @Override
+      public FileMetadata lookup() throws IOException {
+        return metadata;
+      }
+    };
+  }
 
   @Before
   public void setUp() {
     this.provider = createProvider();
-    this.metadata = new TestFileMetadata(0, TestFileMetadata.Type.DIRECTORY);
-    provider.setInitial(metadata);
+    this.metadata = new FakeFileMetadata(0);
+    AttributeService service = createService();
+    service.setInitialAttributes(metadata);
   }
 
-  protected FileMetadataSupplier metadataSupplier() {
-    return FileMetadataSupplier.of(metadata);
+  protected final AttributeService createService() {
+    ImmutableSet<AttributeProvider<?>> providers = ImmutableSet.<AttributeProvider<?>>builder()
+        .add(provider)
+        .addAll(createInheritedProviders())
+        .build();
+    return new AttributeService(providers, createDefaultValues());
+  }
+
+  protected Map<String, ?> createDefaultValues() {
+    return ImmutableMap.of();
+  }
+
+  // assertions
+
+  protected void assertSupportsAll(String... attributes) {
+    for (String attribute : attributes) {
+      ASSERT.that(provider.supports(attribute)).isTrue();
+    }
   }
 
   protected void assertContainsAll(
@@ -66,42 +104,33 @@ public abstract class AttributeProviderTest<P extends AttributeProvider> {
   }
 
   protected void assertSetAndGetSucceeds(String attribute, Object value) {
-    ASSERT.that(provider.isSettable(metadata, attribute));
-    provider.set(metadata, attribute, value);
-    ASSERT.that(provider.get(metadata, attribute)).is(value);
+    assertSetAndGetSucceeds(attribute, value, false);
   }
 
-  protected void assertCannotSet(String attribute) {
-    ASSERT.that(provider.isSettable(metadata, attribute)).isFalse();
+  protected void assertSetAndGetSucceedsOnCreate(String attribute, Object value) {
+    assertSetAndGetSucceeds(attribute, value, true);
+  }
+
+  protected void assertSetAndGetSucceeds(String attribute, Object value, boolean create) {
+    provider.set(metadata, provider.name(), attribute, value, create);
+    ASSERT.that(provider.get(metadata, attribute)).is(value);
   }
 
   @SuppressWarnings("EmptyCatchBlock")
   protected void assertSetFails(String attribute, Object value) {
-    // if the value is not one of the accepted types, we know the set will fail at a higher level
-    boolean accepted = false;
-    for (Class<?> type : provider.acceptedTypes(attribute)) {
-      if (type.isInstance(value)) {
-        accepted = true;
-      }
+    try {
+      provider.set(metadata, provider.name(), attribute, value, false);
+      fail();
+    } catch (IllegalArgumentException expected) {
     }
-
-    if (accepted) {
-      // if the value was one of the accepted types, need to try setting it to see if there are any
-      // further checks that cause it to fail
-      try {
-        provider.set(metadata, attribute, value);
-        fail();
-      } catch (Exception expected) {
-      }
-    }
-
   }
 
-  protected void assertCanSetOnCreate(String attribute) {
-    ASSERT.that(provider.isSettableOnCreate(attribute)).isTrue();
-  }
-
-  protected void assertCannotSetOnCreate(String attribute) {
-    ASSERT.that(provider.isSettableOnCreate(attribute)).isFalse();
+  @SuppressWarnings("EmptyCatchBlock")
+  protected void assertSetFailsOnCreate(String attribute, Object value) {
+    try {
+      provider.set(metadata, provider.name(), attribute, value, true);
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
   }
 }

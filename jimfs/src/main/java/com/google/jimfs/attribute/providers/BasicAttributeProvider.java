@@ -17,19 +17,17 @@
 package com.google.jimfs.attribute.providers;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AbstractAttributeProvider;
-import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.Attribute;
 import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.AttributeReader;
-import com.google.jimfs.attribute.AttributeViewProvider;
 import com.google.jimfs.attribute.FileMetadata;
-import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 /**
  * Attribute provider that provides attributes common to all file systems,
@@ -38,101 +36,79 @@ import java.nio.file.attribute.FileTime;
  *
  * @author Colin Decker
  */
-public final class BasicAttributeProvider extends AbstractAttributeProvider implements
-    AttributeViewProvider<BasicFileAttributeView>, AttributeReader<BasicFileAttributes> {
+final class BasicAttributeProvider extends AttributeProvider<BasicFileAttributeView> {
 
-  public static final String VIEW = "basic";
-
-  public static final String SIZE = "size";
-  public static final String LAST_MODIFIED_TIME = "lastModifiedTime";
-  public static final String LAST_ACCESS_TIME = "lastAccessTime";
-  public static final String CREATION_TIME = "creationTime";
-  public static final String FILE_KEY = "fileKey";
-  public static final String IS_DIRECTORY = "isDirectory";
-  public static final String IS_REGULAR_FILE = "isRegularFile";
-  public static final String IS_SYMBOLIC_LINK = "isSymbolicLink";
-  public static final String IS_OTHER = "isOther";
-
-  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
-      Attribute.unsettable(VIEW, SIZE, Long.class),
-      Attribute.settable(VIEW, LAST_MODIFIED_TIME, FileTime.class),
-      Attribute.settable(VIEW, LAST_ACCESS_TIME, FileTime.class),
-      Attribute.settable(VIEW, CREATION_TIME, FileTime.class),
-      Attribute.unsettable(VIEW, FILE_KEY, Object.class),
-      Attribute.unsettable(VIEW, IS_DIRECTORY, Boolean.class),
-      Attribute.unsettable(VIEW, IS_REGULAR_FILE, Boolean.class),
-      Attribute.unsettable(VIEW, IS_SYMBOLIC_LINK, Boolean.class),
-      Attribute.unsettable(VIEW, IS_OTHER, Boolean.class));
-
-  /**
-   * The singleton instance of {@link BasicAttributeProvider}.
-   */
-  public static final BasicAttributeProvider INSTANCE = new BasicAttributeProvider();
-
-  private BasicAttributeProvider() {
-    super(ATTRIBUTES);
-  }
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
+      "size",
+      "fileKey",
+      "isDirectory",
+      "isRegularFile",
+      "isSymbolicLink",
+      "isOther",
+      "creationTime",
+      "lastAccessTime",
+      "lastModifiedTime");
 
   @Override
   public String name() {
-    return VIEW;
+    return "basic";
   }
 
   @Override
-  public ImmutableSet<String> inherits() {
-    return ImmutableSet.of();
-  }
-
-  @Override
-  public void setInitial(FileMetadata metadata) {
-    // FileTime now = store.clock().now();
-    // TODO(cgdecker): re-add use of a Clock... maybe.
-    long now = System.currentTimeMillis();
-    metadata.setCreationTime(now);
-    metadata.setLastAccessTime(now);
-    metadata.setLastModifiedTime(now);
+  public ImmutableSet<String> fixedAttributes() {
+    return ATTRIBUTES;
   }
 
   @Override
   public Object get(FileMetadata metadata, String attribute) {
     switch (attribute) {
-      case SIZE:
+      case "size":
         return metadata.size();
-      case FILE_KEY:
+      case "fileKey":
         return metadata.id();
-      case IS_DIRECTORY:
+      case "isDirectory":
         return metadata.isDirectory();
-      case IS_REGULAR_FILE:
+      case "isRegularFile":
         return metadata.isRegularFile();
-      case IS_SYMBOLIC_LINK:
+      case "isSymbolicLink":
         return metadata.isSymbolicLink();
-      case IS_OTHER:
+      case "isOther":
         return !metadata.isDirectory() && !metadata.isRegularFile() && !metadata.isSymbolicLink();
-      case CREATION_TIME:
+      case "creationTime":
         return FileTime.fromMillis(metadata.getCreationTime());
-      case LAST_ACCESS_TIME:
+      case "lastAccessTime":
         return FileTime.fromMillis(metadata.getLastAccessTime());
-      case LAST_MODIFIED_TIME:
+      case "lastModifiedTime":
         return FileTime.fromMillis(metadata.getLastModifiedTime());
       default:
-        return super.get(metadata, attribute);
+        return null;
     }
   }
 
   @Override
-  public void set(FileMetadata metadata, String attribute, Object value) {
+  public void set(FileMetadata metadata,
+      String view, String attribute, Object value, boolean create) {
     switch (attribute) {
-      case CREATION_TIME:
-        metadata.setCreationTime(((FileTime) value).toMillis());
+      case "creationTime":
+        checkNotCreate(view, attribute, create);
+        metadata.setCreationTime(
+            checkType(view, attribute, value, FileTime.class).toMillis());
         break;
-      case LAST_ACCESS_TIME:
-        metadata.setLastAccessTime(((FileTime) value).toMillis());
+      case "lastAccessTime":
+        checkNotCreate(view, attribute, create);
+        metadata.setLastAccessTime(checkType(view, attribute, value, FileTime.class).toMillis());
         break;
-      case LAST_MODIFIED_TIME:
-        metadata.setLastModifiedTime(((FileTime) value).toMillis());
+      case "lastModifiedTime":
+        checkNotCreate(view, attribute, create);
+        metadata.setLastModifiedTime(checkType(view, attribute, value, FileTime.class).toMillis());
         break;
-      default:
-        super.set(metadata, attribute, value);
+      case "size":
+      case "fileKey":
+      case "isDirectory":
+      case "isRegularFile":
+      case "isSymbolicLink":
+      case "isOther":
+        throw unsettable(view, attribute);
     }
   }
 
@@ -142,8 +118,9 @@ public final class BasicAttributeProvider extends AbstractAttributeProvider impl
   }
 
   @Override
-  public View getView(FileMetadataSupplier supplier) {
-    return new View(this, supplier);
+  public BasicFileAttributeView view(FileMetadata.Lookup lookup,
+      Map<String, FileAttributeView> inheritedViews) {
+    return new View(lookup);
   }
 
   @Override
@@ -152,43 +129,46 @@ public final class BasicAttributeProvider extends AbstractAttributeProvider impl
   }
 
   @Override
-  public Attributes read(FileMetadata metadata) {
-    try {
-      return new Attributes(getView(FileMetadataSupplier.of(metadata)));
-    } catch (IOException e) {
-      throw new AssertionError(e); // IoSupplier.of won't throw IOException
-    }
+  public BasicFileAttributes readAttributes(FileMetadata metadata) {
+    return new Attributes(metadata);
   }
 
   /**
    * Implementation of {@link BasicFileAttributeView}.
    */
-  private static class View extends AbstractAttributeView implements BasicFileAttributeView {
+  private static final class View extends AbstractAttributeView implements BasicFileAttributeView {
 
-    protected View(AttributeProvider provider, FileMetadataSupplier supplier) {
-      super(provider, supplier);
+    protected View(FileMetadata.Lookup lookup) {
+      super(lookup);
+    }
+
+    @Override
+    public String name() {
+      return "basic";
     }
 
     @Override
     public BasicFileAttributes readAttributes() throws IOException {
-      // create a temporary view that doesn't have to locate the file for each get
-      View view = new View(provider(), FileMetadataSupplier.of(getFileMetadata()));
-      return new Attributes(view);
+      return new Attributes(lookupMetadata());
     }
 
     @Override
-    public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime)
-        throws IOException {
-      // make sure we only lookup the file once
-      FileMetadata store = getFileMetadata();
-      setIfNotNull(store, LAST_MODIFIED_TIME, lastModifiedTime);
-      setIfNotNull(store, LAST_ACCESS_TIME, lastAccessTime);
-      setIfNotNull(store, CREATION_TIME, createTime);
-    }
+    public void setTimes(
+        @Nullable FileTime lastModifiedTime,
+        @Nullable FileTime lastAccessTime,
+        @Nullable FileTime createTime) throws IOException {
+      FileMetadata metadata = lookupMetadata();
 
-    private void setIfNotNull(FileMetadata store, String attribute, FileTime time) {
-      if (time != null) {
-        provider().set(store, attribute, time);
+      if (lastModifiedTime != null) {
+        metadata.setLastModifiedTime(lastModifiedTime.toMillis());
+      }
+
+      if (lastAccessTime != null) {
+        metadata.setLastAccessTime(lastAccessTime.toMillis());
+      }
+
+      if (createTime != null) {
+        metadata.setCreationTime(createTime.toMillis());
       }
     }
   }
@@ -196,40 +176,26 @@ public final class BasicAttributeProvider extends AbstractAttributeProvider impl
   /**
    * Implementation of {@link BasicFileAttributes}.
    */
-  public static class Attributes implements BasicFileAttributes {
+  static class Attributes implements BasicFileAttributes {
 
     private final FileTime lastModifiedTime;
     private final FileTime lastAccessTime;
     private final FileTime creationTime;
-    private final boolean isRegularFile;
-    private final boolean isDirectory;
-    private final boolean isSymbolicLink;
-    private final boolean isOther;
+    private final boolean regularFile;
+    private final boolean directory;
+    private final boolean symbolicLink;
     private final long size;
     private final Object fileKey;
 
-    private Attributes(View view) throws IOException {
-      this.lastModifiedTime = view.get(LAST_MODIFIED_TIME);
-      this.lastAccessTime = view.get(LAST_ACCESS_TIME);
-      this.creationTime = view.get(CREATION_TIME);
-      this.isRegularFile = view.get(IS_REGULAR_FILE);
-      this.isDirectory = view.get(IS_DIRECTORY);
-      this.isSymbolicLink = view.get(IS_SYMBOLIC_LINK);
-      this.isOther = view.get(IS_OTHER);
-      this.size = view.get(SIZE);
-      this.fileKey = view.get(FILE_KEY);
-    }
-
-    protected Attributes(BasicFileAttributes attributes) {
-      this.lastModifiedTime = attributes.lastModifiedTime();
-      this.lastAccessTime = attributes.lastAccessTime();
-      this.creationTime = attributes.creationTime();
-      this.isRegularFile = attributes.isRegularFile();
-      this.isDirectory = attributes.isDirectory();
-      this.isSymbolicLink = attributes.isSymbolicLink();
-      this.isOther = attributes.isOther();
-      this.size = attributes.size();
-      this.fileKey = attributes.fileKey();
+    protected Attributes(FileMetadata metadata) {
+      this.lastModifiedTime = FileTime.fromMillis(metadata.getLastModifiedTime());
+      this.lastAccessTime = FileTime.fromMillis(metadata.getLastAccessTime());
+      this.creationTime = FileTime.fromMillis(metadata.getCreationTime());
+      this.regularFile = metadata.isRegularFile();
+      this.directory = metadata.isDirectory();
+      this.symbolicLink = metadata.isSymbolicLink();
+      this.size = metadata.size();
+      this.fileKey = metadata.id();
     }
 
     @Override
@@ -249,22 +215,22 @@ public final class BasicAttributeProvider extends AbstractAttributeProvider impl
 
     @Override
     public boolean isRegularFile() {
-      return isRegularFile;
+      return regularFile;
     }
 
     @Override
     public boolean isDirectory() {
-      return isDirectory;
+      return directory;
     }
 
     @Override
     public boolean isSymbolicLink() {
-      return isSymbolicLink;
+      return symbolicLink;
     }
 
     @Override
     public boolean isOther() {
-      return isOther;
+      return false;
     }
 
     @Override

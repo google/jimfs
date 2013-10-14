@@ -22,6 +22,7 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -29,8 +30,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for {@link UserDefinedAttributeProvider}.
@@ -42,29 +42,26 @@ public class UserDefinedAttributeProviderTest
 
   @Override
   protected UserDefinedAttributeProvider createProvider() {
-    return UserDefinedAttributeProvider.INSTANCE;
+    return new UserDefinedAttributeProvider();
+  }
+
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of();
   }
 
   @Test
   public void testInitialAttributes() {
     // no initial attributes
     ASSERT.that(ImmutableList.copyOf(metadata.getAttributeKeys())).isEmpty();
-  }
-
-  @Test
-  public void testBasicProperties() {
-    assertCannotSetOnCreate("anything");
-    ASSERT.that(provider.isSettableOnCreate("anything")).isFalse();
-    ASSERT.that(provider.isSettable(metadata, "anything")).isTrue();
-    ASSERT.that(provider.acceptedTypes("anything"))
-        .is(ImmutableSet.of(byte[].class, ByteBuffer.class));
+    ASSERT.that(provider.attributes(metadata)).isEmpty();
   }
 
   @Test
   public void testGettingAndSetting() {
     byte[] bytes = {0, 1, 2, 3};
-    provider.set(metadata, "one", bytes);
-    provider.set(metadata, "two", ByteBuffer.wrap(bytes));
+    provider.set(metadata, "user", "one", bytes, false);
+    provider.set(metadata, "user", "two", ByteBuffer.wrap(bytes), false);
 
     byte[] one = (byte[]) provider.get(metadata, "one");
     byte[] two = (byte[]) provider.get(metadata, "two");
@@ -73,16 +70,17 @@ public class UserDefinedAttributeProviderTest
 
     assertSetFails("foo", "hello");
 
-    Map<String, Object> map = new HashMap<>();
-    provider.readAll(metadata, map);
-    ASSERT.that(map.size()).is(2);
-    ASSERT.that(Arrays.equals((byte[]) map.get("one"), bytes)).isTrue();
-    ASSERT.that(Arrays.equals((byte[]) map.get("two"), bytes)).isTrue();
+    ASSERT.that(provider.attributes(metadata)).has().exactly("one", "two");
+  }
+
+  @Test
+  public void testSetOnCreate() {
+    assertSetFailsOnCreate("anything", new byte[0]);
   }
 
   @Test
   public void testView() throws IOException {
-    UserDefinedFileAttributeView view = provider.getView(metadataSupplier());
+    UserDefinedFileAttributeView view = provider.view(metadataSupplier(), NO_INHERITED_VIEWS);
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("user");

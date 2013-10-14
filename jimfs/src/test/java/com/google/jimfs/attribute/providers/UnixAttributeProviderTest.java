@@ -16,11 +16,18 @@
 
 package com.google.jimfs.attribute.providers;
 
+import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
+import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 
 /**
  * Tests for {@link UnixAttributeProvider}.
@@ -32,20 +39,24 @@ public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttribu
 
   @Override
   protected UnixAttributeProvider createProvider() {
-    PosixAttributeProvider posixProvider = new PosixAttributeProviderTest().createProvider();
-    return new UnixAttributeProvider(posixProvider);
+    return new UnixAttributeProvider();
+  }
+
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of(
+        new BasicAttributeProvider(),
+        new OwnerAttributeProvider(),
+        new PosixAttributeProvider());
   }
 
   @Test
   public void testInitialAttributes() {
     // unix provider relies on other providers to set their initial attributes
-    BasicAttributeProvider.INSTANCE.setInitial(metadata);
-
-    OwnerAttributeProvider owner = new OwnerAttributeProvider("foo");
-    owner.setInitial(metadata);
-
-    PosixAttributeProvider posix = new PosixAttributeProvider("bar", "rw-r--r--", owner);
-    posix.setInitial(metadata);
+    metadata.setAttribute("owner:owner", createUserPrincipal("foo"));
+    metadata.setAttribute("posix:group", createGroupPrincipal("bar"));
+    metadata.setAttribute("posix:permissions",
+        ImmutableSet.copyOf(PosixFilePermissions.fromString("rw-r--r--")));
 
     // these are pretty much meaningless here since they aren't properties this
     // file system actually has, so don't really care about the exact value of these
@@ -64,21 +75,22 @@ public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttribu
 
     // this is based on a property this file system does actually have
     ASSERT.that(provider.get(metadata, "nlink")).is(0);
-    metadata.setLinks(2);
+    metadata.incrementLinkCount();
+    metadata.incrementLinkCount();
     ASSERT.that(provider.get(metadata, "nlink")).is(2);
-    metadata.setLinks(1);
+    metadata.decrementLinkCount();
     ASSERT.that(provider.get(metadata, "nlink")).is(1);
   }
 
   @Test
   public void testSet() {
-    assertCannotSet("unix:uid");
-    assertCannotSet("unix:gid");
-    assertCannotSet("unix:rdev");
-    assertCannotSet("unix:dev");
-    assertCannotSet("unix:ino");
-    assertCannotSet("unix:mode");
-    assertCannotSet("unix:ctime");
-    assertCannotSet("unix:nlink");
+    assertSetFails("unix:uid", 1);
+    assertSetFails("unix:gid", 1);
+    assertSetFails("unix:rdev", 1L);
+    assertSetFails("unix:dev", 1L);
+    assertSetFails("unix:ino", 1);
+    assertSetFails("unix:mode", 1);
+    assertSetFails("unix:ctime", 1L);
+    assertSetFails("unix:nlink", 1);
   }
 }

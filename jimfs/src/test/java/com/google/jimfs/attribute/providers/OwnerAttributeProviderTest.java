@@ -19,10 +19,14 @@ package com.google.jimfs.attribute.providers;
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.attribute.AttributeProvider;
+
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileOwnerAttributeView;
+import java.util.Set;
 
 /**
  * Tests for {@link OwnerAttributeProvider}.
@@ -33,7 +37,12 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
   @Override
   protected OwnerAttributeProvider createProvider() {
-    return new OwnerAttributeProvider("user");
+    return new OwnerAttributeProvider();
+  }
+
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of();
   }
 
   @Test
@@ -43,14 +52,17 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
   @Test
   public void testSet() {
-    assertCanSetOnCreate("owner");
+    assertSetAndGetSucceeds("owner", createUserPrincipal("user"));
+    assertSetAndGetSucceedsOnCreate("owner", createUserPrincipal("user"));
+
+    // invalid type
     assertSetFails("owner", "root");
   }
 
   @Test
   public void testView() throws IOException {
-    FileOwnerAttributeView view = provider.getView(metadataSupplier());
-    assert view != null;
+    FileOwnerAttributeView view = provider.view(metadataSupplier(), NO_INHERITED_VIEWS);
+    ASSERT.that(view).isNotNull();
 
     ASSERT.that(view.name()).is("owner");
     ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("user"));

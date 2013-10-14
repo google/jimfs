@@ -16,21 +16,22 @@
 
 package com.google.jimfs.attribute.providers;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AbstractAttributeProvider;
-import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.Attribute;
-import com.google.jimfs.attribute.AttributeReader;
-import com.google.jimfs.attribute.AttributeViewProvider;
+import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.FileMetadata;
-import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 /**
  * Attribute provider that provides the {@link DosFileAttributeView} ("dos") and allows the reading
@@ -38,47 +39,68 @@ import java.nio.file.attribute.FileTime;
  *
  * @author Colin Decker
  */
-public final class DosAttributeProvider extends AbstractAttributeProvider implements
-    AttributeViewProvider<DosFileAttributeView>, AttributeReader<DosFileAttributes> {
+final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView> {
 
-  public static final String VIEW = "dos";
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
+      "readonly",
+      "hidden",
+      "archive",
+      "system");
 
-  public static final String READ_ONLY = "readonly";
-  public static final String HIDDEN = "hidden";
-  public static final String ARCHIVE = "archive";
-  public static final String SYSTEM = "system";
-
-  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
-      Attribute.settable(VIEW, READ_ONLY, Boolean.class),
-      Attribute.settable(VIEW, HIDDEN, Boolean.class),
-      Attribute.settable(VIEW, ARCHIVE, Boolean.class),
-      Attribute.settable(VIEW, SYSTEM, Boolean.class));
-
-  /**
-   * The singleton instance of {@link DosAttributeProvider}.
-   */
-  public static final DosAttributeProvider INSTANCE = new DosAttributeProvider();
-
-  private DosAttributeProvider() {
-    super(ATTRIBUTES);
-  }
+  private static final ImmutableSet<String> INHERITED_VIEWS = ImmutableSet.of("basic", "owner");
 
   @Override
   public String name() {
-    return VIEW;
+    return "dos";
   }
 
   @Override
   public ImmutableSet<String> inherits() {
-    return ImmutableSet.of("basic", "owner");
+    return INHERITED_VIEWS;
   }
 
   @Override
-  public void setInitial(FileMetadata metadata) {
-    set(metadata, READ_ONLY, false);
-    set(metadata, HIDDEN, false);
-    set(metadata, ARCHIVE, false);
-    set(metadata, SYSTEM, false);
+  public ImmutableSet<String> fixedAttributes() {
+    return ATTRIBUTES;
+  }
+
+  @Override
+  public Map<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
+    return ImmutableMap.of(
+        "dos:readonly", getDefaultValue("dos:readonly", userProvidedDefaults),
+        "dos:hidden", getDefaultValue("dos:hidden", userProvidedDefaults),
+        "dos:archive", getDefaultValue("dos:archive", userProvidedDefaults),
+        "dos:system", getDefaultValue("dos:system", userProvidedDefaults));
+  }
+
+  private static Boolean getDefaultValue(
+      String attribute, Map<String, ?> userProvidedDefaults) {
+    Object userProvidedValue = userProvidedDefaults.get(attribute);
+    if (userProvidedValue != null) {
+      return checkType("dos", attribute, userProvidedValue, Boolean.class);
+    }
+
+    return false;
+  }
+
+  @Nullable
+  @Override
+  public Object get(FileMetadata metadata, String attribute) {
+    if (ATTRIBUTES.contains(attribute)) {
+      return metadata.getAttribute("dos:" + attribute);
+    }
+
+    return null;
+  }
+
+  @Override
+  public void set(FileMetadata metadata, String view, String attribute, Object value,
+      boolean create) {
+    if (supports(attribute)) {
+      checkNotCreate(view, attribute, create);
+      metadata.setAttribute("dos:" + attribute,
+          checkType(view, attribute, value, Boolean.class));
+    }
   }
 
   @Override
@@ -87,8 +109,9 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
   }
 
   @Override
-  public DosFileAttributeView getView(FileMetadataSupplier supplier) {
-    return new View(this, supplier);
+  public DosFileAttributeView view(FileMetadata.Lookup lookup,
+      Map<String, FileAttributeView> inheritedViews) {
+    return new View(lookup, (BasicFileAttributeView) inheritedViews.get("basic"));
   }
 
   @Override
@@ -97,30 +120,30 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
   }
 
   @Override
-  public DosFileAttributes read(FileMetadata metadata) {
-    try {
-      return getView(FileMetadataSupplier.of(metadata)).readAttributes();
-    } catch (IOException e) {
-      throw new AssertionError(e); // IoSupplier.of doesn't throw IOException
-    }
+  public DosFileAttributes readAttributes(FileMetadata metadata) {
+    return new Attributes(metadata);
   }
 
   /**
    * Implementation of {@link DosFileAttributeView}.
    */
-  private static class View extends AbstractAttributeView implements DosFileAttributeView {
+  private static final class View extends AbstractAttributeView implements DosFileAttributeView {
 
     private final BasicFileAttributeView basicView;
 
-    public View(
-        DosAttributeProvider attributeProvider, FileMetadataSupplier supplier) {
-      super(attributeProvider, supplier);
-      this.basicView = BasicAttributeProvider.INSTANCE.getView(supplier);
+    public View(FileMetadata.Lookup lookup, BasicFileAttributeView basicView) {
+      super(lookup);
+      this.basicView = checkNotNull(basicView);
+    }
+
+    @Override
+    public String name() {
+      return "dos";
     }
 
     @Override
     public DosFileAttributes readAttributes() throws IOException {
-      return new Attributes(basicView.readAttributes(), this);
+      return new Attributes(lookupMetadata());
     }
 
     @Override
@@ -131,41 +154,41 @@ public final class DosAttributeProvider extends AbstractAttributeProvider implem
 
     @Override
     public void setReadOnly(boolean value) throws IOException {
-      set(READ_ONLY, value);
+      lookupMetadata().setAttribute("dos:readonly", value);
     }
 
     @Override
     public void setHidden(boolean value) throws IOException {
-      set(HIDDEN, value);
+      lookupMetadata().setAttribute("dos:hidden", value);
     }
 
     @Override
     public void setSystem(boolean value) throws IOException {
-      set(SYSTEM, value);
+      lookupMetadata().setAttribute("dos:system", value);
     }
 
     @Override
     public void setArchive(boolean value) throws IOException {
-      set(ARCHIVE, value);
+      lookupMetadata().setAttribute("dos:archive", value);
     }
   }
 
   /**
    * Implementation of {@link DosFileAttributes}.
    */
-  public static class Attributes extends BasicAttributeProvider.Attributes implements DosFileAttributes {
+  static class Attributes extends BasicAttributeProvider.Attributes implements DosFileAttributes {
 
     private final boolean readOnly;
     private final boolean hidden;
     private final boolean archive;
     private final boolean system;
 
-    protected Attributes(BasicFileAttributes attributes, View view) throws IOException {
-      super(attributes);
-      this.readOnly = view.get(READ_ONLY);
-      this.hidden = view.get(HIDDEN);
-      this.archive = view.get(ARCHIVE);
-      this.system = view.get(SYSTEM);
+    protected Attributes(FileMetadata metadata) {
+      super(metadata);
+      this.readOnly = (boolean) metadata.getAttribute("dos:readonly");
+      this.hidden = (boolean) metadata.getAttribute("dos:hidden");
+      this.archive = (boolean) metadata.getAttribute("dos:archive");
+      this.system = (boolean) metadata.getAttribute("dos:system");
     }
 
     @Override

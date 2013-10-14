@@ -19,83 +19,93 @@ package com.google.jimfs.attribute.providers;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AbstractAttributeProvider;
-import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.Attribute;
-import com.google.jimfs.attribute.AttributeViewProvider;
+import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.FileMetadata;
-import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 /**
  * Attribute provider that provides the {@link AclFileAttributeView} ("acl").
  *
  * @author Colin Decker
  */
-public final class AclAttributeProvider extends AbstractAttributeProvider
-    implements AttributeViewProvider<AclFileAttributeView> {
+final class AclAttributeProvider extends AttributeProvider<AclFileAttributeView> {
 
-  public static final String VIEW = "acl";
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of("acl");
 
-  public static final String ACL = "acl";
+  private static final ImmutableSet<String> INHERITED_VIEWS = ImmutableSet.of("owner");
 
-  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
-      Attribute.settable(VIEW, ACL, List.class));
-
-  private final OwnerAttributeProvider owner;
-
-  private final ImmutableList<AclEntry> defaultAcl;
-
-  public AclAttributeProvider(OwnerAttributeProvider owner) {
-    this(owner, ImmutableList.<AclEntry>of());
-  }
-
-  public AclAttributeProvider(OwnerAttributeProvider owner, List<AclEntry> defaultAcl) {
-    super(ATTRIBUTES);
-    this.owner = checkNotNull(owner);
-    this.defaultAcl = ImmutableList.copyOf(defaultAcl);
-  }
+  private static final ImmutableList<AclEntry> DEFAULT_ACL = ImmutableList.of();
 
   @Override
   public String name() {
-    return VIEW;
+    return "acl";
   }
 
   @Override
   public ImmutableSet<String> inherits() {
-    return ImmutableSet.of("owner");
+    return INHERITED_VIEWS;
   }
 
   @Override
-  public void setInitial(FileMetadata metadata) {
-    set(metadata, ACL, defaultAcl);
+  public ImmutableSet<String> fixedAttributes() {
+    return ATTRIBUTES;
   }
 
   @Override
-  public void set(FileMetadata metadata, String attribute, Object value) {
-    switch (attribute) {
-      case ACL:
-        List<?> list = (List<?>) value;
-        for (Object obj : list) {
-          checkNotNull(obj);
-          if (!(obj instanceof AclEntry)) {
-            throw new IllegalArgumentException("invalid element for attribute '" + name() + ":"
-                + attribute + "': should be List<AclEntry>, found element of type "
-                + obj.getClass());
-          }
-        }
-        super.set(metadata, attribute, ImmutableList.copyOf(list));
-        break;
-      default:
-        super.set(metadata, attribute, value);
+  public Map<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
+    Object userProvidedAcl = userProvidedDefaults.get("acl:acl");
+
+    ImmutableList<AclEntry> acl = DEFAULT_ACL;
+    if (userProvidedAcl != null) {
+      acl = toAcl(checkType("acl", "acl", userProvidedAcl, List.class));
     }
+
+    return ImmutableMap.of("acl:acl", acl);
+  }
+
+  @Nullable
+  @Override
+  public Object get(FileMetadata metadata, String attribute) {
+    if (attribute.equals("acl")) {
+      return metadata.getAttribute("acl:acl");
+    }
+
+    return null;
+  }
+
+  @Override
+  public void set(
+      FileMetadata metadata, String view, String attribute, Object value, boolean create) {
+    if (attribute.equals("acl")) {
+      checkNotCreate(view, attribute, create);
+      metadata.setAttribute("acl:acl",
+          toAcl(checkType(view, attribute, value, List.class)));
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static ImmutableList<AclEntry> toAcl(List<?> list) {
+    for (Object obj : list) {
+      checkNotNull(obj);
+      if (!(obj instanceof AclEntry)) {
+        throw new IllegalArgumentException("invalid element for attribute 'acl:acl': "
+            + "should be List<AclEntry>, found element of type " + obj.getClass());
+      }
+    }
+
+    return ImmutableList.copyOf((List<AclEntry>) list);
   }
 
   @Override
@@ -104,28 +114,38 @@ public final class AclAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public AclFileAttributeView getView(FileMetadataSupplier supplier) {
-    return new View(this, supplier);
+  public AclFileAttributeView view(FileMetadata.Lookup lookup,
+      Map<String, FileAttributeView> inheritedViews) {
+    return new View(lookup, (FileOwnerAttributeView) inheritedViews.get("owner"));
   }
 
+  /**
+   * Implementation of {@link AclFileAttributeView}.
+   */
   private static final class View extends AbstractAttributeView implements AclFileAttributeView {
 
     private final FileOwnerAttributeView ownerView;
 
-    public View(
-        AclAttributeProvider attributeProvider, FileMetadataSupplier supplier) {
-      super(attributeProvider, supplier);
-      this.ownerView = attributeProvider.owner.getView(supplier);
+    public View(FileMetadata.Lookup lookup, FileOwnerAttributeView ownerView) {
+      super(lookup);
+      this.ownerView = checkNotNull(ownerView);
     }
 
     @Override
+    public String name() {
+      return "acl";
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
     public List<AclEntry> getAcl() throws IOException {
-      return get(ACL);
+      return (List<AclEntry>) lookupMetadata().getAttribute("acl:acl");
     }
 
     @Override
     public void setAcl(List<AclEntry> acl) throws IOException {
-      set(ACL, acl);
+      checkNotNull(acl);
+      lookupMetadata().setAttribute("acl:acl", ImmutableList.copyOf(acl));
     }
 
     @Override

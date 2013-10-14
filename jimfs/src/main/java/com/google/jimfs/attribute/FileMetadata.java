@@ -16,92 +16,183 @@
 
 package com.google.jimfs.attribute;
 
+import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Metadata for a file.
  *
  * @author Colin Decker
  */
-public interface FileMetadata {
+public abstract class FileMetadata {
+
+  private final long id;
+
+  private final AtomicInteger links = new AtomicInteger();
+
+  private final AtomicLong creationTime;
+  private final AtomicLong lastAccessTime;
+  private final AtomicLong lastModifiedTime;
+
+  private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
+
+  public FileMetadata(long id) {
+    this.id = id;
+
+    long now = System.currentTimeMillis(); // TODO(cgdecker): Use a Clock
+    this.creationTime = new AtomicLong(now);
+    this.lastAccessTime = new AtomicLong(now);
+    this.lastModifiedTime = new AtomicLong(now);
+  }
 
   /**
    * Returns the ID of the file.
    */
-  long id();
+  public long id() {
+    return id;
+  }
 
   /**
    * Returns whether or not the file is a directory.
    */
-  boolean isDirectory();
+  public abstract boolean isDirectory();
 
   /**
    * Returns whether or not the file is a regular file.
    */
-  boolean isRegularFile();
+  public abstract boolean isRegularFile();
 
   /**
    * Returns whether or not the file is a symbolic link.
    */
-  boolean isSymbolicLink();
+  public abstract boolean isSymbolicLink();
 
   /**
    * Returns the size, in bytes, of the file.
    */
-  long size();
+  public abstract long size();
 
   /**
    * Returns the current count of links to the file.
    */
-  int links();
+  public int links() {
+    return links.get();
+  }
+
+  /**
+   * Increments the link count.
+   */
+  public void incrementLinkCount() {
+    links.incrementAndGet();
+  }
+
+  /**
+   * Decrements and returns the link count.
+   */
+  public int decrementLinkCount() {
+    return links.decrementAndGet();
+  }
 
   /**
    * Gets the creation time of the file.
    */
-  long getCreationTime();
+  public long getCreationTime() {
+    return creationTime.get();
+  }
 
   /**
    * Gets the last access time of the file.
    */
-  long getLastAccessTime();
+  public long getLastAccessTime() {
+    return lastAccessTime.get();
+  }
 
   /**
    * Gets the last modified time of the file.
    */
-  long getLastModifiedTime();
+  public long getLastModifiedTime() {
+    return lastModifiedTime.get();
+  }
 
   /**
    * Sets the creation time of the file.
    */
-  void setCreationTime(long creationTime);
+  public void setCreationTime(long creationTime) {
+    this.creationTime.set(creationTime);
+  }
 
   /**
    * Sets the last access time of the file.
    */
-  void setLastAccessTime(long lastAccessTime);
+  public void setLastAccessTime(long lastAccessTime) {
+    this.lastAccessTime.set(lastAccessTime);
+  }
 
   /**
    * Sets the last modified time of the file.
    */
-  void setLastModifiedTime(long lastModifiedTime);
+  public void setLastModifiedTime(long lastModifiedTime) {
+    this.lastModifiedTime.set(lastModifiedTime);
+  }
+
+  /**
+   * Sets the last access time of the file to the current time.
+   */
+  public void updateAccessTime() {
+    setLastAccessTime(System.currentTimeMillis());
+  }
+
+  /**
+   * Sets the last modified time of the file to the current time.
+   */
+  public void updateModifiedTime() {
+    setLastModifiedTime(System.currentTimeMillis());
+  }
 
   /**
    * Returns the attribute keys contained in the attributes map for the file.
    */
-  Set<String> getAttributeKeys();
+  public Set<String> getAttributeKeys() {
+    return attributes.keySet();
+  }
 
   /**
    * Gets the value of the attribute with the given key.
    */
-  Object getAttribute(String key);
+  public Object getAttribute(String key) {
+    return attributes.get(key);
+  }
 
   /**
    * Sets the attribute with the given key to the given value.
    */
-  void setAttribute(String key, Object value);
+  public void setAttribute(String key, Object value) {
+    attributes.put(key, value);
+  }
 
   /**
    * Deletes the attribute with the given key.
    */
-  void deleteAttribute(String key);
+  public void deleteAttribute(String key) {
+    attributes.remove(key);
+  }
+
+  /**
+   * Callback for looking up the metadata for a file.
+   *
+   * @author Colin Decker
+   */
+  public interface Lookup {
+
+    /**
+     * Looks up the file metadata.
+     *
+     * @throws IOException if the lookup fails for any reason, such as the file not existing
+     */
+    FileMetadata lookup() throws IOException;
+  }
 }

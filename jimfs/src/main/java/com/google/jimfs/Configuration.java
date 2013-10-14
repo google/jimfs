@@ -182,7 +182,8 @@ public final class Configuration {
   private final Set<String> roots = new LinkedHashSet<>();
   private String workingDirectory;
 
-  private AttributeViews attributes = AttributeViews.basic();
+  private AttributeConfiguration attributeConfiguration = AttributeConfiguration.basic();
+
   private Set<Jimfs.Feature> supportedFeatures = ImmutableSet.copyOf(
       EnumSet.allOf(Jimfs.Feature.class));
 
@@ -237,10 +238,10 @@ public final class Configuration {
   }
 
   /**
-   * Returns the configured set of attribute views for the file system.
+   * Returns the attribute configuration for the file system.
    */
-  public AttributeViews getAttributeViews() {
-    return attributes;
+  public AttributeConfiguration getAttributeConfiguration() {
+    return attributeConfiguration;
   }
 
   /**
@@ -335,6 +336,14 @@ public final class Configuration {
   }
 
   /**
+   * Sets the attribute configuration for the file system.
+   */
+  public Configuration setAttributeConfiguration(AttributeConfiguration attributeConfiguration) {
+    this.attributeConfiguration = checkNotNull(attributeConfiguration);
+    return this;
+  }
+
+  /**
    * Adds the given root directories to the file system.
    *
    * @throws IllegalStateException if the path type does not allow multiple roots
@@ -358,21 +367,6 @@ public final class Configuration {
    */
   public Configuration setWorkingDirectory(String workingDirectory) {
     this.workingDirectory = checkNotNull(workingDirectory);
-    return this;
-  }
-
-  /**
-   * Sets the attribute views to use for the file system.
-   *
-   * <p>The default is the {@link AttributeViews#basic() basic} view only, to minimize overhead of
-   * storing attributes when other attributes aren't needed.
-   */
-  public Configuration setAttributeViews(AttributeViews... views) {
-    if (views.length == 0) {
-      this.attributes = AttributeViews.basic();
-    } else {
-      this.attributes = new AttributeViewsSet(views);
-    }
     return this;
   }
 

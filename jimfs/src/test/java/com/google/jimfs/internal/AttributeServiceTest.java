@@ -21,14 +21,14 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.AttributeViews;
+import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.BasicFileAttribute;
-import com.google.jimfs.attribute.FileMetadataSupplier;
+import com.google.jimfs.attribute.FakeFileMetadata;
+import com.google.jimfs.attribute.FileMetadata;
 import com.google.jimfs.attribute.TestAttributeProvider;
 import com.google.jimfs.attribute.TestAttributeView;
 import com.google.jimfs.attribute.TestAttributes;
-import com.google.jimfs.attribute.providers.BasicAttributeProvider;
-import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
+import com.google.jimfs.attribute.providers.StandardAttributeProviders;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -50,11 +50,11 @@ public class AttributeServiceTest {
 
   @Before
   public void setUp() {
-    AttributeViews views = AttributeViews.fromProviders(
-        BasicAttributeProvider.INSTANCE,
-        new TestAttributeProvider(),
-        new OwnerAttributeProvider("user"));
-    service = new AttributeService(views);
+    ImmutableSet<AttributeProvider<?>> providers = ImmutableSet.of(
+        StandardAttributeProviders.get("basic"),
+        StandardAttributeProviders.get("owner"),
+        new TestAttributeProvider());
+    service = new AttributeService(providers, ImmutableMap.<String, Object>of());
   }
 
 
@@ -73,7 +73,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetInitialAttributes() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file);
 
     ASSERT.that(ImmutableSet.copyOf(file.getAttributeKeys())).is(
@@ -89,26 +89,27 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetAttribute() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file);
 
     ASSERT.that(service.getAttribute(file, "test:foo")).is("hello");
     ASSERT.that(service.getAttribute(file, "test", "foo")).is("hello");
-    ASSERT.that(service.getAttribute(file, "basic:isRegularFile")).is(true);
-    ASSERT.that(service.getAttribute(file, "isDirectory")).is(false);
+    ASSERT.that(service.getAttribute(file, "basic:isRegularFile")).is(false);
+    ASSERT.that(service.getAttribute(file, "isDirectory")).is(true);
     ASSERT.that(service.getAttribute(file, "test:baz")).is(1);
   }
 
   @Test
   public void testGetAttribute_fromInheritedProvider() {
-    File file = new File(0L, new StubByteStore(0));
-    ASSERT.that(service.getAttribute(file, "test:isRegularFile")).is(true);
+    FileMetadata file = new FakeFileMetadata(0L);
+    ASSERT.that(service.getAttribute(file, "test:isRegularFile")).is(false);
+    ASSERT.that(service.getAttribute(file, "test:isDirectory")).is(true);
     ASSERT.that(service.getAttribute(file, "test", "fileKey")).is(0L);
   }
 
   @Test
   public void testGetAttribute_failsForAttributesNotDefinedByProvider() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     try {
       service.getAttribute(file, "test:blah");
       fail();
@@ -125,53 +126,53 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute() {
-    File file = new File(0L, new StubByteStore(0));
-    service.setAttribute(file, "test:bar", 10L);
+    FileMetadata file = new FakeFileMetadata(0L);
+    service.setAttribute(file, "test:bar", 10L, false);
     ASSERT.that(file.getAttribute("test:bar")).is(10L);
 
-    service.setAttribute(file, "test", "baz", 100);
+    service.setAttribute(file, "test:baz", 100, false);
     ASSERT.that(file.getAttribute("test:baz")).is(100);
   }
 
   @Test
   public void testSetAttribute_forInheritedProvider() {
-    File file = new File(0L, new StubByteStore(0));
-    service.setAttribute(file, "test:lastModifiedTime", FileTime.fromMillis(0L));
+    FileMetadata file = new FakeFileMetadata(0L);
+    service.setAttribute(file, "test:lastModifiedTime", FileTime.fromMillis(0L), false);
     ASSERT.that(file.getAttribute("test:lastModifiedTime")).isNull();
     ASSERT.that(service.getAttribute(file, "basic:lastModifiedTime")).is(FileTime.fromMillis(0L));
   }
 
   @Test
   public void testSetAttribute_withAlternateAcceptedType() {
-    File file = new File(0L, new StubByteStore(0));
-    service.setAttribute(file, "test:bar", 10f);
+    FileMetadata file = new FakeFileMetadata(0L);
+    service.setAttribute(file, "test:bar", 10f, false);
     ASSERT.that(file.getAttribute("test:bar")).is(10L);
 
-    service.setAttribute(file, "test:bar", BigInteger.valueOf(123L));
+    service.setAttribute(file, "test:bar", BigInteger.valueOf(123L), false);
     ASSERT.that(file.getAttribute("test:bar")).is(123L);
   }
 
   @Test
   public void testSetAttribute_onCreate() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file, new BasicFileAttribute<>("test:baz", 123));
     ASSERT.that(file.getAttribute("test:baz")).is(123);
   }
 
   @Test
   public void testSetAttribute_failsForAttributesNotDefinedByProvider() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file);
 
     try {
-      service.setAttribute(file, "test:blah", "blah");
+      service.setAttribute(file, "test:blah", "blah", false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
       // baz is defined by "test", but basic doesn't inherit test
-      service.setAttribute(file, "basic", "baz", 5);
+      service.setAttribute(file, "basic:baz", 5, false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -181,10 +182,10 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForArgumentThatIsNotOfCorrectType() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file);
     try {
-      service.setAttribute(file, "test", "bar", "wrong");
+      service.setAttribute(file, "test:bar", "wrong", false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -194,10 +195,10 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForNullArgument() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file);
     try {
-      service.setAttribute(file, "test:bar", null);
+      service.setAttribute(file, "test:bar", null, false);
       fail();
     } catch (NullPointerException expected) {
     }
@@ -207,9 +208,9 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForAttributeThatIsNotSettable() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     try {
-      service.setAttribute(file, "test:foo", "world");
+      service.setAttribute(file, "test:foo", "world", false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -219,7 +220,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_onCreate_failsForAttributeThatIsNotSettableOnCreate() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     try {
       service.setInitialAttributes(file, new BasicFileAttribute<>("test:foo", "world"));
       fail();
@@ -237,10 +238,15 @@ public class AttributeServiceTest {
   @SuppressWarnings("ConstantConditions")
   @Test
   public void testGetFileAttributeView() throws IOException {
-    File file = new File(0L, new StubByteStore(0));
+    final FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file);
 
-    FileMetadataSupplier fileSupplier = FileMetadataSupplier.of(file);
+    FileMetadata.Lookup fileSupplier = new FileMetadata.Lookup() {
+      @Override
+      public FileMetadata lookup() throws IOException {
+        return file;
+      }
+    };
 
     ASSERT.that(service.getFileAttributeView(fileSupplier, TestAttributeView.class))
         .isNotNull();
@@ -256,15 +262,20 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetFileAttributeView_isNullForUnsupportedView() {
-    File file = new File(0L, new StubByteStore(0));
-    FileMetadataSupplier fileSupplier = FileMetadataSupplier.of(file);
+    final FileMetadata file = new FakeFileMetadata(0L);
+    FileMetadata.Lookup fileSupplier = new FileMetadata.Lookup() {
+      @Override
+      public FileMetadata lookup() throws IOException {
+        return file;
+      }
+    };
     ASSERT.that(service.getFileAttributeView(fileSupplier, PosixFileAttributeView.class))
         .isNull();
   }
 
   @Test
   public void testReadAttributes_asMap() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file);
 
     ImmutableMap<String, Object> map = service.readAttributes(file, "test:foo,bar,baz");
@@ -283,8 +294,8 @@ public class AttributeServiceTest {
             .put("bar", 0L)
             .put("baz", 1)
             .put("fileKey", 0L)
-            .put("isDirectory", false)
-            .put("isRegularFile", true)
+            .put("isDirectory", true)
+            .put("isRegularFile", false)
             .put("isSymbolicLink", false)
             .put("isOther", false)
             .put("size", 0L)
@@ -297,8 +308,8 @@ public class AttributeServiceTest {
     ASSERT.that(map).isEqualTo(
         ImmutableMap.<String, Object>builder()
             .put("fileKey", 0L)
-            .put("isDirectory", false)
-            .put("isRegularFile", true)
+            .put("isDirectory", true)
+            .put("isRegularFile", false)
             .put("isSymbolicLink", false)
             .put("isOther", false)
             .put("size", 0L)
@@ -310,7 +321,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asMap_failsForInvalidAttributes() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     try {
       service.readAttributes(file, "basic:fileKey,isOther,*,creationTime");
       fail();
@@ -328,12 +339,13 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asObject() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     service.setInitialAttributes(file);
 
     BasicFileAttributes basicAttrs = service.readAttributes(file, BasicFileAttributes.class);
     ASSERT.that(basicAttrs.fileKey()).is(0L);
-    ASSERT.that(basicAttrs.isDirectory()).isFalse();
+    ASSERT.that(basicAttrs.isDirectory()).isTrue();
+    ASSERT.that(basicAttrs.isRegularFile()).isFalse();
 
     TestAttributes testAttrs = service.readAttributes(file, TestAttributes.class);
     ASSERT.that(testAttrs.foo()).is("hello");
@@ -346,7 +358,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_failsForUnsupportedAttributesType() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     try {
       service.readAttributes(file, PosixFileAttributes.class);
       fail();
@@ -356,7 +368,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testIllegalAttributeFormats() {
-    File file = new File(0L, new StubByteStore(0));
+    FileMetadata file = new FakeFileMetadata(0L);
     try {
       service.getAttribute(file, ":bar");
       fail();

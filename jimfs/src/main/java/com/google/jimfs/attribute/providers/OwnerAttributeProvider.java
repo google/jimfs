@@ -16,60 +16,77 @@
 
 package com.google.jimfs.attribute.providers;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AbstractAttributeProvider;
-import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.Attribute;
-import com.google.jimfs.attribute.AttributeViewProvider;
+import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.FileMetadata;
-import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 /**
  * Attribute provider that provides the {@link FileOwnerAttributeView} ("owner").
  *
  * @author Colin Decker
  */
-public final class OwnerAttributeProvider extends AbstractAttributeProvider
-    implements AttributeViewProvider<FileOwnerAttributeView> {
+final class OwnerAttributeProvider extends AttributeProvider<FileOwnerAttributeView> {
 
-  public static final String VIEW = "owner";
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of("owner");
 
-  public static final String OWNER = "owner";
-
-  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
-      Attribute.settableOnCreate(VIEW, OWNER, UserPrincipal.class)
-  );
-
-  private final UserPrincipal defaultOwner;
-
-  public OwnerAttributeProvider() {
-    this("user");
-  }
-
-  public OwnerAttributeProvider(String defaultOwner) {
-    super(ATTRIBUTES);
-    this.defaultOwner = createUserPrincipal(defaultOwner);
-  }
+  private static final UserPrincipal DEFAULT_OWNER = createUserPrincipal("user");
 
   @Override
   public String name() {
-    return VIEW;
+    return "owner";
   }
 
   @Override
-  public ImmutableSet<String> inherits() {
-    return ImmutableSet.of();
+  public ImmutableSet<String> fixedAttributes() {
+    return ATTRIBUTES;
   }
 
   @Override
-  public void setInitial(FileMetadata metadata) {
-    set(metadata, OWNER, defaultOwner);
+  public Map<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
+    Object userProvidedOwner = userProvidedDefaults.get("owner:owner");
+
+    UserPrincipal owner = DEFAULT_OWNER;
+    if (userProvidedOwner != null) {
+      if (userProvidedOwner instanceof String) {
+        owner = createUserPrincipal((String) userProvidedOwner);
+      } else if (userProvidedOwner instanceof UserPrincipal) {
+        owner = createUserPrincipal(userProvidedOwner.toString());
+      } else {
+        throw invalidType("owner", "owner", userProvidedOwner, String.class, UserPrincipal.class);
+      }
+    }
+
+    return ImmutableMap.of("owner:owner", owner);
+  }
+
+  @Nullable
+  @Override
+  public Object get(FileMetadata metadata, String attribute) {
+    if (attribute.equals("owner")) {
+      return metadata.getAttribute("owner:owner");
+    }
+    return null;
+  }
+
+  @Override
+  public void set(FileMetadata metadata, String view, String attribute, Object value,
+      boolean create) {
+    if (attribute.equals("owner")) {
+      metadata.setAttribute("owner:owner",
+          checkType(view, attribute, value, UserPrincipal.class));
+    }
   }
 
   @Override
@@ -78,24 +95,33 @@ public final class OwnerAttributeProvider extends AbstractAttributeProvider
   }
 
   @Override
-  public FileOwnerAttributeView getView(FileMetadataSupplier supplier) {
-    return new View(supplier);
+  public FileOwnerAttributeView view(FileMetadata.Lookup lookup,
+      Map<String, FileAttributeView> inheritedViews) {
+    return new View(lookup);
   }
 
-  private class View extends AbstractAttributeView implements FileOwnerAttributeView {
+  /**
+   * Implementation of {@link FileOwnerAttributeView}.
+   */
+  private static final class View extends AbstractAttributeView implements FileOwnerAttributeView {
 
-    public View(FileMetadataSupplier supplier) {
-      super(OwnerAttributeProvider.this, supplier);
+    public View(FileMetadata.Lookup lookup) {
+      super(lookup);
+    }
+
+    @Override
+    public String name() {
+      return "owner";
     }
 
     @Override
     public UserPrincipal getOwner() throws IOException {
-      return get(OWNER);
+      return (UserPrincipal) lookupMetadata().getAttribute("owner:owner");
     }
 
     @Override
     public void setOwner(UserPrincipal owner) throws IOException {
-      set(OWNER, owner);
+      lookupMetadata().setAttribute("owner:owner", checkNotNull(owner));
     }
   }
 }

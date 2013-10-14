@@ -16,23 +16,15 @@
 
 package com.google.jimfs.internal;
 
+import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Param;
 import com.google.caliper.api.Footprint;
 import com.google.caliper.memory.ObjectGraphMeasurer;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.providers.AclAttributeProvider;
-import com.google.jimfs.attribute.providers.BasicAttributeProvider;
-import com.google.jimfs.attribute.providers.DosAttributeProvider;
-import com.google.jimfs.attribute.providers.OwnerAttributeProvider;
-import com.google.jimfs.attribute.providers.PosixAttributeProvider;
-import com.google.jimfs.attribute.providers.UnixAttributeProvider;
-import com.google.jimfs.attribute.providers.UserDefinedAttributeProvider;
-
-import java.nio.file.attribute.AclEntry;
+import com.google.jimfs.attribute.providers.StandardAttributeProviders;
 
 /**
  * @author Colin Decker
@@ -42,12 +34,18 @@ public class FileFootprintBenchmark {
   @Param
   private AttributeConfiguration attributeConfiguration;
 
+  private AttributeService service;
+
+  @BeforeExperiment
+  public void setUp() {
+    service = new AttributeService(attributeConfiguration.createProviders(),
+        ImmutableMap.<String, Object>of());
+  }
+
   @Footprint
   public File footprintEmptyContentFile() {
     File file = new File(1, NoContent.INSTANCE);
-    for (AttributeProvider provider : attributeConfiguration.createProviders()) {
-      provider.setInitial(file);
-    }
+    service.setInitialAttributes(file.metadata());
     return file;
   }
 
@@ -114,36 +112,35 @@ public class FileFootprintBenchmark {
   private enum AttributeConfiguration {
     BASIC_ONLY {
       @Override
-      public ImmutableSet<BasicAttributeProvider> createProviders() {
-        return ImmutableSet.of(BasicAttributeProvider.INSTANCE);
+      public ImmutableSet<? extends AttributeProvider<?>> createProviders() {
+        return ImmutableSet.of(StandardAttributeProviders.get("basic"));
       }
     },
 
     UNIX_ATTRIBUTES {
       @Override
-      public ImmutableSet<? extends AttributeProvider> createProviders() {
-        OwnerAttributeProvider owner = new OwnerAttributeProvider();
-        PosixAttributeProvider posix = new PosixAttributeProvider(owner);
-        UnixAttributeProvider unix = new UnixAttributeProvider(posix);
-        return ImmutableSet.of(BasicAttributeProvider.INSTANCE, owner, posix, unix);
+      public ImmutableSet<? extends AttributeProvider<?>> createProviders() {
+        return ImmutableSet.of(
+            StandardAttributeProviders.get("basic"),
+            StandardAttributeProviders.get("owner"),
+            StandardAttributeProviders.get("posix"),
+            StandardAttributeProviders.get("unix"));
       }
     },
 
     WINDOWS_ATTRIBUTES {
       @Override
-      public ImmutableSet<? extends AttributeProvider> createProviders() {
-        OwnerAttributeProvider owner = new OwnerAttributeProvider();
-        AclAttributeProvider acl = new AclAttributeProvider(owner, ImmutableList.<AclEntry>of());
+      public ImmutableSet<? extends AttributeProvider<?>> createProviders() {
         return ImmutableSet.of(
-            BasicAttributeProvider.INSTANCE,
-            owner,
-            DosAttributeProvider.INSTANCE,
-            acl,
-            UserDefinedAttributeProvider.INSTANCE);
+            StandardAttributeProviders.get("basic"),
+            StandardAttributeProviders.get("owner"),
+            StandardAttributeProviders.get("dos"),
+            StandardAttributeProviders.get("acl"),
+            StandardAttributeProviders.get("user"));
       }
     };
 
-    public abstract ImmutableSet<? extends AttributeProvider> createProviders();
+    public abstract ImmutableSet<? extends AttributeProvider<?>> createProviders();
   }
 
   private static final class NoContent implements FileContent {
