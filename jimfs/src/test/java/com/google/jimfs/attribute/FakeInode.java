@@ -26,11 +26,11 @@ public class FakeInode extends Inode {
   private final boolean symbolicLink;
   private final long size;
 
-  public FakeInode(long id) {
+  public FakeInode(int id) {
     this(id, true, false, false, 0);
   }
 
-  public FakeInode(long id,
+  public FakeInode(int id,
       boolean directory, boolean regularFile, boolean symbolicLink, long size) {
     super(id);
     this.directory = directory;

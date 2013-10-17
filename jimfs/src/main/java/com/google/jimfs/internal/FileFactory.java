@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Supplier;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Factory for creating new files and copying files. One piece of the file store implementation.
@@ -29,7 +29,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 final class FileFactory {
 
-  private final AtomicLong idGenerator = new AtomicLong();
+  private final AtomicInteger idGenerator = new AtomicInteger();
 
   private final RegularFileStorage storage;
 
@@ -40,7 +40,7 @@ final class FileFactory {
     this.storage = checkNotNull(storage);
   }
 
-  private long nextFileId() {
+  private int nextFileId() {
     return idGenerator.getAndIncrement();
   }
 

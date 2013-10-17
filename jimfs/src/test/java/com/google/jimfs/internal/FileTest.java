@@ -33,16 +33,16 @@ public class FileTest {
   @Test
   public void testFileBasics() {
     FileContent content = new FakeFileContent();
-    File file = new File(0L, content);
+    File file = new File(0, content);
 
-    ASSERT.that(file.id()).is(0L);
+    ASSERT.that(file.id()).is(0);
     ASSERT.that(file.content()).is(content);
     ASSERT.that(file.links()).is(0);
   }
 
   @Test
   public void testDirectory() {
-    File file = new File(0L, new DirectoryTable());
+    File file = new File(0, new DirectoryTable());
     ASSERT.that(file.isDirectory()).isTrue();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isFalse();
@@ -51,7 +51,7 @@ public class FileTest {
 
   @Test
   public void testRegularFile() {
-    File file = new File(0L, new StubByteStore(10));
+    File file = new File(0, new StubByteStore(10));
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isTrue();
     ASSERT.that(file.isSymbolicLink()).isFalse();
@@ -60,7 +60,7 @@ public class FileTest {
 
   @Test
   public void testSymbolicLink() {
-    File file = new File(0L, fakePath());
+    File file = new File(0, fakePath());
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isTrue();
@@ -70,11 +70,11 @@ public class FileTest {
   @Test
   public void testRootDirectory() {
     DirectoryTable superRootTable = new DirectoryTable();
-    File superRoot = new File(-1L, superRootTable);
+    File superRoot = new File(-1, superRootTable);
     superRootTable.setSuperRoot(superRoot);
 
     DirectoryTable table = new DirectoryTable();
-    File file = new File(0L, table);
+    File file = new File(0, table);
 
     superRootTable.link(Name.simple("/"), file);
     table.setRoot();
@@ -84,7 +84,7 @@ public class FileTest {
     superRootTable.unlink(Name.simple("/"));
 
     DirectoryTable otherTable = new DirectoryTable();
-    File otherFile = new File(1L, otherTable);
+    File otherFile = new File(1, otherTable);
     superRootTable.link(Name.simple("$"), otherFile);
     otherTable.setRoot();
 
@@ -95,7 +95,7 @@ public class FileTest {
 
   @Test
   public void testLinkAndUnlink() {
-    File file = new File(0L, new FakeFileContent());
+    File file = new File(0, new FakeFileContent());
     ASSERT.that(file.links()).is(0);
 
     file.incrementLinkCount();
@@ -113,10 +113,10 @@ public class FileTest {
 
   @Test
   public void testEquality() {
-    File file1 = new File(0L, new FakeFileContent());
-    File file2 = new File(0L, new DirectoryTable());
-    File file3 = new File(1L, new StubByteStore(10));
-    File file4 = new File(1L, new FakeFileContent());
+    File file1 = new File(0, new FakeFileContent());
+    File file2 = new File(0, new DirectoryTable());
+    File file3 = new File(1, new StubByteStore(10));
+    File file4 = new File(1, new FakeFileContent());
 
     new EqualsTester()
         .addEqualityGroup(file1, file2)

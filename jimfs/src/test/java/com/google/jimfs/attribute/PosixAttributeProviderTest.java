@@ -90,7 +90,7 @@ public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttri
     ASSERT.that(view.getOwner()).is(createUserPrincipal("user"));
 
     PosixFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.fileKey()).is(0L);
+    ASSERT.that(attrs.fileKey()).is(0);
     ASSERT.that(attrs.owner()).is(createUserPrincipal("user"));
     ASSERT.that(attrs.group()).is(createGroupPrincipal("group"));
     ASSERT.that(attrs.permissions()).is(PosixFilePermissions.fromString("rw-r--r--"));
@@ -115,6 +115,6 @@ public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttri
     PosixFileAttributes attrs = provider.readAttributes(inode);
     ASSERT.that(attrs.permissions()).is(PosixFilePermissions.fromString("rw-r--r--"));
     ASSERT.that(attrs.group()).is(createGroupPrincipal("group"));
-    ASSERT.that(attrs.fileKey()).is(0L);
+    ASSERT.that(attrs.fileKey()).is(0);
   }
 }

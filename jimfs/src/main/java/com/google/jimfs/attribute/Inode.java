@@ -31,7 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public abstract class Inode {
 
-  private final long id;
+  private final int id;
 
   private final AtomicInteger links = new AtomicInteger();
 
@@ -41,7 +41,7 @@ public abstract class Inode {
 
   private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
 
-  public Inode(long id) {
+  public Inode(int id) {
     this.id = id;
 
     long now = System.currentTimeMillis(); // TODO(cgdecker): Use a Clock
@@ -53,7 +53,7 @@ public abstract class Inode {
   /**
    * Returns the ID of the file.
    */
-  public long id() {
+  public int id() {
     return id;
   }
 

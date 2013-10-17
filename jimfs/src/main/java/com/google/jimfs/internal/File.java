@@ -36,7 +36,7 @@ final class File extends Inode {
 
   private final FileContent content;
 
-  public File(long id, FileContent content) {
+  public File(int id, FileContent content) {
     super(id);
     this.content = checkNotNull(content);
   }

@@ -114,7 +114,7 @@ final class UnixAttributeProvider extends AttributeProvider<UnixFileAttributeVie
       case "dev":
         return 1L;
       case "ino":
-        return getUniqueId(inode);
+        return inode.id();
       case "nlink":
         return inode.links();
     }

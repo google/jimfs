@@ -32,7 +32,7 @@ public class InodeTest {
     // these methods are basically just thin wrappers around a map, so no need to test too
     // thoroughly
 
-    Inode inode = new FakeInode(0L, false, true, false, 0);
+    Inode inode = new FakeInode(0, false, true, false, 0);
 
     ASSERT.that(inode.getAttributeKeys()).isEmpty();
     ASSERT.that(inode.getAttribute("foo:foo")).isNull();

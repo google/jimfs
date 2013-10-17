@@ -75,7 +75,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetInitialAttributes() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
 
     ASSERT.that(ImmutableSet.copyOf(inode.getAttributeKeys())).is(
@@ -91,7 +91,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetAttribute() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
 
     ASSERT.that(service.getAttribute(inode, "test:foo")).is("hello");
@@ -103,15 +103,15 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetAttribute_fromInheritedProvider() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     ASSERT.that(service.getAttribute(inode, "test:isRegularFile")).is(false);
     ASSERT.that(service.getAttribute(inode, "test:isDirectory")).is(true);
-    ASSERT.that(service.getAttribute(inode, "test", "fileKey")).is(0L);
+    ASSERT.that(service.getAttribute(inode, "test", "fileKey")).is(0);
   }
 
   @Test
   public void testGetAttribute_failsForAttributesNotDefinedByProvider() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     try {
       service.getAttribute(inode, "test:blah");
       fail();
@@ -128,7 +128,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setAttribute(inode, "test:bar", 10L, false);
     ASSERT.that(inode.getAttribute("test:bar")).is(10L);
 
@@ -138,32 +138,32 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_forInheritedProvider() {
-    Inode inode = new FakeInode(0L);
-    service.setAttribute(inode, "test:lastModifiedTime", FileTime.fromMillis(0L), false);
+    Inode inode = new FakeInode(0);
+    service.setAttribute(inode, "test:lastModifiedTime", FileTime.fromMillis(0), false);
     ASSERT.that(inode.getAttribute("test:lastModifiedTime")).isNull();
-    ASSERT.that(service.getAttribute(inode, "basic:lastModifiedTime")).is(FileTime.fromMillis(0L));
+    ASSERT.that(service.getAttribute(inode, "basic:lastModifiedTime")).is(FileTime.fromMillis(0));
   }
 
   @Test
   public void testSetAttribute_withAlternateAcceptedType() {
-    Inode inode = new FakeInode(0L);
-    service.setAttribute(inode, "test:bar", 10f, false);
+    Inode inode = new FakeInode(0);
+    service.setAttribute(inode, "test:bar", 10F, false);
     ASSERT.that(inode.getAttribute("test:bar")).is(10L);
 
-    service.setAttribute(inode, "test:bar", BigInteger.valueOf(123L), false);
+    service.setAttribute(inode, "test:bar", BigInteger.valueOf(123), false);
     ASSERT.that(inode.getAttribute("test:bar")).is(123L);
   }
 
   @Test
   public void testSetAttribute_onCreate() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode, new BasicFileAttribute<>("test:baz", 123));
     ASSERT.that(inode.getAttribute("test:baz")).is(123);
   }
 
   @Test
   public void testSetAttribute_failsForAttributesNotDefinedByProvider() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
 
     try {
@@ -184,7 +184,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForArgumentThatIsNotOfCorrectType() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
     try {
       service.setAttribute(inode, "test:bar", "wrong", false);
@@ -197,7 +197,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForNullArgument() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
     try {
       service.setAttribute(inode, "test:bar", null, false);
@@ -210,7 +210,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForAttributeThatIsNotSettable() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     try {
       service.setAttribute(inode, "test:foo", "world", false);
       fail();
@@ -222,7 +222,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_onCreate_failsForAttributeThatIsNotSettableOnCreate() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     try {
       service.setInitialAttributes(inode, new BasicFileAttribute<>("test:foo", "world"));
       fail();
@@ -231,7 +231,7 @@ public class AttributeServiceTest {
     }
 
     try {
-      service.setInitialAttributes(inode, new BasicFileAttribute<>("test:bar", 5L));
+      service.setInitialAttributes(inode, new BasicFileAttribute<>("test:bar", 5));
       fail();
     } catch (UnsupportedOperationException expected) {
     }
@@ -240,7 +240,7 @@ public class AttributeServiceTest {
   @SuppressWarnings("ConstantConditions")
   @Test
   public void testGetFileAttributeView() throws IOException {
-    final Inode inode = new FakeInode(0L);
+    final Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
 
     Inode.Lookup inodeLookup = new Inode.Lookup() {
@@ -258,13 +258,13 @@ public class AttributeServiceTest {
     TestAttributes attrs
         = service.getFileAttributeView(inodeLookup, TestAttributeView.class).readAttributes();
     ASSERT.that(attrs.foo()).is("hello");
-    ASSERT.that(attrs.bar()).is(0L);
+    ASSERT.that(attrs.bar()).is(0);
     ASSERT.that(attrs.baz()).is(1);
   }
 
   @Test
   public void testGetFileAttributeView_isNullForUnsupportedView() {
-    final Inode inode = new FakeInode(0L);
+    final Inode inode = new FakeInode(0);
     Inode.Lookup inodeLookup = new Inode.Lookup() {
       @Override
       public Inode lookup() throws IOException {
@@ -277,7 +277,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asMap() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
 
     ImmutableMap<String, Object> map = service.readAttributes(inode, "test:foo,bar,baz");
@@ -295,7 +295,7 @@ public class AttributeServiceTest {
             .put("foo", "hello")
             .put("bar", 0L)
             .put("baz", 1)
-            .put("fileKey", 0L)
+            .put("fileKey", 0)
             .put("isDirectory", true)
             .put("isRegularFile", false)
             .put("isSymbolicLink", false)
@@ -309,7 +309,7 @@ public class AttributeServiceTest {
     map = service.readAttributes(inode, "basic:*");
     ASSERT.that(map).isEqualTo(
         ImmutableMap.<String, Object>builder()
-            .put("fileKey", 0L)
+            .put("fileKey", 0)
             .put("isDirectory", true)
             .put("isRegularFile", false)
             .put("isSymbolicLink", false)
@@ -323,7 +323,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asMap_failsForInvalidAttributes() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     try {
       service.readAttributes(inode, "basic:fileKey,isOther,*,creationTime");
       fail();
@@ -341,17 +341,17 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asObject() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
 
     BasicFileAttributes basicAttrs = service.readAttributes(inode, BasicFileAttributes.class);
-    ASSERT.that(basicAttrs.fileKey()).is(0L);
+    ASSERT.that(basicAttrs.fileKey()).is(0);
     ASSERT.that(basicAttrs.isDirectory()).isTrue();
     ASSERT.that(basicAttrs.isRegularFile()).isFalse();
 
     TestAttributes testAttrs = service.readAttributes(inode, TestAttributes.class);
     ASSERT.that(testAttrs.foo()).is("hello");
-    ASSERT.that(testAttrs.bar()).is(0L);
+    ASSERT.that(testAttrs.bar()).is(0);
     ASSERT.that(testAttrs.baz()).is(1);
 
     inode.setAttribute("test:baz", 100);
@@ -360,7 +360,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_failsForUnsupportedAttributesType() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     try {
       service.readAttributes(inode, PosixFileAttributes.class);
       fail();
@@ -370,7 +370,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testIllegalAttributeFormats() {
-    Inode inode = new FakeInode(0L);
+    Inode inode = new FakeInode(0);
     try {
       service.getAttribute(inode, ":bar");
       fail();

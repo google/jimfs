@@ -61,7 +61,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
     assertContainsAll(inode,
         ImmutableMap.<String, Object>builder()
-            .put("fileKey", 0L)
+            .put("fileKey", 0)
             .put("size", 0L)
             .put("isDirectory", true)
             .put("isRegularFile", false)
@@ -108,7 +108,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
     ASSERT.that(view.name()).is("basic");
 
     BasicFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.fileKey()).is(0L);
+    ASSERT.that(attrs.fileKey()).is(0);
 
     FileTime time = attrs.creationTime();
     ASSERT.that(attrs.lastAccessTime()).is(time);
@@ -132,7 +132,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
   @Test
   public void testAttributes() {
     BasicFileAttributes attrs = provider.readAttributes(inode);
-    ASSERT.that(attrs.fileKey()).is(0L);
+    ASSERT.that(attrs.fileKey()).is(0);
     ASSERT.that(attrs.isDirectory()).isTrue();
     ASSERT.that(attrs.isRegularFile()).isFalse();
     ASSERT.that(attrs.creationTime()).isNotNull();
