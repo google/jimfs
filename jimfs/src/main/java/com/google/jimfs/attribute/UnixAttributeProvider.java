@@ -104,8 +104,7 @@ final class UnixAttributeProvider extends AttributeProvider<UnixFileAttributeVie
         GroupPrincipal group = inode.getAttribute("posix:group");
         return getUniqueId(group);
       case "mode":
-        Set<PosixFilePermission> permissions =
-            inode.getAttribute("posix:permissions");
+        Set<PosixFilePermission> permissions = inode.getAttribute("posix:permissions");
         return toMode(permissions);
       case "ctime":
         return FileTime.fromMillis(inode.getCreationTime());
