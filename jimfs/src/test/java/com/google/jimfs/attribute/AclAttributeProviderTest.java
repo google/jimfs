@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
 import static java.nio.file.attribute.AclEntryFlag.DIRECTORY_INHERIT;
 import static java.nio.file.attribute.AclEntryPermission.APPEND_DATA;
 import static java.nio.file.attribute.AclEntryPermission.DELETE;
@@ -27,7 +27,6 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -81,7 +80,7 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(metadata, "acl")).is(defaultAcl);
+    ASSERT.that(provider.get(inode, "acl")).is(defaultAcl);
   }
 
   @Test
@@ -94,9 +93,9 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
 
   @Test
   public void testView() throws IOException {
-    AclFileAttributeView view = provider.view(metadataSupplier(),
+    AclFileAttributeView view = provider.view(inodeLookup(),
         ImmutableMap.<String, FileAttributeView>of(
-            "owner", new OwnerAttributeProvider().view(metadataSupplier(), NO_INHERITED_VIEWS)));
+            "owner", new OwnerAttributeProvider().view(inodeLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("acl");
@@ -109,6 +108,6 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
     ASSERT.that(view.getAcl()).is(ImmutableList.<AclEntry>of());
     ASSERT.that(view.getOwner()).is(FOO);
 
-    ASSERT.that(metadata.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
+    ASSERT.that(inode.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
   }
 }

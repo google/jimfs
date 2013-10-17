@@ -24,11 +24,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Metadata for a file.
+ * Object for storing file metadata. Conceptually similar to a UNIX
+ * <a href="http://en.wikipedia.org/wiki/Inode">inode</a>.
  *
  * @author Colin Decker
  */
-public abstract class FileMetadata {
+public abstract class Inode {
 
   private final long id;
 
@@ -40,7 +41,7 @@ public abstract class FileMetadata {
 
   private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
 
-  public FileMetadata(long id) {
+  public Inode(long id) {
     this.id = id;
 
     long now = System.currentTimeMillis(); // TODO(cgdecker): Use a Clock
@@ -161,10 +162,13 @@ public abstract class FileMetadata {
   }
 
   /**
-   * Gets the value of the attribute with the given key.
+   * Gets the value of the attribute with the given key. The value is automatically cast to the
+   * target type inferred by the call site, as it is assumed that the caller knows what type the
+   * value will be.
    */
-  public Object getAttribute(String key) {
-    return attributes.get(key);
+  @SuppressWarnings("unchecked")
+  public <T> T getAttribute(String key) {
+    return (T) attributes.get(key);
   }
 
   /**
@@ -182,17 +186,17 @@ public abstract class FileMetadata {
   }
 
   /**
-   * Callback for looking up the metadata for a file.
+   * Callback for looking up an inode.
    *
    * @author Colin Decker
    */
   public interface Lookup {
 
     /**
-     * Looks up the file metadata.
+     * Looks up the inode.
      *
      * @throws IOException if the lookup fails for any reason, such as the file not existing
      */
-    FileMetadata lookup() throws IOException;
+    Inode lookup() throws IOException;
   }
 }

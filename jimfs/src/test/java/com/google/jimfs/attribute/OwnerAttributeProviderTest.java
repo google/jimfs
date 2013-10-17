@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -47,7 +46,7 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(metadata, "owner")).isEqualTo(createUserPrincipal("user"));
+    ASSERT.that(provider.get(inode, "owner")).isEqualTo(createUserPrincipal("user"));
   }
 
   @Test
@@ -61,7 +60,7 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
   @Test
   public void testView() throws IOException {
-    FileOwnerAttributeView view = provider.view(metadataSupplier(), NO_INHERITED_VIEWS);
+    FileOwnerAttributeView view = provider.view(inodeLookup(), NO_INHERITED_VIEWS);
     ASSERT.that(view).isNotNull();
 
     ASSERT.that(view.name()).is("owner");
@@ -69,6 +68,6 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
     view.setOwner(createUserPrincipal("root"));
     ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("root"));
-    ASSERT.that(metadata.getAttribute("owner:owner")).isEqualTo(createUserPrincipal("root"));
+    ASSERT.that(inode.getAttribute("owner:owner")).isEqualTo(createUserPrincipal("root"));
   }
 }

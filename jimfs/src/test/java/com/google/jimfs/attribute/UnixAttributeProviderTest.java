@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
-import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createGroupPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -53,33 +52,33 @@ public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttribu
   @Test
   public void testInitialAttributes() {
     // unix provider relies on other providers to set their initial attributes
-    metadata.setAttribute("owner:owner", createUserPrincipal("foo"));
-    metadata.setAttribute("posix:group", createGroupPrincipal("bar"));
-    metadata.setAttribute("posix:permissions",
+    inode.setAttribute("owner:owner", createUserPrincipal("foo"));
+    inode.setAttribute("posix:group", createGroupPrincipal("bar"));
+    inode.setAttribute("posix:permissions",
         ImmutableSet.copyOf(PosixFilePermissions.fromString("rw-r--r--")));
 
     // these are pretty much meaningless here since they aren't properties this
     // file system actually has, so don't really care about the exact value of these
-    ASSERT.that(provider.get(metadata, "uid")).isA(Integer.class);
-    ASSERT.that(provider.get(metadata, "gid")).isA(Integer.class);
-    ASSERT.that(provider.get(metadata, "rdev")).is(0L);
-    ASSERT.that(provider.get(metadata, "dev")).is(1L);
+    ASSERT.that(provider.get(inode, "uid")).isA(Integer.class);
+    ASSERT.that(provider.get(inode, "gid")).isA(Integer.class);
+    ASSERT.that(provider.get(inode, "rdev")).is(0L);
+    ASSERT.that(provider.get(inode, "dev")).is(1L);
     // TODO(cgdecker): File objects are kind of like inodes; should their IDs be inode IDs here?
     // even though we're already using that ID as the fileKey, which unix doesn't do
-    ASSERT.that(provider.get(metadata, "ino")).isA(Integer.class);
+    ASSERT.that(provider.get(inode, "ino")).isA(Integer.class);
 
     // these have logical origins in attributes from other views
-    ASSERT.that(provider.get(metadata, "mode")).is(0644); // rw-r--r--
-    ASSERT.that(provider.get(metadata, "ctime"))
-        .isEqualTo(FileTime.fromMillis(metadata.getCreationTime()));
+    ASSERT.that(provider.get(inode, "mode")).is(0644); // rw-r--r--
+    ASSERT.that(provider.get(inode, "ctime"))
+        .isEqualTo(FileTime.fromMillis(inode.getCreationTime()));
 
     // this is based on a property this file system does actually have
-    ASSERT.that(provider.get(metadata, "nlink")).is(0);
-    metadata.incrementLinkCount();
-    metadata.incrementLinkCount();
-    ASSERT.that(provider.get(metadata, "nlink")).is(2);
-    metadata.decrementLinkCount();
-    ASSERT.that(provider.get(metadata, "nlink")).is(1);
+    ASSERT.that(provider.get(inode, "nlink")).is(0);
+    inode.incrementLinkCount();
+    inode.incrementLinkCount();
+    ASSERT.that(provider.get(inode, "nlink")).is(2);
+    inode.decrementLinkCount();
+    ASSERT.that(provider.get(inode, "nlink")).is(1);
   }
 
   @Test

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static org.junit.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
@@ -22,7 +22,6 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -56,7 +55,7 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
   @Test
   public void testInitialAttributes() {
     for (String attribute : DOS_ATTRIBUTES) {
-      ASSERT.that(provider.get(metadata, attribute)).is(false);
+      ASSERT.that(provider.get(inode, attribute)).is(false);
     }
   }
 
@@ -70,9 +69,9 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
 
   @Test
   public void testView() throws IOException {
-    DosFileAttributeView view = provider.view(metadataSupplier(),
+    DosFileAttributeView view = provider.view(inodeLookup(),
         ImmutableMap.<String, FileAttributeView>of(
-            "basic", new BasicAttributeProvider().view(metadataSupplier(), NO_INHERITED_VIEWS)));
+            "basic", new BasicAttributeProvider().view(inodeLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("dos");
@@ -105,15 +104,15 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
 
   @Test
   public void testAttributes() {
-    DosFileAttributes attrs = provider.readAttributes(metadata);
+    DosFileAttributes attrs = provider.readAttributes(inode);
     ASSERT.that(attrs.isHidden()).isFalse();
     ASSERT.that(attrs.isArchive()).isFalse();
     ASSERT.that(attrs.isReadOnly()).isFalse();
     ASSERT.that(attrs.isSystem()).isFalse();
 
-    metadata.setAttribute("dos:hidden", true);
+    inode.setAttribute("dos:hidden", true);
 
-    attrs = provider.readAttributes(metadata);
+    attrs = provider.readAttributes(inode);
     ASSERT.that(attrs.isHidden()).isTrue();
     ASSERT.that(attrs.isArchive()).isFalse();
     ASSERT.that(attrs.isReadOnly()).isFalse();

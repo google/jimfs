@@ -67,8 +67,7 @@ final class FileFactory {
   }
 
   /**
-   * Creates copies of the given file metadata and content and stores them. Returns the key of the
-   * new file.
+   * Creates and returns a copy of the given file.
    */
   public File copy(File file) {
     return new File(nextFileId(), file.content().copy());

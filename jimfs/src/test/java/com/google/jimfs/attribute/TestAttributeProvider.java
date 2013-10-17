@@ -74,15 +74,15 @@ public final class TestAttributeProvider extends AttributeProvider<TestAttribute
 
   @Override
   public void set(
-      FileMetadata metadata, String view, String attribute, Object value, boolean create) {
+      Inode inode, String view, String attribute, Object value, boolean create) {
     switch (attribute) {
       case "bar":
         checkNotCreate(view, attribute, create);
-        metadata.setAttribute("test:bar",
+        inode.setAttribute("test:bar",
             checkType(view, attribute, value, Number.class).longValue());
         break;
       case "baz":
-        metadata.setAttribute("test:baz",
+        inode.setAttribute("test:baz",
             checkType(view, attribute, value, Integer.class));
         break;
       default:
@@ -91,11 +91,11 @@ public final class TestAttributeProvider extends AttributeProvider<TestAttribute
   }
 
   @Override
-  public Object get(FileMetadata metadata, String attribute) {
+  public Object get(Inode inode, String attribute) {
     if (attribute.equals("foo")) {
       return "hello";
     }
-    return metadata.getAttribute("test:" + attribute);
+    return inode.getAttribute("test:" + attribute);
   }
 
   @Override
@@ -105,7 +105,7 @@ public final class TestAttributeProvider extends AttributeProvider<TestAttribute
 
   @Override
   public TestAttributeView view(
-      FileMetadata.Lookup lookup, Map<String, FileAttributeView> inheritedViews) {
+      Inode.Lookup lookup, Map<String, FileAttributeView> inheritedViews) {
     return new View(lookup, (BasicFileAttributeView) inheritedViews.get("basic"));
   }
 
@@ -115,16 +115,16 @@ public final class TestAttributeProvider extends AttributeProvider<TestAttribute
   }
 
   @Override
-  public TestAttributes readAttributes(FileMetadata metadata) {
-    return new Attributes(metadata);
+  public TestAttributes readAttributes(Inode inode) {
+    return new Attributes(inode);
   }
 
   static final class View implements TestAttributeView {
 
-    private final FileMetadata.Lookup lookup;
+    private final Inode.Lookup lookup;
     private final BasicFileAttributeView basicView;
 
-    public View(FileMetadata.Lookup lookup, BasicFileAttributeView basicView) {
+    public View(Inode.Lookup lookup, BasicFileAttributeView basicView) {
       this.lookup = checkNotNull(lookup);
       this.basicView = checkNotNull(basicView);
     }
@@ -163,9 +163,9 @@ public final class TestAttributeProvider extends AttributeProvider<TestAttribute
     private final Long bar;
     private final Integer baz;
 
-    public Attributes(FileMetadata metadata) {
-      this.bar = (Long) metadata.getAttribute("test:bar");
-      this.baz = (Integer) metadata.getAttribute("test:baz");
+    public Attributes(Inode inode) {
+      this.bar = inode.getAttribute("test:bar");
+      this.baz = inode.getAttribute("test:baz");
     }
 
     @Override

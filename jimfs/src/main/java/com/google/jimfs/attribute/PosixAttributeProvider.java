@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createGroupPrincipal;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.FileMetadata;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -84,7 +82,7 @@ final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeV
       if (userProvidedGroup instanceof String) {
         group = createGroupPrincipal((String) userProvidedGroup);
       } else if (userProvidedGroup instanceof GroupPrincipal) {
-        group = createGroupPrincipal(userProvidedGroup.toString());
+        group = createGroupPrincipal(((GroupPrincipal) userProvidedGroup).getName());
       } else {
         throw new IllegalArgumentException("invalid type " + userProvidedGroup.getClass()
             + " for attribute 'posix:group': should be one of " + String.class + " or "
@@ -115,27 +113,31 @@ final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeV
 
   @Nullable
   @Override
-  public Object get(FileMetadata metadata, String attribute) {
+  public Object get(Inode inode, String attribute) {
     switch (attribute) {
       case "group":
-        return metadata.getAttribute("posix:group");
+        return inode.getAttribute("posix:group");
       case "permissions":
-        return metadata.getAttribute("posix:permissions");
+        return inode.getAttribute("posix:permissions");
     }
     return null;
   }
 
   @Override
-  public void set(FileMetadata metadata, String view, String attribute, Object value,
+  public void set(Inode inode, String view, String attribute, Object value,
       boolean create) {
     switch (attribute) {
       case "group":
         checkNotCreate(view, attribute, create);
-        metadata.setAttribute("posix:group",
-            checkType(view, attribute, value, GroupPrincipal.class));
+
+        GroupPrincipal group = checkType(view, attribute, value, GroupPrincipal.class);
+        if (!(group instanceof UserPrincipals.JimfsGroupPrincipal)) {
+          group = UserPrincipals.createGroupPrincipal(group.getName());
+        }
+        inode.setAttribute("posix:group", group);
         break;
       case "permissions":
-        metadata.setAttribute("posix:permissions",
+        inode.setAttribute("posix:permissions",
             toPermissions(checkType(view, attribute, value, Set.class)));
     }
   }
@@ -159,7 +161,7 @@ final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeV
   }
 
   @Override
-  public PosixFileAttributeView view(FileMetadata.Lookup lookup,
+  public PosixFileAttributeView view(Inode.Lookup lookup,
       Map<String, FileAttributeView> inheritedViews) {
     return new View(lookup,
         (BasicFileAttributeView) inheritedViews.get("basic"),
@@ -172,8 +174,8 @@ final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeV
   }
 
   @Override
-  public PosixFileAttributes readAttributes(FileMetadata metadata) {
-    return new Attributes(metadata);
+  public PosixFileAttributes readAttributes(Inode inode) {
+    return new Attributes(inode);
   }
 
   /**
@@ -184,7 +186,7 @@ final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeV
     private final BasicFileAttributeView basicView;
     private final FileOwnerAttributeView ownerView;
 
-    protected View(FileMetadata.Lookup lookup,
+    protected View(Inode.Lookup lookup,
         BasicFileAttributeView basicView, FileOwnerAttributeView ownerView) {
       super(lookup);
       this.basicView = checkNotNull(basicView);
@@ -198,7 +200,7 @@ final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeV
 
     @Override
     public PosixFileAttributes readAttributes() throws IOException {
-      return new Attributes(lookupMetadata());
+      return new Attributes(lookupInode());
     }
 
     @Override
@@ -209,12 +211,12 @@ final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeV
 
     @Override
     public void setPermissions(Set<PosixFilePermission> perms) throws IOException {
-      lookupMetadata().setAttribute("posix:permissions", ImmutableSet.copyOf(perms));
+      lookupInode().setAttribute("posix:permissions", ImmutableSet.copyOf(perms));
     }
 
     @Override
     public void setGroup(GroupPrincipal group) throws IOException {
-      lookupMetadata().setAttribute("posix:group", checkNotNull(group));
+      lookupInode().setAttribute("posix:group", checkNotNull(group));
     }
 
     @Override
@@ -238,12 +240,11 @@ final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeV
     private final ImmutableSet<PosixFilePermission> permissions;
 
     @SuppressWarnings("unchecked")
-    protected Attributes(FileMetadata metadata) {
-      super(metadata);
-      this.owner = (UserPrincipal) metadata.getAttribute("owner:owner");
-      this.group = (GroupPrincipal) metadata.getAttribute("posix:group");
-      this.permissions = (ImmutableSet<PosixFilePermission>)
-          metadata.getAttribute("posix:permissions");
+    protected Attributes(Inode inode) {
+      super(inode);
+      this.owner = inode.getAttribute("owner:owner");
+      this.group = inode.getAttribute("posix:group");
+      this.permissions = inode.getAttribute("posix:permissions");
     }
 
     @Override

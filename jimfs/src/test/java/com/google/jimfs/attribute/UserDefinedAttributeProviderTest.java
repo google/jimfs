@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -22,7 +22,6 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -53,24 +52,24 @@ public class UserDefinedAttributeProviderTest
   @Test
   public void testInitialAttributes() {
     // no initial attributes
-    ASSERT.that(ImmutableList.copyOf(metadata.getAttributeKeys())).isEmpty();
-    ASSERT.that(provider.attributes(metadata)).isEmpty();
+    ASSERT.that(ImmutableList.copyOf(inode.getAttributeKeys())).isEmpty();
+    ASSERT.that(provider.attributes(inode)).isEmpty();
   }
 
   @Test
   public void testGettingAndSetting() {
     byte[] bytes = {0, 1, 2, 3};
-    provider.set(metadata, "user", "one", bytes, false);
-    provider.set(metadata, "user", "two", ByteBuffer.wrap(bytes), false);
+    provider.set(inode, "user", "one", bytes, false);
+    provider.set(inode, "user", "two", ByteBuffer.wrap(bytes), false);
 
-    byte[] one = (byte[]) provider.get(metadata, "one");
-    byte[] two = (byte[]) provider.get(metadata, "two");
+    byte[] one = (byte[]) provider.get(inode, "one");
+    byte[] two = (byte[]) provider.get(inode, "two");
     ASSERT.that(Arrays.equals(one, bytes)).isTrue();
     ASSERT.that(Arrays.equals(two, bytes)).isTrue();
 
     assertSetFails("foo", "hello");
 
-    ASSERT.that(provider.attributes(metadata)).has().exactly("one", "two");
+    ASSERT.that(provider.attributes(inode)).has().exactly("one", "two");
   }
 
   @Test
@@ -80,7 +79,7 @@ public class UserDefinedAttributeProviderTest
 
   @Test
   public void testView() throws IOException {
-    UserDefinedFileAttributeView view = provider.view(metadataSupplier(), NO_INHERITED_VIEWS);
+    UserDefinedFileAttributeView view = provider.view(inodeLookup(), NO_INHERITED_VIEWS);
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("user");
@@ -93,7 +92,7 @@ public class UserDefinedAttributeProviderTest
     view.write("b2", ByteBuffer.wrap(b2));
 
     ASSERT.that(view.list()).has().allOf("b1", "b2");
-    ASSERT.that(metadata.getAttributeKeys()).has().exactly("user:b1", "user:b2");
+    ASSERT.that(inode.getAttributeKeys()).has().exactly("user:b1", "user:b2");
 
     ASSERT.that(view.size("b1")).is(3);
     ASSERT.that(view.size("b2")).is(5);
@@ -110,7 +109,7 @@ public class UserDefinedAttributeProviderTest
     view.delete("b2");
 
     ASSERT.that(view.list()).has().exactly("b1");
-    ASSERT.that(metadata.getAttributeKeys()).has().exactly("user:b1");
+    ASSERT.that(inode.getAttributeKeys()).has().exactly("user:b1");
 
     try {
       view.size("b2");

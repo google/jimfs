@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.FileMetadata;
 
 import java.io.IOException;
 import java.nio.file.attribute.AclEntry;
@@ -77,9 +75,9 @@ final class AclAttributeProvider extends AttributeProvider<AclFileAttributeView>
 
   @Nullable
   @Override
-  public Object get(FileMetadata metadata, String attribute) {
+  public Object get(Inode inode, String attribute) {
     if (attribute.equals("acl")) {
-      return metadata.getAttribute("acl:acl");
+      return inode.getAttribute("acl:acl");
     }
 
     return null;
@@ -87,10 +85,10 @@ final class AclAttributeProvider extends AttributeProvider<AclFileAttributeView>
 
   @Override
   public void set(
-      FileMetadata metadata, String view, String attribute, Object value, boolean create) {
+      Inode inode, String view, String attribute, Object value, boolean create) {
     if (attribute.equals("acl")) {
       checkNotCreate(view, attribute, create);
-      metadata.setAttribute("acl:acl",
+      inode.setAttribute("acl:acl",
           toAcl(checkType(view, attribute, value, List.class)));
     }
   }
@@ -114,7 +112,7 @@ final class AclAttributeProvider extends AttributeProvider<AclFileAttributeView>
   }
 
   @Override
-  public AclFileAttributeView view(FileMetadata.Lookup lookup,
+  public AclFileAttributeView view(Inode.Lookup lookup,
       Map<String, FileAttributeView> inheritedViews) {
     return new View(lookup, (FileOwnerAttributeView) inheritedViews.get("owner"));
   }
@@ -126,7 +124,7 @@ final class AclAttributeProvider extends AttributeProvider<AclFileAttributeView>
 
     private final FileOwnerAttributeView ownerView;
 
-    public View(FileMetadata.Lookup lookup, FileOwnerAttributeView ownerView) {
+    public View(Inode.Lookup lookup, FileOwnerAttributeView ownerView) {
       super(lookup);
       this.ownerView = checkNotNull(ownerView);
     }
@@ -139,13 +137,13 @@ final class AclAttributeProvider extends AttributeProvider<AclFileAttributeView>
     @SuppressWarnings("unchecked")
     @Override
     public List<AclEntry> getAcl() throws IOException {
-      return (List<AclEntry>) lookupMetadata().getAttribute("acl:acl");
+      return lookupInode().getAttribute("acl:acl");
     }
 
     @Override
     public void setAcl(List<AclEntry> acl) throws IOException {
       checkNotNull(acl);
-      lookupMetadata().setAttribute("acl:acl", ImmutableList.copyOf(acl));
+      lookupInode().setAttribute("acl:acl", ImmutableList.copyOf(acl));
     }
 
     @Override

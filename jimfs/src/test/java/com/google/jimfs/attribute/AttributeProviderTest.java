@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.internal.AttributeService;
-import com.google.jimfs.attribute.FakeFileMetadata;
-import com.google.jimfs.attribute.FileMetadata;
 
 import org.junit.Before;
 
@@ -44,7 +39,7 @@ public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
       ImmutableMap.of();
 
   protected P provider;
-  protected FileMetadata metadata;
+  protected Inode inode;
 
   /**
    * Create the provider being tested.
@@ -56,11 +51,11 @@ public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
    */
   protected abstract Set<? extends AttributeProvider<?>> createInheritedProviders();
 
-  protected FileMetadata.Lookup metadataSupplier() {
-    return new FileMetadata.Lookup() {
+  protected Inode.Lookup inodeLookup() {
+    return new Inode.Lookup() {
       @Override
-      public FileMetadata lookup() throws IOException {
-        return metadata;
+      public Inode lookup() throws IOException {
+        return inode;
       }
     };
   }
@@ -68,17 +63,23 @@ public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
   @Before
   public void setUp() {
     this.provider = createProvider();
-    this.metadata = new FakeFileMetadata(0);
-    AttributeService service = createService();
-    service.setInitialAttributes(metadata);
+    this.inode = new FakeInode(0);
+
+    Map<String, ?> defaultValues = createDefaultValues();
+    setDefaultValues(inode, provider, defaultValues);
+
+    Set<? extends AttributeProvider<?>> inheritedProviders = createInheritedProviders();
+    for (AttributeProvider<?> inherited : inheritedProviders) {
+      setDefaultValues(inode, inherited, defaultValues);
+    }
   }
 
-  protected final AttributeService createService() {
-    ImmutableSet<AttributeProvider<?>> providers = ImmutableSet.<AttributeProvider<?>>builder()
-        .add(provider)
-        .addAll(createInheritedProviders())
-        .build();
-    return new AttributeService(providers, createDefaultValues());
+  private static void setDefaultValues(
+      Inode inode, AttributeProvider<?> provider, Map<String, ?> defaultValues) {
+    Map<String, ?> defaults = provider.defaultValues(defaultValues);
+    for (Map.Entry<String, ?> entry : defaults.entrySet()) {
+      inode.setAttribute(entry.getKey(), entry.getValue());
+    }
   }
 
   protected Map<String, ?> createDefaultValues() {
@@ -94,7 +95,7 @@ public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
   }
 
   protected void assertContainsAll(
-      FileMetadata store, ImmutableMap<String, Object> expectedAttributes) {
+      Inode store, ImmutableMap<String, Object> expectedAttributes) {
     for (Map.Entry<String, Object> entry : expectedAttributes.entrySet()) {
       String attribute = entry.getKey();
       Object value = entry.getValue();
@@ -112,14 +113,14 @@ public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
   }
 
   protected void assertSetAndGetSucceeds(String attribute, Object value, boolean create) {
-    provider.set(metadata, provider.name(), attribute, value, create);
-    ASSERT.that(provider.get(metadata, attribute)).is(value);
+    provider.set(inode, provider.name(), attribute, value, create);
+    ASSERT.that(provider.get(inode, attribute)).is(value);
   }
 
   @SuppressWarnings("EmptyCatchBlock")
   protected void assertSetFails(String attribute, Object value) {
     try {
-      provider.set(metadata, provider.name(), attribute, value, false);
+      provider.set(inode, provider.name(), attribute, value, false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -128,7 +129,7 @@ public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
   @SuppressWarnings("EmptyCatchBlock")
   protected void assertSetFailsOnCreate(String attribute, Object value) {
     try {
-      provider.set(metadata, provider.name(), attribute, value, true);
+      provider.set(inode, provider.name(), attribute, value, true);
       fail();
     } catch (UnsupportedOperationException expected) {
     }

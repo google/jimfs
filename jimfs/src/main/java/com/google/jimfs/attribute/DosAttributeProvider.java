@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.FileMetadata;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -85,20 +83,20 @@ final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView>
 
   @Nullable
   @Override
-  public Object get(FileMetadata metadata, String attribute) {
+  public Object get(Inode inode, String attribute) {
     if (ATTRIBUTES.contains(attribute)) {
-      return metadata.getAttribute("dos:" + attribute);
+      return inode.getAttribute("dos:" + attribute);
     }
 
     return null;
   }
 
   @Override
-  public void set(FileMetadata metadata, String view, String attribute, Object value,
+  public void set(Inode inode, String view, String attribute, Object value,
       boolean create) {
     if (supports(attribute)) {
       checkNotCreate(view, attribute, create);
-      metadata.setAttribute("dos:" + attribute,
+      inode.setAttribute("dos:" + attribute,
           checkType(view, attribute, value, Boolean.class));
     }
   }
@@ -109,7 +107,7 @@ final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView>
   }
 
   @Override
-  public DosFileAttributeView view(FileMetadata.Lookup lookup,
+  public DosFileAttributeView view(Inode.Lookup lookup,
       Map<String, FileAttributeView> inheritedViews) {
     return new View(lookup, (BasicFileAttributeView) inheritedViews.get("basic"));
   }
@@ -120,8 +118,8 @@ final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView>
   }
 
   @Override
-  public DosFileAttributes readAttributes(FileMetadata metadata) {
-    return new Attributes(metadata);
+  public DosFileAttributes readAttributes(Inode inode) {
+    return new Attributes(inode);
   }
 
   /**
@@ -131,7 +129,7 @@ final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView>
 
     private final BasicFileAttributeView basicView;
 
-    public View(FileMetadata.Lookup lookup, BasicFileAttributeView basicView) {
+    public View(Inode.Lookup lookup, BasicFileAttributeView basicView) {
       super(lookup);
       this.basicView = checkNotNull(basicView);
     }
@@ -143,7 +141,7 @@ final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView>
 
     @Override
     public DosFileAttributes readAttributes() throws IOException {
-      return new Attributes(lookupMetadata());
+      return new Attributes(lookupInode());
     }
 
     @Override
@@ -154,22 +152,22 @@ final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView>
 
     @Override
     public void setReadOnly(boolean value) throws IOException {
-      lookupMetadata().setAttribute("dos:readonly", value);
+      lookupInode().setAttribute("dos:readonly", value);
     }
 
     @Override
     public void setHidden(boolean value) throws IOException {
-      lookupMetadata().setAttribute("dos:hidden", value);
+      lookupInode().setAttribute("dos:hidden", value);
     }
 
     @Override
     public void setSystem(boolean value) throws IOException {
-      lookupMetadata().setAttribute("dos:system", value);
+      lookupInode().setAttribute("dos:system", value);
     }
 
     @Override
     public void setArchive(boolean value) throws IOException {
-      lookupMetadata().setAttribute("dos:archive", value);
+      lookupInode().setAttribute("dos:archive", value);
     }
   }
 
@@ -183,12 +181,12 @@ final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView>
     private final boolean archive;
     private final boolean system;
 
-    protected Attributes(FileMetadata metadata) {
-      super(metadata);
-      this.readOnly = (boolean) metadata.getAttribute("dos:readonly");
-      this.hidden = (boolean) metadata.getAttribute("dos:hidden");
-      this.archive = (boolean) metadata.getAttribute("dos:archive");
-      this.system = (boolean) metadata.getAttribute("dos:system");
+    protected Attributes(Inode inode) {
+      super(inode);
+      this.readOnly = inode.getAttribute("dos:readonly");
+      this.hidden = inode.getAttribute("dos:hidden");
+      this.archive = inode.getAttribute("dos:archive");
+      this.system = inode.getAttribute("dos:system");
     }
 
     @Override

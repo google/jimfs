@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.FileMetadata;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileAttributeView;
@@ -62,7 +60,7 @@ final class OwnerAttributeProvider extends AttributeProvider<FileOwnerAttributeV
       if (userProvidedOwner instanceof String) {
         owner = createUserPrincipal((String) userProvidedOwner);
       } else if (userProvidedOwner instanceof UserPrincipal) {
-        owner = createUserPrincipal(userProvidedOwner.toString());
+        owner = createUserPrincipal(((UserPrincipal) userProvidedOwner).getName());
       } else {
         throw invalidType("owner", "owner", userProvidedOwner, String.class, UserPrincipal.class);
       }
@@ -73,19 +71,22 @@ final class OwnerAttributeProvider extends AttributeProvider<FileOwnerAttributeV
 
   @Nullable
   @Override
-  public Object get(FileMetadata metadata, String attribute) {
+  public Object get(Inode inode, String attribute) {
     if (attribute.equals("owner")) {
-      return metadata.getAttribute("owner:owner");
+      return inode.getAttribute("owner:owner");
     }
     return null;
   }
 
   @Override
-  public void set(FileMetadata metadata, String view, String attribute, Object value,
+  public void set(Inode inode, String view, String attribute, Object value,
       boolean create) {
     if (attribute.equals("owner")) {
-      metadata.setAttribute("owner:owner",
-          checkType(view, attribute, value, UserPrincipal.class));
+      UserPrincipal user = checkType(view, attribute, value, UserPrincipal.class);
+      if (!(user instanceof UserPrincipals.JimfsUserPrincipal)) {
+        user = createUserPrincipal(user.getName());
+      }
+      inode.setAttribute("owner:owner", user);
     }
   }
 
@@ -95,7 +96,7 @@ final class OwnerAttributeProvider extends AttributeProvider<FileOwnerAttributeV
   }
 
   @Override
-  public FileOwnerAttributeView view(FileMetadata.Lookup lookup,
+  public FileOwnerAttributeView view(Inode.Lookup lookup,
       Map<String, FileAttributeView> inheritedViews) {
     return new View(lookup);
   }
@@ -105,7 +106,7 @@ final class OwnerAttributeProvider extends AttributeProvider<FileOwnerAttributeV
    */
   private static final class View extends AbstractAttributeView implements FileOwnerAttributeView {
 
-    public View(FileMetadata.Lookup lookup) {
+    public View(Inode.Lookup lookup) {
       super(lookup);
     }
 
@@ -116,12 +117,12 @@ final class OwnerAttributeProvider extends AttributeProvider<FileOwnerAttributeV
 
     @Override
     public UserPrincipal getOwner() throws IOException {
-      return (UserPrincipal) lookupMetadata().getAttribute("owner:owner");
+      return lookupInode().getAttribute("owner:owner");
     }
 
     @Override
     public void setOwner(UserPrincipal owner) throws IOException {
-      lookupMetadata().setAttribute("owner:owner", checkNotNull(owner));
+      lookupInode().setAttribute("owner:owner", checkNotNull(owner));
     }
   }
 }

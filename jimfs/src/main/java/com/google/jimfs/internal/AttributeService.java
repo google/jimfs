@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.AttributeConfiguration;
 import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.FileMetadata;
+import com.google.jimfs.attribute.Inode;
 
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-public final class AttributeService {
+final class AttributeService {
 
   private static final String ALL_ATTRIBUTES = "*";
 
@@ -110,56 +110,56 @@ public final class AttributeService {
   }
 
   /**
-   * Sets all initial attributes for the given file, including the given attributes if possible.
+   * Sets all initial attributes for the given inode, including the given attributes if possible.
    */
-  public void setInitialAttributes(FileMetadata file, FileAttribute<?>... attrs) {
+  public void setInitialAttributes(Inode inode, FileAttribute<?>... attrs) {
     // default values should already be sanitized by their providers
     for (int i = 0; i < defaultValues.size(); i++) {
       FileAttribute<?> attribute = defaultValues.get(i);
-      file.setAttribute(attribute.name(), attribute.value());
+      inode.setAttribute(attribute.name(), attribute.value());
     }
 
     for (FileAttribute<?> attr : attrs) {
-      setAttribute(file, attr.name(), attr.value(), true);
+      setAttribute(inode, attr.name(), attr.value(), true);
     }
   }
 
   /**
-   * Copies the file times of the given file to the given copy file.
+   * Copies the file times of the given inode to the given copy inode.
    */
-  public void copyBasicAttributes(FileMetadata file, FileMetadata copy) {
-    copy.setCreationTime(file.getCreationTime());
-    copy.setLastAccessTime(file.getLastAccessTime());
-    copy.setLastModifiedTime(file.getLastModifiedTime());
+  public void copyBasicAttributes(Inode inode, Inode copy) {
+    copy.setCreationTime(inode.getCreationTime());
+    copy.setLastAccessTime(inode.getLastAccessTime());
+    copy.setLastModifiedTime(inode.getLastModifiedTime());
   }
 
   /**
-   * Copies the attributes of the given file to the given copy file.
+   * Copies the attributes of the given inode to the given copy inode.
    */
-  public void copyAttributes(FileMetadata file, FileMetadata copy) {
-    copyBasicAttributes(file, copy);
-    for (String attribute : file.getAttributeKeys()) {
-      copy.setAttribute(attribute, file.getAttribute(attribute));
+  public void copyAttributes(Inode inode, Inode copy) {
+    copyBasicAttributes(inode, copy);
+    for (String attribute : inode.getAttributeKeys()) {
+      copy.setAttribute(attribute, inode.getAttribute(attribute));
     }
   }
 
   /**
-   * Gets the value of the given attribute for the given file. {@code attribute} must be of the form
-   * "view:attribute" or "attribute".
+   * Gets the value of the given attribute for the given inode. {@code attribute} must be of the
+   * form "view:attribute" or "attribute".
    */
-  public <V> V getAttribute(FileMetadata file, String attribute) {
+  public <V> V getAttribute(Inode inode, String attribute) {
     String view = getViewName(attribute);
     String attr = getSingleAttribute(attribute);
-    return getAttribute(file, view, attr);
+    return getAttribute(inode, view, attr);
   }
 
   /**
-   * Gets the value of the given attribute for the given view and file. Neither view nor file may
-   * have a ':' character.
+   * Gets the value of the given attribute for the given view and inode. Neither view nor attribute
+   * may have a ':' character.
    */
   @SuppressWarnings("unchecked")
-  public <V> V getAttribute(FileMetadata file, String view, String attribute) {
-    Object value = getAttributeInternal(file, view, attribute);
+  public <V> V getAttribute(Inode inode, String view, String attribute) {
+    Object value = getAttributeInternal(inode, view, attribute);
     if (value == null) {
       throw new IllegalArgumentException(
           "invalid attribute for view '" + view + "': " + attribute);
@@ -167,16 +167,16 @@ public final class AttributeService {
     return (V) value;
   }
 
-  private Object getAttributeInternal(FileMetadata file, String view, String attribute) {
+  private Object getAttributeInternal(Inode inode, String view, String attribute) {
     AttributeProvider<?> provider = providers.get(view);
     if (provider == null) {
       return null;
     }
 
-    Object value = provider.get(file, attribute);
+    Object value = provider.get(inode, attribute);
     if (value == null) {
       for (String inheritedView : provider.inherits()) {
-        value = getAttributeInternal(file, inheritedView, attribute);
+        value = getAttributeInternal(inode, inheritedView, attribute);
         if (value != null) {
           break;
         }
@@ -187,28 +187,28 @@ public final class AttributeService {
   }
 
   /**
-   * Sets the value of the given attribute to the given value for the given file.
+   * Sets the value of the given attribute to the given value for the given inode.
    */
-  public void setAttribute(FileMetadata file, String attribute, Object value, boolean create) {
+  public void setAttribute(Inode inode, String attribute, Object value, boolean create) {
     String view = getViewName(attribute);
     String attr = getSingleAttribute(attribute);
-    setAttributeInternal(file, view, attr, value, create);
+    setAttributeInternal(inode, view, attr, value, create);
   }
 
   private void setAttributeInternal(
-      FileMetadata file, String view, String attribute, Object value, boolean create) {
+      Inode inode, String view, String attribute, Object value, boolean create) {
     AttributeProvider<?> provider = providers.get(view);
 
     if (provider != null) {
       if (provider.supports(attribute)) {
-        provider.set(file, view, attribute, value, create);
+        provider.set(inode, view, attribute, value, create);
         return;
       }
 
       for (String inheritedView : provider.inherits()) {
         AttributeProvider<?> inheritedProvider = providers.get(inheritedView);
         if (inheritedProvider.supports(attribute)) {
-          inheritedProvider.set(file, view, attribute, value, create);
+          inheritedProvider.set(inode, view, attribute, value, create);
           return;
         }
       }
@@ -223,12 +223,12 @@ public final class AttributeService {
   }
 
   /**
-   * Returns an attribute view of the given type for the given file metadata lookup callback, or
+   * Returns an attribute view of the given type for the given inode lookup callback, or
    * {@code null} if the view type is not supported.
    */
   @Nullable
   public <V extends FileAttributeView> V getFileAttributeView(
-      FileMetadata.Lookup lookup, Class<V> type) {
+      Inode.Lookup lookup, Class<V> type) {
     AttributeProvider<V> provider = getProviderForView(type);
 
     if (provider != null) {
@@ -239,7 +239,7 @@ public final class AttributeService {
   }
 
   private <V extends FileAttributeView> Map<String, FileAttributeView> createInheritedViews(
-      FileMetadata.Lookup lookup, AttributeProvider<V> provider) {
+      Inode.Lookup lookup, AttributeProvider<V> provider) {
     if (provider.inherits().isEmpty()) {
       return ImmutableMap.of();
     }
@@ -249,7 +249,7 @@ public final class AttributeService {
     return Collections.unmodifiableMap(inheritedViews);
   }
 
-  private void createInheritedViews(FileMetadata.Lookup lookup, AttributeProvider<?> provider,
+  private void createInheritedViews(Inode.Lookup lookup, AttributeProvider<?> provider,
       Map<String, FileAttributeView> inheritedViews) {
 
     for (String inherited : provider.inherits()) {
@@ -263,7 +263,7 @@ public final class AttributeService {
     }
   }
 
-  private FileAttributeView getFileAttributeView(FileMetadata.Lookup lookup,
+  private FileAttributeView getFileAttributeView(Inode.Lookup lookup,
       Class<? extends FileAttributeView> viewType, Map<String, FileAttributeView> inheritedViews) {
     AttributeProvider<?> provider = getProviderForView(viewType);
     createInheritedViews(lookup, provider, inheritedViews);
@@ -273,7 +273,7 @@ public final class AttributeService {
   /**
    * Implements {@link Files#readAttributes(Path, String, LinkOption...)}.
    */
-  public ImmutableMap<String, Object> readAttributes(FileMetadata file, String attributes) {
+  public ImmutableMap<String, Object> readAttributes(Inode inode, String attributes) {
     String view = getViewName(attributes);
     List<String> attrs = getAttributeNames(attributes);
 
@@ -286,29 +286,28 @@ public final class AttributeService {
     if (attrs.size() == 1 && attrs.contains(ALL_ATTRIBUTES)) {
       // for 'view:*' format, get all keys for all providers for the view
       AttributeProvider<?> provider = providers.get(view);
-      readAll(file, provider, result);
+      readAll(inode, provider, result);
 
       for (String inheritedView : provider.inherits()) {
         AttributeProvider<?> inheritedProvider = providers.get(inheritedView);
-        readAll(file, inheritedProvider, result);
+        readAll(inode, inheritedProvider, result);
       }
     } else {
       // for 'view:attr1,attr2,etc'
       for (String attr : attrs) {
-        result.put(attr, getAttribute(file, view, attr));
+        result.put(attr, getAttribute(inode, view, attr));
       }
     }
 
     return ImmutableMap.copyOf(result);
   }
 
-  private static void readAll(
-      FileMetadata metadata, AttributeProvider<?> provider, Map<String, Object> map) {
-    for (String attribute : provider.attributes(metadata)) {
-      Object value = provider.get(metadata, attribute);
+  private static void readAll(Inode inode, AttributeProvider<?> provider, Map<String, Object> map) {
+    for (String attribute : provider.attributes(inode)) {
+      Object value = provider.get(inode, attribute);
 
       // check for null to protect against race condition when an attribute present when
-      // attributes(metadata) was called is deleted before get() is called for that attribute
+      // attributes(inode) was called is deleted before get() is called for that attribute
       if (value != null) {
         map.put(attribute, value);
       }
@@ -316,15 +315,15 @@ public final class AttributeService {
   }
 
   /**
-   * Returns attributes of the given file as an object of the given type.
+   * Returns attributes of the given inode as an object of the given type.
    *
    * @throws UnsupportedOperationException if the given attributes type is not supported
    */
   @SuppressWarnings("unchecked")
-  public <A extends BasicFileAttributes> A readAttributes(FileMetadata file, Class<A> type) {
+  public <A extends BasicFileAttributes> A readAttributes(Inode inode, Class<A> type) {
     AttributeProvider<?> provider = readers.get(type);
     if (provider != null) {
-      return (A) provider.readAttributes(file);
+      return (A) provider.readAttributes(inode);
     }
 
     throw new UnsupportedOperationException("unsupported attributes type: " + type);

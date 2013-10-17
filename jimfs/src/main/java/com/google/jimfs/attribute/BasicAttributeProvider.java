@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.FileMetadata;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -60,47 +58,47 @@ final class BasicAttributeProvider extends AttributeProvider<BasicFileAttributeV
   }
 
   @Override
-  public Object get(FileMetadata metadata, String attribute) {
+  public Object get(Inode inode, String attribute) {
     switch (attribute) {
       case "size":
-        return metadata.size();
+        return inode.size();
       case "fileKey":
-        return metadata.id();
+        return inode.id();
       case "isDirectory":
-        return metadata.isDirectory();
+        return inode.isDirectory();
       case "isRegularFile":
-        return metadata.isRegularFile();
+        return inode.isRegularFile();
       case "isSymbolicLink":
-        return metadata.isSymbolicLink();
+        return inode.isSymbolicLink();
       case "isOther":
-        return !metadata.isDirectory() && !metadata.isRegularFile() && !metadata.isSymbolicLink();
+        return !inode.isDirectory() && !inode.isRegularFile() && !inode.isSymbolicLink();
       case "creationTime":
-        return FileTime.fromMillis(metadata.getCreationTime());
+        return FileTime.fromMillis(inode.getCreationTime());
       case "lastAccessTime":
-        return FileTime.fromMillis(metadata.getLastAccessTime());
+        return FileTime.fromMillis(inode.getLastAccessTime());
       case "lastModifiedTime":
-        return FileTime.fromMillis(metadata.getLastModifiedTime());
+        return FileTime.fromMillis(inode.getLastModifiedTime());
       default:
         return null;
     }
   }
 
   @Override
-  public void set(FileMetadata metadata,
+  public void set(Inode inode,
       String view, String attribute, Object value, boolean create) {
     switch (attribute) {
       case "creationTime":
         checkNotCreate(view, attribute, create);
-        metadata.setCreationTime(
+        inode.setCreationTime(
             checkType(view, attribute, value, FileTime.class).toMillis());
         break;
       case "lastAccessTime":
         checkNotCreate(view, attribute, create);
-        metadata.setLastAccessTime(checkType(view, attribute, value, FileTime.class).toMillis());
+        inode.setLastAccessTime(checkType(view, attribute, value, FileTime.class).toMillis());
         break;
       case "lastModifiedTime":
         checkNotCreate(view, attribute, create);
-        metadata.setLastModifiedTime(checkType(view, attribute, value, FileTime.class).toMillis());
+        inode.setLastModifiedTime(checkType(view, attribute, value, FileTime.class).toMillis());
         break;
       case "size":
       case "fileKey":
@@ -118,7 +116,7 @@ final class BasicAttributeProvider extends AttributeProvider<BasicFileAttributeV
   }
 
   @Override
-  public BasicFileAttributeView view(FileMetadata.Lookup lookup,
+  public BasicFileAttributeView view(Inode.Lookup lookup,
       Map<String, FileAttributeView> inheritedViews) {
     return new View(lookup);
   }
@@ -129,8 +127,8 @@ final class BasicAttributeProvider extends AttributeProvider<BasicFileAttributeV
   }
 
   @Override
-  public BasicFileAttributes readAttributes(FileMetadata metadata) {
-    return new Attributes(metadata);
+  public BasicFileAttributes readAttributes(Inode inode) {
+    return new Attributes(inode);
   }
 
   /**
@@ -138,7 +136,7 @@ final class BasicAttributeProvider extends AttributeProvider<BasicFileAttributeV
    */
   private static final class View extends AbstractAttributeView implements BasicFileAttributeView {
 
-    protected View(FileMetadata.Lookup lookup) {
+    protected View(Inode.Lookup lookup) {
       super(lookup);
     }
 
@@ -149,7 +147,7 @@ final class BasicAttributeProvider extends AttributeProvider<BasicFileAttributeV
 
     @Override
     public BasicFileAttributes readAttributes() throws IOException {
-      return new Attributes(lookupMetadata());
+      return new Attributes(lookupInode());
     }
 
     @Override
@@ -157,18 +155,18 @@ final class BasicAttributeProvider extends AttributeProvider<BasicFileAttributeV
         @Nullable FileTime lastModifiedTime,
         @Nullable FileTime lastAccessTime,
         @Nullable FileTime createTime) throws IOException {
-      FileMetadata metadata = lookupMetadata();
+      Inode inode = lookupInode();
 
       if (lastModifiedTime != null) {
-        metadata.setLastModifiedTime(lastModifiedTime.toMillis());
+        inode.setLastModifiedTime(lastModifiedTime.toMillis());
       }
 
       if (lastAccessTime != null) {
-        metadata.setLastAccessTime(lastAccessTime.toMillis());
+        inode.setLastAccessTime(lastAccessTime.toMillis());
       }
 
       if (createTime != null) {
-        metadata.setCreationTime(createTime.toMillis());
+        inode.setCreationTime(createTime.toMillis());
       }
     }
   }
@@ -187,15 +185,15 @@ final class BasicAttributeProvider extends AttributeProvider<BasicFileAttributeV
     private final long size;
     private final Object fileKey;
 
-    protected Attributes(FileMetadata metadata) {
-      this.lastModifiedTime = FileTime.fromMillis(metadata.getLastModifiedTime());
-      this.lastAccessTime = FileTime.fromMillis(metadata.getLastAccessTime());
-      this.creationTime = FileTime.fromMillis(metadata.getCreationTime());
-      this.regularFile = metadata.isRegularFile();
-      this.directory = metadata.isDirectory();
-      this.symbolicLink = metadata.isSymbolicLink();
-      this.size = metadata.size();
-      this.fileKey = metadata.id();
+    protected Attributes(Inode inode) {
+      this.lastModifiedTime = FileTime.fromMillis(inode.getLastModifiedTime());
+      this.lastAccessTime = FileTime.fromMillis(inode.getLastAccessTime());
+      this.creationTime = FileTime.fromMillis(inode.getCreationTime());
+      this.regularFile = inode.isRegularFile();
+      this.directory = inode.isDirectory();
+      this.symbolicLink = inode.isSymbolicLink();
+      this.size = inode.size();
+      this.fileKey = inode.id();
     }
 
     @Override

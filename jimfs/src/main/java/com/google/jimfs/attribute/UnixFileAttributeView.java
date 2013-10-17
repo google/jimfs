@@ -14,34 +14,14 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal;
+package com.google.jimfs.attribute;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileAttributeView;
 
 /**
- * Simple implementation of {@link FileAttribute}.
+ * Dummy view interface for the "unix" view, which doesn't have a public view interface.
  *
  * @author Colin Decker
  */
-final class SimpleFileAttribute<T> implements FileAttribute<T> {
-
-  private final String name;
-  private final T value;
-
-  SimpleFileAttribute(String name, T value) {
-    this.name = checkNotNull(name);
-    this.value = checkNotNull(value);
-  }
-
-  @Override
-  public String name() {
-    return name;
-  }
-
-  @Override
-  public T value() {
-    return value;
-  }
+interface UnixFileAttributeView extends FileAttributeView {
 }

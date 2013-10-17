@@ -24,7 +24,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.providers.StandardAttributeProviders;
+import com.google.jimfs.attribute.StandardAttributeProviders;
 
 /**
  * @author Colin Decker
@@ -45,7 +45,7 @@ public class FileFootprintBenchmark {
   @Footprint
   public File footprintEmptyContentFile() {
     File file = new File(1, NoContent.INSTANCE);
-    service.setInitialAttributes(file.metadata());
+    service.setInitialAttributes(file);
     return file;
   }
 

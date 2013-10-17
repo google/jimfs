@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.jimfs.attribute.FileMetadata;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileAttributeView;
@@ -30,16 +28,16 @@ import java.nio.file.attribute.FileAttributeView;
  */
 abstract class AbstractAttributeView implements FileAttributeView {
 
-  private final FileMetadata.Lookup lookup;
+  private final Inode.Lookup lookup;
 
-  public AbstractAttributeView(FileMetadata.Lookup lookup) {
+  public AbstractAttributeView(Inode.Lookup lookup) {
     this.lookup = checkNotNull(lookup);
   }
 
   /**
-   * Gets the file metadata object to get or set attributes on.
+   * Gets the inode object to get or set attributes on.
    */
-  public final FileMetadata lookupMetadata() throws IOException {
+  public final Inode lookupInode() throws IOException {
     return lookup.lookup();
   }
 }

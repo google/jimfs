@@ -23,12 +23,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.BasicFileAttribute;
-import com.google.jimfs.attribute.FakeFileMetadata;
-import com.google.jimfs.attribute.FileMetadata;
+import com.google.jimfs.attribute.FakeInode;
+import com.google.jimfs.attribute.Inode;
+import com.google.jimfs.attribute.StandardAttributeProviders;
 import com.google.jimfs.attribute.TestAttributeProvider;
 import com.google.jimfs.attribute.TestAttributeView;
 import com.google.jimfs.attribute.TestAttributes;
-import com.google.jimfs.attribute.providers.StandardAttributeProviders;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +42,8 @@ import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 
 /**
+ * Tests for {@link AttributeService}.
+ *
  * @author Colin Decker
  */
 public class AttributeServiceTest {
@@ -73,52 +75,52 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetInitialAttributes() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file);
+    Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode);
 
-    ASSERT.that(ImmutableSet.copyOf(file.getAttributeKeys())).is(
+    ASSERT.that(ImmutableSet.copyOf(inode.getAttributeKeys())).is(
         ImmutableSet.of(
             "test:bar",
             "test:baz",
             "owner:owner"));
 
-    ASSERT.that(service.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
-    ASSERT.that(file.getAttribute("test:bar")).is(0L);
-    ASSERT.that(file.getAttribute("test:baz")).is(1);
+    ASSERT.that(service.getAttribute(inode, "basic:lastModifiedTime")).isA(FileTime.class);
+    ASSERT.that(inode.getAttribute("test:bar")).is(0L);
+    ASSERT.that(inode.getAttribute("test:baz")).is(1);
   }
 
   @Test
   public void testGetAttribute() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file);
+    Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode);
 
-    ASSERT.that(service.getAttribute(file, "test:foo")).is("hello");
-    ASSERT.that(service.getAttribute(file, "test", "foo")).is("hello");
-    ASSERT.that(service.getAttribute(file, "basic:isRegularFile")).is(false);
-    ASSERT.that(service.getAttribute(file, "isDirectory")).is(true);
-    ASSERT.that(service.getAttribute(file, "test:baz")).is(1);
+    ASSERT.that(service.getAttribute(inode, "test:foo")).is("hello");
+    ASSERT.that(service.getAttribute(inode, "test", "foo")).is("hello");
+    ASSERT.that(service.getAttribute(inode, "basic:isRegularFile")).is(false);
+    ASSERT.that(service.getAttribute(inode, "isDirectory")).is(true);
+    ASSERT.that(service.getAttribute(inode, "test:baz")).is(1);
   }
 
   @Test
   public void testGetAttribute_fromInheritedProvider() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    ASSERT.that(service.getAttribute(file, "test:isRegularFile")).is(false);
-    ASSERT.that(service.getAttribute(file, "test:isDirectory")).is(true);
-    ASSERT.that(service.getAttribute(file, "test", "fileKey")).is(0L);
+    Inode inode = new FakeInode(0L);
+    ASSERT.that(service.getAttribute(inode, "test:isRegularFile")).is(false);
+    ASSERT.that(service.getAttribute(inode, "test:isDirectory")).is(true);
+    ASSERT.that(service.getAttribute(inode, "test", "fileKey")).is(0L);
   }
 
   @Test
   public void testGetAttribute_failsForAttributesNotDefinedByProvider() {
-    FileMetadata file = new FakeFileMetadata(0L);
+    Inode inode = new FakeInode(0L);
     try {
-      service.getAttribute(file, "test:blah");
+      service.getAttribute(inode, "test:blah");
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
       // baz is defined by "test", but basic doesn't inherit test
-      service.getAttribute(file, "basic", "baz");
+      service.getAttribute(inode, "basic", "baz");
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -126,110 +128,110 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setAttribute(file, "test:bar", 10L, false);
-    ASSERT.that(file.getAttribute("test:bar")).is(10L);
+    Inode inode = new FakeInode(0L);
+    service.setAttribute(inode, "test:bar", 10L, false);
+    ASSERT.that(inode.getAttribute("test:bar")).is(10L);
 
-    service.setAttribute(file, "test:baz", 100, false);
-    ASSERT.that(file.getAttribute("test:baz")).is(100);
+    service.setAttribute(inode, "test:baz", 100, false);
+    ASSERT.that(inode.getAttribute("test:baz")).is(100);
   }
 
   @Test
   public void testSetAttribute_forInheritedProvider() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setAttribute(file, "test:lastModifiedTime", FileTime.fromMillis(0L), false);
-    ASSERT.that(file.getAttribute("test:lastModifiedTime")).isNull();
-    ASSERT.that(service.getAttribute(file, "basic:lastModifiedTime")).is(FileTime.fromMillis(0L));
+    Inode inode = new FakeInode(0L);
+    service.setAttribute(inode, "test:lastModifiedTime", FileTime.fromMillis(0L), false);
+    ASSERT.that(inode.getAttribute("test:lastModifiedTime")).isNull();
+    ASSERT.that(service.getAttribute(inode, "basic:lastModifiedTime")).is(FileTime.fromMillis(0L));
   }
 
   @Test
   public void testSetAttribute_withAlternateAcceptedType() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setAttribute(file, "test:bar", 10f, false);
-    ASSERT.that(file.getAttribute("test:bar")).is(10L);
+    Inode inode = new FakeInode(0L);
+    service.setAttribute(inode, "test:bar", 10f, false);
+    ASSERT.that(inode.getAttribute("test:bar")).is(10L);
 
-    service.setAttribute(file, "test:bar", BigInteger.valueOf(123L), false);
-    ASSERT.that(file.getAttribute("test:bar")).is(123L);
+    service.setAttribute(inode, "test:bar", BigInteger.valueOf(123L), false);
+    ASSERT.that(inode.getAttribute("test:bar")).is(123L);
   }
 
   @Test
   public void testSetAttribute_onCreate() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file, new BasicFileAttribute<>("test:baz", 123));
-    ASSERT.that(file.getAttribute("test:baz")).is(123);
+    Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode, new BasicFileAttribute<>("test:baz", 123));
+    ASSERT.that(inode.getAttribute("test:baz")).is(123);
   }
 
   @Test
   public void testSetAttribute_failsForAttributesNotDefinedByProvider() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file);
+    Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode);
 
     try {
-      service.setAttribute(file, "test:blah", "blah", false);
+      service.setAttribute(inode, "test:blah", "blah", false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
       // baz is defined by "test", but basic doesn't inherit test
-      service.setAttribute(file, "basic:baz", 5, false);
+      service.setAttribute(inode, "basic:baz", 5, false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(file.getAttribute("test:baz")).is(1);
+    ASSERT.that(inode.getAttribute("test:baz")).is(1);
   }
 
   @Test
   public void testSetAttribute_failsForArgumentThatIsNotOfCorrectType() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file);
+    Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode);
     try {
-      service.setAttribute(file, "test:bar", "wrong", false);
+      service.setAttribute(inode, "test:bar", "wrong", false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(file.getAttribute("test:bar")).is(0L);
+    ASSERT.that(inode.getAttribute("test:bar")).is(0L);
   }
 
   @Test
   public void testSetAttribute_failsForNullArgument() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file);
+    Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode);
     try {
-      service.setAttribute(file, "test:bar", null, false);
+      service.setAttribute(inode, "test:bar", null, false);
       fail();
     } catch (NullPointerException expected) {
     }
 
-    ASSERT.that(file.getAttribute("test:bar")).is(0L);
+    ASSERT.that(inode.getAttribute("test:bar")).is(0L);
   }
 
   @Test
   public void testSetAttribute_failsForAttributeThatIsNotSettable() {
-    FileMetadata file = new FakeFileMetadata(0L);
+    Inode inode = new FakeInode(0L);
     try {
-      service.setAttribute(file, "test:foo", "world", false);
+      service.setAttribute(inode, "test:foo", "world", false);
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(file.getAttribute("test:foo")).isNull();
+    ASSERT.that(inode.getAttribute("test:foo")).isNull();
   }
 
   @Test
   public void testSetAttribute_onCreate_failsForAttributeThatIsNotSettableOnCreate() {
-    FileMetadata file = new FakeFileMetadata(0L);
+    Inode inode = new FakeInode(0L);
     try {
-      service.setInitialAttributes(file, new BasicFileAttribute<>("test:foo", "world"));
+      service.setInitialAttributes(inode, new BasicFileAttribute<>("test:foo", "world"));
       fail();
     } catch (IllegalArgumentException expected) {
       // IAE because test:foo just can't be set
     }
 
     try {
-      service.setInitialAttributes(file, new BasicFileAttribute<>("test:bar", 5L));
+      service.setInitialAttributes(inode, new BasicFileAttribute<>("test:bar", 5L));
       fail();
     } catch (UnsupportedOperationException expected) {
     }
@@ -238,23 +240,23 @@ public class AttributeServiceTest {
   @SuppressWarnings("ConstantConditions")
   @Test
   public void testGetFileAttributeView() throws IOException {
-    final FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file);
+    final Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode);
 
-    FileMetadata.Lookup fileSupplier = new FileMetadata.Lookup() {
+    Inode.Lookup inodeLookup = new Inode.Lookup() {
       @Override
-      public FileMetadata lookup() throws IOException {
-        return file;
+      public Inode lookup() throws IOException {
+        return inode;
       }
     };
 
-    ASSERT.that(service.getFileAttributeView(fileSupplier, TestAttributeView.class))
+    ASSERT.that(service.getFileAttributeView(inodeLookup, TestAttributeView.class))
         .isNotNull();
-    ASSERT.that(service.getFileAttributeView(fileSupplier, BasicFileAttributeView.class))
+    ASSERT.that(service.getFileAttributeView(inodeLookup, BasicFileAttributeView.class))
         .isNotNull();
 
     TestAttributes attrs
-        = service.getFileAttributeView(fileSupplier, TestAttributeView.class).readAttributes();
+        = service.getFileAttributeView(inodeLookup, TestAttributeView.class).readAttributes();
     ASSERT.that(attrs.foo()).is("hello");
     ASSERT.that(attrs.bar()).is(0L);
     ASSERT.that(attrs.baz()).is(1);
@@ -262,32 +264,32 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetFileAttributeView_isNullForUnsupportedView() {
-    final FileMetadata file = new FakeFileMetadata(0L);
-    FileMetadata.Lookup fileSupplier = new FileMetadata.Lookup() {
+    final Inode inode = new FakeInode(0L);
+    Inode.Lookup inodeLookup = new Inode.Lookup() {
       @Override
-      public FileMetadata lookup() throws IOException {
-        return file;
+      public Inode lookup() throws IOException {
+        return inode;
       }
     };
-    ASSERT.that(service.getFileAttributeView(fileSupplier, PosixFileAttributeView.class))
+    ASSERT.that(service.getFileAttributeView(inodeLookup, PosixFileAttributeView.class))
         .isNull();
   }
 
   @Test
   public void testReadAttributes_asMap() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file);
+    Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode);
 
-    ImmutableMap<String, Object> map = service.readAttributes(file, "test:foo,bar,baz");
+    ImmutableMap<String, Object> map = service.readAttributes(inode, "test:foo,bar,baz");
     ASSERT.that(map).isEqualTo(
         ImmutableMap.of(
             "foo", "hello",
             "bar", 0L,
             "baz", 1));
 
-    FileTime time = service.getAttribute(file, "basic:creationTime");
+    FileTime time = service.getAttribute(inode, "basic:creationTime");
 
-    map = service.readAttributes(file, "test:*");
+    map = service.readAttributes(inode, "test:*");
     ASSERT.that(map).isEqualTo(
         ImmutableMap.<String, Object>builder()
             .put("foo", "hello")
@@ -304,7 +306,7 @@ public class AttributeServiceTest {
             .put("creationTime", time)
             .build());
 
-    map = service.readAttributes(file, "basic:*");
+    map = service.readAttributes(inode, "basic:*");
     ASSERT.that(map).isEqualTo(
         ImmutableMap.<String, Object>builder()
             .put("fileKey", 0L)
@@ -321,16 +323,16 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asMap_failsForInvalidAttributes() {
-    FileMetadata file = new FakeFileMetadata(0L);
+    Inode inode = new FakeInode(0L);
     try {
-      service.readAttributes(file, "basic:fileKey,isOther,*,creationTime");
+      service.readAttributes(inode, "basic:fileKey,isOther,*,creationTime");
       fail();
     } catch (IllegalArgumentException expected) {
       ASSERT.that(expected.getMessage()).contains("invalid attributes");
     }
 
     try {
-      service.readAttributes(file, "basic:fileKey,isOther,foo");
+      service.readAttributes(inode, "basic:fileKey,isOther,foo");
       fail();
     } catch (IllegalArgumentException expected) {
       ASSERT.that(expected.getMessage()).contains("invalid attribute");
@@ -339,28 +341,28 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asObject() {
-    FileMetadata file = new FakeFileMetadata(0L);
-    service.setInitialAttributes(file);
+    Inode inode = new FakeInode(0L);
+    service.setInitialAttributes(inode);
 
-    BasicFileAttributes basicAttrs = service.readAttributes(file, BasicFileAttributes.class);
+    BasicFileAttributes basicAttrs = service.readAttributes(inode, BasicFileAttributes.class);
     ASSERT.that(basicAttrs.fileKey()).is(0L);
     ASSERT.that(basicAttrs.isDirectory()).isTrue();
     ASSERT.that(basicAttrs.isRegularFile()).isFalse();
 
-    TestAttributes testAttrs = service.readAttributes(file, TestAttributes.class);
+    TestAttributes testAttrs = service.readAttributes(inode, TestAttributes.class);
     ASSERT.that(testAttrs.foo()).is("hello");
     ASSERT.that(testAttrs.bar()).is(0L);
     ASSERT.that(testAttrs.baz()).is(1);
 
-    file.setAttribute("test:baz", 100);
-    ASSERT.that(service.readAttributes(file, TestAttributes.class).baz()).is(100);
+    inode.setAttribute("test:baz", 100);
+    ASSERT.that(service.readAttributes(inode, TestAttributes.class).baz()).is(100);
   }
 
   @Test
   public void testReadAttributes_failsForUnsupportedAttributesType() {
-    FileMetadata file = new FakeFileMetadata(0L);
+    Inode inode = new FakeInode(0L);
     try {
-      service.readAttributes(file, PosixFileAttributes.class);
+      service.readAttributes(inode, PosixFileAttributes.class);
       fail();
     } catch (UnsupportedOperationException expected) {
     }
@@ -368,30 +370,30 @@ public class AttributeServiceTest {
 
   @Test
   public void testIllegalAttributeFormats() {
-    FileMetadata file = new FakeFileMetadata(0L);
+    Inode inode = new FakeInode(0L);
     try {
-      service.getAttribute(file, ":bar");
+      service.getAttribute(inode, ":bar");
       fail();
     } catch (IllegalArgumentException expected) {
       ASSERT.that(expected.getMessage()).contains("attribute format");
     }
 
     try {
-      service.getAttribute(file, "test:");
+      service.getAttribute(inode, "test:");
       fail();
     } catch (IllegalArgumentException expected) {
       ASSERT.that(expected.getMessage()).contains("attribute format");
     }
 
     try {
-      service.getAttribute(file, "basic:test:isDirectory");
+      service.getAttribute(inode, "basic:test:isDirectory");
       fail();
     } catch (IllegalArgumentException expected) {
       ASSERT.that(expected.getMessage()).contains("attribute format");
     }
 
     try {
-      service.getAttribute(file, "basic:fileKey,size");
+      service.getAttribute(inode, "basic:fileKey,size");
       fail();
     } catch (IllegalArgumentException expected) {
       ASSERT.that(expected.getMessage()).contains("single attribute");

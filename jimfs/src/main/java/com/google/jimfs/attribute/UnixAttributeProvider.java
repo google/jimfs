@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.FileMetadata;
 
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
@@ -75,7 +73,7 @@ final class UnixAttributeProvider extends AttributeProvider<UnixFileAttributeVie
   }
 
   @Override
-  public UnixFileAttributeView view(FileMetadata.Lookup lookup,
+  public UnixFileAttributeView view(Inode.Lookup lookup,
       Map<String, FileAttributeView> inheritedViews) {
     throw new UnsupportedOperationException(); // should not be called
   }
@@ -97,28 +95,28 @@ final class UnixAttributeProvider extends AttributeProvider<UnixFileAttributeVie
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object get(FileMetadata metadata, String attribute) {
+  public Object get(Inode inode, String attribute) {
     switch (attribute) {
       case "uid":
-        UserPrincipal user = (UserPrincipal) metadata.getAttribute("owner:owner");
+        UserPrincipal user = inode.getAttribute("owner:owner");
         return getUniqueId(user);
       case "gid":
-        GroupPrincipal group = (GroupPrincipal) metadata.getAttribute("posix:group");
+        GroupPrincipal group = inode.getAttribute("posix:group");
         return getUniqueId(group);
       case "mode":
         Set<PosixFilePermission> permissions =
-            (Set<PosixFilePermission>) metadata.getAttribute("posix:permissions");
+            inode.getAttribute("posix:permissions");
         return toMode(permissions);
       case "ctime":
-        return FileTime.fromMillis(metadata.getCreationTime());
+        return FileTime.fromMillis(inode.getCreationTime());
       case "rdev":
         return 0L;
       case "dev":
         return 1L;
       case "ino":
-        return getUniqueId(metadata);
+        return getUniqueId(inode);
       case "nlink":
-        return metadata.links();
+        return inode.links();
     }
 
     return null;
@@ -126,7 +124,7 @@ final class UnixAttributeProvider extends AttributeProvider<UnixFileAttributeVie
 
   @Override
   public void set(
-      FileMetadata metadata, String view, String attribute, Object value, boolean create) {
+      Inode inode, String view, String attribute, Object value, boolean create) {
     throw unsettable(view, attribute);
   }
 

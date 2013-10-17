@@ -53,11 +53,11 @@ public abstract class AttributeProvider<V extends FileAttributeView> {
   public abstract Class<V> viewType();
 
   /**
-   * Returns a view of the file metadata located by the given lookup callback. The given map
+   * Returns a view of the inode located by the given lookup callback. The given map
    * contains the views inherited by this view.
    */
   public abstract V view(
-      FileMetadata.Lookup lookup, Map<String, FileAttributeView> inheritedViews);
+      Inode.Lookup lookup, Map<String, FileAttributeView> inheritedViews);
 
   /**
    * Returns a map containing the default attribute values for this provider. The keys of the map
@@ -88,22 +88,22 @@ public abstract class AttributeProvider<V extends FileAttributeView> {
   }
 
   /**
-   * Returns the attribute keys supported by this view that are present in the given metadata. For
+   * Returns the set of attributes supported by this view that are present in the given inode. For
    * most providers, this will be a fixed set of attributes.
    */
-  public ImmutableSet<String> attributes(FileMetadata metadata) {
+  public ImmutableSet<String> attributes(Inode inode) {
     return fixedAttributes();
   }
 
   /**
-   * Returns the value of the given attribute in the given metadata or null if the attribute is not
+   * Returns the value of the given attribute in the given inode or null if the attribute is not
    * supported by this provider.
    */
   @Nullable
-  public abstract Object get(FileMetadata metadata, String attribute);
+  public abstract Object get(Inode inode, String attribute);
 
   /**
-   * Sets the value of the given attribute in the given metadata object. The {@code create}
+   * Sets the value of the given attribute in the given inode object. The {@code create}
    * parameter indicates whether or not the value is being set upon creation of a new file via a
    * user-provided {@code FileAttribute}.
    *
@@ -113,7 +113,7 @@ public abstract class AttributeProvider<V extends FileAttributeView> {
    *     and is allowed to be set by the user, but not on file creation and {@code create} is true
    */
   public abstract void set(
-      FileMetadata metadata, String view, String attribute, Object value, boolean create);
+      Inode inode, String view, String attribute, Object value, boolean create);
 
   // optional
 
@@ -127,12 +127,12 @@ public abstract class AttributeProvider<V extends FileAttributeView> {
   }
 
   /**
-   * Reads this provider's attributes from the given metadata as an attributes object.
+   * Reads this provider's attributes from the given inode as an attributes object.
    *
    * @throws UnsupportedOperationException if this provider does not support reading an attributes
    *     object
    */
-  public BasicFileAttributes readAttributes(FileMetadata metadata) {
+  public BasicFileAttributes readAttributes(Inode inode) {
     throw new UnsupportedOperationException();
   }
 

@@ -20,15 +20,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
 import com.google.common.primitives.Longs;
-import com.google.jimfs.attribute.FileMetadata;
+import com.google.jimfs.attribute.Inode;
 
 /**
- * A single file object. Similar in concept to an <i>inode</i> in that it mostly stores file
- * metadata, but also keeps a reference to the file's content.
+ * A file object, implementing {@link Inode} and containing a reference to the file's
+ * {@linkplain FileContent content}.
+ *
+ * <p>While logically this class should not extend {@code Inode}, it's needed to allow the
+ * {@code size()} method to get the size directly from the content rather than having to update a
+ * size field in the {@code Inode} each time it changes.
  *
  * @author Colin Decker
  */
-final class File extends FileMetadata {
+final class File extends Inode {
 
   private final FileContent content;
 

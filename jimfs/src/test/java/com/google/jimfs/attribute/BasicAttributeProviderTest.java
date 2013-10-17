@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AttributeProvider;
 
 import org.junit.Test;
 
@@ -55,12 +54,12 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Test
   public void testInitialAttributes() {
-    long time = metadata.getCreationTime();
+    long time = inode.getCreationTime();
     ASSERT.that(time).isNotEqualTo(0L);
-    ASSERT.that(time).isEqualTo(metadata.getLastAccessTime());
-    ASSERT.that(time).isEqualTo(metadata.getLastModifiedTime());
+    ASSERT.that(time).isEqualTo(inode.getLastAccessTime());
+    ASSERT.that(time).isEqualTo(inode.getLastModifiedTime());
 
-    assertContainsAll(metadata,
+    assertContainsAll(inode,
         ImmutableMap.<String, Object>builder()
             .put("fileKey", 0L)
             .put("size", 0L)
@@ -103,7 +102,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Test
   public void testView() throws IOException {
-    BasicFileAttributeView view = provider.view(metadataSupplier(), NO_INHERITED_VIEWS);
+    BasicFileAttributeView view = provider.view(inodeLookup(), NO_INHERITED_VIEWS);
 
     ASSERT.that(view).isNotNull();
     ASSERT.that(view.name()).is("basic");
@@ -132,7 +131,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Test
   public void testAttributes() {
-    BasicFileAttributes attrs = provider.readAttributes(metadata);
+    BasicFileAttributes attrs = provider.readAttributes(inode);
     ASSERT.that(attrs.fileKey()).is(0L);
     ASSERT.that(attrs.isDirectory()).isTrue();
     ASSERT.that(attrs.isRegularFile()).isFalse();
