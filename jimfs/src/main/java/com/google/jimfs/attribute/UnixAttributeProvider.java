@@ -78,6 +78,13 @@ final class UnixAttributeProvider extends AttributeProvider<UnixFileAttributeVie
     throw new UnsupportedOperationException(); // should not be called
   }
 
+  // TODO(cgdecker): Since we can now guarantee that the owner/group for an inode are our own
+  // implementation of UserPrincipal/GroupPrincipal, it would be nice to have them store a unique
+  // ID themselves and just get that rather than doing caching here. Then this could be a singleton
+  // like the rest of the AttributeProviders. However, that would require a way for the owner/posix
+  // providers to create their default principals using the lookup service for the specific file
+  // system.
+
   /**
    * Returns an ID that is guaranteed to be the same for any invocation with equal objects.
    */
