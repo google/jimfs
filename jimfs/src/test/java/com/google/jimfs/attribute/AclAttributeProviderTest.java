@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
 import static java.nio.file.attribute.AclEntryFlag.DIRECTORY_INHERIT;
 import static java.nio.file.attribute.AclEntryPermission.APPEND_DATA;
 import static java.nio.file.attribute.AclEntryPermission.DELETE;
@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
@@ -32,7 +33,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for {@link AclAttributeProvider}.
@@ -44,42 +48,54 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
   private static final UserPrincipal USER = createUserPrincipal("user");
   private static final UserPrincipal FOO = createUserPrincipal("foo");
 
-  private ImmutableList<AclEntry> defaultAcl;
+  private static final ImmutableList<AclEntry> defaultAcl = new ImmutableList.Builder<AclEntry>()
+      .add(AclEntry.newBuilder()
+          .setType(ALLOW)
+          .setFlags(DIRECTORY_INHERIT)
+          .setPermissions(DELETE, APPEND_DATA)
+          .setPrincipal(USER)
+          .build())
+      .add(AclEntry.newBuilder()
+          .setType(ALLOW)
+          .setFlags(DIRECTORY_INHERIT)
+          .setPermissions(DELETE, APPEND_DATA)
+          .setPrincipal(FOO)
+          .build())
+      .build();
 
   @Override
   protected AclAttributeProvider createProvider() {
-    AclEntry entry1 = AclEntry.newBuilder()
-        .setType(ALLOW)
-        .setFlags(DIRECTORY_INHERIT)
-        .setPermissions(DELETE, APPEND_DATA)
-        .setPrincipal(USER)
-        .build();
-    AclEntry entry2 = AclEntry.newBuilder(entry1)
-        .setPrincipal(FOO)
-        .build();
+    return new AclAttributeProvider();
+  }
 
-    defaultAcl = ImmutableList.of(entry1, entry2);
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of( new BasicAttributeProvider(), new OwnerAttributeProvider());
+  }
 
-    OwnerAttributeProvider owner = new OwnerAttributeProvider("user");
-    return new AclAttributeProvider(owner, defaultAcl);
+  @Override
+  protected Map<String, ?> createDefaultValues() {
+    return ImmutableMap.of("acl:acl", defaultAcl);
   }
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(metadata, "acl")).is(defaultAcl);
+    ASSERT.that(provider.get(inode, "acl")).is(defaultAcl);
   }
 
   @Test
   public void testSet() {
     assertSetAndGetSucceeds("acl", ImmutableList.of());
-    assertCannotSetOnCreate("acl");
+    assertSetFailsOnCreate("acl", ImmutableList.of());
     assertSetFails("acl", ImmutableSet.of());
     assertSetFails("acl", ImmutableList.of("hello"));
   }
 
   @Test
   public void testView() throws IOException {
-    AclFileAttributeView view = provider.getView(metadataSupplier());
+    AclFileAttributeView view = provider.view(inodeLookup(),
+        ImmutableMap.<String, FileAttributeView>of(
+            "owner", new OwnerAttributeProvider().view(inodeLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("acl");
@@ -92,6 +108,6 @@ public class AclAttributeProviderTest extends AttributeProviderTest<AclAttribute
     ASSERT.that(view.getAcl()).is(ImmutableList.<AclEntry>of());
     ASSERT.that(view.getOwner()).is(FOO);
 
-    ASSERT.that(metadata.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
+    ASSERT.that(inode.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
   }
 }

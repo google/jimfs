@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.jimfs.Jimfs;
-import com.google.jimfs.attribute.FileMetadataSupplier;
+import com.google.jimfs.attribute.Inode;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -188,13 +188,12 @@ final class JimfsFileStore extends FileStore {
   }
 
   /**
-   * Returns an attribute view of the given type for the given file supplier, or {@code null} if the
-   * view type is not supported.
+   * Returns an attribute view of the given type for the given file lookup callback, or
+   * {@code null} if the view type is not supported.
    */
   @Nullable
-  <V extends FileAttributeView> V getFileAttributeView(
-      FileMetadataSupplier supplier, Class<V> type) {
-    return attributes.getFileAttributeView(supplier, type);
+  <V extends FileAttributeView> V getFileAttributeView(Inode.Lookup lookup, Class<V> type) {
+    return attributes.getFileAttributeView(lookup, type);
   }
 
   /**
@@ -217,7 +216,7 @@ final class JimfsFileStore extends FileStore {
    * Sets the given attribute to the given value for the given file.
    */
   void setAttribute(File file, String attribute, Object value) {
-    attributes.setAttribute(file, attribute, value);
+    attributes.setAttribute(file, attribute, value, false);
   }
 
   /**

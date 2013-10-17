@@ -17,12 +17,12 @@
 package com.google.jimfs.attribute;
 
 import java.io.IOException;
-import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.BasicFileAttributeView;
 
 /**
  * @author Colin Decker
  */
-public interface TestAttributeView extends FileAttributeView {
+public interface TestAttributeView extends BasicFileAttributeView {
 
   TestAttributes readAttributes() throws IOException;
 

@@ -14,35 +14,34 @@
  * limitations under the License.
  */
 
-package com.google.jimfs;
+package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.ImmutableSet;
+import java.nio.file.attribute.FileAttribute;
 
 /**
- * Configuration for an {@code AttributeProvider} that requires other {@code AttributeProvider}
- * instances to construct.
+ * Simple implementation of {@link FileAttribute}.
  *
  * @author Colin Decker
  */
-abstract class DependantAttributeViews extends AttributeViews {
+final class SimpleFileAttribute<T> implements FileAttribute<T> {
 
-  private final String view;
-  private final ImmutableSet<String> requires;
+  private final String name;
+  private final T value;
 
-  protected DependantAttributeViews(String view, String... requires) {
-    this.view = checkNotNull(view);
-    this.requires = ImmutableSet.copyOf(requires);
+  SimpleFileAttribute(String name, T value) {
+    this.name = checkNotNull(name);
+    this.value = checkNotNull(value);
   }
 
   @Override
-  ImmutableSet<String> provides() {
-    return ImmutableSet.of(view);
+  public String name() {
+    return name;
   }
 
   @Override
-  ImmutableSet<String> requires() {
-    return requires;
+  public T value() {
+    return value;
   }
 }

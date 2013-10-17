@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
-
-import static com.google.common.base.Preconditions.checkNotNull;
+package com.google.jimfs.attribute;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AbstractAttributeProvider;
-import com.google.jimfs.attribute.Attribute;
-import com.google.jimfs.attribute.FileMetadata;
 
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -37,55 +34,56 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Colin Decker
  */
-public final class UnixAttributeProvider extends AbstractAttributeProvider {
+final class UnixAttributeProvider extends AttributeProvider<UnixFileAttributeView> {
 
-  public static final String VIEW = "unix";
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
+      "uid",
+      "ino",
+      "dev",
+      "nlink",
+      "rdev",
+      "ctime",
+      "mode",
+      "gid");
 
-  public static final String UID = "uid";
-  public static final String INO = "ino";
-  public static final String DEV = "dev";
-  public static final String NLINK = "nlink";
-  public static final String RDEV = "rdev";
-  public static final String CTIME = "ctime";
-  public static final String MODE = "mode";
-  public static final String GID = "gid";
-
-  private static final ImmutableSet<Attribute> ATTRIBUTES = ImmutableSet.of(
-      Attribute.unsettable(VIEW, UID, Integer.class),
-      Attribute.unsettable(VIEW, INO, Long.class),
-      Attribute.unsettable(VIEW, DEV, Long.class),
-      Attribute.unsettable(VIEW, NLINK, Integer.class),
-      Attribute.unsettable(VIEW, RDEV, Long.class),
-      Attribute.unsettable(VIEW, CTIME, FileTime.class),
-      Attribute.unsettable(VIEW, MODE, Integer.class),
-      Attribute.unsettable(VIEW, GID, Integer.class));
+  private static final ImmutableSet<String> INHERITED_VIEWS =
+      ImmutableSet.of("basic", "owner", "posix");
 
   private final AtomicInteger uidGenerator = new AtomicInteger();
   private final ConcurrentMap<Object, Integer> idCache = new ConcurrentHashMap<>();
 
-  private final OwnerAttributeProvider owner;
-  private final PosixAttributeProvider posix;
-
-  public UnixAttributeProvider(PosixAttributeProvider posix) {
-    super(ATTRIBUTES);
-    this.owner = checkNotNull(posix.owner);
-    this.posix = checkNotNull(posix);
-  }
-
   @Override
   public String name() {
-    return VIEW;
+    return "unix";
   }
 
   @Override
   public ImmutableSet<String> inherits() {
-    return ImmutableSet.of("basic", "owner", "posix");
+    return INHERITED_VIEWS;
   }
 
   @Override
-  public void setInitial(FileMetadata metadata) {
-    // doesn't actually set anything in the attribute map
+  public ImmutableSet<String> fixedAttributes() {
+    return ATTRIBUTES;
   }
+
+  @Override
+  public Class<UnixFileAttributeView> viewType() {
+    return UnixFileAttributeView.class;
+  }
+
+  @Override
+  public UnixFileAttributeView view(Inode.Lookup lookup,
+      Map<String, FileAttributeView> inheritedViews) {
+    throw new UnsupportedOperationException(); // should not be called
+  }
+
+  // TODO(cgdecker): Since we can now guarantee that the owner/group for an inode are our own
+  // implementation of UserPrincipal/GroupPrincipal, it would be nice to have them store a unique
+  // ID themselves and just get that rather than doing caching here. Then this could be a singleton
+  // like the rest of the AttributeProviders. However, that would require a way for the owner/posix
+  // providers to create their default principals using the lookup service for the specific file
+  // system.
 
   /**
    * Returns an ID that is guaranteed to be the same for any invocation with equal objects.
@@ -104,30 +102,36 @@ public final class UnixAttributeProvider extends AbstractAttributeProvider {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object get(FileMetadata metadata, String attribute) {
+  public Object get(Inode inode, String attribute) {
     switch (attribute) {
-      case UID:
-        UserPrincipal user = (UserPrincipal) owner.get(metadata, OwnerAttributeProvider.OWNER);
+      case "uid":
+        UserPrincipal user = inode.getAttribute("owner:owner");
         return getUniqueId(user);
-      case GID:
-        GroupPrincipal group = (GroupPrincipal) posix.get(metadata, PosixAttributeProvider.GROUP);
+      case "gid":
+        GroupPrincipal group = inode.getAttribute("posix:group");
         return getUniqueId(group);
-      case MODE:
-        Set<PosixFilePermission> permissions
-            = (Set<PosixFilePermission>) posix.get(metadata, PosixAttributeProvider.PERMISSIONS);
+      case "mode":
+        Set<PosixFilePermission> permissions = inode.getAttribute("posix:permissions");
         return toMode(permissions);
-      case CTIME:
-        return BasicAttributeProvider.INSTANCE.get(metadata, BasicAttributeProvider.CREATION_TIME);
-      case RDEV:
+      case "ctime":
+        return FileTime.fromMillis(inode.getCreationTime());
+      case "rdev":
         return 0L;
-      case DEV:
+      case "dev":
         return 1L;
-      case INO:
-        return getUniqueId(metadata);
-      case NLINK:
-        return metadata.links();
+      case "ino":
+        return inode.id();
+      case "nlink":
+        return inode.links();
     }
-    return super.get(metadata, attribute);
+
+    return null;
+  }
+
+  @Override
+  public void set(
+      Inode inode, String view, String attribute, Object value, boolean create) {
+    throw unsettable(view, attribute);
   }
 
   @SuppressWarnings("OctalInteger")

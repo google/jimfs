@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
-import static com.google.jimfs.attribute.UserLookupService.createGroupPrincipal;
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createGroupPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
 import static org.junit.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
@@ -28,10 +28,12 @@ import com.google.common.collect.ImmutableSet;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 
 /**
  * Tests for {@link PosixAttributeProvider}.
@@ -42,13 +44,17 @@ public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttri
 
   @Override
   protected PosixAttributeProvider createProvider() {
-    OwnerAttributeProvider owner = new OwnerAttributeProvider("user");
-    return new PosixAttributeProvider("group", "rw-r--r--", owner);
+    return new PosixAttributeProvider();
+  }
+
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of(new BasicAttributeProvider(), new OwnerAttributeProvider());
   }
 
   @Test
   public void testInitialAttributes() {
-    assertContainsAll(metadata,
+    assertContainsAll(inode,
         ImmutableMap.of(
             "group", createGroupPrincipal("group"),
             "permissions", PosixFilePermissions.fromString("rw-r--r--")));
@@ -58,48 +64,57 @@ public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttri
   public void testSet() {
     assertSetAndGetSucceeds("group", createGroupPrincipal("foo"));
     assertSetAndGetSucceeds("permissions", PosixFilePermissions.fromString("rwxrwxrwx"));
-    assertCanSetOnCreate("permissions");
-    assertCannotSetOnCreate("group");
+
+    // invalid types
     assertSetFails("permissions", ImmutableList.of(PosixFilePermission.GROUP_EXECUTE));
     assertSetFails("permissions", ImmutableSet.of("foo"));
   }
 
   @Test
-  public void testView() throws IOException {
-    metadata.setAttribute("owner:owner", createUserPrincipal("user"));
+  public void testSetOnCreate() {
+    assertSetAndGetSucceedsOnCreate("permissions", PosixFilePermissions.fromString("rwxrwxrwx"));
+    assertSetFailsOnCreate("group", createGroupPrincipal("foo"));
+  }
 
-    PosixFileAttributeView view = provider.getView(metadataSupplier());
+  @Test
+  public void testView() throws IOException {
+    inode.setAttribute("owner:owner", createUserPrincipal("user"));
+
+    PosixFileAttributeView view = provider.view(inodeLookup(),
+        ImmutableMap.<String, FileAttributeView>of(
+            "basic", new BasicAttributeProvider().view(inodeLookup(), NO_INHERITED_VIEWS),
+            "owner", new OwnerAttributeProvider().view(inodeLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("posix");
     ASSERT.that(view.getOwner()).is(createUserPrincipal("user"));
 
     PosixFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.fileKey()).is(0L);
+    ASSERT.that(attrs.fileKey()).is(0);
     ASSERT.that(attrs.owner()).is(createUserPrincipal("user"));
     ASSERT.that(attrs.group()).is(createGroupPrincipal("group"));
     ASSERT.that(attrs.permissions()).is(PosixFilePermissions.fromString("rw-r--r--"));
 
     view.setOwner(createUserPrincipal("root"));
     ASSERT.that(view.getOwner()).is(createUserPrincipal("root"));
-    ASSERT.that(metadata.getAttribute("owner:owner")).is(createUserPrincipal("root"));
+    ASSERT.that(inode.getAttribute("owner:owner")).is(createUserPrincipal("root"));
 
     view.setGroup(createGroupPrincipal("root"));
     ASSERT.that(view.readAttributes().group()).is(createGroupPrincipal("root"));
-    ASSERT.that(metadata.getAttribute("posix:group")).is(createGroupPrincipal("root"));
+    ASSERT.that(inode.getAttribute("posix:group")).is(createGroupPrincipal("root"));
 
     view.setPermissions(PosixFilePermissions.fromString("rwx------"));
     ASSERT.that(view.readAttributes().permissions())
         .is(PosixFilePermissions.fromString("rwx------"));
-    ASSERT.that(metadata.getAttribute("posix:permissions"))
+    ASSERT.that(inode.getAttribute("posix:permissions"))
         .is(PosixFilePermissions.fromString("rwx------"));
   }
 
   @Test
   public void testAttributes() {
-    PosixFileAttributes attrs = provider.read(metadata);
+    PosixFileAttributes attrs = provider.readAttributes(inode);
     ASSERT.that(attrs.permissions()).is(PosixFilePermissions.fromString("rw-r--r--"));
     ASSERT.that(attrs.group()).is(createGroupPrincipal("group"));
-    ASSERT.that(attrs.fileKey()).is(0L);
+    ASSERT.that(attrs.fileKey()).is(0);
   }
 }

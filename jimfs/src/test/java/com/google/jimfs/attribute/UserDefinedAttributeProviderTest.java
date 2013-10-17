@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -29,8 +29,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Set;
 
 /**
  * Tests for {@link UserDefinedAttributeProvider}.
@@ -42,47 +41,45 @@ public class UserDefinedAttributeProviderTest
 
   @Override
   protected UserDefinedAttributeProvider createProvider() {
-    return UserDefinedAttributeProvider.INSTANCE;
+    return new UserDefinedAttributeProvider();
+  }
+
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of();
   }
 
   @Test
   public void testInitialAttributes() {
     // no initial attributes
-    ASSERT.that(ImmutableList.copyOf(metadata.getAttributeKeys())).isEmpty();
-  }
-
-  @Test
-  public void testBasicProperties() {
-    assertCannotSetOnCreate("anything");
-    ASSERT.that(provider.isSettableOnCreate("anything")).isFalse();
-    ASSERT.that(provider.isSettable(metadata, "anything")).isTrue();
-    ASSERT.that(provider.acceptedTypes("anything"))
-        .is(ImmutableSet.of(byte[].class, ByteBuffer.class));
+    ASSERT.that(ImmutableList.copyOf(inode.getAttributeKeys())).isEmpty();
+    ASSERT.that(provider.attributes(inode)).isEmpty();
   }
 
   @Test
   public void testGettingAndSetting() {
     byte[] bytes = {0, 1, 2, 3};
-    provider.set(metadata, "one", bytes);
-    provider.set(metadata, "two", ByteBuffer.wrap(bytes));
+    provider.set(inode, "user", "one", bytes, false);
+    provider.set(inode, "user", "two", ByteBuffer.wrap(bytes), false);
 
-    byte[] one = (byte[]) provider.get(metadata, "one");
-    byte[] two = (byte[]) provider.get(metadata, "two");
+    byte[] one = (byte[]) provider.get(inode, "one");
+    byte[] two = (byte[]) provider.get(inode, "two");
     ASSERT.that(Arrays.equals(one, bytes)).isTrue();
     ASSERT.that(Arrays.equals(two, bytes)).isTrue();
 
     assertSetFails("foo", "hello");
 
-    Map<String, Object> map = new HashMap<>();
-    provider.readAll(metadata, map);
-    ASSERT.that(map.size()).is(2);
-    ASSERT.that(Arrays.equals((byte[]) map.get("one"), bytes)).isTrue();
-    ASSERT.that(Arrays.equals((byte[]) map.get("two"), bytes)).isTrue();
+    ASSERT.that(provider.attributes(inode)).has().exactly("one", "two");
+  }
+
+  @Test
+  public void testSetOnCreate() {
+    assertSetFailsOnCreate("anything", new byte[0]);
   }
 
   @Test
   public void testView() throws IOException {
-    UserDefinedFileAttributeView view = provider.getView(metadataSupplier());
+    UserDefinedFileAttributeView view = provider.view(inodeLookup(), NO_INHERITED_VIEWS);
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("user");
@@ -95,7 +92,7 @@ public class UserDefinedAttributeProviderTest
     view.write("b2", ByteBuffer.wrap(b2));
 
     ASSERT.that(view.list()).has().allOf("b1", "b2");
-    ASSERT.that(metadata.getAttributeKeys()).has().exactly("user:b1", "user:b2");
+    ASSERT.that(inode.getAttributeKeys()).has().exactly("user:b1", "user:b2");
 
     ASSERT.that(view.size("b1")).is(3);
     ASSERT.that(view.size("b2")).is(5);
@@ -112,7 +109,7 @@ public class UserDefinedAttributeProviderTest
     view.delete("b2");
 
     ASSERT.that(view.list()).has().exactly("b1");
-    ASSERT.that(metadata.getAttributeKeys()).has().exactly("user:b1");
+    ASSERT.that(inode.getAttributeKeys()).has().exactly("user:b1");
 
     try {
       view.size("b2");

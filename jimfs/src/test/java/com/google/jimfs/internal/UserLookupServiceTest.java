@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute;
+package com.google.jimfs.internal;
 
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
@@ -24,16 +24,19 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.attribute.UserPrincipalNotFoundException;
 
 /**
+ * Tests for {@link UserLookupService}.
+ *
  * @author Colin Decker
  */
 public class UserLookupServiceTest {
 
   @Test
   public void testUserLookupService() throws IOException {
-    UserLookupService service = new UserLookupService(true);
+    UserPrincipalLookupService service = new UserLookupService(true);
     UserPrincipal bob1 = service.lookupPrincipalByName("bob");
     UserPrincipal bob2 = service.lookupPrincipalByName("bob");
     UserPrincipal alice = service.lookupPrincipalByName("alice");
@@ -51,7 +54,7 @@ public class UserLookupServiceTest {
 
   @Test
   public void testServiceNotSupportingGroups() throws IOException {
-    UserLookupService service = new UserLookupService(false);
+    UserPrincipalLookupService service = new UserLookupService(false);
 
     try {
       service.lookupPrincipalByGroupName("group");

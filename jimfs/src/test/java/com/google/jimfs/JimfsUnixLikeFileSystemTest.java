@@ -17,7 +17,7 @@
 package com.google.jimfs;
 
 import static com.google.common.primitives.Bytes.concat;
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
 import static com.google.jimfs.testing.TestUtils.bytes;
 import static com.google.jimfs.testing.TestUtils.permutations;
 import static com.google.jimfs.testing.TestUtils.preFilledBytes;
@@ -110,7 +110,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Override
   protected FileSystem createFileSystem() {
     return Jimfs.newFileSystem("unix",
-        Configuration.unix().setAttributeViews(AttributeViews.unix()));
+        Configuration.unix().setAttributeConfiguration(AttributeConfiguration.unix()));
   }
 
   @Test

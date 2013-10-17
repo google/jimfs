@@ -49,7 +49,7 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
     return Jimfs.newFileSystem("win",
         Configuration.windows()
             .addRoots("E:\\")
-            .setAttributeViews(AttributeViews.windows()));
+            .setAttributeConfiguration(AttributeConfiguration.windows()));
   }
 
   @Test

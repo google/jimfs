@@ -447,7 +447,7 @@ public class FileTreeTest {
     File dir = files.get(parent);
 
     DirectoryTable table = new DirectoryTable();
-    File newFile = new File(new Random().nextLong(), table);
+    File newFile = new File(new Random().nextInt(), table);
 
     dir.asDirectoryTable().link(Name.simple(name), newFile);
 
@@ -459,7 +459,7 @@ public class FileTreeTest {
   private File createFile(String parent, String name) {
     File dir = files.get(parent);
 
-    File newFile = new File(new Random().nextLong(), new StubByteStore(0));
+    File newFile = new File(new Random().nextInt(), new StubByteStore(0));
 
     dir.asDirectoryTable().link(Name.simple(name), newFile);
 
@@ -471,7 +471,7 @@ public class FileTreeTest {
   private File createSymbolicLink(String parent, String name, String target) {
     File dir = files.get(parent);
 
-    File newFile = new File(new Random().nextLong(), pathService.parsePath(target));
+    File newFile = new File(new Random().nextInt(), pathService.parsePath(target));
 
     dir.asDirectoryTable().link(Name.simple(name), newFile);
 

@@ -14,15 +14,18 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
-import static com.google.jimfs.attribute.UserLookupService.createUserPrincipal;
+import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
+
+import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileOwnerAttributeView;
+import java.util.Set;
 
 /**
  * Tests for {@link OwnerAttributeProvider}.
@@ -33,30 +36,38 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
 
   @Override
   protected OwnerAttributeProvider createProvider() {
-    return new OwnerAttributeProvider("user");
+    return new OwnerAttributeProvider();
+  }
+
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of();
   }
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(metadata, "owner")).isEqualTo(createUserPrincipal("user"));
+    ASSERT.that(provider.get(inode, "owner")).isEqualTo(createUserPrincipal("user"));
   }
 
   @Test
   public void testSet() {
-    assertCanSetOnCreate("owner");
+    assertSetAndGetSucceeds("owner", createUserPrincipal("user"));
+    assertSetAndGetSucceedsOnCreate("owner", createUserPrincipal("user"));
+
+    // invalid type
     assertSetFails("owner", "root");
   }
 
   @Test
   public void testView() throws IOException {
-    FileOwnerAttributeView view = provider.getView(metadataSupplier());
-    assert view != null;
+    FileOwnerAttributeView view = provider.view(inodeLookup(), NO_INHERITED_VIEWS);
+    ASSERT.that(view).isNotNull();
 
     ASSERT.that(view.name()).is("owner");
     ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("user"));
 
     view.setOwner(createUserPrincipal("root"));
     ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("root"));
-    ASSERT.that(metadata.getAttribute("owner:owner")).isEqualTo(createUserPrincipal("root"));
+    ASSERT.that(inode.getAttribute("owner:owner")).isEqualTo(createUserPrincipal("root"));
   }
 }

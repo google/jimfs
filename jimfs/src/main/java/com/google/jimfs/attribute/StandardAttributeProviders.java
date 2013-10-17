@@ -14,64 +14,92 @@
  * limitations under the License.
  */
 
+package com.google.jimfs.attribute;
+
+import com.google.common.collect.ImmutableMap;
+
+import javax.annotation.Nullable;
+
 /**
- * Package containing a standard set of
- * {@link com.google.jimfs.attribute.AttributeProvider AttributeProvider} implementations.
+ * Static registry of {@link AttributeProvider} implementations for the standard set of file
+ * attribute views JIMFS supports.
  *
- * <p>The providers contained in this package are:
+ * <p>The supported views are:
  *
  * <table>
  *   <tr>
- *     <td><b>AttributeProvider</b></td>
  *     <td><b>View Name</b></td>
  *     <td><b>View Interface</b></td>
  *     <td><b>Attributes Interface</b></td>
  *   </tr>
  *   <tr>
- *     <td>{@link BasicAttributeProvider}</td>
  *     <td>{@code "basic"}</td>
  *     <td>{@link java.nio.file.attribute.BasicFileAttributeView BasicFileAttributeView}</td>
  *     <td>{@link java.nio.file.attribute.BasicFileAttributes BasicFileAttributes}</td>
  *   </tr>
  *   <tr>
- *     <td>{@link OwnerAttributeProvider}</td>
  *     <td>{@code "owner"}</td>
  *     <td>{@link java.nio.file.attribute.FileOwnerAttributeView FileOwnerAttributeView}</td>
  *     <td>--</td>
  *   </tr>
  *   <tr>
- *     <td>{@link PosixAttributeProvider}</td>
  *     <td>{@code "posix"}</td>
  *     <td>{@link java.nio.file.attribute.PosixFileAttributeView PosixFileAttributeView}</td>
  *     <td>{@link java.nio.file.attribute.PosixFileAttributes PosixFileAttributes}</td>
  *   </tr>
  *   <tr>
- *     <td>{@link UnixAttributeProvider}</td>
  *     <td>{@code "unix"}</td>
  *     <td>--</td>
  *     <td>--</td>
  *   </tr>
  *   <tr>
- *     <td>{@link DosAttributeProvider}</td>
  *     <td>{@code "dos"}</td>
  *     <td>{@link java.nio.file.attribute.DosFileAttributeView DosFileAttributeView}</td>
  *     <td>{@link java.nio.file.attribute.DosFileAttributes DosFileAttributes}</td>
  *   </tr>
  *   <tr>
- *     <td>{@link AclAttributeProvider}</td>
  *     <td>{@code "acl"}</td>
  *     <td>{@link java.nio.file.attribute.AclFileAttributeView AclFileAttributeView}</td>
  *     <td>--</td>
  *   </tr>
  *   <tr>
- *     <td>{@link UserDefinedAttributeProvider}</td>
  *     <td>{@code "user"}</td>
  *     <td>{@link java.nio.file.attribute.UserDefinedFileAttributeView UserDefinedFileAttributeView}</td>
  *     <td>--</td>
  *   </tr>
  * </table>
+ *
+ * @author Colin Decker
  */
-@ParametersAreNonnullByDefault
-package com.google.jimfs.attribute.providers;
+public final class StandardAttributeProviders {
 
-import javax.annotation.ParametersAreNonnullByDefault;
+  private StandardAttributeProviders() {}
+
+  private static final ImmutableMap<String, AttributeProvider<?>> PROVIDERS =
+      new ImmutableMap.Builder<String, AttributeProvider<?>>()
+          .put("basic", new BasicAttributeProvider())
+          .put("owner", new OwnerAttributeProvider())
+          .put("posix", new PosixAttributeProvider())
+          .put("unix", new UnixAttributeProvider())
+          .put("dos", new DosAttributeProvider())
+          .put("acl", new AclAttributeProvider())
+          .put("user", new UserDefinedAttributeProvider())
+          .build();
+
+  /**
+   * Returns the attribute provider for the given view, or {@code null} if the given view is not
+   * one of the attribute views this supports.
+   */
+  @Nullable
+  public static AttributeProvider<?> get(String view) {
+    AttributeProvider<?> provider = PROVIDERS.get(view);
+
+    if (provider == null && view.equals("unix")) {
+      // create a new UnixAttributeProvider per file system, as it does some caching that should be
+      // cleaned up when the file system is garbage collected
+      return new UnixAttributeProvider();
+    }
+
+    return provider;
+  }
+}

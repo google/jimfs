@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
-import com.google.common.collect.ImmutableList;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.attribute.AbstractAttributeView;
-import com.google.jimfs.attribute.AttributeViewProvider;
-import com.google.jimfs.attribute.FileMetadata;
-import com.google.jimfs.attribute.FileMetadataSupplier;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.List;
 import java.util.Map;
@@ -37,17 +35,11 @@ import java.util.Map;
  *
  * @author Colin Decker
  */
-public final class UserDefinedAttributeProvider
-    implements AttributeViewProvider<UserDefinedFileAttributeView> {
-
-  /**
-   * The singleton instance of {@link UserDefinedAttributeProvider}.
-   */
-  public static final UserDefinedAttributeProvider INSTANCE = new UserDefinedAttributeProvider();
+final class UserDefinedAttributeProvider extends AttributeProvider<UserDefinedFileAttributeView> {
 
   public static final String VIEW = "user";
 
-  private UserDefinedAttributeProvider() {}
+  UserDefinedAttributeProvider() {}
 
   @Override
   public String name() {
@@ -55,23 +47,25 @@ public final class UserDefinedAttributeProvider
   }
 
   @Override
-  public ImmutableSet<String> inherits() {
+  public ImmutableSet<String> fixedAttributes() {
+    // no fixed set of attributes for this view
     return ImmutableSet.of();
   }
 
   @Override
-  public void readAll(FileMetadata metadata, Map<String, Object> map) {
-    for (String attribute : metadata.getAttributeKeys()) {
-      if (attribute.startsWith("user:")) {
-        String attributeName = attribute.substring(5);
-        map.put(attributeName, get(metadata, attributeName));
-      }
-    }
+  public boolean supports(String attribute) {
+    // any attribute name is supported
+    return true;
   }
 
-  private ImmutableList<String> userDefinedAttributes(FileMetadata store) {
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
-    for (String attribute : store.getAttributeKeys()) {
+  @Override
+  public ImmutableSet<String> attributes(Inode inode) {
+    return userDefinedAttributes(inode);
+  }
+
+  private static ImmutableSet<String> userDefinedAttributes(Inode inode) {
+    ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+    for (String attribute : inode.getAttributeKeys()) {
       if (attribute.startsWith("user:")) {
         builder.add(attribute.substring(5));
       }
@@ -80,48 +74,34 @@ public final class UserDefinedAttributeProvider
   }
 
   @Override
-  public void setInitial(FileMetadata metadata) {
+  public Object get(Inode inode, String attribute) {
+    Object value = inode.getAttribute("user:" + attribute);
+    if (value instanceof byte[]) {
+      byte[] bytes = (byte[]) value;
+      return bytes.clone();
+    }
+    return null;
   }
 
   @Override
-  public boolean isGettable(FileMetadata metadata, String attribute) {
-    return metadata.getAttribute(name() + ":" + attribute) != null;
-  }
+  public void set(Inode inode, String view, String attribute, Object value,
+      boolean create) {
+    checkNotNull(value);
+    checkNotCreate(view, attribute, create);
 
-  @Override
-  public Object get(FileMetadata metadata, String attribute) {
-    byte[] bytes = (byte[]) metadata.getAttribute(name() + ":" + attribute);
-    return bytes.clone();
-  }
-
-  @Override
-  public ImmutableSet<Class<?>> acceptedTypes(String attribute) {
-    return ImmutableSet.of(ByteBuffer.class, byte[].class);
-  }
-
-  @Override
-  public boolean isSettable(FileMetadata metadata, String attribute) {
-    return true;
-  }
-
-  @Override
-  public boolean isSettableOnCreate(String attribute) {
-    return false;
-  }
-
-  @Override
-  public void set(FileMetadata metadata, String attribute, Object value) {
     byte[] bytes;
     if (value instanceof byte[]) {
       bytes = ((byte[]) value).clone();
-    } else {
+    } else if (value instanceof ByteBuffer) {
       // value instanceof ByteBuffer
       ByteBuffer buffer = (ByteBuffer) value;
       bytes = new byte[buffer.remaining()];
       buffer.get(bytes);
+    } else{
+      throw invalidType(view, attribute, value, byte[].class, ByteBuffer.class);
     }
 
-    metadata.setAttribute(name() + ":" + attribute, bytes);
+    inode.setAttribute(VIEW + ":" + attribute, bytes);
   }
 
   @Override
@@ -130,8 +110,9 @@ public final class UserDefinedAttributeProvider
   }
 
   @Override
-  public UserDefinedFileAttributeView getView(FileMetadataSupplier supplier) {
-    return new View(this, supplier);
+  public UserDefinedFileAttributeView view(Inode.Lookup lookup,
+      Map<String, FileAttributeView> inheritedViews) {
+    return new View(lookup);
   }
 
   /**
@@ -139,17 +120,22 @@ public final class UserDefinedAttributeProvider
    */
   private static class View extends AbstractAttributeView implements UserDefinedFileAttributeView {
 
-    public View(UserDefinedAttributeProvider attributeProvider, FileMetadataSupplier supplier) {
-      super(attributeProvider, supplier);
+    public View(Inode.Lookup lookup) {
+      super(lookup);
+    }
+
+    @Override
+    public String name() {
+      return "user";
     }
 
     @Override
     public List<String> list() throws IOException {
-      return ((UserDefinedAttributeProvider) provider()).userDefinedAttributes(getFileMetadata());
+      return userDefinedAttributes(lookupInode()).asList();
     }
 
     private byte[] getStoredBytes(String name) throws IOException {
-      byte[] bytes = (byte[]) getFileMetadata().getAttribute(name() + ":" + name);
+      byte[] bytes = lookupInode().getAttribute(name() + ":" + name);
       if (bytes == null) {
         throw new IllegalArgumentException("attribute '" + name() + ":" + name + "' is not set");
       }
@@ -172,13 +158,13 @@ public final class UserDefinedAttributeProvider
     public int write(String name, ByteBuffer src) throws IOException {
       byte[] bytes = new byte[src.remaining()];
       src.get(bytes);
-      getFileMetadata().setAttribute(name() + ":" + name, bytes);
+      lookupInode().setAttribute(name() + ":" + name, bytes);
       return bytes.length;
     }
 
     @Override
     public void delete(String name) throws IOException {
-      getFileMetadata().deleteAttribute(name() + ":" + name);
+      lookupInode().deleteAttribute(name() + ":" + name);
     }
   }
 }

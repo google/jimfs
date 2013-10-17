@@ -16,73 +16,176 @@
 
 package com.google.jimfs.attribute;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttributeView;
+import java.util.Arrays;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 /**
- * Provider for handling a specific group of file attributes.
+ * Provider for handling a specific file attribute view.
  *
  * @author Colin Decker
  */
-public interface AttributeProvider {
+public abstract class AttributeProvider<V extends FileAttributeView> {
 
   /**
    * Returns the view name that's used to get attributes from this provider.
    */
-  String name();
+  public abstract String name();
 
   /**
    * Returns the names of other providers that this provider inherits attributes from.
    */
-  ImmutableSet<String> inherits();
+  public ImmutableSet<String> inherits() {
+    return ImmutableSet.of();
+  }
 
   /**
-   * Reads all of the attributes associated with this provider from the given metadata into the
-   * given map.
+   * Returns the type of the view interface that this provider supports.
    */
-  void readAll(FileMetadata metadata, Map<String, Object> map);
+  public abstract Class<V> viewType();
 
   /**
-   * Sets any initial attributes in the given metadata.
+   * Returns a view of the inode located by the given lookup callback. The given map
+   * contains the views inherited by this view.
    */
-  void setInitial(FileMetadata metadata);
+  public abstract V view(
+      Inode.Lookup lookup, Map<String, FileAttributeView> inheritedViews);
 
   /**
-   * Returns whether or not it's currently possible to get the given attribute from the given
-   * metadata.
+   * Returns a map containing the default attribute values for this provider. The keys of the map
+   * are attribute identifier strings (in "view:attribute" form) and the value for each is the
+   * default value that should be set for that attribute when creating a new file.
+   *
+   * <p>The given map should be in the same format and contains user-provided default values. If
+   * the user provided any default values for attributes handled by this provider, those values
+   * should be checked to ensure they are of the correct type. Additionally, if any changes to a
+   * user-provided attribute are necessary (for example, creating an immutable defensive copy),
+   * that should be done. The resulting values should be included in the result map along with
+   * default values for any attributes the user did not provide a value for.
    */
-  boolean isGettable(FileMetadata metadata, String attribute);
+  public Map<String, ?> defaultValues(Map<String, ?> userDefaults) {
+    return ImmutableMap.of();
+  }
 
   /**
-   * Returns the value of the given attribute in the given metadata.
+   * Returns the set of attributes that are always available from this provider.
    */
-  Object get(FileMetadata metadata, String attribute);
+  public abstract ImmutableSet<String> fixedAttributes();
 
   /**
-   * Returns the types that are accepted when setting the given attribute.
+   * Returns whether or not this provider supports the given attribute directly.
    */
-  ImmutableSet<Class<?>> acceptedTypes(String attribute);
+  public boolean supports(String attribute) {
+    return fixedAttributes().contains(attribute);
+  }
 
   /**
-   * Returns whether or not it's possible for a user to set the given attribute in the given
-   * metadata.
+   * Returns the set of attributes supported by this view that are present in the given inode. For
+   * most providers, this will be a fixed set of attributes.
    */
-  boolean isSettable(FileMetadata metadata, String attribute);
+  public ImmutableSet<String> attributes(Inode inode) {
+    return fixedAttributes();
+  }
 
   /**
-   * Returns whether or not it's possible for a user to set the given attribute during file
-   * creation (e.g. by passing a {@link FileAttribute} to
-   * {@link Files#createFile(Path, FileAttribute[])}). Only called if
-   * {@link #isSettable(FileMetadata, String)} already returned true.
+   * Returns the value of the given attribute in the given inode or null if the attribute is not
+   * supported by this provider.
    */
-  boolean isSettableOnCreate(String attribute);
+  @Nullable
+  public abstract Object get(Inode inode, String attribute);
 
   /**
-   * Sets the value of the given attribute in the given metadata.
+   * Sets the value of the given attribute in the given inode object. The {@code create}
+   * parameter indicates whether or not the value is being set upon creation of a new file via a
+   * user-provided {@code FileAttribute}.
+   *
+   * @throws IllegalArgumentException if the given attribute is one supported by this provider but
+   *     it is not allowed to be set by the user
+   * @throws UnsupportedOperationException if the given attribute is one supported by this provider
+   *     and is allowed to be set by the user, but not on file creation and {@code create} is true
    */
-  void set(FileMetadata metadata, String attribute, Object value);
+  public abstract void set(
+      Inode inode, String view, String attribute, Object value, boolean create);
+
+  // optional
+
+  /**
+   * Returns the type of file attributes object this provider supports, or null if it doesn't
+   * support reading its attributes as an object.
+   */
+  @Nullable
+  public Class<? extends BasicFileAttributes> attributesType() {
+    return null;
+  }
+
+  /**
+   * Reads this provider's attributes from the given inode as an attributes object.
+   *
+   * @throws UnsupportedOperationException if this provider does not support reading an attributes
+   *     object
+   */
+  public BasicFileAttributes readAttributes(Inode inode) {
+    throw new UnsupportedOperationException();
+  }
+
+  // exception helpers
+
+  /**
+   * Throws an illegal argument exception indicating that the given attribute cannot be set.
+   */
+  protected static IllegalArgumentException unsettable(String view, String attribute) {
+    throw new IllegalArgumentException("cannot set attribute '" + view + ":" + attribute + "'");
+  }
+
+  /**
+   * Checks that the attribute is not being set by the user on file creation, throwing an
+   * unsupported operation exception if it is.
+   */
+  protected static void checkNotCreate(String view, String attribute, boolean create) {
+    if (create) {
+      throw unsettableOnCreate(view, attribute);
+    }
+  }
+
+  /**
+   * Throws an unsupported operation exception indicating that the given attribute cannot be set
+   * during file creation.
+   */
+  protected static UnsupportedOperationException unsettableOnCreate(String view, String attribute) {
+    throw new UnsupportedOperationException(
+        "cannot set attribute '" + view + ":" + attribute + "' during file creation");
+  }
+
+  /**
+   * Checks that the given value is of the given type, returning the value if so and throwing an
+   * exception if not.
+   */
+  protected static <T> T checkType(String view, String attribute, Object value, Class<T> type) {
+    checkNotNull(value);
+    if (type.isInstance(value)) {
+      return type.cast(value);
+    }
+
+    throw invalidType(view, attribute, value, type);
+  }
+
+  /**
+   * Throws an illegal argument exception indicating that the given value is not one of the
+   * expected types for the given attribute.
+   */
+  protected static IllegalArgumentException invalidType(
+      String view, String attribute, Object value, Class<?>... expectedTypes) {
+    Object expected = expectedTypes.length == 1 ?
+       expectedTypes[0] : "one of " + Arrays.toString(expectedTypes);
+    throw new IllegalArgumentException("invalid type " + value.getClass() + " for attribute '"
+        + view + ":" + attribute + "': expected " + expected);
+  }
 }

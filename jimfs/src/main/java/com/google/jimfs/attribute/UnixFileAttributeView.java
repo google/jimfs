@@ -16,30 +16,12 @@
 
 package com.google.jimfs.attribute;
 
-import java.io.IOException;
+import java.nio.file.attribute.FileAttributeView;
 
 /**
- * Supplier for retrieving {@link FileMetadata}, either by looking up the file or by just returning
- * the already located metadata.
+ * Dummy view interface for the "unix" view, which doesn't have a public view interface.
  *
  * @author Colin Decker
  */
-public abstract class FileMetadataSupplier {
-
-  /**
-   * Gets the file metadata, throwing an exception if it can't be retrieved for any reason.
-   */
-  public abstract FileMetadata getMetadata() throws IOException;
-
-  /**
-   * Returns a supplier that always returns the given metadata.
-   */
-  public static FileMetadataSupplier of(final FileMetadata metadata) {
-    return new FileMetadataSupplier() {
-      @Override
-      public FileMetadata getMetadata() {
-        return metadata;
-      }
-    };
-  }
+interface UnixFileAttributeView extends FileAttributeView {
 }

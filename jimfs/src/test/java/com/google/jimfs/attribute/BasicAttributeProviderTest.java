@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.Set;
 
 /**
  * Tests for {@link BasicAttributeProvider}.
@@ -36,19 +38,30 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Override
   protected BasicAttributeProvider createProvider() {
-    return BasicAttributeProvider.INSTANCE;
+    return new BasicAttributeProvider();
+  }
+
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of();
+  }
+
+  @Test
+  public void testSupportedAttributes() {
+    assertSupportsAll("fileKey", "size", "isDirectory", "isRegularFile", "isSymbolicLink",
+        "isOther", "creationTime", "lastModifiedTime", "lastAccessTime");
   }
 
   @Test
   public void testInitialAttributes() {
-    long time = metadata.getCreationTime();
+    long time = inode.getCreationTime();
     ASSERT.that(time).isNotEqualTo(0L);
-    ASSERT.that(time).isEqualTo(metadata.getLastAccessTime());
-    ASSERT.that(time).isEqualTo(metadata.getLastModifiedTime());
+    ASSERT.that(time).isEqualTo(inode.getLastAccessTime());
+    ASSERT.that(time).isEqualTo(inode.getLastModifiedTime());
 
-    assertContainsAll(metadata,
+    assertContainsAll(inode,
         ImmutableMap.<String, Object>builder()
-            .put("fileKey", 0L)
+            .put("fileKey", 0)
             .put("size", 0L)
             .put("isDirectory", true)
             .put("isRegularFile", false)
@@ -60,26 +73,42 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
   @Test
   public void testSet() {
     FileTime time = FileTime.fromMillis(0L);
+
+    // settable
     assertSetAndGetSucceeds("creationTime", time);
     assertSetAndGetSucceeds("lastModifiedTime", time);
     assertSetAndGetSucceeds("lastAccessTime", time);
-    assertCannotSet("fileKey");
-    assertCannotSet("size");
-    assertCannotSet("isRegularFile");
-    assertCannotSet("isDirectory");
-    assertCannotSet("isSymbolicLink");
-    assertCannotSet("isOther");
+
+    // unsettable
+    assertSetFails("fileKey", 3L);
+    assertSetFails("size", 1L);
+    assertSetFails("isRegularFile", true);
+    assertSetFails("isDirectory", true);
+    assertSetFails("isSymbolicLink", true);
+    assertSetFails("isOther", true);
+
+    // invalid type
     assertSetFails("creationTime", "foo");
   }
 
   @Test
+  public void testSetOnCreate() {
+    FileTime time = FileTime.fromMillis(0L);
+
+    assertSetFailsOnCreate("creationTime", time);
+    assertSetFailsOnCreate("lastModifiedTime", time);
+    assertSetFailsOnCreate("lastAccessTime", time);
+  }
+
+  @Test
   public void testView() throws IOException {
-    BasicFileAttributeView view = provider.getView(metadataSupplier());
-    assert view != null;
+    BasicFileAttributeView view = provider.view(inodeLookup(), NO_INHERITED_VIEWS);
+
+    ASSERT.that(view).isNotNull();
     ASSERT.that(view.name()).is("basic");
 
     BasicFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.fileKey()).is(0L);
+    ASSERT.that(attrs.fileKey()).is(0);
 
     FileTime time = attrs.creationTime();
     ASSERT.that(attrs.lastAccessTime()).is(time);
@@ -102,8 +131,8 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
 
   @Test
   public void testAttributes() {
-    BasicFileAttributes attrs = provider.read(metadata);
-    ASSERT.that(attrs.fileKey()).is(0L);
+    BasicFileAttributes attrs = provider.readAttributes(inode);
+    ASSERT.that(attrs.fileKey()).is(0);
     ASSERT.that(attrs.isDirectory()).isTrue();
     ASSERT.that(attrs.isRegularFile()).isFalse();
     ASSERT.that(attrs.creationTime()).isNotNull();

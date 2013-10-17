@@ -51,13 +51,13 @@ public class DirectoryTableTest {
     superRootTable.setSuperRoot(superRoot);
 
     root = new DirectoryTable();
-    rootFile = new File(0L, root);
+    rootFile = new File(0, root);
 
     superRootTable.link(Name.simple("/"), rootFile);
     root.setRoot();
 
     table = new DirectoryTable();
-    dirFile = new File(1L, table);
+    dirFile = new File(1, table);
     root.link(Name.simple("foo"), dirFile);
   }
 
@@ -91,7 +91,7 @@ public class DirectoryTableTest {
   public void testLink() {
     ASSERT.that(table.get(Name.simple("bar"))).isNull();
 
-    File bar = new File(2L, new DirectoryTable());
+    File bar = new File(2, new DirectoryTable());
     table.link(Name.simple("bar"), bar);
 
     ASSERT.that(table.get(Name.simple("bar"))).is(entry(dirFile, "bar", bar));
@@ -100,7 +100,7 @@ public class DirectoryTableTest {
   @Test
   public void testLink_existingNameFails() {
     try {
-      root.link(Name.simple("foo"), new File(2L, new DirectoryTable()));
+      root.link(Name.simple("foo"), new File(2, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -109,29 +109,29 @@ public class DirectoryTableTest {
   @Test
   public void testLink_parentAndSelfNameFails() {
     try {
-      table.link(Name.simple("."), new File(2L, new DirectoryTable()));
+      table.link(Name.simple("."), new File(2, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      table.link(Name.simple(".."), new File(2L, new DirectoryTable()));
+      table.link(Name.simple(".."), new File(2, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     // ensure that even if the parent/self entries do not already exist in the table,
     // they aren't allowed when calling link()
-    File file = new File(2L, new DirectoryTable());
+    File file = new File(2, new DirectoryTable());
 
     try {
-      file.asDirectoryTable().link(Name.simple("."), new File(2L, new DirectoryTable()));
+      file.asDirectoryTable().link(Name.simple("."), new File(2, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      file.asDirectoryTable().link(Name.simple(".."), new File(2L, new DirectoryTable()));
+      file.asDirectoryTable().link(Name.simple(".."), new File(2, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -139,7 +139,7 @@ public class DirectoryTableTest {
 
   @Test
   public void testGet_normalizingCaseInsensitive() {
-    File bar = new File(2L, new DirectoryTable());
+    File bar = new File(2, new DirectoryTable());
     Name barName = caseInsensitive("bar");
 
     table.link(barName, bar);
@@ -186,7 +186,7 @@ public class DirectoryTableTest {
 
   @Test
   public void testUnlink_normalizingCaseInsensitive() {
-    table.link(caseInsensitive("bar"), new File(2L, new DirectoryTable()));
+    table.link(caseInsensitive("bar"), new File(2, new DirectoryTable()));
 
     ASSERT.that(table.get(caseInsensitive("bar"))).isNotNull();
 
@@ -236,8 +236,8 @@ public class DirectoryTableTest {
 
   @Test
   public void testSnapshot() {
-    root.link(Name.simple("bar"), new File(2L, new StubByteStore(10)));
-    root.link(Name.simple("abc"), new File(3L, new StubByteStore(10)));
+    root.link(Name.simple("bar"), new File(2, new StubByteStore(10)));
+    root.link(Name.simple("abc"), new File(3, new StubByteStore(10)));
 
     // does not include . or .. and is sorted by the name
     ASSERT.that(root.snapshot())
@@ -246,8 +246,8 @@ public class DirectoryTableTest {
 
   @Test
   public void testSnapshot_sortsUsingStringAndNotCanonicalValueOfNames() {
-    table.link(caseInsensitive("FOO"), new File(2L, new StubByteStore(10)));
-    table.link(caseInsensitive("bar"), new File(3L, new StubByteStore(10)));
+    table.link(caseInsensitive("FOO"), new File(2, new StubByteStore(10)));
+    table.link(caseInsensitive("bar"), new File(3, new StubByteStore(10)));
 
     ImmutableSortedSet<Name> snapshot = table.snapshot();
     Iterable<String> strings = Iterables.transform(snapshot, Functions.toStringFunction());

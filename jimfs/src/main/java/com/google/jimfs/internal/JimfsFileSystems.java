@@ -51,7 +51,7 @@ final class JimfsFileSystems {
    */
   private static JimfsFileStore createFileStore(
       Configuration config, PathService pathService) {
-    AttributeService attributeService = new AttributeService(config.getAttributeViews());
+    AttributeService attributeService = new AttributeService(config.getAttributeConfiguration());
     RegularFileStorage storage = new HeapDisk();
     FileFactory fileFactory = new FileFactory(storage);
 

@@ -26,48 +26,18 @@ import java.nio.file.attribute.FileAttributeView;
  *
  * @author Colin Decker
  */
-public abstract class AbstractAttributeView implements FileAttributeView {
+abstract class AbstractAttributeView implements FileAttributeView {
 
-  private final AttributeProvider attributeProvider;
-  private final FileMetadataSupplier supplier;
+  private final Inode.Lookup lookup;
 
-  public AbstractAttributeView(
-      AttributeProvider attributeProvider, FileMetadataSupplier supplier) {
-    this.attributeProvider = checkNotNull(attributeProvider);
-    this.supplier = checkNotNull(supplier);
-  }
-
-  @Override
-  public final String name() {
-    return attributeProvider.name();
+  public AbstractAttributeView(Inode.Lookup lookup) {
+    this.lookup = checkNotNull(lookup);
   }
 
   /**
-   * Gets the file metadata object to get or set attributes on.
+   * Gets the inode object to get or set attributes on.
    */
-  public final FileMetadata getFileMetadata() throws IOException {
-    return supplier.getMetadata();
-  }
-
-  /**
-   * Gets the attribute provider this view uses.
-   */
-  public final AttributeProvider provider() {
-    return attributeProvider;
-  }
-
-  /**
-   * Gets the value of the given attribute for the file located by this view.
-   */
-  @SuppressWarnings("unchecked")
-  public final <V> V get(String attribute) throws IOException {
-    return (V) attributeProvider.get(getFileMetadata(), attribute);
-  }
-
-  /**
-   * Sets the value of the given attribute for the file located by this view.
-   */
-  public final void set(String attribute, Object value) throws IOException {
-    attributeProvider.set(getFileMetadata(), attribute, value);
+  public final Inode lookupInode() throws IOException {
+    return lookup.lookup();
   }
 }

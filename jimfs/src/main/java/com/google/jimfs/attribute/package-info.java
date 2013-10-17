@@ -15,24 +15,17 @@
  */
 
 /**
- * This package provides classes for configuring the handling of file attributes for a file system.
- * It centers around the {@link AttributeProvider} interface, which defines a group (or view) of
- * file attributes such as "basic" or "posix". See the Java
+ * This package contains the abstract {@link AttributeProvider} class, which implements the
+ * handling of attributes for a file attribute view such as "basic" or "posix". See the Java
  * <a href="http://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html">tutorial</a> on file
  * attributes for more information about attribute views.
  *
- * <p>Attribute providers may additionally implement {@link AttributeViewProvider} if they
- * have a {@link java.nio.file.attribute.FileAttributeView FileAttributeView} interface they can
- * provide and {@link AttributeReader} if they have a subclass of
- * {@link java.nio.file.attribute.BasicFileAttributes BasicFileAttributes} they can read for a
- * file.
+ * <p>The package also contains the abstract {@link Inode} class, which acts as the interface for
+ * storing and retrieving file attributes, and the {@link UserPrincipals} class, which provides
+ * methods for creating {@code UserPrincipal} and {@code GroupPrincipal} instances.
  *
- * <p>Each attribute provider may also declare that it "inherits" one or more other attribute
- * views, allowing it to provide the attributes that view provides. For example, "posix" inherits
- * "basic", allowing "posix:isDirectory" to return the basic attribute "isDirectory".
- *
- * <p>The {@code providers} subpackage contains a standard set of providers covering the attributes
- * views available on a typical Unix or Windows machine.
+ * <p>Finally, the package contains a standard set of {@code AttributeProvider} implementations,
+ * accessible through the {@link StandardAttributeProviders} class.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs.attribute;

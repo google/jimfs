@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.attribute.providers;
+package com.google.jimfs.attribute;
 
 import static org.junit.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.Set;
 
 /**
  * Tests for {@link DosAttributeProvider}.
@@ -40,13 +44,18 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
 
   @Override
   protected DosAttributeProvider createProvider() {
-    return DosAttributeProvider.INSTANCE;
+    return new DosAttributeProvider();
+  }
+
+  @Override
+  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+    return ImmutableSet.of(new BasicAttributeProvider(), new OwnerAttributeProvider());
   }
 
   @Test
   public void testInitialAttributes() {
     for (String attribute : DOS_ATTRIBUTES) {
-      ASSERT.that(provider.get(metadata, attribute)).is(false);
+      ASSERT.that(provider.get(inode, attribute)).is(false);
     }
   }
 
@@ -54,13 +63,15 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
   public void testSet() {
     for (String attribute : DOS_ATTRIBUTES) {
       assertSetAndGetSucceeds(attribute, true);
-      assertCannotSetOnCreate(attribute);
+      assertSetFailsOnCreate(attribute, true);
     }
   }
 
   @Test
   public void testView() throws IOException {
-    DosFileAttributeView view = provider.getView(metadataSupplier());
+    DosFileAttributeView view = provider.view(inodeLookup(),
+        ImmutableMap.<String, FileAttributeView>of(
+            "basic", new BasicAttributeProvider().view(inodeLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
     ASSERT.that(view.name()).is("dos");
@@ -93,15 +104,15 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
 
   @Test
   public void testAttributes() {
-    DosFileAttributes attrs = provider.read(metadata);
+    DosFileAttributes attrs = provider.readAttributes(inode);
     ASSERT.that(attrs.isHidden()).isFalse();
     ASSERT.that(attrs.isArchive()).isFalse();
     ASSERT.that(attrs.isReadOnly()).isFalse();
     ASSERT.that(attrs.isSystem()).isFalse();
 
-    metadata.setAttribute("dos:hidden", true);
+    inode.setAttribute("dos:hidden", true);
 
-    attrs = provider.read(metadata);
+    attrs = provider.readAttributes(inode);
     ASSERT.that(attrs.isHidden()).isTrue();
     ASSERT.that(attrs.isArchive()).isFalse();
     ASSERT.that(attrs.isReadOnly()).isFalse();
