@@ -52,13 +52,12 @@ public class AttributeServiceTest {
 
   @Before
   public void setUp() {
-    ImmutableSet<AttributeProvider<?>> providers = ImmutableSet.of(
+    ImmutableSet<AttributeProvider> providers = ImmutableSet.of(
         StandardAttributeProviders.get("basic"),
         StandardAttributeProviders.get("owner"),
         new TestAttributeProvider());
     service = new AttributeService(providers, ImmutableMap.<String, Object>of());
   }
-
 
   @Test
   public void testSupportedFileAttributeViews() {

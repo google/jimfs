@@ -42,7 +42,7 @@ public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttribu
   }
 
   @Override
-  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+  protected Set<? extends AttributeProvider> createInheritedProviders() {
     return ImmutableSet.of(
         new BasicAttributeProvider(),
         new OwnerAttributeProvider(),

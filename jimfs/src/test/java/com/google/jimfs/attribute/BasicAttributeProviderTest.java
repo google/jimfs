@@ -42,7 +42,7 @@ public class BasicAttributeProviderTest extends AttributeProviderTest<BasicAttri
   }
 
   @Override
-  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+  protected Set<? extends AttributeProvider> createInheritedProviders() {
     return ImmutableSet.of();
   }
 

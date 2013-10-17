@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 /**
  * @author Colin Decker
  */
-public final class TestAttributeProvider extends AttributeProvider<TestAttributeView> {
+public final class TestAttributeProvider extends AttributeProvider {
 
   private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
       "foo",

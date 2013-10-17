@@ -49,9 +49,9 @@ final class AttributeService {
 
   private static final String ALL_ATTRIBUTES = "*";
 
-  private final ImmutableMap<String, AttributeProvider<?>> providers;
-  private final ImmutableMap<Class<?>, AttributeProvider<?>> viewProviders;
-  private final ImmutableMap<Class<?>, AttributeProvider<?>> readers;
+  private final ImmutableMap<String, AttributeProvider> providersByName;
+  private final ImmutableMap<Class<?>, AttributeProvider> providersByViewType;
+  private final ImmutableMap<Class<?>, AttributeProvider> providersByAttributesType;
 
   private final ImmutableList<FileAttribute<?>> defaultValues;
 
@@ -67,17 +67,17 @@ final class AttributeService {
    * values.
    */
   public AttributeService(
-      Iterable<? extends AttributeProvider<?>> providers, Map<String, ?> userProvidedDefaults) {
-    ImmutableMap.Builder<String, AttributeProvider<?>> byViewNameBuilder =
+      Iterable<? extends AttributeProvider> providers, Map<String, ?> userProvidedDefaults) {
+    ImmutableMap.Builder<String, AttributeProvider> byViewNameBuilder =
         ImmutableMap.builder();
-    ImmutableMap.Builder<Class<?>, AttributeProvider<?>> byViewTypeBuilder =
+    ImmutableMap.Builder<Class<?>, AttributeProvider> byViewTypeBuilder =
         ImmutableMap.builder();
-    ImmutableMap.Builder<Class<?>, AttributeProvider<?>> byAttributesTypeBuilder =
+    ImmutableMap.Builder<Class<?>, AttributeProvider> byAttributesTypeBuilder =
         ImmutableMap.builder();
 
     ImmutableList.Builder<FileAttribute<?>> defaultAttributesBuilder = ImmutableList.builder();
 
-    for (AttributeProvider<?> provider : providers) {
+    for (AttributeProvider provider : providers) {
       byViewNameBuilder.put(provider.name(), provider);
       byViewTypeBuilder.put(provider.viewType(), provider);
       if (provider.attributesType() != null) {
@@ -89,9 +89,9 @@ final class AttributeService {
       }
     }
 
-    this.providers = byViewNameBuilder.build();
-    this.viewProviders = byViewTypeBuilder.build();
-    this.readers = byAttributesTypeBuilder.build();
+    this.providersByName = byViewNameBuilder.build();
+    this.providersByViewType = byViewTypeBuilder.build();
+    this.providersByAttributesType = byAttributesTypeBuilder.build();
     this.defaultValues = defaultAttributesBuilder.build();
   }
 
@@ -99,14 +99,14 @@ final class AttributeService {
    * Implements {@link FileSystem#supportedFileAttributeViews()}.
    */
   public ImmutableSet<String> supportedFileAttributeViews() {
-    return providers.keySet();
+    return providersByName.keySet();
   }
 
   /**
    * Implements {@link FileStore#supportsFileAttributeView(Class)}.
    */
   public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
-    return viewProviders.keySet().contains(type);
+    return providersByViewType.containsKey(type);
   }
 
   /**
@@ -168,7 +168,7 @@ final class AttributeService {
   }
 
   private Object getAttributeInternal(Inode inode, String view, String attribute) {
-    AttributeProvider<?> provider = providers.get(view);
+    AttributeProvider provider = providersByName.get(view);
     if (provider == null) {
       return null;
     }
@@ -197,7 +197,7 @@ final class AttributeService {
 
   private void setAttributeInternal(
       Inode inode, String view, String attribute, Object value, boolean create) {
-    AttributeProvider<?> provider = providers.get(view);
+    AttributeProvider provider = providersByName.get(view);
 
     if (provider != null) {
       if (provider.supports(attribute)) {
@@ -206,7 +206,7 @@ final class AttributeService {
       }
 
       for (String inheritedView : provider.inherits()) {
-        AttributeProvider<?> inheritedProvider = providers.get(inheritedView);
+        AttributeProvider inheritedProvider = providersByName.get(inheritedView);
         if (inheritedProvider.supports(attribute)) {
           inheritedProvider.set(inode, view, attribute, value, create);
           return;
@@ -217,29 +217,25 @@ final class AttributeService {
     throw new IllegalArgumentException("cannot set attribute '" + view + ":" + attribute + "'");
   }
 
-  @SuppressWarnings("unchecked")
-  private <V extends FileAttributeView> AttributeProvider<V> getProviderForView(Class<V> viewType) {
-    return (AttributeProvider<V>) viewProviders.get(viewType);
-  }
-
   /**
    * Returns an attribute view of the given type for the given inode lookup callback, or
    * {@code null} if the view type is not supported.
    */
+  @SuppressWarnings("unchecked")
   @Nullable
   public <V extends FileAttributeView> V getFileAttributeView(
       Inode.Lookup lookup, Class<V> type) {
-    AttributeProvider<V> provider = getProviderForView(type);
+    AttributeProvider provider = providersByViewType.get(type);
 
     if (provider != null) {
-      return provider.view(lookup, createInheritedViews(lookup, provider));
+      return (V) provider.view(lookup, createInheritedViews(lookup, provider));
     }
 
     return null;
   }
 
-  private <V extends FileAttributeView> Map<String, FileAttributeView> createInheritedViews(
-      Inode.Lookup lookup, AttributeProvider<V> provider) {
+  private Map<String, FileAttributeView> createInheritedViews(
+      Inode.Lookup lookup, AttributeProvider provider) {
     if (provider.inherits().isEmpty()) {
       return ImmutableMap.of();
     }
@@ -249,12 +245,12 @@ final class AttributeService {
     return Collections.unmodifiableMap(inheritedViews);
   }
 
-  private void createInheritedViews(Inode.Lookup lookup, AttributeProvider<?> provider,
+  private void createInheritedViews(Inode.Lookup lookup, AttributeProvider provider,
       Map<String, FileAttributeView> inheritedViews) {
 
     for (String inherited : provider.inherits()) {
       if (!inheritedViews.containsKey(inherited)) {
-        AttributeProvider<?> inheritedProvider = providers.get(inherited);
+        AttributeProvider inheritedProvider = providersByName.get(inherited);
         FileAttributeView inheritedView = getFileAttributeView(
             lookup, inheritedProvider.viewType(), inheritedViews);
 
@@ -265,7 +261,7 @@ final class AttributeService {
 
   private FileAttributeView getFileAttributeView(Inode.Lookup lookup,
       Class<? extends FileAttributeView> viewType, Map<String, FileAttributeView> inheritedViews) {
-    AttributeProvider<?> provider = getProviderForView(viewType);
+    AttributeProvider provider = providersByViewType.get(viewType);
     createInheritedViews(lookup, provider, inheritedViews);
     return provider.view(lookup, inheritedViews);
   }
@@ -285,11 +281,11 @@ final class AttributeService {
     Map<String, Object> result = new HashMap<>();
     if (attrs.size() == 1 && attrs.contains(ALL_ATTRIBUTES)) {
       // for 'view:*' format, get all keys for all providers for the view
-      AttributeProvider<?> provider = providers.get(view);
+      AttributeProvider provider = providersByName.get(view);
       readAll(inode, provider, result);
 
       for (String inheritedView : provider.inherits()) {
-        AttributeProvider<?> inheritedProvider = providers.get(inheritedView);
+        AttributeProvider inheritedProvider = providersByName.get(inheritedView);
         readAll(inode, inheritedProvider, result);
       }
     } else {
@@ -302,7 +298,7 @@ final class AttributeService {
     return ImmutableMap.copyOf(result);
   }
 
-  private static void readAll(Inode inode, AttributeProvider<?> provider, Map<String, Object> map) {
+  private static void readAll(Inode inode, AttributeProvider provider, Map<String, Object> map) {
     for (String attribute : provider.attributes(inode)) {
       Object value = provider.get(inode, attribute);
 
@@ -321,7 +317,7 @@ final class AttributeService {
    */
   @SuppressWarnings("unchecked")
   public <A extends BasicFileAttributes> A readAttributes(Inode inode, Class<A> type) {
-    AttributeProvider<?> provider = readers.get(type);
+    AttributeProvider provider = providersByAttributesType.get(type);
     if (provider != null) {
       return (A) provider.readAttributes(inode);
     }

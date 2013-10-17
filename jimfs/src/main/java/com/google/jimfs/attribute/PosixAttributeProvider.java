@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class PosixAttributeProvider extends AttributeProvider<PosixFileAttributeView> {
+final class PosixAttributeProvider extends AttributeProvider {
 
   private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
       "group",

@@ -75,8 +75,8 @@ public final class StandardAttributeProviders {
 
   private StandardAttributeProviders() {}
 
-  private static final ImmutableMap<String, AttributeProvider<?>> PROVIDERS =
-      new ImmutableMap.Builder<String, AttributeProvider<?>>()
+  private static final ImmutableMap<String, AttributeProvider> PROVIDERS =
+      new ImmutableMap.Builder<String, AttributeProvider>()
           .put("basic", new BasicAttributeProvider())
           .put("owner", new OwnerAttributeProvider())
           .put("posix", new PosixAttributeProvider())
@@ -91,8 +91,8 @@ public final class StandardAttributeProviders {
    * one of the attribute views this supports.
    */
   @Nullable
-  public static AttributeProvider<?> get(String view) {
-    AttributeProvider<?> provider = PROVIDERS.get(view);
+  public static AttributeProvider get(String view) {
+    AttributeProvider provider = PROVIDERS.get(view);
 
     if (provider == null && view.equals("unix")) {
       // create a new UnixAttributeProvider per file system, as it does some caching that should be

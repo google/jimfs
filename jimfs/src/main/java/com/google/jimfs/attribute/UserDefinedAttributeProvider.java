@@ -35,7 +35,7 @@ import java.util.Map;
  *
  * @author Colin Decker
  */
-final class UserDefinedAttributeProvider extends AttributeProvider<UserDefinedFileAttributeView> {
+final class UserDefinedAttributeProvider extends AttributeProvider {
 
   public static final String VIEW = "user";
 

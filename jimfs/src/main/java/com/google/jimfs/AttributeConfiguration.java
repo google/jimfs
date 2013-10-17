@@ -106,7 +106,7 @@ public final class AttributeConfiguration {
   }
 
   private final ImmutableSet<String> views;
-  private Set<AttributeProvider<?>> providers;
+  private Set<AttributeProvider> providers;
   private Map<String, Object> defaultValues;
 
   private AttributeConfiguration(Iterable<String> views) {
@@ -116,11 +116,11 @@ public final class AttributeConfiguration {
   /**
    * Returns all attribute providers for this configuration.
    */
-  public Iterable<AttributeProvider<?>> getProviders() {
-    Map<String, AttributeProvider<?>> result = new HashMap<>();
+  public Iterable<AttributeProvider> getProviders() {
+    Map<String, AttributeProvider> result = new HashMap<>();
 
     if (providers != null) {
-      for (AttributeProvider<?> provider : providers) {
+      for (AttributeProvider provider : providers) {
         result.put(provider.name(), provider);
       }
     }
@@ -130,7 +130,7 @@ public final class AttributeConfiguration {
     }
 
     Set<String> missingViews = new HashSet<>();
-    for (AttributeProvider<?> provider : result.values()) {
+    for (AttributeProvider provider : result.values()) {
       for (String inheritedView : provider.inherits()) {
         if (!result.containsKey(inheritedView)) {
           missingViews.add(inheritedView);
@@ -146,8 +146,8 @@ public final class AttributeConfiguration {
     return Collections.unmodifiableCollection(result.values());
   }
 
-  private void addStandardProvider(Map<String, AttributeProvider<?>> result, String view) {
-    AttributeProvider<?> provider = StandardAttributeProviders.get(view);
+  private void addStandardProvider(Map<String, AttributeProvider> result, String view) {
+    AttributeProvider provider = StandardAttributeProviders.get(view);
 
     if (provider == null) {
       if (!result.containsKey(view)) {
@@ -170,7 +170,7 @@ public final class AttributeConfiguration {
   /**
    * Adds the given attribute provider to the set of providers available to the file system.
    */
-  public AttributeConfiguration addProvider(AttributeProvider<?> provider) {
+  public AttributeConfiguration addProvider(AttributeProvider provider) {
     checkNotNull(provider);
 
     if (providers == null) {

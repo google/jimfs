@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class OwnerAttributeProvider extends AttributeProvider<FileOwnerAttributeView> {
+final class OwnerAttributeProvider extends AttributeProvider {
 
   private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of("owner");
 

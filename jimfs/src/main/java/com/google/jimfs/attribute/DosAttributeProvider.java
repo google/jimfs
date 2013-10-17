@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class DosAttributeProvider extends AttributeProvider<DosFileAttributeView> {
+final class DosAttributeProvider extends AttributeProvider {
 
   private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
       "readonly",

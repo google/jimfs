@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-public abstract class AttributeProvider<V extends FileAttributeView> {
+public abstract class AttributeProvider {
 
   /**
    * Returns the view name that's used to get attributes from this provider.
@@ -50,13 +50,13 @@ public abstract class AttributeProvider<V extends FileAttributeView> {
   /**
    * Returns the type of the view interface that this provider supports.
    */
-  public abstract Class<V> viewType();
+  public abstract Class<? extends FileAttributeView> viewType();
 
   /**
    * Returns a view of the inode located by the given lookup callback. The given map
    * contains the views inherited by this view.
    */
-  public abstract V view(
+  public abstract FileAttributeView view(
       Inode.Lookup lookup, Map<String, FileAttributeView> inheritedViews);
 
   /**

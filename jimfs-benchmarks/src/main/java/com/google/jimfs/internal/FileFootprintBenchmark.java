@@ -112,14 +112,14 @@ public class FileFootprintBenchmark {
   private enum AttributeConfiguration {
     BASIC_ONLY {
       @Override
-      public ImmutableSet<? extends AttributeProvider<?>> createProviders() {
+      public ImmutableSet<? extends AttributeProvider> createProviders() {
         return ImmutableSet.of(StandardAttributeProviders.get("basic"));
       }
     },
 
     UNIX_ATTRIBUTES {
       @Override
-      public ImmutableSet<? extends AttributeProvider<?>> createProviders() {
+      public ImmutableSet<? extends AttributeProvider> createProviders() {
         return ImmutableSet.of(
             StandardAttributeProviders.get("basic"),
             StandardAttributeProviders.get("owner"),
@@ -130,7 +130,7 @@ public class FileFootprintBenchmark {
 
     WINDOWS_ATTRIBUTES {
       @Override
-      public ImmutableSet<? extends AttributeProvider<?>> createProviders() {
+      public ImmutableSet<? extends AttributeProvider> createProviders() {
         return ImmutableSet.of(
             StandardAttributeProviders.get("basic"),
             StandardAttributeProviders.get("owner"),
@@ -140,7 +140,7 @@ public class FileFootprintBenchmark {
       }
     };
 
-    public abstract ImmutableSet<? extends AttributeProvider<?>> createProviders();
+    public abstract ImmutableSet<? extends AttributeProvider> createProviders();
   }
 
   private static final class NoContent implements FileContent {

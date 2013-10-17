@@ -33,7 +33,7 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
-public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
+public abstract class AttributeProviderTest<P extends AttributeProvider> {
 
   protected static final ImmutableMap<String, FileAttributeView> NO_INHERITED_VIEWS =
       ImmutableMap.of();
@@ -49,7 +49,7 @@ public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
   /**
    * Creates the set of providers the provider being tested depends on.
    */
-  protected abstract Set<? extends AttributeProvider<?>> createInheritedProviders();
+  protected abstract Set<? extends AttributeProvider> createInheritedProviders();
 
   protected Inode.Lookup inodeLookup() {
     return new Inode.Lookup() {
@@ -68,14 +68,14 @@ public abstract class AttributeProviderTest<P extends AttributeProvider<?>> {
     Map<String, ?> defaultValues = createDefaultValues();
     setDefaultValues(inode, provider, defaultValues);
 
-    Set<? extends AttributeProvider<?>> inheritedProviders = createInheritedProviders();
-    for (AttributeProvider<?> inherited : inheritedProviders) {
+    Set<? extends AttributeProvider> inheritedProviders = createInheritedProviders();
+    for (AttributeProvider inherited : inheritedProviders) {
       setDefaultValues(inode, inherited, defaultValues);
     }
   }
 
   private static void setDefaultValues(
-      Inode inode, AttributeProvider<?> provider, Map<String, ?> defaultValues) {
+      Inode inode, AttributeProvider provider, Map<String, ?> defaultValues) {
     Map<String, ?> defaults = provider.defaultValues(defaultValues);
     for (Map.Entry<String, ?> entry : defaults.entrySet()) {
       inode.setAttribute(entry.getKey(), entry.getValue());

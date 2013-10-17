@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Colin Decker
  */
-final class UnixAttributeProvider extends AttributeProvider<UnixFileAttributeView> {
+final class UnixAttributeProvider extends AttributeProvider {
 
   private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
       "uid",

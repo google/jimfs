@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class AclAttributeProvider extends AttributeProvider<AclFileAttributeView> {
+final class AclAttributeProvider extends AttributeProvider {
 
   private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of("acl");
 

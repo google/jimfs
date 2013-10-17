@@ -48,7 +48,7 @@ public class DosAttributeProviderTest extends AttributeProviderTest<DosAttribute
   }
 
   @Override
-  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+  protected Set<? extends AttributeProvider> createInheritedProviders() {
     return ImmutableSet.of(new BasicAttributeProvider(), new OwnerAttributeProvider());
   }
 

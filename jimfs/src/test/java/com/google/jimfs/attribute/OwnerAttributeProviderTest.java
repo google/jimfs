@@ -40,7 +40,7 @@ public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttri
   }
 
   @Override
-  protected Set<? extends AttributeProvider<?>> createInheritedProviders() {
+  protected Set<? extends AttributeProvider> createInheritedProviders() {
     return ImmutableSet.of();
   }
 
