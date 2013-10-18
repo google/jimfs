@@ -23,16 +23,19 @@ import com.google.common.primitives.Longs;
 import com.google.jimfs.attribute.Inode;
 
 /**
- * A file object, implementing {@link Inode} and containing a reference to the file's
- * {@linkplain FileContent content}.
- *
- * <p>While logically this class should not extend {@code Inode}, it's needed to allow the
- * {@code size()} method to get the size directly from the content rather than having to update a
- * size field in the {@code Inode} each time it changes.
+ * A file object, containing both the file's metadata and a reference to its content.
  *
  * @author Colin Decker
  */
 final class File extends Inode {
+
+  /*
+   * While conceptually this class should not extend Inode (instead the inode ID should be used
+   * elsewhere to locate the file content), it makes the most sense here to extend Inode because it
+   * makes locating the content easier (it's referenced directly from the inode) and because it
+   * allows the size() method to get the size directly from the content rather than having to store
+   * the size itself and have it updated every time the size changes.
+   */
 
   private final FileContent content;
 

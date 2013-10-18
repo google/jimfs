@@ -23,6 +23,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.annotation.Nullable;
+
 /**
  * Object for storing file metadata. Conceptually similar to a UNIX
  * <a href="http://en.wikipedia.org/wiki/Inode">inode</a>.
@@ -41,7 +43,7 @@ public abstract class Inode {
 
   private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
 
-  public Inode(int id) {
+  protected Inode(int id) {
     this.id = id;
 
     long now = System.currentTimeMillis(); // TODO(cgdecker): Use a Clock
@@ -51,113 +53,113 @@ public abstract class Inode {
   }
 
   /**
-   * Returns the ID of the file.
+   * Returns the ID of this inode.
    */
-  public int id() {
+  public final int id() {
     return id;
   }
 
   /**
-   * Returns whether or not the file is a directory.
+   * Returns whether or not the file this inode represents is a directory.
    */
   public abstract boolean isDirectory();
 
   /**
-   * Returns whether or not the file is a regular file.
+   * Returns whether or not the file this inode represents is a regular file.
    */
   public abstract boolean isRegularFile();
 
   /**
-   * Returns whether or not the file is a symbolic link.
+   * Returns whether or not the file is this inode represents a symbolic link.
    */
   public abstract boolean isSymbolicLink();
 
   /**
-   * Returns the size, in bytes, of the file.
+   * Returns the size, in bytes, of the content of the file this inode represents.
    */
   public abstract long size();
 
   /**
-   * Returns the current count of links to the file.
+   * Returns the current count of links to this inode.
    */
-  public int links() {
+  public final int links() {
     return links.get();
   }
 
   /**
    * Increments the link count.
    */
-  public void incrementLinkCount() {
+  public final void incrementLinkCount() {
     links.incrementAndGet();
   }
 
   /**
    * Decrements and returns the link count.
    */
-  public int decrementLinkCount() {
+  public final int decrementLinkCount() {
     return links.decrementAndGet();
   }
 
   /**
    * Gets the creation time of the file.
    */
-  public long getCreationTime() {
+  public final long getCreationTime() {
     return creationTime.get();
   }
 
   /**
    * Gets the last access time of the file.
    */
-  public long getLastAccessTime() {
+  public final long getLastAccessTime() {
     return lastAccessTime.get();
   }
 
   /**
    * Gets the last modified time of the file.
    */
-  public long getLastModifiedTime() {
+  public final long getLastModifiedTime() {
     return lastModifiedTime.get();
   }
 
   /**
    * Sets the creation time of the file.
    */
-  public void setCreationTime(long creationTime) {
+  public final void setCreationTime(long creationTime) {
     this.creationTime.set(creationTime);
   }
 
   /**
    * Sets the last access time of the file.
    */
-  public void setLastAccessTime(long lastAccessTime) {
+  public final void setLastAccessTime(long lastAccessTime) {
     this.lastAccessTime.set(lastAccessTime);
   }
 
   /**
    * Sets the last modified time of the file.
    */
-  public void setLastModifiedTime(long lastModifiedTime) {
+  public final void setLastModifiedTime(long lastModifiedTime) {
     this.lastModifiedTime.set(lastModifiedTime);
   }
 
   /**
    * Sets the last access time of the file to the current time.
    */
-  public void updateAccessTime() {
+  public final void updateAccessTime() {
     setLastAccessTime(System.currentTimeMillis());
   }
 
   /**
    * Sets the last modified time of the file to the current time.
    */
-  public void updateModifiedTime() {
+  public final void updateModifiedTime() {
     setLastModifiedTime(System.currentTimeMillis());
   }
 
   /**
    * Returns the attribute keys contained in the attributes map for the file.
    */
-  public Set<String> getAttributeKeys() {
+  public final Set<String> getAttributeKeys() {
     return attributes.keySet();
   }
 
@@ -167,21 +169,22 @@ public abstract class Inode {
    * value will be.
    */
   @SuppressWarnings("unchecked")
-  public <T> T getAttribute(String key) {
+  @Nullable
+  public final <T> T getAttribute(String key) {
     return (T) attributes.get(key);
   }
 
   /**
    * Sets the attribute with the given key to the given value.
    */
-  public void setAttribute(String key, Object value) {
+  public final void setAttribute(String key, Object value) {
     attributes.put(key, value);
   }
 
   /**
    * Deletes the attribute with the given key.
    */
-  public void deleteAttribute(String key) {
+  public final void deleteAttribute(String key) {
     attributes.remove(key);
   }
 

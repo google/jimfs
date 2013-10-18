@@ -67,9 +67,9 @@ public class FileLookupBenchmark {
   public int lookup(int reps) throws IOException {
     int result = 0;
     for (int i = 0; i < reps; i++) {
-      DirectoryStream<Path> stream = Files.newDirectoryStream(file);
-      result ^= stream.hashCode();
-      stream.close();
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(file)) {
+        result ^= stream.hashCode();
+      }
     }
     return result;
   }
