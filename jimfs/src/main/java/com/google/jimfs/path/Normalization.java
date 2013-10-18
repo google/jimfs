@@ -44,7 +44,7 @@ public enum Normalization {
   /**
    * Unicode composed normalization (form {@linkplain Normalizer.Form#NFC NFC}).
    */
-  NORMALIZE_NFC(Pattern.CANON_EQ) {
+  NFC(Pattern.CANON_EQ) {
     @Override
     public String normalize(String string) {
       return Normalizer.normalize(string, Normalizer.Form.NFC);
@@ -54,7 +54,7 @@ public enum Normalization {
   /**
    * Unicode decomposed normalization (form {@linkplain Normalizer.Form#NFD NFD}).
    */
-  NORMALIZE_NFD(Pattern.CANON_EQ) {
+  NFD(Pattern.CANON_EQ) {
     @Override
     public String normalize(String string) {
       return Normalizer.normalize(string, Normalizer.Form.NFD);
@@ -64,7 +64,7 @@ public enum Normalization {
   /**
    * Unicode case folding for case insensitive paths. Requires ICU4J on the classpath.
    */
-  CASE_FOLD(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE) {
+  CASE_FOLD_UNICODE(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE) {
     @Override
     public String normalize(String string) {
       return UCharacter.foldCase(string, true);
@@ -96,7 +96,7 @@ public enum Normalization {
    * Returns the flags that should be used when creating a regex {@link Pattern} in order to
    * approximate this normalization.
    */
-  public int getPatternFlags() {
+  public int patternFlags() {
     return patternFlags;
   }
 }

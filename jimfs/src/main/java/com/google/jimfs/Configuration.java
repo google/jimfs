@@ -18,8 +18,8 @@ package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
-import static com.google.jimfs.path.Normalization.NORMALIZE_NFC;
-import static com.google.jimfs.path.Normalization.NORMALIZE_NFD;
+import static com.google.jimfs.path.Normalization.NFC;
+import static com.google.jimfs.path.Normalization.NFD;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -74,9 +74,9 @@ public final class Configuration {
   }
 
   private static final Configuration UNIX = Configuration.builder(PathType.unix())
-      .setAttributeViews("basic")
       .setRoots("/")
       .setWorkingDirectory("/work")
+      .setAttributeViews("basic")
       .build();
 
   /**
@@ -107,7 +107,7 @@ public final class Configuration {
    * <pre>
    *   Configuration config = Configuration.osx().toBuilder()
    *       .setAttributeViews("basic", "owner", "posix", "unix")
-   *       .setNameCanonicalNormalization(NORMALIZE_NFD, CASE_FOLD)
+   *       .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
    *       .setWorkingDirectory("/Users/user")
    *       .build();  </pre>
    */
@@ -116,8 +116,8 @@ public final class Configuration {
   }
 
   private static final Configuration OSX = UNIX.toBuilder()
-      .setNameDisplayNormalization(NORMALIZE_NFC)
-      .setNameCanonicalNormalization(NORMALIZE_NFD, CASE_FOLD_ASCII)
+      .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
+      .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
       .build();
 
   /**
@@ -146,7 +146,7 @@ public final class Configuration {
    * <pre>
    *   Configuration config = Configuration.windows().toBuilder()
    *       .setAttributeViews("basic", "owner", "dos", "acl", "user")
-   *       .setNameCanonicalNormalization(CASE_FOLD)
+   *       .setNameCanonicalNormalization(CASE_FOLD_UNICODE)
    *       .setWorkingDirectory("C:\\Users\dir")
    *       .build();  </pre>
    */
@@ -155,11 +155,11 @@ public final class Configuration {
   }
 
   private static final Configuration WINDOWS = Configuration.builder(PathType.windows())
-      .setAttributeViews("basic")
       .setRoots("C:\\")
       .setWorkingDirectory("C:\\work")
       .setNameCanonicalNormalization(CASE_FOLD_ASCII)
-      .setPathEqualityUsesCanonicalForm(true)
+      .setPathEqualityUsesCanonicalForm(true) // matches real behavior of WindowsPath
+      .setAttributeViews("basic")
       .build();
 
   /**
@@ -349,12 +349,12 @@ public final class Configuration {
           case NONE:
             none = n;
             break;
-          case NORMALIZE_NFC:
-          case NORMALIZE_NFD:
+          case NFC:
+          case NFD:
             checkNormalizationNotSet(n, normalization);
             normalization = n;
             break;
-          case CASE_FOLD:
+          case CASE_FOLD_UNICODE:
           case CASE_FOLD_ASCII:
             checkNormalizationNotSet(n, caseFold);
             caseFold = n;

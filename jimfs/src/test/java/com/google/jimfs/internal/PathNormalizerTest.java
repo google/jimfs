@@ -16,10 +16,10 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.path.Normalization.CASE_FOLD;
+import static com.google.jimfs.path.Normalization.CASE_FOLD_UNICODE;
 import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
-import static com.google.jimfs.path.Normalization.NORMALIZE_NFC;
-import static com.google.jimfs.path.Normalization.NORMALIZE_NFD;
+import static com.google.jimfs.path.Normalization.NFC;
+import static com.google.jimfs.path.Normalization.NFD;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -71,7 +71,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testCaseFold() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(CASE_FOLD));
+    normalizer = PathNormalizer.create(ImmutableSet.of(CASE_FOLD_UNICODE));
 
     for (String[] row : CASE_FOLD_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
@@ -103,7 +103,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfc() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFC));
 
     for (String[] row : NORMALIZE_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
@@ -116,7 +116,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfd() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFD));
 
     for (String[] row : NORMALIZE_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
@@ -134,7 +134,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfcCaseFold() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC, CASE_FOLD));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFC, CASE_FOLD_UNICODE));
 
     for (String[] row : NORMALIZE_CASE_FOLD_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
@@ -147,7 +147,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfdCaseFold() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD, CASE_FOLD));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFD, CASE_FOLD_UNICODE));
 
     for (String[] row : NORMALIZE_CASE_FOLD_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
@@ -165,7 +165,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfcCaseFoldAscii() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC, CASE_FOLD_ASCII));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFC, CASE_FOLD_ASCII));
 
     for (String[] row : NORMALIZED_CASE_INSENSITIVE_ASCII_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
@@ -178,7 +178,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfdCaseFoldAscii() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD, CASE_FOLD_ASCII));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFD, CASE_FOLD_ASCII));
 
     for (String[] row : NORMALIZED_CASE_INSENSITIVE_ASCII_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
@@ -203,7 +203,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testCaseFold_pattern() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(CASE_FOLD));
+    normalizer = PathNormalizer.create(ImmutableSet.of(CASE_FOLD_UNICODE));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");
@@ -229,7 +229,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfc_pattern() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFC));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternDoesNotMatch("foo", "FOO");
     assertNormalizedPatternDoesNotMatch("FOO", "foo");
@@ -239,7 +239,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfd_pattern() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFD));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternDoesNotMatch("foo", "FOO");
     assertNormalizedPatternDoesNotMatch("FOO", "foo");
@@ -249,7 +249,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfcCaseFold_pattern() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC, CASE_FOLD));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFC, CASE_FOLD_UNICODE));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");
@@ -262,7 +262,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfdCaseFold_pattern() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD, CASE_FOLD));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFD, CASE_FOLD_UNICODE));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");
@@ -275,7 +275,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfcCaseFoldAscii_pattern() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFC, CASE_FOLD_ASCII));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFC, CASE_FOLD_ASCII));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");
@@ -290,7 +290,7 @@ public class PathNormalizerTest {
 
   @Test
   public void testNormalizeNfdCaseFoldAscii_pattern() {
-    normalizer = PathNormalizer.create(ImmutableSet.of(NORMALIZE_NFD, CASE_FOLD_ASCII));
+    normalizer = PathNormalizer.create(ImmutableSet.of(NFD, CASE_FOLD_ASCII));
     assertNormalizedPatternMatches("foo", "foo");
     assertNormalizedPatternMatches("foo", "FOO");
     assertNormalizedPatternMatches("FOO", "foo");

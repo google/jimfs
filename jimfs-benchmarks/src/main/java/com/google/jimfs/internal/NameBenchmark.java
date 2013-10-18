@@ -16,9 +16,9 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.path.Normalization.CASE_FOLD;
+import static com.google.jimfs.path.Normalization.CASE_FOLD_UNICODE;
 import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
-import static com.google.jimfs.path.Normalization.NORMALIZE_NFC;
+import static com.google.jimfs.path.Normalization.NFC;
 
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;
@@ -112,21 +112,21 @@ public class NameBenchmark {
   private enum NameImpl {
     NONE(PathNormalizer.none(), PathNormalizer.none()),
 
-    NORMALIZED(PathNormalizer.none(), PathNormalizer.create(NORMALIZE_NFC)),
+    NORMALIZED(PathNormalizer.none(), PathNormalizer.create(NFC)),
 
-    CASE_INSENSITIVE(PathNormalizer.none(), PathNormalizer.create(CASE_FOLD)),
+    CASE_INSENSITIVE(PathNormalizer.none(), PathNormalizer.create(CASE_FOLD_UNICODE)),
 
     CASE_INSENSITIVE_ASCII(PathNormalizer.none(), PathNormalizer.create(CASE_FOLD_ASCII)),
 
     NORMALIZED_CASE_INSENSITIVE(
-        PathNormalizer.none(), PathNormalizer.create(NORMALIZE_NFC, CASE_FOLD)),
+        PathNormalizer.none(), PathNormalizer.create(NFC, CASE_FOLD_UNICODE)),
 
     NORMALIZED_CASE_INSENSITIVE_ASCII(
-        PathNormalizer.none(), PathNormalizer.create(NORMALIZE_NFC, CASE_FOLD_ASCII)),
+        PathNormalizer.none(), PathNormalizer.create(NFC, CASE_FOLD_ASCII)),
 
     NORMALIZED_CASE_INSENSITIVE_ASCII_WITH_PATH_NORMALIZED(
-        PathNormalizer.create(NORMALIZE_NFC),
-        PathNormalizer.create(NORMALIZE_NFC, CASE_FOLD_ASCII));
+        PathNormalizer.create(NFC),
+        PathNormalizer.create(NFC, CASE_FOLD_ASCII));
 
     private final PathNormalizer displayNormalization;
     private final PathNormalizer canonicalNormalization;

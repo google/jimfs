@@ -91,7 +91,7 @@ final class PathNormalizer {
   public Pattern compilePattern(String regex) {
     int flags = 0;
     for (Normalization normalization : normalizations) {
-      flags |= normalization.getPatternFlags();
+      flags |= normalization.patternFlags();
     }
     return Pattern.compile(regex, flags);
   }
