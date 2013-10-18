@@ -66,6 +66,8 @@ public enum Normalization implements Function<String, String> {
    * Unicode case folding for case insensitive paths. Requires ICU4J on the classpath.
    */
   CASE_FOLD_UNICODE(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE) {
+    // TODO(cgdecker): This does default case folding, e.g. non-Turkish case folding.
+    // Should there be an option to use the Turkish-correct case folding instead?
     @Override
     public String apply(String string) {
       return UCharacter.foldCase(string, true);

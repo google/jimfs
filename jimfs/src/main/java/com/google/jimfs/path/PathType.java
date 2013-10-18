@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.InvalidPathException;
 import java.util.Arrays;
 
 import javax.annotation.Nullable;
@@ -160,6 +161,8 @@ public abstract class PathType {
 
   /**
    * Parses the given strings as a path.
+   *
+   * @throws InvalidPathException if the path isn't valid for this path type
    */
   public abstract ParseResult parsePath(String path);
 
@@ -177,6 +180,8 @@ public abstract class PathType {
 
   /**
    * Parses a path from the given URI path.
+   *
+   * @throws InvalidPathException if the given path isn't valid for this path type
    */
   protected abstract ParseResult parseUriPath(String uriPath);
 

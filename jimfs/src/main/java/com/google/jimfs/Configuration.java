@@ -16,6 +16,7 @@
 
 package com.google.jimfs;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
 import static com.google.jimfs.path.Normalization.NFC;
@@ -24,17 +25,20 @@ import static com.google.jimfs.path.Normalization.NFD;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.StandardAttributeProviders;
 import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
+import java.nio.file.InvalidPathException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -398,6 +402,7 @@ public final class Configuration {
      * Adds an attribute provider for a custom view for the file system to support.
      */
     public Builder addAttributeProvider(AttributeProvider provider) {
+      checkNotNull(provider);
       if (attributeProviders == null) {
         attributeProviders = new HashSet<>();
       }
@@ -452,27 +457,54 @@ public final class Configuration {
      * </table>
      */
     public Builder setDefaultAttributeValue(String attribute, Object value) {
+      checkArgument(ATTRIBUTE_PATTERN.matcher(attribute).matches(),
+          "attribute (%s) must be of the form \"view:attribute\"", attribute);
+      checkNotNull(value);
+
       if (defaultAttributeValues == null) {
         defaultAttributeValues = new HashMap<>();
       }
 
-      defaultAttributeValues.put(checkNotNull(attribute), checkNotNull(value));
+      defaultAttributeValues.put(attribute, value);
       return this;
     }
 
+    private static final Pattern ATTRIBUTE_PATTERN = Pattern.compile("[^:]+:[^:]+");
+
     /**
      * Sets the roots for the file system.
+     *
+     * @throws InvalidPathException if any of the given roots is not a valid path for this
+     *     builder's path type
+     * @throws IllegalArgumentException if any of the given roots is a valid path for this
+     *     builder's path type but is not a root path with no name elements
      */
     public Builder setRoots(String first, String... more) {
-      this.roots = ImmutableSet.copyOf(Lists.asList(first, more));
+      List<String> roots = Lists.asList(first, more);
+      for (String root : roots) {
+        PathType.ParseResult parseResult = pathType.parsePath(root);
+        if (parseResult.root() == null || !Iterables.isEmpty(parseResult.names())) {
+          throw new IllegalArgumentException("invalid root: " + root);
+        }
+      }
+      this.roots = ImmutableSet.copyOf(roots);
       return this;
     }
 
     /**
      * Sets the path to the working directory for the file system. The working directory must be
      * an absolute path starting with one of the configured roots.
+     *
+     * @throws InvalidPathException if the given path is not valid for this builder's path type
+     * @throws IllegalArgumentException if the given path is valid for this builder's path type but
+     *     is not an absolute path
      */
     public Builder setWorkingDirectory(String workingDirectory) {
+      PathType.ParseResult parseResult = pathType.parsePath(workingDirectory);
+      if (!parseResult.isAbsolute()) {
+        throw new IllegalArgumentException(
+            "working directory must be an absolute path: " + workingDirectory);
+      }
       this.workingDirectory = checkNotNull(workingDirectory);
       return this;
     }
