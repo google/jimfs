@@ -273,7 +273,7 @@ final class FileSystemView {
    * already exists at the given path, returns the key of that file. Otherwise, throws {@link
    * FileAlreadyExistsException}.
    */
-  public File createFile(JimfsPath path, Supplier<File> fileSupplier,
+  private File createFile(JimfsPath path, Supplier<File> fileSupplier,
       boolean allowExisting, FileAttribute<?>... attrs) throws IOException {
     checkNotNull(path);
     checkNotNull(fileSupplier);

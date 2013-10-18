@@ -25,6 +25,7 @@ import com.google.caliper.runner.CaliperMain;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 
 /**
  * Benchmark comparing the times to create and delete a file between JIMFS and the default file
@@ -33,6 +34,8 @@ import java.nio.file.Path;
  * @author Colin Decker
  */
 public class FileCreationAndDeletionBenchmark {
+
+  private static final FileAttribute<?>[] NO_ATTRS = {};
 
   @Param
   private FileSystemImpl impl;
@@ -50,7 +53,7 @@ public class FileCreationAndDeletionBenchmark {
   @Benchmark
   public void createAndDeleteDirectory(int reps) throws IOException {
     for (int i = 0; i < reps; i++) {
-      Files.createDirectory(file);
+      Files.createDirectory(file, NO_ATTRS);
       Files.deleteIfExists(file);
     }
   }
@@ -58,7 +61,7 @@ public class FileCreationAndDeletionBenchmark {
   @Benchmark
   public void createAndDeleteRegularFile(int reps) throws IOException {
     for (int i = 0; i < reps; i++) {
-      Files.createFile(file);
+      Files.createFile(file, NO_ATTRS);
       Files.deleteIfExists(file);
     }
   }
@@ -66,7 +69,7 @@ public class FileCreationAndDeletionBenchmark {
   @Benchmark
   public void createAndDeleteSymbolicLink(int reps) throws IOException {
     for (int i = 0; i < reps; i++) {
-      Files.createSymbolicLink(file, file);
+      Files.createSymbolicLink(file, file, NO_ATTRS);
       Files.deleteIfExists(file);
     }
   }

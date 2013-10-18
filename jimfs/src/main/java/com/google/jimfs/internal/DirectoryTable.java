@@ -16,10 +16,10 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -136,7 +136,8 @@ final class DirectoryTable implements FileContent {
   /**
    * Returns the number of entries in this directory.
    */
-  public int size() {
+  @VisibleForTesting
+  int entryCount() {
     return entries.size();
   }
 
@@ -161,7 +162,9 @@ final class DirectoryTable implements FileContent {
   }
 
   private DirectoryEntry linkInternal(Name name, File file) {
-    checkArgument(!entries.containsKey(name), "entry '%s' already exists", name);
+    if (entries.containsKey(name)) {
+      throw new IllegalArgumentException("entry '" + name + "' already exists");
+    }
     DirectoryEntry entry = new DirectoryEntry(self(), name, file);
     entries.put(name, entry);
     file.incrementLinkCount();
@@ -219,7 +222,9 @@ final class DirectoryTable implements FileContent {
   }
 
   private static Name checkValidName(Name name, String action) {
-    checkArgument(!RESERVED_NAMES.contains(name), "cannot %s: %s", action, name);
+    if (RESERVED_NAMES.contains(name)) {
+      throw new IllegalArgumentException("cannot " + action + ": " + name);
+    }
     return name;
   }
 }

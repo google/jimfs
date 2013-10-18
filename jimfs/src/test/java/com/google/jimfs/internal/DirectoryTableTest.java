@@ -64,7 +64,7 @@ public class DirectoryTableTest {
   @SuppressWarnings("ConstantConditions")
   @Test
   public void testRootDirectory() {
-    ASSERT.that(root.size()).is(3); // two for parent/self, one for table
+    ASSERT.that(root.entryCount()).is(3); // two for parent/self, one for table
     ASSERT.that(root.isEmpty()).isFalse();
     ASSERT.that(root.entry()).is(entry(rootFile, "/", rootFile));
     ASSERT.that(root.name()).is(Name.simple("/"));
@@ -74,7 +74,7 @@ public class DirectoryTableTest {
 
   @Test
   public void testEmptyDirectory() {
-    ASSERT.that(table.size()).is(2);
+    ASSERT.that(table.entryCount()).is(2);
     ASSERT.that(table.isEmpty()).isTrue();
 
     assertParentAndSelf(table, rootFile, dirFile);
