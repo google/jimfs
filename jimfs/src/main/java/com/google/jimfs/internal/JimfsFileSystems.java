@@ -51,7 +51,7 @@ final class JimfsFileSystems {
    */
   private static JimfsFileStore createFileStore(
       Configuration config, PathService pathService) {
-    AttributeService attributeService = new AttributeService(config.getAttributeConfiguration());
+    AttributeService attributeService = new AttributeService(config);
     RegularFileStorage storage = new HeapDisk();
     FileFactory fileFactory = new FileFactory(storage);
 
@@ -59,7 +59,7 @@ final class JimfsFileSystems {
     superRoot.asDirectoryTable().setSuperRoot(superRoot);
 
     // create roots
-    for (String root : config.getRoots()) {
+    for (String root : config.roots()) {
       JimfsPath path = pathService.parsePath(root);
       if (!path.isAbsolute() && path.getNameCount() == 0) {
         throw new IllegalArgumentException("Invalid root path: " + root);
@@ -74,8 +74,7 @@ final class JimfsFileSystems {
       rootDir.asDirectoryTable().setRoot();
     }
 
-    return new JimfsFileStore(new FileTree(superRoot), fileFactory, storage,
-        attributeService, config.getSupportedFeatures());
+    return new JimfsFileStore(new FileTree(superRoot), fileFactory, storage, attributeService);
   }
 
   /**
@@ -83,7 +82,7 @@ final class JimfsFileSystems {
    */
   private static FileSystemView createDefaultView(Configuration config,
       JimfsFileStore fileStore, PathService pathService) throws IOException {
-    JimfsPath workingDirPath = pathService.parsePath(config.getWorkingDirectory());
+    JimfsPath workingDirPath = pathService.parsePath(config.workingDirectory());
 
     File dir = fileStore.getRoot(workingDirPath.root());
     if (dir == null) {

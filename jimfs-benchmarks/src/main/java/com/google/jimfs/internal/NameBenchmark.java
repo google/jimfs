@@ -16,9 +16,9 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.Normalization.CASE_FOLD;
-import static com.google.jimfs.Normalization.CASE_FOLD_ASCII;
-import static com.google.jimfs.Normalization.NORMALIZE_NFC;
+import static com.google.jimfs.path.Normalization.CASE_FOLD;
+import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.path.Normalization.NORMALIZE_NFC;
 
 import com.google.caliper.BeforeExperiment;
 import com.google.caliper.Benchmark;

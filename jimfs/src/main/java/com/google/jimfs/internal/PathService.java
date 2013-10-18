@@ -19,7 +19,7 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.jimfs.PathType.ParseResult;
+import static com.google.jimfs.path.PathType.ParseResult;
 
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
@@ -29,7 +29,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.jimfs.Configuration;
-import com.google.jimfs.PathType;
+import com.google.jimfs.path.PathType;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -70,10 +70,10 @@ final class PathService implements Comparator<JimfsPath> {
   private volatile JimfsPath emptyPath;
 
   PathService(Configuration config) {
-    this(config.getPathType(),
-        PathNormalizer.create(config.getPathDisplayNormalization()),
-        PathNormalizer.create(config.getPathCanonicalNormalization()),
-        config.getPathEqualityUsesCanonicalForm());
+    this(config.pathType(),
+        PathNormalizer.create(config.nameDisplayNormalization()),
+        PathNormalizer.create(config.nameCanonicalNormalization()),
+        config.pathEqualityUsesCanonicalForm());
   }
 
   PathService(PathType type,

@@ -16,17 +16,17 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.Normalization.CASE_FOLD;
-import static com.google.jimfs.Normalization.CASE_FOLD_ASCII;
-import static com.google.jimfs.Normalization.NORMALIZE_NFC;
-import static com.google.jimfs.Normalization.NORMALIZE_NFD;
+import static com.google.jimfs.path.Normalization.CASE_FOLD;
+import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.path.Normalization.NORMALIZE_NFC;
+import static com.google.jimfs.path.Normalization.NORMALIZE_NFD;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.Normalization;
+import com.google.jimfs.path.Normalization;
 
 import org.junit.Test;
 

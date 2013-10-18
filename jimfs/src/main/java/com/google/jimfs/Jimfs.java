@@ -25,9 +25,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
 import java.util.UUID;
 
 /**
@@ -78,23 +75,6 @@ public final class Jimfs {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
-  }
-
-  /**
-   * Optional features that may or may not be supported by a file system.
-   */
-  public static enum Feature {
-    /**
-     * Controls whether or not {@linkplain Files#createLink(Path, Path) hard links to regular files}
-     * are supported.
-     */
-    LINKS,
-
-    /**
-     * Controls whether or not {@linkplain Files#createSymbolicLink(Path, Path, FileAttribute[])
-     * symbolic links} are supported.
-     */
-    SYMBOLIC_LINKS
   }
 
   private static String newRandomFileSystemName() {

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.jimfs;
+package com.google.jimfs.path;
 
-import static com.google.jimfs.PathType.windows;
-import static com.google.jimfs.PathTypeTest.assertParseResult;
-import static com.google.jimfs.PathTypeTest.assertUriRoundTripsCorrectly;
-import static com.google.jimfs.PathTypeTest.fileSystemUri;
+import static com.google.jimfs.path.PathType.windows;
+import static com.google.jimfs.path.PathTypeTest.assertParseResult;
+import static com.google.jimfs.path.PathTypeTest.assertUriRoundTripsCorrectly;
+import static com.google.jimfs.path.PathTypeTest.fileSystemUri;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 

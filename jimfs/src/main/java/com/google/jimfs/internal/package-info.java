@@ -48,7 +48,7 @@
  *
  * The implementation of {@link java.nio.file.Path} for the file system is {@link JimfsPath}. Paths
  * are created by a {@link PathService} with help from the file system's configured
- * {@link com.google.jimfs.PathType PathType}.
+ * {@link com.google.jimfs.path.PathType PathType}.
  *
  * <p>Paths are made up of {@link com.google.jimfs.internal.Name Name} objects, which also serve as the
  * file names in directories. Names are basically enhanced strings that may have different notions

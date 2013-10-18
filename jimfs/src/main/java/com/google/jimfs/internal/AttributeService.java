@@ -20,9 +20,10 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.AttributeConfiguration;
+import com.google.jimfs.Configuration;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.Inode;
+import com.google.jimfs.attribute.StandardAttributeProviders;
 
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -34,8 +35,10 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -58,8 +61,8 @@ final class AttributeService {
   /**
    * Creates a new attribute service using the given configuration.
    */
-  public AttributeService(AttributeConfiguration configuration) {
-    this(configuration.getProviders(), configuration.getDefaultValues());
+  public AttributeService(Configuration configuration) {
+    this(getProviders(configuration), configuration.defaultAttributeValues());
   }
 
   /**
@@ -93,6 +96,57 @@ final class AttributeService {
     this.providersByViewType = byViewTypeBuilder.build();
     this.providersByAttributesType = byAttributesTypeBuilder.build();
     this.defaultValues = defaultAttributesBuilder.build();
+  }
+
+  private static Iterable<AttributeProvider> getProviders(Configuration configuration) {
+    Map<String, AttributeProvider> result = new HashMap<>();
+
+    for (AttributeProvider provider : configuration.attributeProviders()) {
+      result.put(provider.name(), provider);
+    }
+
+    for (String view : configuration.attributeViews()) {
+      addStandardProvider(result, view);
+    }
+
+    addMissingProviders(result);
+
+    return Collections.unmodifiableCollection(result.values());
+  }
+
+  private static void addMissingProviders(Map<String, AttributeProvider> providers) {
+    Set<String> missingViews = new HashSet<>();
+    for (AttributeProvider provider : providers.values()) {
+      for (String inheritedView : provider.inherits()) {
+        if (!providers.containsKey(inheritedView)) {
+          missingViews.add(inheritedView);
+        }
+      }
+    }
+
+    if (missingViews.isEmpty()) {
+      return;
+    }
+
+    // add any inherited views that were not listed directly
+    for (String view : missingViews) {
+      addStandardProvider(providers, view);
+    }
+
+    // in case any of the providers that were added themselves have missing views they inherit
+    addMissingProviders(providers);
+  }
+
+  private static void addStandardProvider(Map<String, AttributeProvider> result, String view) {
+    AttributeProvider provider = StandardAttributeProviders.get(view);
+
+    if (provider == null) {
+      if (!result.containsKey(view)) {
+        throw new IllegalStateException("no provider found for attribute view '" + view + "'");
+      }
+    } else {
+      result.put(provider.name(), provider);
+    }
   }
 
   /**

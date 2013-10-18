@@ -25,7 +25,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
-import com.google.jimfs.Jimfs;
 import com.google.jimfs.attribute.Inode;
 
 import java.io.IOException;
@@ -47,13 +46,12 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * View of a file system with a specific working directory. As all file system operations need to
- * work when given either relative or absolute paths, this class contains the implementation of
- * most file system operations, with relative path operations resolving against the working
- * directory.
+ * work when given either relative or absolute paths, this class contains the implementation of most
+ * file system operations, with relative path operations resolving against the working directory.
  *
- * <p>A file system has one default view using the file system's working directory. Additional
- * views may be created for use in {@link SecureDirectoryStream} instances, which each have a
- * different working directory they use.
+ * <p>A file system has one default view using the file system's working directory. Additional views
+ * may be created for use in {@link SecureDirectoryStream} instances, which each have a different
+ * working directory they use.
  *
  * @author Colin Decker
  */
@@ -91,8 +89,8 @@ final class FileSystemView {
   }
 
   /**
-   * Returns the path of the working directory at the time this view was created. Does not
-   * reflect changes to the path caused by the directory being moved.
+   * Returns the path of the working directory at the time this view was created. Does not reflect
+   * changes to the path caused by the directory being moved.
    */
   public JimfsPath getWorkingDirectoryPath() {
     return workingDirectoryPath;
@@ -115,23 +113,6 @@ final class FileSystemView {
    */
   private DirectoryEntry lookup(JimfsPath path, LinkOptions options) throws IOException {
     return store.lookup(workingDirectory, path, options);
-  }
-
-  /**
-   * Returns a supplier that suppliers a file by looking up the given path in this view, using
-   * the given link handling option.
-   */
-  public Inode.Lookup lookupFileSupplier(final JimfsPath path, final LinkOptions options) {
-    checkNotNull(path);
-    checkNotNull(options);
-    return new Inode.Lookup() {
-      @Override
-      public Inode lookup() throws IOException {
-        return lookupWithLock(path, options)
-            .requireExists(path)
-            .file();
-      }
-    };
   }
 
   /**
@@ -283,7 +264,6 @@ final class FileSystemView {
    */
   public File createSymbolicLink(
       JimfsPath path, JimfsPath target, FileAttribute<?>... attrs) throws IOException {
-    store.checkSupported(Jimfs.Feature.SYMBOLIC_LINKS);
     return createFile(path, store.createSymbolicLink(target), false, attrs);
   }
 
@@ -414,16 +394,14 @@ final class FileSystemView {
 
   /**
    * Creates a hard link at the given link path to the regular file at the given path. The existing
-   * file must exist and must be a regular file. The given file system view must belong to the
-   * same file system as this view.
+   * file must exist and must be a regular file. The given file system view must belong to the same
+   * file system as this view.
    */
   public void link(
       JimfsPath link, FileSystemView existingView, JimfsPath existing) throws IOException {
     checkNotNull(link);
     checkNotNull(existingView);
     checkNotNull(existing);
-
-    store.checkSupported(Jimfs.Feature.LINKS);
 
     if (!isSameFileSystem(existingView)) {
       throw new FileSystemException(link.toString(), existing.toString(),
@@ -689,8 +667,15 @@ final class FileSystemView {
    * Returns a file attribute view for the given path in this view.
    */
   public <V extends FileAttributeView> V getFileAttributeView(
-      JimfsPath path, Class<V> type, LinkOptions options) {
-    return store.getFileAttributeView(lookupFileSupplier(path, options), type);
+      final JimfsPath path, Class<V> type, final LinkOptions options) {
+    return store.getFileAttributeView(new Inode.Lookup() {
+      @Override
+      public Inode lookup() throws IOException {
+        return lookupWithLock(path, options)
+            .requireExists(path)
+            .file();
+      }
+    }, type);
   }
 
   /**

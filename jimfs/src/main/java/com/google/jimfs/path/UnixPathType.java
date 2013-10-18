@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs;
+package com.google.jimfs.path;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

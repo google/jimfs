@@ -46,10 +46,10 @@ public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTes
 
   @Override
   protected FileSystem createFileSystem() {
-    return Jimfs.newFileSystem("win",
-        Configuration.windows()
-            .addRoots("E:\\")
-            .setAttributeConfiguration(AttributeConfiguration.windows()));
+    return Jimfs.newFileSystem("win", Configuration.windows().toBuilder()
+        .setRoots("C:\\", "E:\\")
+        .setAttributeViews("basic", "owner", "dos", "acl", "user")
+        .build());
   }
 
   @Test

@@ -25,7 +25,7 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-import com.google.jimfs.PathType;
+import com.google.jimfs.path.PathType;
 
 import org.junit.Before;
 import org.junit.Test;

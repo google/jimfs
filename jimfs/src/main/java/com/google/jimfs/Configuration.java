@@ -17,365 +17,471 @@
 package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.jimfs.Normalization.CASE_FOLD_ASCII;
-import static com.google.jimfs.Normalization.NORMALIZE_NFC;
-import static com.google.jimfs.Normalization.NORMALIZE_NFD;
+import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.path.Normalization.NORMALIZE_NFC;
+import static com.google.jimfs.path.Normalization.NORMALIZE_NFD;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.jimfs.attribute.AttributeProvider;
+import com.google.jimfs.attribute.StandardAttributeProviders;
+import com.google.jimfs.path.Normalization;
+import com.google.jimfs.path.PathType;
 
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.LinkedHashSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
 
 /**
- * Configuration for an in-memory file system instance. Instances of this class are mutable.
+ * Immutable configuration for an in-memory file system instance.
  *
  * @author Colin Decker
  */
 public final class Configuration {
 
   /**
-   * Returns a new mutable {@link Configuration} instance with defaults for a UNIX-like file
-   * system. Legal paths are described by {@link PathType#unix()}. Only one root, "/", is allowed.
-   *
-   * <h3>Default configuration</h3>
-   *
-   * <p>If no changes are made, a file system created with this configuration:
+   * Returns the default configuration for a UNIX-like file system. A file system created with this
+   * configuration:
    *
    * <ul>
    *   <li>uses "/" as the path name separator (see {@link PathType#unix()} for more information on
    *   the path format)</li>
    *   <li>has root "/" and working directory "/work"</li>
-   *   <li>supports symbolic links and hard links</li>
-   *   <li>does case-sensitive lookup</li>
-   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view</li>
+   *   <li>performs case-sensitive file lookup</li>
+   *   <li>supports only the {@code basic} file attribute view, in the interest of avoiding
+   *   overhead for unneeded attributes</li>
    * </ul>
    *
-   * <h3>Advanced configuration</h3>
-   *
-   * These defaults balance working like a UNIX file system with avoiding overhead that may not be
-   * needed such as the full set of UNIX file attribute views. The returned configuration can be
-   * altered to suit your needs.
+   * To create a modified version of this configuration, such as to include the full set of UNIX
+   * file attribute views, {@linkplain #toBuilder() create a builder}.
    *
    * <p>Example:
    *
    * <pre>
-   *   Configuration config = Configuration.unix()
-   *       .setAttributeViews(AttributeView.unix()) // full set of UNIX attribute views
-   *       .setWorkingDirectory("/home/user") // different working dir  </pre>
+   *   Configuration config = Configuration.unix().toBuilder()
+   *       .setAttributeViews("basic", "owner", "posix", "unix")
+   *       .setWorkingDirectory("/home/user")
+   *       .build();  </pre>
    */
   public static Configuration unix() {
-    return create(PathType.unix())
-        .addRoots("/")
-        .setWorkingDirectory("/work");
+    return UNIX;
   }
 
+  private static final Configuration UNIX = Configuration.builder(PathType.unix())
+      .setAttributeViews("basic")
+      .setRoots("/")
+      .setWorkingDirectory("/work")
+      .build();
+
   /**
-   * Returns a new mutable {@link Configuration} instance with defaults for a Mac OS X-like file
-   * system. Legal paths are described by {@link PathType#unix()}. Only one root, "/", is allowed.
+   * Returns the default configuration for a Mac OS X-like file system.
    *
    * <p>The primary differences between this configuration and the default {@link #unix()}
-   * configuration are that this configuration does Unicode normalization on the string form of
-   * {@code Path} objects it creates and that it does case insensitive file lookup.
+   * configuration are that this configuration does Unicode normalization on the display and
+   * canonical forms of filenames and does case insensitive file lookup.
    *
-   * <h3>Default configuration</h3>
-   *
-   * <p>If no changes are made, a file system created with this configuration:
+   * <p>A file system created with this configuration:
    *
    * <ul>
    *   <li>uses "/" as the path name separator (see {@link PathType#unix()} for more information
    *   on the path format)</li>
    *   <li>has root "/" and working directory "/work"</li>
-   *   <li>supports symbolic links and hard links</li>
    *   <li>does Unicode normalization on paths, both for lookup and for {@code Path} objects</li>
    *   <li>does case-insensitive (for ASCII characters only) lookup</li>
-   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view</li>
+   *   <li>supports only the {@code basic} file attribute view, to avoid overhead for unneeded
+   *   attributes</li>
    * </ul>
    *
-   * <h3>Advanced configuration</h3>
-   *
-   * These defaults balance working like an OS X file system with avoiding overhead that may not be
-   * needed such as the full set of UNIX file attribute views. The returned configuration can be
-   * altered to suit your needs.
+   * To create a modified version of this configuration, such as to include the full set of UNIX
+   * file attribute views or to use full Unicode case insensitivity,
+   * {@linkplain #toBuilder() create a builder}.
    *
    * <p>Example:
    *
    * <pre>
-   *   Configuration config = Configuration.osx()
-   *       .setAttributeViews(AttributeView.unix()) // full set of UNIX attribute views
-   *       .setWorkingDirectory("/Users/user") // different working dir
-   *
-   *   // use full Unicode case insensitivity for lookups; requires ICU4J
-   *   config.setPathCanonicalNormalization(
-   *       Normalization.NORMALIZE_NFD, Normalization.CASE_FOLD); </pre>
+   *   Configuration config = Configuration.osx().toBuilder()
+   *       .setAttributeViews("basic", "owner", "posix", "unix")
+   *       .setNameCanonicalNormalization(NORMALIZE_NFD, CASE_FOLD)
+   *       .setWorkingDirectory("/Users/user")
+   *       .build();  </pre>
    */
   public static Configuration osx() {
-    return unix()
-        .setPathDisplayNormalization(NORMALIZE_NFC) // matches new JDK behavior as of 1.7u40
-        .setPathCanonicalNormalization(NORMALIZE_NFD, CASE_FOLD_ASCII);
+    return OSX;
   }
 
+  private static final Configuration OSX = UNIX.toBuilder()
+      .setNameDisplayNormalization(NORMALIZE_NFC)
+      .setNameCanonicalNormalization(NORMALIZE_NFD, CASE_FOLD_ASCII)
+      .build();
+
   /**
-   * Returns a new {@link Configuration} with defaults for a Windows-like file system. Legal roots
-   * and paths are described by {@link PathType#windows()}.
-   *
-   * <h3>Default configuration</h3>
-   *
-   * <p>If no changes are made, a file system created with this configuration:
+   * Returns the default configuration for a Windows-like file system. A file system created with
+   * this configuration:
    *
    * <ul>
    *   <li>uses "\" as the path name separator and recognizes "/" as a separator when parsing
    *   paths (see {@link PathType#windows()} for more information on path format)</li>
    *   <li>has root "C:\" and working directory "C:\work"</li>
-   *   <li>supports symbolic and hard links</li>
-   *   <li>does Unicode normalization on paths for lookup</li>
-   *   <li>uses case-insensitive (for ASCII characters only) file lookup</li>
-   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view</li>
+   *   <li>performs case-insensitive (for ASCII characters only) file lookup</li>
+   *   <li>creates {@code Path} objects that use case-insensitive (for ASCII characters only)
+   *   equality</li>
+   *   <li>supports only the {@code basic} file attribute view, to avoid overhead for unneeded
+   *   attributes</li>
    * </ul>
    *
    * <h3>Advanced configuration</h3>
    *
-   * These defaults balance working like a Windows file system with avoiding overhead that may not
-   * be needed such as the full set of Windows file attribute views. The returned configuration can
-   * be altered to suit your needs.
+   * To create a modified version of this configuration, such as to include the full set of Windows
+   * file attribute views or to use full Unicode case insensitivity,
+   * {@linkplain #toBuilder() create a builder}.
    *
    * <p>Example:
    *
    * <pre>
-   *   Configuration config = Configuration.windows()
-   *       .setAttributeViews(AttributeView.windows()) // full set of Windows attribute views
-   *       .setWorkingDirectory("C:\\Users\dir") // different working dir
-   *
-   *   // use full Unicode case insensitivity for lookups; requires ICU4J
-   *   config.setPathCanonicalNormalization(Normalization.CASE_FOLD); </pre>
+   *   Configuration config = Configuration.windows().toBuilder()
+   *       .setAttributeViews("basic", "owner", "dos", "acl", "user")
+   *       .setNameCanonicalNormalization(CASE_FOLD)
+   *       .setWorkingDirectory("C:\\Users\dir")
+   *       .build();  </pre>
    */
   public static Configuration windows() {
-    return create(PathType.windows())
-        .addRoots("C:\\")
-        .setWorkingDirectory("C:\\work")
-        .setPathCanonicalNormalization(CASE_FOLD_ASCII)
-        // Windows Path objects are case insensitive for equality
-        .setPathEqualityUsesCanonicalForm();
+    return WINDOWS;
   }
+
+  private static final Configuration WINDOWS = Configuration.builder(PathType.windows())
+      .setAttributeViews("basic")
+      .setRoots("C:\\")
+      .setWorkingDirectory("C:\\work")
+      .setNameCanonicalNormalization(CASE_FOLD_ASCII)
+      .setPathEqualityUsesCanonicalForm(true)
+      .build();
 
   /**
-   * Returns a new {@link Configuration} using the given path type. The returned configuration has
-   * no other options set; at a minimum, a root must be added before creating a file system.
+   * Creates a new mutable {@link Configuration} builder using the given path type.
    */
-  public static Configuration create(PathType pathType) {
-    return new Configuration(pathType);
+  public static Builder builder(PathType pathType) {
+    return new Builder(pathType);
   }
 
+  // Path configuration
   private final PathType pathType;
-  private ImmutableSet<Normalization> pathDisplayNormalization = ImmutableSet.of();
-  private ImmutableSet<Normalization> pathCanonicalNormalization = ImmutableSet.of();
-  private boolean pathEqualityUsesCanonicalForm = false;
+  private final ImmutableSet<Normalization> nameDisplayNormalization;
+  private final ImmutableSet<Normalization> nameCanonicalNormalization;
+  private final boolean pathEqualityUsesCanonicalForm;
 
-  private final Set<String> roots = new LinkedHashSet<>();
-  private String workingDirectory;
+  // Attribute configuration
+  private final ImmutableSet<String> attributeViews;
+  private final ImmutableSet<AttributeProvider> attributeProviders;
+  private final ImmutableMap<String, Object> defaultAttributeValues;
 
-  private AttributeConfiguration attributeConfiguration = AttributeConfiguration.basic();
+  // Other
+  private final ImmutableSet<String> roots;
+  private final String workingDirectory;
 
-  private Set<Jimfs.Feature> supportedFeatures = ImmutableSet.copyOf(
-      EnumSet.allOf(Jimfs.Feature.class));
-
-  Configuration(PathType pathType) {
-    this.pathType = checkNotNull(pathType);
+  /**
+   * Creates an immutable configuration object from the given builder.
+   */
+  private Configuration(Builder builder) {
+    this.pathType = builder.pathType;
+    this.nameDisplayNormalization = builder.nameDisplayNormalization;
+    this.nameCanonicalNormalization = builder.nameCanonicalNormalization;
+    this.pathEqualityUsesCanonicalForm = builder.pathEqualityUsesCanonicalForm;
+    this.attributeViews = builder.attributeViews;
+    this.attributeProviders = builder.attributeProviders == null
+        ? ImmutableSet.<AttributeProvider>of()
+        : ImmutableSet.copyOf(builder.attributeProviders);
+    this.defaultAttributeValues = builder.defaultAttributeValues == null
+        ? ImmutableMap.<String, Object>of()
+        : ImmutableMap.copyOf(builder.defaultAttributeValues);
+    this.roots = builder.roots;
+    this.workingDirectory = builder.workingDirectory;
   }
 
   /**
-   * Returns the configured path type for the file system.
+   * Returns the roots for the file system.
    */
-  public PathType getPathType() {
-    return pathType;
-  }
-
-  /**
-   * Returns the normalization that should be done when creating {@code Path} objects.
-   */
-  public ImmutableSet<Normalization> getPathDisplayNormalization() {
-    return pathDisplayNormalization;
-  }
-
-  /**
-   * Returns the normalization that should used internally for file lookups.
-   */
-  public ImmutableSet<Normalization> getPathCanonicalNormalization() {
-    return pathCanonicalNormalization;
-  }
-
-  /**
-   * Returns whether or not path equality should use the canonical form of names or not.
-   */
-  public boolean getPathEqualityUsesCanonicalForm() {
-    return pathEqualityUsesCanonicalForm;
-  }
-
-  /**
-   * Returns the configured roots for the file system.
-   */
-  public ImmutableList<String> getRoots() {
+  public ImmutableList<String> roots() {
     return ImmutableList.copyOf(roots);
   }
 
   /**
-   * Returns the configured working directory for the file system.
+   * Returns the working directory for the file system.
    */
-  public String getWorkingDirectory() {
-    if (workingDirectory == null) {
-      String firstRoot = roots.iterator().next();
-      return firstRoot + pathType.getSeparator() + "work";
-    }
+  public String workingDirectory() {
     return workingDirectory;
   }
 
   /**
-   * Returns the attribute configuration for the file system.
+   * Returns the path type for the file system.
    */
-  public AttributeConfiguration getAttributeConfiguration() {
-    return attributeConfiguration;
+  public PathType pathType() {
+    return pathType;
   }
 
   /**
-   * Returns the configured set of optional features the file system should support.
+   * Returns the normalizations that will be applied to filenames for the string form of
+   * {@code Path} objects in the file system.
    */
-  public Set<Jimfs.Feature> getSupportedFeatures() {
-    return Collections.unmodifiableSet(supportedFeatures);
+  public ImmutableSet<Normalization> nameDisplayNormalization() {
+    return nameDisplayNormalization;
   }
 
   /**
-   * Sets the normalization that should should be used for {@code toString()} form of {@code Path}
-   * objects created by the file system. Unless {@link #setPathEqualityUsesCanonicalForm()} is set,
-   * the display normalization is also used for determining equality and sort order of path
-   * objects.
-   *
-   * <p>The given normalizations may include either {@link Normalization#NONE NONE} or at most one
-   * of the Unicode normalizations ({@link Normalization#NORMALIZE_NFC NORMALIZE_NFC} and
-   * {@link Normalization#NORMALIZE_NFD NORMALIZE_NFD}) and at most one of the case folding
-   * normalizations ({@link Normalization#CASE_FOLD CASE_FOLD} and
-   * {@link Normalization#CASE_FOLD_ASCII CASE_FOLD_ASCII}).
-   *
-   * @throws IllegalArgumentException if the given set of normalizations is invalid
+   * Returns the normalizations that will be applied to the canonical form of filenames in the file
+   * system.
    */
-  public Configuration setPathDisplayNormalization(
-      Normalization first, Normalization... more) {
-    List<Normalization> normalizations = Lists.asList(first, more);
-    checkNormalizations(normalizations);
-    this.pathDisplayNormalization = ImmutableSet.copyOf(normalizations);
-    return this;
+  public ImmutableSet<Normalization> nameCanonicalNormalization() {
+    return nameCanonicalNormalization;
   }
 
   /**
-   * Sets the canonical normalization of {@code Path} objects created by the file system. The
-   * canonical normalization is used to determine equality of two filenames when doing file lookup,
-   * creation, etc. It can also be used for determining equality and sort order of path objects by
-   * setting {@link #setPathEqualityUsesCanonicalForm()}.
-   *
-   * <p>The given normalizations may include either {@link Normalization#NONE NONE} or at most one
-   * of the Unicode normalizations ({@link Normalization#NORMALIZE_NFC NORMALIZE_NFC} and
-   * {@link Normalization#NORMALIZE_NFD NORMALIZE_NFD}) and at most one of the case folding
-   * normalizations ({@link Normalization#CASE_FOLD CASE_FOLD} and
-   * {@link Normalization#CASE_FOLD_ASCII CASE_FOLD_ASCII}).
-   *
-   * @throws IllegalArgumentException if the given set of normalizations is invalid
+   * Returns true if {@code Path} objects in the file system use the canonical form of filenames
+   * for determining equality of two paths; false if they use the display form.
    */
-  public Configuration setPathCanonicalNormalization(Normalization first, Normalization... more) {
-    List<Normalization> normalizations = Lists.asList(first, more);
-    checkNormalizations(normalizations);
-    this.pathCanonicalNormalization = ImmutableSet.copyOf(normalizations);
-    return this;
+  public boolean pathEqualityUsesCanonicalForm() {
+    return pathEqualityUsesCanonicalForm;
   }
 
   /**
-   * Sets the file system to use the canonical normalization of filenames to determine the
-   * equality and sort order of {@code Path} objects rather than using the string form of the path.
+   * Returns the set of file attribute views the file system supports.
    */
-  public Configuration setPathEqualityUsesCanonicalForm() {
-    pathEqualityUsesCanonicalForm = true;
-    return this;
+  public ImmutableSet<String> attributeViews() {
+    return attributeViews;
   }
 
-  private void checkNormalizations(List<Normalization> normalizations) {
-    Normalization none = null;
-    Normalization normalization = null;
-    Normalization caseFold = null;
-    for (Normalization n : normalizations) {
-      checkNotNull(n);
-      checkNormalizationNotSet(n, none);
+  /**
+   * Returns the set of custom attribute providers the file system uses to implement custom file
+   * attribute views.
+   */
+  public ImmutableSet<AttributeProvider> attributeProviders() {
+    return attributeProviders;
+  }
 
-      switch (n) {
-        case NONE:
-          none = n;
-          break;
-        case NORMALIZE_NFC:
-        case NORMALIZE_NFD:
-          checkNormalizationNotSet(n, normalization);
-          normalization = n;
-          break;
-        case CASE_FOLD:
-        case CASE_FOLD_ASCII:
-          checkNormalizationNotSet(n, caseFold);
-          caseFold = n;
+  /**
+   * Returns the set of default file attribute values for the file system. The values in the
+   * returned map override the file system defaults.
+   */
+  public ImmutableMap<String, Object> defaultAttributeValues() {
+    return defaultAttributeValues;
+  }
+
+  /**
+   * Returns a new mutable builder that initially contains the same settings as this configuration.
+   */
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
+
+  /**
+   * Mutable builder for {@link Configuration} objects.
+   */
+  public static final class Builder {
+
+    // Path configuration
+    private final PathType pathType;
+    private ImmutableSet<Normalization> nameDisplayNormalization = ImmutableSet.of();
+    private ImmutableSet<Normalization> nameCanonicalNormalization = ImmutableSet.of();
+    private boolean pathEqualityUsesCanonicalForm;
+
+    // Attribute configuration
+    private ImmutableSet<String> attributeViews = ImmutableSet.of();
+    private Set<AttributeProvider> attributeProviders = null;
+    private Map<String, Object> defaultAttributeValues;
+
+    // Other
+    private ImmutableSet<String> roots = ImmutableSet.of();
+    private String workingDirectory;
+
+    private Builder(PathType pathType) {
+      this.pathType = checkNotNull(pathType);
+    }
+
+    private Builder(Configuration configuration) {
+      this.pathType = configuration.pathType;
+      this.nameDisplayNormalization = configuration.nameDisplayNormalization;
+      this.nameCanonicalNormalization = configuration.nameCanonicalNormalization;
+      this.pathEqualityUsesCanonicalForm = configuration.pathEqualityUsesCanonicalForm;
+      this.attributeViews = configuration.attributeViews;
+      this.attributeProviders = configuration.attributeProviders.isEmpty()
+          ? null
+          : new HashSet<>(configuration.attributeProviders);
+      this.defaultAttributeValues = configuration.defaultAttributeValues.isEmpty()
+          ? null
+          : new HashMap<>(configuration.defaultAttributeValues);
+      this.roots = configuration.roots;
+      this.workingDirectory = configuration.workingDirectory;
+    }
+
+    /**
+     * Sets the normalizations that will be applied to the display form of filenames. The display
+     * form is used in the {@code toString()} of {@code Path} objects.
+     */
+    public Builder setNameDisplayNormalization(Normalization first, Normalization... more) {
+      this.nameDisplayNormalization = checkNormalizations(Lists.asList(first, more));
+      return this;
+    }
+
+    /**
+     * Returns the normalizations that will be applied to the canonical form of filenames in the
+     * file system. The canonical form is used to determine the equality of two filenames when
+     * performing a file lookup.
+     */
+    public Builder setNameCanonicalNormalization(Normalization first, Normalization... more) {
+      this.nameCanonicalNormalization = checkNormalizations(Lists.asList(first, more));
+      return this;
+    }
+
+    private ImmutableSet<Normalization> checkNormalizations(List<Normalization> normalizations) {
+      Normalization none = null;
+      Normalization normalization = null;
+      Normalization caseFold = null;
+      for (Normalization n : normalizations) {
+        checkNotNull(n);
+        checkNormalizationNotSet(n, none);
+
+        switch (n) {
+          case NONE:
+            none = n;
+            break;
+          case NORMALIZE_NFC:
+          case NORMALIZE_NFD:
+            checkNormalizationNotSet(n, normalization);
+            normalization = n;
+            break;
+          case CASE_FOLD:
+          case CASE_FOLD_ASCII:
+            checkNormalizationNotSet(n, caseFold);
+            caseFold = n;
+        }
+      }
+
+      if (none != null) {
+        return ImmutableSet.of();
+      }
+      return ImmutableSet.copyOf(normalizations);
+    }
+
+    private static void checkNormalizationNotSet(Normalization n, @Nullable Normalization set) {
+      if (set != null) {
+        throw new IllegalArgumentException("can't set normalization " + n
+            + ": normalization " + set + " already set");
       }
     }
-  }
 
-  private static void checkNormalizationNotSet(Normalization n, @Nullable Normalization set) {
-    if (set != null) {
-      throw new IllegalArgumentException("can't set normalization " + n
-          + ": normalization " + set + " already set");
+    /**
+     * Sets whether {@code Path} objects in the file system use the canonical form (true) or the
+     * display form (false) of filenames for determining equality of two paths.
+     */
+    public Builder setPathEqualityUsesCanonicalForm(boolean useCanonicalForm) {
+      this.pathEqualityUsesCanonicalForm = useCanonicalForm;
+      return this;
     }
-  }
 
-  /**
-   * Sets the attribute configuration for the file system.
-   */
-  public Configuration setAttributeConfiguration(AttributeConfiguration attributeConfiguration) {
-    this.attributeConfiguration = checkNotNull(attributeConfiguration);
-    return this;
-  }
-
-  /**
-   * Adds the given root directories to the file system.
-   *
-   * @throws IllegalStateException if the path type does not allow multiple roots
-   */
-  public Configuration addRoots(String first, String... more) {
-    List<String> roots = Lists.asList(first, more);
-    checkState(this.roots.size() + roots.size() == 1 || pathType.allowsMultipleRoots(),
-        "this path type does not allow multiple roots");
-    for (String root : roots) {
-      checkState(!this.roots.contains(root), "root " + root + " is already configured");
-      this.roots.add(checkNotNull(root));
+    /**
+     * Sets the attribute views the file system should support. By default, the views that may be
+     * specified are those listed by {@link StandardAttributeProviders}. If any other views should
+     * be supported, attribute providers for those views must be
+     * {@linkplain #addAttributeProvider(AttributeProvider) added}.
+     */
+    public Builder setAttributeViews(String first, String... more) {
+      this.attributeViews = ImmutableSet.copyOf(Lists.asList(first, more));
+      return this;
     }
-    return this;
-  }
 
-  /**
-   * Sets the working directory for the file system.
-   *
-   * <p>If not set, the default working directory will be a directory called "work" located in
-   * the first root directory in the list of roots.
-   */
-  public Configuration setWorkingDirectory(String workingDirectory) {
-    this.workingDirectory = checkNotNull(workingDirectory);
-    return this;
-  }
+    /**
+     * Adds an attribute provider for a custom view for the file system to support.
+     */
+    public Builder addAttributeProvider(AttributeProvider provider) {
+      if (attributeProviders == null) {
+        attributeProviders = new HashSet<>();
+      }
+      attributeProviders.add(provider);
+      return this;
+    }
 
-  /**
-   * Sets the optional features the file system should support. Any supported features that were
-   * previously set are replaced.
-   */
-  public Configuration setSupportedFeatures(Jimfs.Feature... features) {
-    supportedFeatures = ImmutableSet.copyOf(features);
-    return this;
+    /**
+     * Sets the default value to use for the given file attribute when creating new files. The
+     * attribute must be in the form "view:attribute". The value must be of a type that the
+     * provider for the view accepts.
+     *
+     * <p>For the included attribute views, default values can be set for the following attributes:
+     *
+     * <table>
+     *   <tr>
+     *     <th>Attribute</th>
+     *     <th>Legal Types</th>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "owner:owner"}</td>
+     *     <td>{@code String} (user name), {@code UserPrincipal}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "posix:group"}</td>
+     *     <td>{@code String} (group name), {@code GroupPrincipal}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "posix:permissions"}</td>
+     *     <td>{@code String} (format "rwxrw-r--"), {@code Set<PosixFilePermission>}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "dos:readonly"}</td>
+     *     <td>{@code Boolean}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "dos:hidden"}</td>
+     *     <td>{@code Boolean}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "dos:archive"}</td>
+     *     <td>{@code Boolean}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "dos:system"}</td>
+     *     <td>{@code Boolean}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "acl:acl"}</td>
+     *     <td>{@code List<AclEntry>}</td>
+     *   </tr>
+     * </table>
+     */
+    public Builder setDefaultAttributeValue(String attribute, Object value) {
+      if (defaultAttributeValues == null) {
+        defaultAttributeValues = new HashMap<>();
+      }
+
+      defaultAttributeValues.put(checkNotNull(attribute), checkNotNull(value));
+      return this;
+    }
+
+    /**
+     * Sets the roots for the file system.
+     */
+    public Builder setRoots(String first, String... more) {
+      this.roots = ImmutableSet.copyOf(Lists.asList(first, more));
+      return this;
+    }
+
+    /**
+     * Sets the path to the working directory for the file system. The working directory must be
+     * an absolute path starting with one of the configured roots.
+     */
+    public Builder setWorkingDirectory(String workingDirectory) {
+      this.workingDirectory = checkNotNull(workingDirectory);
+      return this;
+    }
+
+    /**
+     * Creates a new immutable configuration object from this builder.
+     */
+    public Configuration build() {
+      return new Configuration(this);
+    }
   }
 }

@@ -19,7 +19,7 @@ package com.google.jimfs.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
-import com.google.jimfs.Normalization;
+import com.google.jimfs.path.Normalization;
 
 import java.util.Collection;
 import java.util.regex.Pattern;
