@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.jimfs.internal;
+package com.google.jimfs.path;
 
 import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
 import static com.google.jimfs.path.Normalization.CASE_FOLD_UNICODE;
@@ -26,7 +26,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.jimfs.path.Normalization;
 
 import org.junit.Test;
 
