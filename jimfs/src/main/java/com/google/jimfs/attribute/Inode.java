@@ -40,7 +40,8 @@ public abstract class Inode {
   private long lastAccessTime;
   private long lastModifiedTime;
 
-  private final Map<String, Object> attributes = new HashMap<>();
+  @Nullable
+  private Map<String, Object> attributes; // null when only the basic view is used (default)
 
   protected Inode(int id) {
     this.id = id;
@@ -159,6 +160,9 @@ public abstract class Inode {
    * Returns the attribute keys contained in the attributes map for the file.
    */
   public synchronized final ImmutableSet<String> getAttributeKeys() {
+    if (attributes == null) {
+      return ImmutableSet.of();
+    }
     return ImmutableSet.copyOf(attributes.keySet());
   }
 
@@ -170,6 +174,9 @@ public abstract class Inode {
   @SuppressWarnings("unchecked")
   @Nullable
   public synchronized final <T> T getAttribute(String key) {
+    if (attributes == null) {
+      return null;
+    }
     return (T) attributes.get(key);
   }
 
@@ -177,6 +184,9 @@ public abstract class Inode {
    * Sets the attribute with the given key to the given value.
    */
   public synchronized final void setAttribute(String key, Object value) {
+    if (attributes == null) {
+      attributes = new HashMap<>();
+    }
     attributes.put(key, value);
   }
 
@@ -184,7 +194,9 @@ public abstract class Inode {
    * Deletes the attribute with the given key.
    */
   public synchronized final void deleteAttribute(String key) {
-    attributes.remove(key);
+    if (attributes != null) {
+      attributes.remove(key);
+    }
   }
 
   /**
@@ -209,8 +221,11 @@ public abstract class Inode {
     target.putAll(attributes);
   }
 
-  private synchronized void putAll(Map<String, Object> attributes) {
-    if (this.attributes != attributes) {
+  private synchronized void putAll(@Nullable Map<String, Object> attributes) {
+    if (attributes != null && this.attributes != attributes) {
+      if (this.attributes == null) {
+        this.attributes = new HashMap<>();
+      }
       this.attributes.putAll(attributes);
     }
   }
