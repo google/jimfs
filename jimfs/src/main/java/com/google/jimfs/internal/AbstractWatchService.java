@@ -150,8 +150,8 @@ abstract class AbstractWatchService implements WatchService {
   @Override
   public void close() {
     if (open.compareAndSet(true, false)) {
-      // TODO(cgdecker): If there's a better way to guarantee that no thread is blocked on the queue
-      // after this is closed I'd love to know
+      // TODO(cgdecker): If there's a better way to guarantee that no thread is blocked on the
+      // queue after this is closed I'd love to know
 
       // Attempt to acquire the write lock... each time we fail, there may be threads blocked
       // on the queue (if none are blocked, they will be blocked soon)

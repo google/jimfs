@@ -63,8 +63,6 @@ public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttribu
     ASSERT.that(provider.get(inode, "gid")).isA(Integer.class);
     ASSERT.that(provider.get(inode, "rdev")).is(0L);
     ASSERT.that(provider.get(inode, "dev")).is(1L);
-    // TODO(cgdecker): File objects are kind of like inodes; should their IDs be inode IDs here?
-    // even though we're already using that ID as the fileKey, which unix doesn't do
     ASSERT.that(provider.get(inode, "ino")).isA(Integer.class);
 
     // these have logical origins in attributes from other views

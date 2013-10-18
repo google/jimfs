@@ -44,11 +44,10 @@
       </dependency>
 
       <!--
-      TODO(cgdecker): Don't really like needing a dependency on ICU4J here.
-      However, it does seem like the best option for dealing with good general purpose case
-      insensitivity with Normalizer2. Of course, not many people probably care about case
-      insensitivity beyond ASCII for an in-memory file system, so I'll see if I can make it optional
-      unless the user really wants Unicode case insensitivity...
+      Don't really like needing a dependency on ICU4J here. However, it does seem like the best
+      (only?) option for general purpose Unicode case insensitivity. Of course, not many people
+      probably care about case insensitivity beyond ASCII for an in-memory file system, so it's
+      optional unless the user really wants Unicode case insensitivity.
        -->
       <dependency>
         <groupId>com.ibm.icu</groupId>

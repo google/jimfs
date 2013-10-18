@@ -73,6 +73,21 @@ public class WindowsPathTypeTest {
   }
 
   @Test
+  public void testWindows_absolutePathOnCurrentDrive_unsupported() {
+    try {
+      windows().parsePath("\\foo\\bar");
+      fail();
+    } catch (InvalidPathException expected) {
+    }
+
+    try {
+      windows().parsePath("\\");
+      fail();
+    } catch (InvalidPathException expected) {
+    }
+  }
+
+  @Test
   public void testWindows_uncPaths() {
     PathType windows = PathType.windows();
     PathType.ParseResult path = windows.parsePath("\\\\host\\share");
