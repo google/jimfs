@@ -16,12 +16,11 @@
 
 package com.google.jimfs.attribute;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -35,21 +34,21 @@ public abstract class Inode {
 
   private final int id;
 
-  private final AtomicInteger links = new AtomicInteger();
+  private int links;
 
-  private final AtomicLong creationTime;
-  private final AtomicLong lastAccessTime;
-  private final AtomicLong lastModifiedTime;
+  private long creationTime;
+  private long lastAccessTime;
+  private long lastModifiedTime;
 
-  private final ConcurrentMap<String, Object> attributes = new ConcurrentHashMap<>();
+  private final Map<String, Object> attributes = new HashMap<>();
 
   protected Inode(int id) {
     this.id = id;
 
     long now = System.currentTimeMillis(); // TODO(cgdecker): Use a Clock
-    this.creationTime = new AtomicLong(now);
-    this.lastAccessTime = new AtomicLong(now);
-    this.lastModifiedTime = new AtomicLong(now);
+    this.creationTime = now;
+    this.lastAccessTime = now;
+    this.lastModifiedTime = now;
   }
 
   /**
@@ -82,64 +81,64 @@ public abstract class Inode {
   /**
    * Returns the current count of links to this inode.
    */
-  public final int links() {
-    return links.get();
+  public synchronized final int links() {
+    return links;
   }
 
   /**
    * Increments the link count.
    */
-  public final void incrementLinkCount() {
-    links.incrementAndGet();
+  public synchronized final void incrementLinkCount() {
+    links++;
   }
 
   /**
    * Decrements and returns the link count.
    */
-  public final int decrementLinkCount() {
-    return links.decrementAndGet();
+  public synchronized final int decrementLinkCount() {
+    return --links;
   }
 
   /**
    * Gets the creation time of the file.
    */
-  public final long getCreationTime() {
-    return creationTime.get();
+  public synchronized final long getCreationTime() {
+    return creationTime;
   }
 
   /**
    * Gets the last access time of the file.
    */
-  public final long getLastAccessTime() {
-    return lastAccessTime.get();
+  public synchronized final long getLastAccessTime() {
+    return lastAccessTime;
   }
 
   /**
    * Gets the last modified time of the file.
    */
-  public final long getLastModifiedTime() {
-    return lastModifiedTime.get();
+  public synchronized final long getLastModifiedTime() {
+    return lastModifiedTime;
   }
 
   /**
    * Sets the creation time of the file.
    */
-  public final void setCreationTime(long creationTime) {
-    this.creationTime.set(creationTime);
+  public synchronized final void setCreationTime(long creationTime) {
+    this.creationTime = creationTime;
   }
 
   /**
    * Sets the last access time of the file.
    */
-  public final void setLastAccessTime(long lastAccessTime) {
-    this.lastAccessTime.set(lastAccessTime);
+  public synchronized final void setLastAccessTime(long lastAccessTime) {
+    this.lastAccessTime = lastAccessTime;
   }
 
   /**
    * Sets the last modified time of the file.
    */
-  public final void setLastModifiedTime(long lastModifiedTime) {
-    this.lastModifiedTime.set(lastModifiedTime);
+  public synchronized final void setLastModifiedTime(long lastModifiedTime) {
+    this.lastModifiedTime = lastModifiedTime;
   }
 
   /**
@@ -159,8 +158,8 @@ public abstract class Inode {
   /**
    * Returns the attribute keys contained in the attributes map for the file.
    */
-  public final Set<String> getAttributeKeys() {
-    return attributes.keySet();
+  public synchronized final ImmutableSet<String> getAttributeKeys() {
+    return ImmutableSet.copyOf(attributes.keySet());
   }
 
   /**
@@ -170,22 +169,50 @@ public abstract class Inode {
    */
   @SuppressWarnings("unchecked")
   @Nullable
-  public final <T> T getAttribute(String key) {
+  public synchronized final <T> T getAttribute(String key) {
     return (T) attributes.get(key);
   }
 
   /**
    * Sets the attribute with the given key to the given value.
    */
-  public final void setAttribute(String key, Object value) {
+  public synchronized final void setAttribute(String key, Object value) {
     attributes.put(key, value);
   }
 
   /**
    * Deletes the attribute with the given key.
    */
-  public final void deleteAttribute(String key) {
+  public synchronized final void deleteAttribute(String key) {
     attributes.remove(key);
+  }
+
+  /**
+   * Copies basic attributes (file times) from this inode to the given inode.
+   */
+  public synchronized final void copyBasicAttributes(Inode target) {
+    target.setFileTimes(creationTime, lastModifiedTime, lastAccessTime);
+  }
+
+  private synchronized void setFileTimes(
+      long creationTime, long lastModifiedTime, long lastAccessTime) {
+    this.creationTime = creationTime;
+    this.lastModifiedTime = lastModifiedTime;
+    this.lastAccessTime = lastAccessTime;
+  }
+
+  /**
+   * Copies the attributes from this inode to the given inode.
+   */
+  public synchronized final void copyAttributes(Inode target) {
+    copyBasicAttributes(target);
+    target.putAll(attributes);
+  }
+
+  private synchronized void putAll(Map<String, Object> attributes) {
+    if (this.attributes != attributes) {
+      this.attributes.putAll(attributes);
+    }
   }
 
   /**

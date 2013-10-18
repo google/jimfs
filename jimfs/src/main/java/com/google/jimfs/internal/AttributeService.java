@@ -182,19 +182,14 @@ final class AttributeService {
    * Copies the file times of the given inode to the given copy inode.
    */
   public void copyBasicAttributes(Inode inode, Inode copy) {
-    copy.setCreationTime(inode.getCreationTime());
-    copy.setLastAccessTime(inode.getLastAccessTime());
-    copy.setLastModifiedTime(inode.getLastModifiedTime());
+    inode.copyBasicAttributes(copy);
   }
 
   /**
    * Copies the attributes of the given inode to the given copy inode.
    */
   public void copyAttributes(Inode inode, Inode copy) {
-    copyBasicAttributes(inode, copy);
-    for (String attribute : inode.getAttributeKeys()) {
-      copy.setAttribute(attribute, inode.getAttribute(attribute));
-    }
+    inode.copyAttributes(copy);
   }
 
   /**
