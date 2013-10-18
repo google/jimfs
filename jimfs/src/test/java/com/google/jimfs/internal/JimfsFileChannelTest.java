@@ -209,11 +209,11 @@ public class JimfsFileChannelTest {
     FileChannel channel = channel(store, WRITE);
 
     channel.truncate(10); // no resize, >= size
-    assertEquals(10, store.sizeInBytes());
+    assertEquals(10, store.size());
     channel.truncate(11); // no resize, > size
-    assertEquals(10, store.sizeInBytes());
+    assertEquals(10, store.size());
     channel.truncate(5); // resize down to 5
-    assertEquals(5, store.sizeInBytes());
+    assertEquals(5, store.size());
 
     channel.position(20);
     channel.truncate(10);

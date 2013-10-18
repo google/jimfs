@@ -58,7 +58,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   }
 
   @Override
-  public long sizeInBytes() {
+  public long size() {
     return 0;
   }
 

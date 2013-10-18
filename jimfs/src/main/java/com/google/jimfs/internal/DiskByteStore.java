@@ -48,7 +48,7 @@ final class DiskByteStore extends ByteStore {
   }
 
   @Override
-  public long size() {
+  public long currentSize() {
     return size;
   }
 

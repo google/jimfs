@@ -48,7 +48,7 @@ public class RealFileByteStore extends ByteStore implements Closeable {
   }
 
   @Override
-  public long size() {
+  public long currentSize() {
     try {
       return channel.size();
     } catch (IOException e) {
@@ -60,7 +60,7 @@ public class RealFileByteStore extends ByteStore implements Closeable {
   protected ByteStore createCopy() {
     RealFileByteStore copy = new RealFileByteStore();
     try {
-      transferTo(0, size(), copy.channel);
+      transferTo(0, currentSize(), copy.channel);
       return copy;
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -69,7 +69,7 @@ public class RealFileByteStore extends ByteStore implements Closeable {
 
   @Override
   public boolean truncate(long size) {
-    if (size < size()) {
+    if (size < currentSize()) {
       try {
         channel.truncate(size);
       } catch (IOException e) {

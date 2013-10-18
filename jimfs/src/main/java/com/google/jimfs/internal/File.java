@@ -53,7 +53,7 @@ final class File extends Inode {
 
   @Override
   public long size() {
-    return content.sizeInBytes();
+    return content.size();
   }
 
   @Override

@@ -231,7 +231,7 @@ final class JimfsFileChannel extends FileChannel {
         store.writeLock().lockInterruptibly();
         try {
           if (options.isAppend()) {
-            position = store.sizeInBytes();
+            position = store.size();
           }
           int written = store.write(position, src);
           position += written;
@@ -275,7 +275,7 @@ final class JimfsFileChannel extends FileChannel {
         store.writeLock().lockInterruptibly();
         try {
           if (options.isAppend()) {
-            position = store.sizeInBytes();
+            position = store.size();
           }
           long written = store.write(position, srcs);
           position += written;
@@ -321,7 +321,7 @@ final class JimfsFileChannel extends FileChannel {
   @Override
   public long size() throws IOException {
     checkOpen();
-    return store.sizeInBytes();
+    return store.size();
   }
 
   @Override
@@ -423,7 +423,7 @@ final class JimfsFileChannel extends FileChannel {
         store.writeLock().lockInterruptibly();
         try {
           if (options.isAppend()) {
-            position = store.sizeInBytes();
+            position = store.size();
           }
 
           long transferred = store.transferFrom(src, (int) position, (int) count);
@@ -502,7 +502,7 @@ final class JimfsFileChannel extends FileChannel {
         store.writeLock().lockInterruptibly();
         try {
           if (options.isAppend()) {
-            position = store.size();
+            position = store.currentSize();
           }
 
           int written = store.write((int) position, src);

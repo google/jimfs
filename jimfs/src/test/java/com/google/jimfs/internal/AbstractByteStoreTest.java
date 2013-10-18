@@ -53,7 +53,7 @@ public abstract class AbstractByteStoreTest {
 
   @Test
   public void testEmpty() {
-    assertEquals(0, store.sizeInBytes());
+    assertEquals(0, store.size());
     assertContentEquals("", store);
   }
 
@@ -738,8 +738,8 @@ public abstract class AbstractByteStoreTest {
   }
 
   private static void assertContentEquals(byte[] expected, ByteStore actual) {
-    assertEquals(expected.length, actual.size());
-    byte[] actualBytes = new byte[(int) actual.size()];
+    assertEquals(expected.length, actual.currentSize());
+    byte[] actualBytes = new byte[(int) actual.currentSize()];
     actual.read(0, ByteBuffer.wrap(actualBytes));
     assertArrayEquals(expected, actualBytes);
   }

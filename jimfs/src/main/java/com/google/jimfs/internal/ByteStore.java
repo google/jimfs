@@ -49,9 +49,10 @@ abstract class ByteStore implements FileContent {
   }
 
   /**
-   * Gets the current size of this store in bytes.
+   * Gets the current size of this store in bytes. Does not do locking, so should only be called
+   * when holding a lock.
    */
-  public abstract long size();
+  public abstract long currentSize();
 
   /**
    * Creates a copy of this byte store.
@@ -61,10 +62,10 @@ abstract class ByteStore implements FileContent {
   // need to lock in these methods since they're defined by an interface
 
   @Override
-  public final long sizeInBytes() {
+  public final long size() {
     readLock().lock();
     try {
-      return size();
+      return currentSize();
     } finally {
       readLock().unlock();
     }
@@ -169,7 +170,7 @@ abstract class ByteStore implements FileContent {
    * read or -1 if {@code pos} is greater than or equal to the size of this store.
    */
   public long read(long pos, Iterable<ByteBuffer> bufs) {
-    if (pos >= sizeInBytes()) {
+    if (pos >= size()) {
       return -1;
     }
 

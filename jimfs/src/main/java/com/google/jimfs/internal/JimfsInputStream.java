@@ -106,7 +106,7 @@ final class JimfsInputStream extends InputStream {
       }
 
       // available() must be an int, so the min must be also
-      int skip = (int) Math.min(Math.max(store.sizeInBytes() - pos, 0), n);
+      int skip = (int) Math.min(Math.max(store.size() - pos, 0), n);
       pos += skip;
       return skip;
     }
@@ -119,7 +119,7 @@ final class JimfsInputStream extends InputStream {
       if (finished) {
         return 0;
       }
-      long available = Math.max(store.sizeInBytes() - pos, 0);
+      long available = Math.max(store.size() - pos, 0);
       return Ints.saturatedCast(available);
     }
   }

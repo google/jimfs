@@ -73,7 +73,7 @@ final class JimfsPath implements Path, FileContent {
   }
 
   @Override
-  public long sizeInBytes() {
+  public long size() {
     return 0;
   }
 

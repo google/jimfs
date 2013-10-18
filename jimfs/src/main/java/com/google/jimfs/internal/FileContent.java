@@ -31,7 +31,7 @@ interface FileContent {
   /**
    * Returns the size, in bytes, of this content.
    */
-  long sizeInBytes();
+  long size();
 
   /**
    * Called when the file is deleted.

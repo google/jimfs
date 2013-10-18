@@ -44,7 +44,7 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public long size() {
+  public long currentSize() {
     return size;
   }
 

@@ -153,7 +153,7 @@ public class FileFootprintBenchmark {
     }
 
     @Override
-    public long sizeInBytes() {
+    public long size() {
       return 0;
     }
 
