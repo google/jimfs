@@ -152,7 +152,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    *     entry already exists for the it
    */
   public void link(Name name, File file) {
-    DirectoryEntry entry = put(checkValidName(name, "link"), file);
+    DirectoryEntry entry = put(checkNotReserved(name, "link"), file);
     if (file.isDirectory()) {
       file.asDirectoryTable().linked(entry);
     }
@@ -165,7 +165,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    * @throws IllegalArgumentException if {@code name} is a reserved name such as "."
    */
   public void unlink(Name name) {
-    DirectoryEntry entry = remove(checkValidName(name, "unlink"));
+    DirectoryEntry entry = remove(checkNotReserved(name, "unlink"));
     File file = entry.file();
     if (file.isDirectory()) {
       file.asDirectoryTable().unlinked();
@@ -193,12 +193,11 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
     return builder.build();
   }
 
-  private static int indexOf(Name name, int tableLength) {
+  /**
+   * Returns the index of the bucket in the array where an entry for the given name should go.
+   */
+  private static int bucketIndex(Name name, int tableLength) {
     return smearHash(name.hashCode()) & (tableLength - 1);
-  }
-
-  private float loadFactor() {
-    return ((float) size) / table.length;
   }
 
   /**
@@ -206,7 +205,8 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    */
   @Nullable
   public DirectoryEntry get(Name name) {
-    int index = indexOf(name, table.length);
+    int index = bucketIndex(name, table.length);
+
     DirectoryEntry entry = table[index];
     while (entry != null) {
       if (name.equals(entry.name())) {
@@ -219,10 +219,13 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   }
 
   /**
-   * Adds the given entry to this table.
+   * Adds an entry for the given name and file to this table.
    */
   private DirectoryEntry put(Name name, File file) {
-    int index = indexOf(name, table.length);
+    int index = bucketIndex(name, table.length);
+
+    // find the place the new entry should go, ensuring an entry with the same name doesn't already
+    // exist along the way
     DirectoryEntry prev = null;
     DirectoryEntry curr = table[index];
     while (curr != null) {
@@ -235,14 +238,19 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
     }
 
     DirectoryEntry newEntry = new DirectoryEntry(self(), name, file);
-    size++;
 
+    size++;
     if (expandIfNeeded()) {
+      // if the table was expanded, the index/entry we found is no longer applicable, so just add
+      // the entry normally
       put(table, newEntry);
-    } else if (prev != null) {
-      prev.next = newEntry;
     } else {
-      table[index] = newEntry;
+      // otherwise, we just can use the index/entry we found
+      if (prev != null) {
+        prev.next = newEntry;
+      } else {
+        table[index] = newEntry;
+      }
     }
 
     file.incrementLinkCount();
@@ -250,9 +258,10 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   }
 
   private boolean expandIfNeeded() {
-    if (loadFactor() > 0.8) {
+    if (percentFull() > 0.75f) {
       DirectoryEntry[] newTable = new DirectoryEntry[table.length * 2];
 
+      // redistribute all current entries in the new table
       for (DirectoryEntry entry : table) {
         for (; entry != null; entry = entry.next) {
           put(newTable, entry);
@@ -266,8 +275,12 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
     return false;
   }
 
+  private float percentFull() {
+    return ((float) size) / table.length;
+  }
+
   private static void put(DirectoryEntry[] table, DirectoryEntry entry) {
-    int index = indexOf(entry.name(), table.length);
+    int index = bucketIndex(entry.name(), table.length);
     DirectoryEntry prev = null;
     DirectoryEntry existing = table[index];
     while (existing != null) {
@@ -287,7 +300,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    * no such entry exists.
    */
   private DirectoryEntry remove(Name name) {
-    int index = indexOf(name, table.length);
+    int index = bucketIndex(name, table.length);
 
     DirectoryEntry prev = null;
     DirectoryEntry entry = table[index];
@@ -337,26 +350,21 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
     };
   }
 
-  private static Name checkValidName(Name name, String action) {
+  /**
+   * Checks that the given name is not "." or "..". Those names cannot be set/removed by users.
+   */
+  private static Name checkNotReserved(Name name, String action) {
     if (isReserved(name)) {
       throw new IllegalArgumentException("cannot " + action + ": " + name);
     }
     return name;
   }
 
+  /**
+   * Returns true if the given name is "." or "..".
+   */
   private static boolean isReserved(Name name) {
-    String string = name.toString();
-    int length = string.length();
-    if (length == 0 || length > 2) {
-      return false;
-    }
-
-    for (int i = 0; i < string.length(); i++) {
-      if (string.charAt(i) != '.') {
-        return false;
-      }
-    }
-
-    return true;
+    // all "." and ".." names are canonicalized to the same objects, so we can use identity
+    return name == Name.SELF || name == Name.PARENT;
   }
 }
