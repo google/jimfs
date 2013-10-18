@@ -20,6 +20,8 @@ import static com.google.jimfs.testing.PathSubject.paths;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
 import org.junit.Test;
@@ -40,6 +42,8 @@ import java.util.Set;
  * @author Colin Decker
  */
 public class PathServiceTest {
+  
+  private static final ImmutableSet<Normalization> NO_NORMALIZATIONS = ImmutableSet.of();
 
   private final PathService service = fakeUnixPathService();
 
@@ -107,8 +111,7 @@ public class PathServiceTest {
 
   @Test
   public void testHash_usingDisplayForm() {
-    PathService pathService = fakePathService(PathType.unix(),
-        PathNormalizer.none(), PathNormalizer.none(), false);
+    PathService pathService = fakePathService(PathType.unix(), false);
 
     JimfsPath path1 = new JimfsPath(pathService, null,
         ImmutableList.of(Name.create("FOO", "foo")));
@@ -123,8 +126,7 @@ public class PathServiceTest {
 
   @Test
   public void testHash_usingCanonicalForm() {
-    PathService pathService = fakePathService(PathType.unix(),
-        PathNormalizer.none(), PathNormalizer.none(), true);
+    PathService pathService = fakePathService(PathType.unix(), true);
 
     JimfsPath path1 = new JimfsPath(pathService, null,
         ImmutableList.of(Name.create("foo", "foo")));
@@ -139,8 +141,7 @@ public class PathServiceTest {
 
   @Test
   public void testCompareTo_usingDisplayForm() {
-    PathService pathService = fakePathService(PathType.unix(),
-        PathNormalizer.none(), PathNormalizer.none(), false);
+    PathService pathService = fakePathService(PathType.unix(), false);
 
     JimfsPath path1 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("a", "z")));
     JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("b", "y")));
@@ -152,8 +153,7 @@ public class PathServiceTest {
 
   @Test
   public void testCompareTo_usingCanonicalForm() {
-    PathService pathService = fakePathService(PathType.unix(),
-        PathNormalizer.none(), PathNormalizer.none(), true);
+    PathService pathService = fakePathService(PathType.unix(), true);
 
     JimfsPath path1 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("a", "z")));
     JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("b", "y")));
@@ -170,18 +170,16 @@ public class PathServiceTest {
   }
 
   public static PathService fakeUnixPathService() {
-    return fakePathService(PathType.unix(), PathNormalizer.none(), PathNormalizer.none(), false);
+    return fakePathService(PathType.unix(), false);
   }
 
   public static PathService fakeWindowsPathService() {
-    return fakePathService(PathType.windows(), PathNormalizer.none(), PathNormalizer.none(), false);
+    return fakePathService(PathType.windows(), false);
   }
 
-  public static PathService fakePathService(PathType type,
-      PathNormalizer displayNormalizer, PathNormalizer canonicalNormalizer,
-      boolean equalityUsesCanonicalForm) {
+  public static PathService fakePathService(PathType type, boolean equalityUsesCanonicalForm) {
     PathService service = new PathService(
-        type, displayNormalizer, canonicalNormalizer, equalityUsesCanonicalForm);
+        type, NO_NORMALIZATIONS, NO_NORMALIZATIONS, equalityUsesCanonicalForm);
     service.setFileSystem(FAKE_FILE_SYSTEM);
     return service;
   }

@@ -25,10 +25,12 @@ import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.jimfs.Configuration;
+import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
 import java.net.URI;
@@ -59,8 +61,8 @@ final class PathService implements Comparator<JimfsPath> {
 
   private final PathType type;
 
-  private final PathNormalizer displayNormalizer;
-  private final PathNormalizer canonicalNormalizer;
+  private final ImmutableSet<Normalization> displayNormalizations;
+  private final ImmutableSet<Normalization> canonicalNormalizations;
   private final boolean equalityUsesCanonicalForm;
 
   private final Ordering<Name> rootOrdering;
@@ -71,17 +73,18 @@ final class PathService implements Comparator<JimfsPath> {
 
   PathService(Configuration config) {
     this(config.pathType(),
-        PathNormalizer.create(config.nameDisplayNormalization()),
-        PathNormalizer.create(config.nameCanonicalNormalization()),
+        config.nameDisplayNormalization(),
+        config.nameCanonicalNormalization(),
         config.pathEqualityUsesCanonicalForm());
   }
 
   PathService(PathType type,
-      PathNormalizer displayNormalizer, PathNormalizer canonicalNormalizer,
+      Iterable<Normalization> displayNormalizations,
+      Iterable<Normalization> canonicalNormalizations,
       boolean equalityUsesCanonicalForm) {
     this.type = checkNotNull(type);
-    this.displayNormalizer = checkNotNull(displayNormalizer);
-    this.canonicalNormalizer = checkNotNull(canonicalNormalizer);
+    this.displayNormalizations = ImmutableSet.copyOf(displayNormalizations);
+    this.canonicalNormalizations = ImmutableSet.copyOf(canonicalNormalizations);
     this.equalityUsesCanonicalForm = equalityUsesCanonicalForm;
 
     if (equalityUsesCanonicalForm) {
@@ -143,8 +146,8 @@ final class PathService implements Comparator<JimfsPath> {
         return Name.PARENT;
     }
 
-    String display = displayNormalizer.normalize(name);
-    String canonical = canonicalNormalizer.normalize(name);
+    String display = Normalization.normalize(name, displayNormalizations);
+    String canonical = Normalization.normalize(name, canonicalNormalizations);
     return Name.create(display, canonical);
   }
 
@@ -283,7 +286,7 @@ final class PathService implements Comparator<JimfsPath> {
    */
   public final PathMatcher createPathMatcher(String syntaxAndPattern) {
     return PathMatchers.getPathMatcher(
-        syntaxAndPattern, type.getSeparator() + type.getOtherSeparators());
+        syntaxAndPattern, type.getSeparator() + type.getOtherSeparators(), displayNormalizations);
   }
 
   private static final Predicate<Object> NOT_EMPTY = new Predicate<Object>() {

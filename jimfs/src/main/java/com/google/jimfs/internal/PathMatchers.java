@@ -21,6 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.path.Normalization;
 
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -48,7 +50,8 @@ final class PathMatchers {
    */
   // TODO(cgdecker): Should I be just canonicalizing separators rather than matching any separator?
   // Perhaps so, assuming Path always canonicalizes its separators
-  public static PathMatcher getPathMatcher(String syntaxAndPattern, String separators) {
+  public static PathMatcher getPathMatcher(
+      String syntaxAndPattern, String separators, ImmutableSet<Normalization> normalizations) {
     int syntaxSeparator = syntaxAndPattern.indexOf(':');
     checkArgument(syntaxSeparator > 0, "Must be of the form 'syntax:pattern': %s",
         syntaxAndPattern);
@@ -58,20 +61,18 @@ final class PathMatchers {
 
     switch (syntax) {
       case GLOB:
-        return fromGlob(pattern, separators);
+        pattern = GlobToRegex.toRegex(pattern, separators);
+        // fall through
       case REGEX:
-        return fromRegex(pattern);
+        return fromRegex(pattern, normalizations);
       default:
         throw new UnsupportedOperationException("Invalid syntax: " + syntaxAndPattern);
     }
   }
 
-  static PathMatcher fromGlob(String glob, String separators) {
-    return fromRegex(GlobToRegex.toRegex(glob, separators));
-  }
-
-  static PathMatcher fromRegex(String pattern) {
-    return new RegexPathMatcher(Pattern.compile(pattern));
+  @SuppressWarnings("MagicConstant")
+  private static PathMatcher fromRegex(String regex, Iterable<Normalization> normalizations) {
+    return new RegexPathMatcher(Normalization.compilePattern(regex, normalizations));
   }
 
   /**

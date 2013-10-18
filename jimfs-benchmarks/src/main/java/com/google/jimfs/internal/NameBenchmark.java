@@ -16,8 +16,8 @@
 
 package com.google.jimfs.internal;
 
-import static com.google.jimfs.path.Normalization.CASE_FOLD_UNICODE;
 import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.path.Normalization.CASE_FOLD_UNICODE;
 import static com.google.jimfs.path.Normalization.NFC;
 
 import com.google.caliper.BeforeExperiment;
@@ -25,7 +25,9 @@ import com.google.caliper.Benchmark;
 import com.google.caliper.Param;
 import com.google.caliper.runner.CaliperMain;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.jimfs.path.Normalization;
 
 import java.util.Iterator;
 import java.util.Random;
@@ -107,39 +109,41 @@ public class NameBenchmark {
   public static void main(String[] args) {
     CaliperMain.main(NameBenchmark.class, args);
   }
+  
+  private static final ImmutableSet<Normalization> NO_NORMALIZATIONS = ImmutableSet.of();
 
   @SuppressWarnings("unused")
   private enum NameImpl {
-    NONE(PathNormalizer.none(), PathNormalizer.none()),
+    NONE(NO_NORMALIZATIONS, NO_NORMALIZATIONS),
 
-    NORMALIZED(PathNormalizer.none(), PathNormalizer.create(NFC)),
+    NORMALIZED(NO_NORMALIZATIONS, ImmutableSet.of(NFC)),
 
-    CASE_INSENSITIVE(PathNormalizer.none(), PathNormalizer.create(CASE_FOLD_UNICODE)),
+    CASE_INSENSITIVE(NO_NORMALIZATIONS, ImmutableSet.of(CASE_FOLD_UNICODE)),
 
-    CASE_INSENSITIVE_ASCII(PathNormalizer.none(), PathNormalizer.create(CASE_FOLD_ASCII)),
+    CASE_INSENSITIVE_ASCII(NO_NORMALIZATIONS, ImmutableSet.of(CASE_FOLD_ASCII)),
 
     NORMALIZED_CASE_INSENSITIVE(
-        PathNormalizer.none(), PathNormalizer.create(NFC, CASE_FOLD_UNICODE)),
+        NO_NORMALIZATIONS, ImmutableSet.of(NFC, CASE_FOLD_UNICODE)),
 
     NORMALIZED_CASE_INSENSITIVE_ASCII(
-        PathNormalizer.none(), PathNormalizer.create(NFC, CASE_FOLD_ASCII)),
+        NO_NORMALIZATIONS, ImmutableSet.of(NFC, CASE_FOLD_ASCII)),
 
     NORMALIZED_CASE_INSENSITIVE_ASCII_WITH_PATH_NORMALIZED(
-        PathNormalizer.create(NFC),
-        PathNormalizer.create(NFC, CASE_FOLD_ASCII));
+        ImmutableSet.of(NFC),
+        ImmutableSet.of(NFC, CASE_FOLD_ASCII));
+    
+    private final ImmutableSet<Normalization> displayNormalizations;
+    private final ImmutableSet<Normalization> canonicalNormalizations;
 
-    private final PathNormalizer displayNormalization;
-    private final PathNormalizer canonicalNormalization;
-
-    private NameImpl(PathNormalizer displayNormalization,
-        PathNormalizer canonicalNormalization) {
-      this.displayNormalization = displayNormalization;
-      this.canonicalNormalization = canonicalNormalization;
+    private NameImpl(ImmutableSet<Normalization> displayNormalizations,
+        ImmutableSet<Normalization> canonicalNormalizations) {
+      this.displayNormalizations = displayNormalizations;
+      this.canonicalNormalizations = canonicalNormalizations;
     }
 
     Name create(String string) {
-      String display = displayNormalization.normalize(string);
-      String canonical = canonicalNormalization.normalize(string);
+      String display = Normalization.normalize(string, displayNormalizations);
+      String canonical = Normalization.normalize(string, canonicalNormalizations);
       return Name.create(display, canonical);
     }
   }

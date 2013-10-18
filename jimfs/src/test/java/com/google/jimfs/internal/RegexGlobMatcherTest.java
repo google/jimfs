@@ -18,6 +18,9 @@ package com.google.jimfs.internal;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.path.Normalization;
+
 import org.junit.Test;
 
 import java.nio.file.FileSystem;
@@ -32,7 +35,7 @@ public class RegexGlobMatcherTest extends AbstractGlobMatcherTest {
 
   @Override
   protected PathMatcher matcher(String pattern) {
-    return PathMatchers.fromGlob(pattern, "/");
+    return PathMatchers.getPathMatcher("glob:" + pattern, "/", ImmutableSet.<Normalization>of());
   }
 
   @Override

@@ -101,7 +101,7 @@ public class FileTreeTest {
               "uriPath (%s) must start with // or /$ or /!");
           return parsePath(uriPath.substring(1)); // skip leading /
         }
-      }, PathNormalizer.none(), PathNormalizer.none(), false);
+      }, false);
 
   private FileTree fileTree;
   private File workingDirectory;

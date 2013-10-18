@@ -17,6 +17,7 @@
 package com.google.jimfs.path;
 
 import com.google.common.base.Ascii;
+import com.google.common.base.Function;
 
 import com.ibm.icu.lang.UCharacter;
 
@@ -29,14 +30,14 @@ import java.util.regex.Pattern;
  *
  * @author Colin Decker
  */
-public enum Normalization {
+public enum Normalization implements Function<String, String> {
 
   /**
    * No normalization.
    */
   NONE(0) {
     @Override
-    public String normalize(String string) {
+    public String apply(String string) {
       return string;
     }
   },
@@ -46,7 +47,7 @@ public enum Normalization {
    */
   NFC(Pattern.CANON_EQ) {
     @Override
-    public String normalize(String string) {
+    public String apply(String string) {
       return Normalizer.normalize(string, Normalizer.Form.NFC);
     }
   },
@@ -56,7 +57,7 @@ public enum Normalization {
    */
   NFD(Pattern.CANON_EQ) {
     @Override
-    public String normalize(String string) {
+    public String apply(String string) {
       return Normalizer.normalize(string, Normalizer.Form.NFD);
     }
   },
@@ -66,7 +67,7 @@ public enum Normalization {
    */
   CASE_FOLD_UNICODE(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE) {
     @Override
-    public String normalize(String string) {
+    public String apply(String string) {
       return UCharacter.foldCase(string, true);
     }
   },
@@ -76,7 +77,7 @@ public enum Normalization {
    */
   CASE_FOLD_ASCII(Pattern.CASE_INSENSITIVE) {
     @Override
-    public String normalize(String string) {
+    public String apply(String string) {
       return Ascii.toLowerCase(string);
     }
   };
@@ -90,13 +91,38 @@ public enum Normalization {
   /**
    * Applies this normalization to the given string, returning the normalized result.
    */
-  public abstract String normalize(String string);
+  @Override
+  public abstract String apply(String string);
 
   /**
    * Returns the flags that should be used when creating a regex {@link Pattern} in order to
    * approximate this normalization.
    */
-  public int patternFlags() {
+  public final int patternFlags() {
     return patternFlags;
+  }
+
+  /**
+   * Applies the given normalizations to the given string in order, returning the normalized
+   * result.
+   */
+  public static String normalize(String string, Iterable<Normalization> normalizations) {
+    String result = string;
+    for (Normalization normalization : normalizations) {
+      result = normalization.apply(result);
+    }
+    return result;
+  }
+
+  /**
+   * Compiles a regex pattern using flags based on the given normalizations.
+   */
+  @SuppressWarnings("MagicConstant")
+  public static Pattern compilePattern(String regex, Iterable<Normalization> normalizations) {
+    int flags = 0;
+    for (Normalization normalization : normalizations) {
+      flags |= normalization.patternFlags();
+    }
+    return Pattern.compile(regex, flags);
   }
 }
