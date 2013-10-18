@@ -32,31 +32,31 @@ import org.junit.Test;
 import javax.annotation.Nullable;
 
 /**
- * Tests for {@link DirectoryTable}.
+ * Tests for {@link Directory}.
  *
  * @author Colin Decker
  */
-public class DirectoryTableTest {
+public class DirectoryTest {
 
   private File rootFile;
   private File dirFile;
 
-  private DirectoryTable root;
-  private DirectoryTable table;
+  private Directory root;
+  private Directory table;
 
   @Before
   public void setUp() {
-    DirectoryTable superRootTable = new DirectoryTable();
+    Directory superRootTable = new Directory();
     File superRoot = new File(-1, superRootTable);
     superRootTable.setSuperRoot(superRoot);
 
-    root = new DirectoryTable();
+    root = new Directory();
     rootFile = new File(0, root);
 
     superRootTable.link(Name.simple("/"), rootFile);
     root.setRoot();
 
-    table = new DirectoryTable();
+    table = new Directory();
     dirFile = new File(1, table);
     root.link(Name.simple("foo"), dirFile);
   }
@@ -91,7 +91,7 @@ public class DirectoryTableTest {
   public void testLink() {
     ASSERT.that(table.get(Name.simple("bar"))).isNull();
 
-    File bar = new File(2, new DirectoryTable());
+    File bar = new File(2, new Directory());
     table.link(Name.simple("bar"), bar);
 
     ASSERT.that(table.get(Name.simple("bar"))).is(entry(dirFile, "bar", bar));
@@ -100,7 +100,7 @@ public class DirectoryTableTest {
   @Test
   public void testLink_existingNameFails() {
     try {
-      root.link(Name.simple("foo"), new File(2, new DirectoryTable()));
+      root.link(Name.simple("foo"), new File(2, new Directory()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -109,29 +109,29 @@ public class DirectoryTableTest {
   @Test
   public void testLink_parentAndSelfNameFails() {
     try {
-      table.link(Name.simple("."), new File(2, new DirectoryTable()));
+      table.link(Name.simple("."), new File(2, new Directory()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      table.link(Name.simple(".."), new File(2, new DirectoryTable()));
+      table.link(Name.simple(".."), new File(2, new Directory()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     // ensure that even if the parent/self entries do not already exist in the table,
     // they aren't allowed when calling link()
-    File file = new File(2, new DirectoryTable());
+    File file = new File(2, new Directory());
 
     try {
-      file.asDirectoryTable().link(Name.simple("."), new File(2, new DirectoryTable()));
+      file.asDirectory().link(Name.simple("."), new File(2, new Directory()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      file.asDirectoryTable().link(Name.simple(".."), new File(2, new DirectoryTable()));
+      file.asDirectory().link(Name.simple(".."), new File(2, new Directory()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -139,7 +139,7 @@ public class DirectoryTableTest {
 
   @Test
   public void testGet_normalizingCaseInsensitive() {
-    File bar = new File(2, new DirectoryTable());
+    File bar = new File(2, new Directory());
     Name barName = caseInsensitive("bar");
 
     table.link(barName, bar);
@@ -186,7 +186,7 @@ public class DirectoryTableTest {
 
   @Test
   public void testUnlink_normalizingCaseInsensitive() {
-    table.link(caseInsensitive("bar"), new File(2, new DirectoryTable()));
+    table.link(caseInsensitive("bar"), new File(2, new Directory()));
 
     ASSERT.that(table.get(caseInsensitive("bar"))).isNotNull();
 
@@ -197,7 +197,7 @@ public class DirectoryTableTest {
 
   @Test
   public void testLinkDirectory() {
-    DirectoryTable newTable = new DirectoryTable();
+    Directory newTable = new Directory();
     File newDir = new File(10, newTable);
 
     ASSERT.that(newTable.entry()).isNull();
@@ -218,7 +218,7 @@ public class DirectoryTableTest {
 
   @Test
   public void testUnlinkDirectory() {
-    DirectoryTable newTable = new DirectoryTable();
+    Directory newTable = new Directory();
     File newDir = new File(10, newTable);
 
     table.link(Name.simple("foo"), newDir);
@@ -263,7 +263,7 @@ public class DirectoryTableTest {
   }
 
   @SuppressWarnings("ConstantConditions")
-  private static void assertParentAndSelf(DirectoryTable table, File parent, File self) {
+  private static void assertParentAndSelf(Directory table, File parent, File self) {
     ASSERT.that(table.get(PARENT)).is(entry(self, "..", parent));
     ASSERT.that(table.parent()).is(parent);
 

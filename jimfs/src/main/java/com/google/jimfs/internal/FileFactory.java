@@ -48,7 +48,7 @@ final class FileFactory {
    * Creates a new directory and stores it. Returns the key of the new file.
    */
   public File createDirectory() {
-    return new File(nextFileId(), new DirectoryTable());
+    return new File(nextFileId(), new Directory());
   }
 
   /**

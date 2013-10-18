@@ -55,7 +55,7 @@ final class FileTree {
    */
   FileTree(File superRoot) {
     this.superRoot = checkNotNull(superRoot);
-    this.rootDirectoryNames = superRoot.asDirectoryTable().snapshot();
+    this.rootDirectoryNames = superRoot.asDirectory().snapshot();
   }
 
   /**
@@ -71,7 +71,7 @@ final class FileTree {
    */
   @Nullable
   public DirectoryEntry getRoot(Name name) {
-    return superRoot.asDirectoryTable().get(name);
+    return superRoot.asDirectory().get(name);
   }
 
   /**
@@ -96,7 +96,7 @@ final class FileTree {
 
     if (path.isAbsolute()) {
       // lookup the root directory
-      DirectoryEntry entry = superRoot.asDirectoryTable().get(path.root());
+      DirectoryEntry entry = superRoot.asDirectory().get(path.root());
       if (entry == null) {
         // root not found; always return null as no real parent directory exists
         // this prevents new roots from being created in file systems supporting multiple roots
@@ -130,7 +130,7 @@ final class FileTree {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
-      DirectoryTable table = toDirectoryTable(dir);
+      Directory table = toDirectoryTable(dir);
       if (table == null) {
         return null;
       }
@@ -165,7 +165,7 @@ final class FileTree {
   @Nullable
   private DirectoryEntry lookupLast(@Nullable File dir,
       Name name, LinkOptions options, int linkDepth) throws IOException {
-    DirectoryTable table = toDirectoryTable(dir);
+    Directory table = toDirectoryTable(dir);
     if (table == null) {
       return null;
     }
@@ -206,16 +206,16 @@ final class FileTree {
     Name name = entry.name();
 
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
-      return entry.file().asDirectoryTable().entry();
+      return entry.file().asDirectory().entry();
     } else {
       return entry;
     }
   }
 
   @Nullable
-  private DirectoryTable toDirectoryTable(@Nullable File file) {
+  private Directory toDirectoryTable(@Nullable File file) {
     if (file != null && file.isDirectory()) {
-      return file.asDirectoryTable();
+      return file.asDirectory();
     }
 
     return null;

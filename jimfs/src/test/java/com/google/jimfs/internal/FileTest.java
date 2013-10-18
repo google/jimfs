@@ -42,11 +42,11 @@ public class FileTest {
 
   @Test
   public void testDirectory() {
-    File file = new File(0, new DirectoryTable());
+    File file = new File(0, new Directory());
     ASSERT.that(file.isDirectory()).isTrue();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isFalse();
-    ASSERT.that(file.content()).isA(DirectoryTable.class);
+    ASSERT.that(file.content()).isA(Directory.class);
   }
 
   @Test
@@ -69,11 +69,11 @@ public class FileTest {
 
   @Test
   public void testRootDirectory() {
-    DirectoryTable superRootTable = new DirectoryTable();
+    Directory superRootTable = new Directory();
     File superRoot = new File(-1, superRootTable);
     superRootTable.setSuperRoot(superRoot);
 
-    DirectoryTable table = new DirectoryTable();
+    Directory table = new Directory();
     File file = new File(0, table);
 
     superRootTable.link(Name.simple("/"), file);
@@ -83,7 +83,7 @@ public class FileTest {
 
     superRootTable.unlink(Name.simple("/"));
 
-    DirectoryTable otherTable = new DirectoryTable();
+    Directory otherTable = new Directory();
     File otherFile = new File(1, otherTable);
     superRootTable.link(Name.simple("$"), otherFile);
     otherTable.setRoot();
@@ -114,7 +114,7 @@ public class FileTest {
   @Test
   public void testEquality() {
     File file1 = new File(0, new FakeFileContent());
-    File file2 = new File(0, new DirectoryTable());
+    File file2 = new File(0, new Directory());
     File file3 = new File(1, new StubByteStore(10));
     File file4 = new File(1, new FakeFileContent());
 

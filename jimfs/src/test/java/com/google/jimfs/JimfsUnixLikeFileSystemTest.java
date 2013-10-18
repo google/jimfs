@@ -1774,6 +1774,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       secureStream.newByteChannel(path("b"), ImmutableSet.of(CREATE_NEW)).close();
       assertThat("/foo/b").isRegularFile();
 
+      assertThat("/foo").hasChildren("a", "b", "bar", "barLink");
+
       Files.createDirectory(path("/baz"));
       Files.move(path("/foo"), path("/baz/stuff"));
 

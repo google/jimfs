@@ -44,6 +44,9 @@ final class DirectoryEntry {
   @Nullable
   private final File file;
 
+  @Nullable
+  DirectoryEntry next; // for use in DirectoryTable
+
   DirectoryEntry(File directory, Name name, @Nullable File file) {
     this.directory = checkNotNull(directory);
     this.name = checkNotNull(name);

@@ -58,7 +58,7 @@ final class File extends Inode {
 
   @Override
   public boolean isDirectory() {
-    return content instanceof DirectoryTable;
+    return content instanceof Directory;
   }
 
   @Override
@@ -76,7 +76,7 @@ final class File extends Inode {
    */
   public boolean isRootDirectory() {
     // only root directories have their parent link pointing to themselves
-    return isDirectory() && equals(asDirectoryTable().parent());
+    return isDirectory() && equals(asDirectory().parent());
   }
 
   /**
@@ -89,8 +89,8 @@ final class File extends Inode {
   /**
    * Returns a view of this file as a directory table.
    */
-  public DirectoryTable asDirectoryTable() {
-    return (DirectoryTable) content;
+  public Directory asDirectory() {
+    return (Directory) content;
   }
 
   /**
