@@ -109,7 +109,7 @@ public class FileTreeTest {
 
   @Before
   public void setUp() {
-    Directory superRootTable = new Directory();
+    DirectoryTable superRootTable = new DirectoryTable();
     File superRoot = new File(-1, superRootTable);
     superRootTable.setSuperRoot(superRoot);
 
@@ -117,14 +117,14 @@ public class FileTreeTest {
 
     fileTree = new FileTree(superRoot);
 
-    Directory rootTable = new Directory();
+    DirectoryTable rootTable = new DirectoryTable();
     File root = new File(0, rootTable);
     superRootTable.link(Name.simple("/"), root);
     rootTable.setRoot();
 
     files.put("/", root);
 
-    Directory otherRootTable = new Directory();
+    DirectoryTable otherRootTable = new DirectoryTable();
     File otherRoot = new File(2, otherRootTable);
     superRootTable.link(Name.simple("$"), otherRoot);
     otherRootTable.setRoot();
@@ -446,10 +446,10 @@ public class FileTreeTest {
   private File createDirectory(String parent, String name) {
     File dir = files.get(parent);
 
-    Directory table = new Directory();
+    DirectoryTable table = new DirectoryTable();
     File newFile = new File(new Random().nextInt(), table);
 
-    dir.asDirectory().link(Name.simple(name), newFile);
+    dir.asDirectoryTable().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 
@@ -461,7 +461,7 @@ public class FileTreeTest {
 
     File newFile = new File(new Random().nextInt(), new StubByteStore(0));
 
-    dir.asDirectory().link(Name.simple(name), newFile);
+    dir.asDirectoryTable().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 
@@ -473,7 +473,7 @@ public class FileTreeTest {
 
     File newFile = new File(new Random().nextInt(), pathService.parsePath(target));
 
-    dir.asDirectory().link(Name.simple(name), newFile);
+    dir.asDirectoryTable().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 

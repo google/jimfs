@@ -16,63 +16,189 @@
 
 package com.google.jimfs.internal;
 
-import com.google.common.collect.AbstractIterator;
+import static com.google.jimfs.internal.Name.PARENT;
+import static com.google.jimfs.internal.Name.SELF;
+import static com.google.jimfs.internal.Util.smearHash;
 
-import java.util.HashMap;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Ordering;
+
 import java.util.Iterator;
 
 import javax.annotation.Nullable;
 
 /**
- * Simple hash table mapping names to directory entries. Mostly equivalent to {@link HashMap}, but
- * avoids allocating separate {@code Map.Entry} objects since {@code DirectoryEntry} objects can
- * fill its role.
+ * A table of {@linkplain DirectoryEntry directory entries}.
  *
  * @author Colin Decker
- * @author Austin Appleby
  */
-final class DirectoryTable implements Iterable<DirectoryEntry> {
+final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
 
+  /*
+   * This class uses its own simple hash table implementation to avoid allocation of redundant
+   * Map.Entry objects. DirectoryEntry objects are able to serve the same purpose.
+   */
   private DirectoryEntry[] table = new DirectoryEntry[16];
   private int size;
 
-  private static int indexOf(Name name, int tableLength) {
-    return smear(name.hashCode()) & (tableLength - 1);
+  /**
+   * The entry linking to this directory in its parent directory.
+   */
+  private DirectoryEntry entry;
+
+  /**
+   * Creates a copy of this table. The copy does <i>not</i> contain a copy of the entries in this
+   * table.
+   */
+  @Override
+  public DirectoryTable copy() {
+    return new DirectoryTable();
   }
 
-  private float loadFactor() {
-    return ((float) size) / table.length;
+  @Override
+  public long sizeInBytes() {
+    return 0;
   }
 
-  private boolean expandIfNeeded() {
-    if (loadFactor() > 0.8) {
-      DirectoryEntry[] newTable = new DirectoryEntry[table.length * 2];
-
-      for (DirectoryEntry entry : table) {
-        for (; entry != null; entry = entry.next) {
-          put(newTable, entry);
-        }
-      }
-
-      this.table = newTable;
-      return true;
-    }
-
-    return false;
+  @Override
+  public void delete() {
   }
 
   /**
-   * Returns the number of entries in this table.
+   * Sets this directory as the super root.
    */
-  public int size() {
+  public void setSuperRoot(File file) {
+    // just set this table's entry to include the file
+    this.entry = new DirectoryEntry(file, Name.EMPTY, file);
+  }
+
+  /**
+   * Sets this directory as a root directory, linking ".." to itself.
+   */
+  public void setRoot() {
+    this.entry = new DirectoryEntry(self(), name(), self());
+    remove(PARENT);
+    put(PARENT, self());
+  }
+
+  /**
+   * Returns the entry linking to this directory in its parent.
+   */
+  public DirectoryEntry entry() {
+    return entry;
+  }
+
+  /**
+   * Returns the file for this directory.
+   */
+  public File self() {
+    return entry.file();
+  }
+
+  /**
+   * Returns the name of this directory.
+   */
+  public Name name() {
+    return entry.name();
+  }
+
+  /**
+   * Returns the parent of this directory.
+   */
+  public File parent() {
+    return entry.directory();
+  }
+
+  /**
+   * Called when this directory is linked in a parent directory. The given entry is the new entry
+   * linking to this directory.
+   */
+  public void linked(DirectoryEntry entry) {
+    this.entry = entry;
+    put(SELF, entry.file());
+    put(PARENT, entry.directory());
+  }
+
+  /**
+   * Called when this directory is unlinked from its parent directory.
+   */
+  public void unlinked() {
+    remove(SELF);
+    remove(PARENT);
+    entry = null;
+  }
+
+  /**
+   * Returns the number of entries in this directory.
+   */
+  @VisibleForTesting
+  int entryCount() {
     return size;
   }
 
   /**
-   * Return whether or not this table contains an entry for the given name.
+   * Returns true if this directory has no entries other than those to itself and its parent.
    */
-  public boolean containsEntry(Name name) {
-    return get(name) != null;
+  public boolean isEmpty() {
+    return size <= 2;
+  }
+
+  /**
+   * Links the given name to the given file in this table.
+   *
+   * @throws IllegalArgumentException if {@code name} is a reserved name such as "." or if an
+   *     entry already exists for the it
+   */
+  public void link(Name name, File file) {
+    DirectoryEntry entry = put(checkValidName(name, "link"), file);
+    if (file.isDirectory()) {
+      file.asDirectoryTable().linked(entry);
+    }
+  }
+
+  /**
+   * Unlinks the given name from any key it is linked to in this table. Returns the file key that
+   * was linked to the name, or {@code null} if no such mapping was present.
+   *
+   * @throws IllegalArgumentException if {@code name} is a reserved name such as "."
+   */
+  public void unlink(Name name) {
+    DirectoryEntry entry = remove(checkValidName(name, "unlink"));
+    File file = entry.file();
+    if (file.isDirectory()) {
+      file.asDirectoryTable().unlinked();
+    }
+  }
+
+  @SuppressWarnings("unchecked") // safe cast
+  private static final Ordering<Name> ORDERING_BY_STRING =
+      (Ordering<Name>) (Ordering) Ordering.usingToString();
+
+  /**
+   * Creates an immutable sorted snapshot of the names this directory contains, excluding "." and
+   * "..".
+   */
+  @SuppressWarnings("unchecked") // safe cast
+  public ImmutableSortedSet<Name> snapshot() {
+    ImmutableSortedSet.Builder<Name> builder = ImmutableSortedSet.orderedBy(ORDERING_BY_STRING);
+
+    for (DirectoryEntry entry : this) {
+      if (!isReserved(entry.name())) {
+        builder.add(entry.name());
+      }
+    }
+
+    return builder.build();
+  }
+
+  private static int indexOf(Name name, int tableLength) {
+    return smearHash(name.hashCode()) & (tableLength - 1);
+  }
+
+  private float loadFactor() {
+    return ((float) size) / table.length;
   }
 
   /**
@@ -95,11 +221,49 @@ final class DirectoryTable implements Iterable<DirectoryEntry> {
   /**
    * Adds the given entry to this table.
    */
-  public void put(DirectoryEntry entry) {
-    size++;
-    expandIfNeeded();
+  private DirectoryEntry put(Name name, File file) {
+    int index = indexOf(name, table.length);
+    DirectoryEntry prev = null;
+    DirectoryEntry curr = table[index];
+    while (curr != null) {
+      if (curr.name().equals(name)) {
+        throw new IllegalArgumentException("entry '" + name + "' already exists");
+      }
 
-    put(table, entry);
+      prev = curr;
+      curr = curr.next;
+    }
+
+    DirectoryEntry newEntry = new DirectoryEntry(self(), name, file);
+    size++;
+
+    if (expandIfNeeded()) {
+      put(table, newEntry);
+    } else if (prev != null) {
+      prev.next = newEntry;
+    } else {
+      table[index] = newEntry;
+    }
+
+    file.incrementLinkCount();
+    return newEntry;
+  }
+
+  private boolean expandIfNeeded() {
+    if (loadFactor() > 0.8) {
+      DirectoryEntry[] newTable = new DirectoryEntry[table.length * 2];
+
+      for (DirectoryEntry entry : table) {
+        for (; entry != null; entry = entry.next) {
+          put(newTable, entry);
+        }
+      }
+
+      this.table = newTable;
+      return true;
+    }
+
+    return false;
   }
 
   private static void put(DirectoryEntry[] table, DirectoryEntry entry) {
@@ -122,8 +286,7 @@ final class DirectoryTable implements Iterable<DirectoryEntry> {
    * Removes the entry for the given name from this table, returning that entry or {@code null} if
    * no such entry exists.
    */
-  @Nullable
-  public DirectoryEntry remove(Name name) {
+  private DirectoryEntry remove(Name name) {
     int index = indexOf(name, table.length);
 
     DirectoryEntry prev = null;
@@ -138,6 +301,7 @@ final class DirectoryTable implements Iterable<DirectoryEntry> {
 
         entry.next = null;
         size--;
+        entry.file().decrementLinkCount();
         return entry;
       }
 
@@ -145,12 +309,13 @@ final class DirectoryTable implements Iterable<DirectoryEntry> {
       entry = entry.next;
     }
 
-    return null;
+    throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
   }
 
   /**
    * Returns an iterator over the entries in this table.
    */
+  @Override
   public Iterator<DirectoryEntry> iterator() {
     return new AbstractIterator<DirectoryEntry>() {
       private int index;
@@ -172,18 +337,26 @@ final class DirectoryTable implements Iterable<DirectoryEntry> {
     };
   }
 
-  private static final int C1 = 0xcc9e2d51;
-  private static final int C2 = 0x1b873593;
+  private static Name checkValidName(Name name, String action) {
+    if (isReserved(name)) {
+      throw new IllegalArgumentException("cannot " + action + ": " + name);
+    }
+    return name;
+  }
 
-  /*
-   * This method was rewritten in Java from an intermediate step of the Murmur hash function in
-   * http://code.google.com/p/smhasher/source/browse/trunk/MurmurHash3.cpp, which contained the
-   * following header:
-   *
-   * MurmurHash3 was written by Austin Appleby, and is placed in the public domain. The author
-   * hereby disclaims copyright to this source code.
-   */
-  private static int smear(int hashCode) {
-    return C2 * Integer.rotateLeft(hashCode * C1, 15);
+  private static boolean isReserved(Name name) {
+    String string = name.toString();
+    int length = string.length();
+    if (length == 0 || length > 2) {
+      return false;
+    }
+
+    for (int i = 0; i < string.length(); i++) {
+      if (string.charAt(i) != '.') {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

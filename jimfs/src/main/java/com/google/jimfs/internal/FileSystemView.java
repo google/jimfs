@@ -153,7 +153,7 @@ final class FileSystemView {
     ImmutableSortedSet<Name> names;
     store.readLock().lock();
     try {
-      names = workingDirectory.asDirectory().snapshot();
+      names = workingDirectory.asDirectoryTable().snapshot();
       workingDirectory.updateAccessTime();
     } finally {
       store.readLock().unlock();
@@ -179,7 +179,7 @@ final class FileSystemView {
           .requireDirectory(path)
           .file();
 
-      for (DirectoryEntry entry : dir.asDirectory().entries()) {
+      for (DirectoryEntry entry : dir.asDirectoryTable()) {
         if (!entry.name().equals(Name.SELF) && !entry.name().equals(Name.PARENT)) {
           long modifiedTime = entry.file().getLastModifiedTime();
           modifiedTimes.put(entry.name(), modifiedTime);
@@ -232,7 +232,7 @@ final class FileSystemView {
       if (!entry.file().isRootDirectory()) {
         File file = entry.directory();
         while (true) {
-          Directory fileTable = file.asDirectory();
+          DirectoryTable fileTable = file.asDirectoryTable();
           names.add(fileTable.name());
           File parent = fileTable.parent();
           if (file.isRootDirectory()) {
@@ -301,7 +301,7 @@ final class FileSystemView {
 
       File newFile = fileSupplier.get();
       store.setInitialAttributes(newFile, attrs);
-      parent.asDirectory().link(name, newFile);
+      parent.asDirectoryTable().link(name, newFile);
       parent.updateModifiedTime();
       return newFile;
     } finally {
@@ -428,7 +428,7 @@ final class FileSystemView {
           .requireDoesNotExist(link)
           .directory();
 
-      linkParent.asDirectory().link(linkName, existingFile);
+      linkParent.asDirectoryTable().link(linkName, existingFile);
       linkParent.updateModifiedTime();
     } finally {
       store.writeLock().unlock();
@@ -465,7 +465,7 @@ final class FileSystemView {
     File file = entry.file();
 
     checkDeletable(file, deleteMode, pathForException);
-    parent.asDirectory().unlink(entry.name());
+    parent.asDirectoryTable().unlink(entry.name());
     parent.updateModifiedTime();
 
     if (file.links() == 0) {
@@ -527,7 +527,7 @@ final class FileSystemView {
    * DirectoryNotEmptyException} if it isn't.
    */
   private void checkEmpty(File file, Path pathForException) throws FileSystemException {
-    if (!file.asDirectory().isEmpty()) {
+    if (!file.asDirectoryTable().isEmpty()) {
       throw new DirectoryNotEmptyException(pathForException.toString());
     }
   }
@@ -588,16 +588,16 @@ final class FileSystemView {
       // can only do an actual move within one file system instance
       // otherwise we have to copy and delete
       if (options.isMove() && sameFileSystem) {
-        sourceParent.asDirectory().unlink(sourceName);
+        sourceParent.asDirectoryTable().unlink(sourceName);
         sourceParent.updateModifiedTime();
 
-        destParent.asDirectory().link(destName, sourceFile);
+        destParent.asDirectoryTable().link(destName, sourceFile);
         destParent.updateModifiedTime();
       } else {
         // copy
         boolean copyAttributes = options.isCopyAttributes() && !options.isMove();
         File copy = destView.store.copy(sourceFile, copyAttributes);
-        destParent.asDirectory().link(destName, copy);
+        destParent.asDirectoryTable().link(destName, copy);
         destParent.updateModifiedTime();
 
         if (options.isMove()) {
@@ -660,7 +660,7 @@ final class FileSystemView {
       if (current.isRootDirectory()) {
         return;
       } else {
-        current = current.asDirectory().parent();
+        current = current.asDirectoryTable().parent();
       }
     }
   }
