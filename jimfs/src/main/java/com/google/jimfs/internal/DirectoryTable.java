@@ -263,8 +263,12 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
 
       // redistribute all current entries in the new table
       for (DirectoryEntry entry : table) {
-        for (; entry != null; entry = entry.next) {
+        while (entry != null) {
           put(newTable, entry);
+          DirectoryEntry next = entry.next;
+          // set entry.next to null; it's always the last entry in its bucket after being added
+          entry.next = null;
+          entry = next;
         }
       }
 
