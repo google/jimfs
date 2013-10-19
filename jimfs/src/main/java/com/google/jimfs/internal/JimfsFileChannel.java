@@ -22,8 +22,6 @@ import static com.google.jimfs.internal.Util.checkNoneNull;
 import static com.google.jimfs.internal.Util.checkNotNegative;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
@@ -72,22 +70,6 @@ final class JimfsFileChannel extends FileChannel {
     this.file = file;
     this.store = file.asByteStore();
     this.options = checkNotNull(options);
-  }
-
-  /**
-   * Returns an {@link InputStream} view of this channel.
-   */
-  public InputStream asInputStream() {
-    checkReadable();
-    return new JimfsInputStream(file);
-  }
-
-  /**
-   * Returns an {@link OutputStream} view of this channel.
-   */
-  public OutputStream asOutputStream() {
-    checkWritable();
-    return new JimfsOutputStream(file, options.isAppend());
   }
 
   /**

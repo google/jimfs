@@ -64,7 +64,7 @@ final class JimfsSecureDirectoryStream
   public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options,
       FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    OpenOptions opts = OpenOptions.from(getOptionsForChannel(options));
+    OpenOptions opts = getOptionsForChannel(options);
     return new JimfsFileChannel(view.getRegularFile(checkedPath, opts), opts);
   }
 

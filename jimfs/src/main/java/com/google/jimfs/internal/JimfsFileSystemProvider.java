@@ -23,13 +23,13 @@ import static com.google.jimfs.Jimfs.CONFIG_KEY;
 import static com.google.jimfs.Jimfs.URI_SCHEME;
 import static com.google.jimfs.internal.LinkOptions.NOFOLLOW_LINKS;
 import static java.nio.file.StandardOpenOption.APPEND;
-import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.DELETE_ON_CLOSE;
 import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.jimfs.Configuration;
 import com.google.jimfs.Jimfs;
 
@@ -56,8 +56,6 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -196,7 +194,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public JimfsFileChannel newFileChannel(
       Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    OpenOptions opts = OpenOptions.from(getOptionsForChannel(options));
+    OpenOptions opts = getOptionsForChannel(options);
     File file = getDefaultView(checkedPath).getRegularFile(checkedPath, opts, attrs);
     return new JimfsFileChannel(file, opts);
   }
@@ -222,45 +220,59 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
-    return newFileChannel(checkPath(path), getOptionsForRead(options)).asInputStream();
+    JimfsPath checkedPath = checkPath(path);
+    checkOptionsForRead(options);
+    File file = getDefaultView(checkedPath)
+        .getRegularFile(checkedPath, OpenOptions.DEFAULT_READ, NO_ATTRS);
+    return new JimfsInputStream(file);
   }
+
+  private static final FileAttribute<?>[] NO_ATTRS = {};
 
   @Override
   public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
-    return newFileChannel(checkPath(path), getOptionsForWrite(options)).asOutputStream();
+    JimfsPath checkedPath = checkPath(path);
+    OpenOptions opts = getOptionsForWrite(options);
+    File file = getDefaultView(checkedPath)
+        .getRegularFile(checkedPath, opts, NO_ATTRS);
+    return new JimfsOutputStream(file, opts.isAppend());
   }
 
-  static Set<? extends OpenOption> getOptionsForChannel(Set<? extends OpenOption> options) {
+  static OpenOptions getOptionsForChannel(Set<? extends OpenOption> options) {
     if (!options.contains(READ) && !options.contains(WRITE)) {
       OpenOption optionToAdd = options.contains(APPEND) ? WRITE : READ;
-      return ImmutableSet.<OpenOption>builder()
-          .addAll(options)
-          .add(optionToAdd)
-          .build();
+      return OpenOptions.from(Iterables.concat(ImmutableSet.of(optionToAdd), options));
     }
-    return options;
+    return OpenOptions.from(options);
   }
 
-  private static Set<OpenOption> getOptionsForRead(OpenOption... options) {
-    Set<OpenOption> optionsSet = new HashSet<>(Arrays.asList(options));
-    if (optionsSet.contains(WRITE)) {
-      throw new UnsupportedOperationException("WRITE");
+  private static void checkOptionsForRead(OpenOption... options) {
+    for (OpenOption option : options) {
+      if (checkNotNull(option) != READ && option != DELETE_ON_CLOSE) {
+        throw new UnsupportedOperationException(option.toString());
+      }
+    }
+  }
+
+  private static OpenOptions getOptionsForWrite(OpenOption... options) {
+    if (options.length == 0) {
+      return OpenOptions.DEFAULT_WRITE;
     } else {
-      optionsSet.add(READ);
-    }
-    return optionsSet;
-  }
+      boolean addWrite = true;
+      for (OpenOption option : options) {
+        if (checkNotNull(option) == READ) {
+          throw new UnsupportedOperationException("READ");
+        } else if (option == WRITE) {
+          addWrite = false;
+        }
+      }
 
-  private static Set<OpenOption> getOptionsForWrite(OpenOption... options) {
-    Set<OpenOption> optionsSet = Sets.newHashSet(options);
-    if (optionsSet.contains(READ)) {
-      throw new UnsupportedOperationException("READ");
-    } else if (optionsSet.isEmpty()) {
-      optionsSet.addAll(Arrays.asList(CREATE, WRITE, TRUNCATE_EXISTING));
-    } else if (!optionsSet.contains(WRITE)) {
-      optionsSet.add(WRITE);
+      if (addWrite) {
+        return OpenOptions.from(Lists.asList(WRITE, options));
+      } else {
+        return OpenOptions.from(options);
+      }
     }
-    return optionsSet;
   }
 
   @Override

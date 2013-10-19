@@ -58,7 +58,7 @@ final class JimfsPath implements Path, FileContent {
   @Nullable
   private final Name root;
   private final ImmutableList<Name> names;
-  protected final PathService pathService;
+  private final PathService pathService;
 
   public JimfsPath(PathService pathService, @Nullable Name root, Iterable<Name> names) {
     this.pathService = checkNotNull(pathService);
@@ -112,7 +112,7 @@ final class JimfsPath implements Path, FileContent {
    * Returns whether or not this is the empty path, with no root and a single, empty string, name.
    */
   public boolean isEmptyPath() {
-    return root == null && names.size() == 1 && names.get(0).toString().equals("");
+    return root == null && names.size() == 1 && names.get(0).toString().isEmpty();
   }
 
   @Override
