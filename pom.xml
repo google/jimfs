@@ -23,7 +23,7 @@
   <groupId>com.google.jimfs</groupId>
   <artifactId>jimfs-parent</artifactId>
   <packaging>pom</packaging>
-  <version>0.8-SNAPSHOT</version>
+  <version>0.9-SNAPSHOT</version>
 
   <modules>
     <module>jimfs</module>
