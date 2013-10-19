@@ -27,6 +27,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.Test;
@@ -56,7 +57,8 @@ public class JimfsAsynchronousFileChannelTest {
   private static JimfsAsynchronousFileChannel channel(
       ByteStore store, ExecutorService executor, OpenOption... options) throws IOException {
     return new JimfsAsynchronousFileChannel(
-        new JimfsFileChannel(new File(-1, store), OpenOptions.from(options)), executor);
+        new JimfsFileChannel(new File(-1, store),
+            Options.getOptionsForChannel(ImmutableSet.copyOf(options))), executor);
   }
 
   private static StubByteStore store(int size) throws IOException {

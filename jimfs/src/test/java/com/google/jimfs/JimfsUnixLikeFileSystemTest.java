@@ -671,7 +671,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   public void testOpenChannel_withInitialAttributes_createNewFile() throws IOException {
     FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
         PosixFilePermissions.fromString("rwxrwxrwx"));
-    Files.newByteChannel(path("/foo"), ImmutableSet.of(CREATE), permissions).close();
+    Files.newByteChannel(path("/foo"), ImmutableSet.of(WRITE, CREATE), permissions).close();
 
     assertThat("/foo").isRegularFile()
         .and().attribute("posix:permissions").is(permissions.value());
@@ -683,7 +683,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
         PosixFilePermissions.fromString("rwxrwxrwx"));
-    Files.newByteChannel(path("/foo"), ImmutableSet.of(CREATE), permissions).close();
+    Files.newByteChannel(path("/foo"), ImmutableSet.of(WRITE, CREATE), permissions).close();
 
     assertThat("/foo").isRegularFile()
         .and().attribute("posix:permissions").isNot(permissions.value());
@@ -1771,7 +1771,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       secureStream.deleteFile(path("b"));
       assertThat("/foo/b").doesNotExist();
 
-      secureStream.newByteChannel(path("b"), ImmutableSet.of(CREATE_NEW)).close();
+      secureStream.newByteChannel(path("b"), ImmutableSet.of(WRITE, CREATE_NEW)).close();
       assertThat("/foo/b").isRegularFile();
 
       assertThat("/foo").hasChildren("a", "b", "bar", "barLink");
@@ -1811,7 +1811,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       }
 
       try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
-        barStream.newByteChannel(path("stuff"), ImmutableSet.of(CREATE_NEW)).close();
+        barStream.newByteChannel(path("stuff"), ImmutableSet.of(WRITE, CREATE_NEW)).close();
         ASSERT.that(barStream.getFileAttributeView(path("stuff"), BasicFileAttributeView.class)
             .readAttributes()
             .isRegularFile()).isTrue();

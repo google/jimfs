@@ -26,6 +26,7 @@ import com.google.jimfs.attribute.Inode;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
@@ -111,8 +112,8 @@ final class JimfsFileStore extends FileStore {
    * @throws IOException if a symbolic link cycle is detected or the depth of symbolic link
    *    recursion otherwise exceeds a threshold
    */
-  DirectoryEntry lookup(
-      File workingDirectory, JimfsPath path, LinkOptions options) throws IOException {
+  DirectoryEntry lookup(File workingDirectory,
+      JimfsPath path, ImmutableSet<? super LinkOption> options) throws IOException {
     return tree.lookup(workingDirectory, path, options);
   }
 

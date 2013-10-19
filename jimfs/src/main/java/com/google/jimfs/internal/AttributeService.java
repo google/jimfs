@@ -16,6 +16,8 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -408,5 +410,29 @@ final class AttributeService {
     }
 
     return attributeNames.get(0);
+  }
+
+  /**
+   * Simple implementation of {@link FileAttribute}.
+   */
+  private static final class SimpleFileAttribute<T> implements FileAttribute<T> {
+
+    private final String name;
+    private final T value;
+
+    SimpleFileAttribute(String name, T value) {
+      this.name = checkNotNull(name);
+      this.value = checkNotNull(value);
+    }
+
+    @Override
+    public String name() {
+      return name;
+    }
+
+    @Override
+    public T value() {
+      return value;
+    }
   }
 }

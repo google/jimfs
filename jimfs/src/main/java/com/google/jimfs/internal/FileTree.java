@@ -17,12 +17,13 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 
 import java.io.IOException;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.util.Iterator;
 
@@ -77,8 +78,8 @@ final class FileTree {
   /**
    * Returns the result of the file lookup for the given path.
    */
-  public DirectoryEntry lookup(
-      File workingDirectory, JimfsPath path, LinkOptions options) throws IOException {
+  public DirectoryEntry lookup(File workingDirectory,
+      JimfsPath path, ImmutableSet<? super LinkOption> options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
 
@@ -90,8 +91,8 @@ final class FileTree {
     return result;
   }
 
-  private DirectoryEntry lookup(
-      File dir, JimfsPath path, LinkOptions options, int linkDepth) throws IOException {
+  private DirectoryEntry lookup(File dir,
+      JimfsPath path, ImmutableSet<? super LinkOption> options, int linkDepth) throws IOException {
     ImmutableList<Name> names = path.names();
 
     if (path.isAbsolute()) {
@@ -126,7 +127,7 @@ final class FileTree {
    */
   @Nullable
   private DirectoryEntry lookup(@Nullable File dir,
-      Iterable<Name> names, LinkOptions options, int linkDepth) throws IOException {
+      Iterable<Name> names, ImmutableSet<? super LinkOption> options, int linkDepth) throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
@@ -164,7 +165,7 @@ final class FileTree {
    */
   @Nullable
   private DirectoryEntry lookupLast(@Nullable File dir,
-      Name name, LinkOptions options, int linkDepth) throws IOException {
+      Name name, ImmutableSet<? super LinkOption> options, int linkDepth) throws IOException {
     DirectoryTable table = toDirectoryTable(dir);
     if (table == null) {
       return null;
@@ -176,7 +177,7 @@ final class FileTree {
     }
 
     File file = entry.file();
-    if (options.isFollowLinks() && file.isSymbolicLink()) {
+    if (!options.contains(LinkOption.NOFOLLOW_LINKS) && file.isSymbolicLink()) {
       return followSymbolicLink(dir, file, linkDepth);
     }
 
@@ -193,7 +194,7 @@ final class FileTree {
       throw new IOException("too many levels of symbolic links");
     }
 
-    return lookup(dir, link.getTarget(), FOLLOW_LINKS, linkDepth + 1);
+    return lookup(dir, link.getTarget(), Options.FOLLOW_LINKS, linkDepth + 1);
   }
 
   /**

@@ -30,6 +30,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.testing.ByteBufferChannel;
@@ -68,7 +69,8 @@ public class JimfsFileChannelTest {
 
   private static FileChannel channel(ByteStore store, OpenOption... options)
       throws IOException {
-    return new JimfsFileChannel(new File(-1, store), OpenOptions.from(options));
+    return new JimfsFileChannel(new File(-1, store),
+        Options.getOptionsForChannel(ImmutableSet.copyOf(options)));
   }
 
   private static StubByteStore store(int size) throws IOException {
@@ -225,7 +227,7 @@ public class JimfsFileChannelTest {
   @Test
   public void testFileTimeUpdates() throws IOException {
     File file = new File(-1, new StubByteStore(10));
-    FileChannel channel = new JimfsFileChannel(file, OpenOptions.from(READ, WRITE));
+    FileChannel channel = new JimfsFileChannel(file, ImmutableSet.<OpenOption>of(READ, WRITE));
 
     // accessed
     long accessTime = file.getLastAccessTime();

@@ -17,10 +17,12 @@
 package com.google.jimfs.internal;
 
 import static com.google.jimfs.internal.FileSystemView.DeleteMode;
-import static com.google.jimfs.internal.JimfsFileSystemProvider.getOptionsForChannel;
+
+import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.CopyOption;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -56,7 +58,7 @@ final class JimfsSecureDirectoryStream
       throws IOException {
     JimfsPath checkedPath = checkPath(path);
     return view.newSecureDirectoryStream(
-        checkedPath, ALWAYS_TRUE_FILTER, LinkOptions.from(options),
+        checkedPath, ALWAYS_TRUE_FILTER, Options.getLinkOptions(options),
         path().resolve(checkedPath));
   }
 
@@ -64,7 +66,7 @@ final class JimfsSecureDirectoryStream
   public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options,
       FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
-    OpenOptions opts = getOptionsForChannel(options);
+    ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
     return new JimfsFileChannel(view.getRegularFile(checkedPath, opts), opts);
   }
 
@@ -93,8 +95,8 @@ final class JimfsSecureDirectoryStream
 
     JimfsSecureDirectoryStream checkedTargetDir = (JimfsSecureDirectoryStream) targetDir;
 
-    view.copy(
-        checkedSrcPath, checkedTargetDir.view, checkedTargetPath, CopyOptions.move());
+    view.copy(checkedSrcPath, checkedTargetDir.view, checkedTargetPath,
+        ImmutableSet.<CopyOption>of(), true);
   }
 
   @Override
@@ -106,7 +108,7 @@ final class JimfsSecureDirectoryStream
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
       LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
-    return view.getFileAttributeView(checkedPath, type, LinkOptions.from(options));
+    return view.getFileAttributeView(checkedPath, type, Options.getLinkOptions(options));
   }
 
   private static JimfsPath checkPath(Path path) {

@@ -17,22 +17,30 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.LinkOptions.FOLLOW_LINKS;
-import static com.google.jimfs.internal.LinkOptions.NOFOLLOW_LINKS;
+import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.jimfs.attribute.Inode;
 
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystemException;
+import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -99,7 +107,8 @@ final class FileSystemView {
   /**
    * Attempt to lookup the file at the given path.
    */
-  private DirectoryEntry lookupWithLock(JimfsPath path, LinkOptions options) throws IOException {
+  private DirectoryEntry lookupWithLock(
+      JimfsPath path, ImmutableSet<? super LinkOption> options) throws IOException {
     store.readLock().lock();
     try {
       return lookup(path, options);
@@ -111,7 +120,8 @@ final class FileSystemView {
   /**
    * Looks up the file at the given path without locking.
    */
-  private DirectoryEntry lookup(JimfsPath path, LinkOptions options) throws IOException {
+  private DirectoryEntry lookup(
+      JimfsPath path, ImmutableSet<? super LinkOption> options) throws IOException {
     return store.lookup(workingDirectory, path, options);
   }
 
@@ -121,7 +131,7 @@ final class FileSystemView {
    * exist.
    */
   public File getRegularFile(
-      JimfsPath path, OpenOptions options, FileAttribute<?>... attrs) throws IOException {
+      JimfsPath path, ImmutableSet<OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     File file = getOrCreateRegularFile(path, options, attrs);
     if (!file.isRegularFile()) {
       throw new FileSystemException(path.toString(), null, "not a regular file");
@@ -135,8 +145,10 @@ final class FileSystemView {
    * {@code basePathForStream} is that base path that the returned stream will use. This will be the
    * same as {@code dir} except for streams created relative to another secure stream.
    */
-  public JimfsSecureDirectoryStream newSecureDirectoryStream(JimfsPath dir,
-      DirectoryStream.Filter<? super Path> filter, LinkOptions options,
+  public JimfsSecureDirectoryStream newSecureDirectoryStream(
+      JimfsPath dir,
+      DirectoryStream.Filter<? super Path> filter,
+      ImmutableSet<? super LinkOption> options,
       JimfsPath basePathForStream) throws IOException {
     File file = lookupWithLock(dir, options)
         .requireDirectory(dir)
@@ -175,7 +187,7 @@ final class FileSystemView {
 
     store.readLock().lock();
     try {
-      File dir = lookup(path, LinkOptions.NOFOLLOW_LINKS)
+      File dir = lookup(path, Options.NOFOLLOW_LINKS)
           .requireDirectory(path)
           .file();
 
@@ -204,8 +216,8 @@ final class FileSystemView {
 
     store.readLock().lock();
     try {
-      File file = lookup(path, FOLLOW_LINKS).orNull();
-      File file2 = view2.lookup(path2, FOLLOW_LINKS).orNull();
+      File file = lookup(path, Options.FOLLOW_LINKS).orNull();
+      File file2 = view2.lookup(path2, Options.FOLLOW_LINKS).orNull();
       return file != null && Objects.equal(file, file2);
     } finally {
       store.readLock().unlock();
@@ -216,7 +228,7 @@ final class FileSystemView {
    * Gets the real path to the file located by the given path.
    */
   public JimfsPath toRealPath(
-      JimfsPath path, PathService pathService, LinkOptions options) throws IOException {
+      JimfsPath path, PathService pathService, ImmutableSet<? super LinkOption> options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
 
@@ -284,7 +296,7 @@ final class FileSystemView {
 
     store.writeLock().lock();
     try {
-      DirectoryEntry entry = lookup(path, NOFOLLOW_LINKS);
+      DirectoryEntry entry = lookup(path, Options.NOFOLLOW_LINKS);
 
       if (entry.exists()) {
         if (allowExisting) {
@@ -314,10 +326,10 @@ final class FileSystemView {
    * specify that it should be created.
    */
   public File getOrCreateRegularFile(
-      JimfsPath path, OpenOptions options, FileAttribute<?>... attrs) throws IOException {
+      JimfsPath path, ImmutableSet<OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     checkNotNull(path);
-    boolean createNew = options.isCreateNew();
-    boolean create = createNew || options.isCreate();
+    boolean createNew = options.contains(CREATE_NEW);
+    boolean create = createNew || options.contains(CREATE);
 
     // assume no file exists at the path if CREATE_NEW was specified
     if (!createNew) {
@@ -360,8 +372,8 @@ final class FileSystemView {
     }
   }
 
-  private static File truncateIfNeeded(File regularFile, OpenOptions options) {
-    if (options.isTruncateExisting() && options.isWrite()) {
+  private static File truncateIfNeeded(File regularFile, ImmutableSet<OpenOption> options) {
+    if (options.contains(TRUNCATE_EXISTING) && options.contains(WRITE)) {
       ByteStore byteStore = regularFile.asByteStore();
       byteStore.writeLock().lock();
       try {
@@ -378,7 +390,7 @@ final class FileSystemView {
    * Returns the target of the symbolic link at the given path.
    */
   public JimfsPath readSymbolicLink(JimfsPath path) throws IOException {
-    File symbolicLink = lookup(path, NOFOLLOW_LINKS)
+    File symbolicLink = lookup(path, Options.NOFOLLOW_LINKS)
         .requireSymbolicLink(path)
         .file();
 
@@ -391,7 +403,7 @@ final class FileSystemView {
    */
   public void checkAccess(JimfsPath path) throws IOException {
     // just check that the file exists
-    lookup(path, FOLLOW_LINKS).requireExists(path);
+    lookup(path, Options.FOLLOW_LINKS).requireExists(path);
   }
 
   /**
@@ -416,7 +428,7 @@ final class FileSystemView {
     store.writeLock().lock();
     try {
       // we do want to follow links when finding the existing file
-      File existingFile = existingView.lookup(existing, FOLLOW_LINKS)
+      File existingFile = existingView.lookup(existing, Options.FOLLOW_LINKS)
           .requireExists(existing)
           .file();
       if (!existingFile.isRegularFile()) {
@@ -424,7 +436,7 @@ final class FileSystemView {
             "can't link: not a regular file");
       }
 
-      File linkParent = lookup(link, NOFOLLOW_LINKS)
+      File linkParent = lookup(link, Options.NOFOLLOW_LINKS)
           .requireDoesNotExist(link)
           .directory();
 
@@ -448,7 +460,7 @@ final class FileSystemView {
   public void deleteFile(JimfsPath path, DeleteMode deleteMode) throws IOException {
     store.writeLock().lock();
     try {
-      DirectoryEntry entry = lookup(path, NOFOLLOW_LINKS)
+      DirectoryEntry entry = lookup(path, Options.NOFOLLOW_LINKS)
           .requireExists(path);
       delete(entry, deleteMode, path);
     } finally {
@@ -536,15 +548,11 @@ final class FileSystemView {
    * Copies or moves the file at the given source path to the given dest path.
    */
   public void copy(JimfsPath source, FileSystemView destView, JimfsPath dest,
-      CopyOptions options) throws IOException {
+      ImmutableSet<CopyOption> options, boolean move) throws IOException {
     checkNotNull(source);
     checkNotNull(destView);
     checkNotNull(dest);
     checkNotNull(options);
-
-    if (options.isCopy() && options.isAtomicMove()) {
-      throw new UnsupportedOperationException("ATOMIC_MOVE");
-    }
 
     boolean sameFileSystem = isSameFileSystem(destView);
 
@@ -555,14 +563,14 @@ final class FileSystemView {
     try {
       DirectoryEntry sourceEntry = lookup(source, options)
           .requireExists(source);
-      DirectoryEntry destEntry = destView.lookup(dest, NOFOLLOW_LINKS);
+      DirectoryEntry destEntry = destView.lookup(dest, Options.NOFOLLOW_LINKS);
 
       File sourceParent = sourceEntry.directory();
       File sourceFile = sourceEntry.file();
 
       File destParent = destEntry.directory();
 
-      if (options.isMove() && sourceFile.isDirectory()) {
+      if (move && sourceFile.isDirectory()) {
         if (sameFileSystem) {
           checkMovable(sourceFile, source);
           checkNotAncestor(sourceFile, destParent, destView);
@@ -578,7 +586,7 @@ final class FileSystemView {
         // TODO(cgdecker): consider changing this to make the IDs unique per VM
         if (destEntry.file() == sourceFile) {
           return;
-        } else if (options.isReplaceExisting()) {
+        } else if (options.contains(REPLACE_EXISTING)) {
           destView.delete(destEntry, DeleteMode.ANY, dest);
         } else {
           throw new FileAlreadyExistsException(dest.toString());
@@ -587,7 +595,7 @@ final class FileSystemView {
 
       // can only do an actual move within one file system instance
       // otherwise we have to copy and delete
-      if (options.isMove() && sameFileSystem) {
+      if (move && sameFileSystem) {
         sourceParent.asDirectoryTable().unlink(sourceName);
         sourceParent.updateModifiedTime();
 
@@ -595,12 +603,12 @@ final class FileSystemView {
         destParent.updateModifiedTime();
       } else {
         // copy
-        boolean copyAttributes = options.isCopyAttributes() && !options.isMove();
+        boolean copyAttributes = options.contains(COPY_ATTRIBUTES) && !move;
         File copy = destView.store.copy(sourceFile, copyAttributes);
         destParent.asDirectoryTable().link(destName, copy);
         destParent.updateModifiedTime();
 
-        if (options.isMove()) {
+        if (move) {
           store.copyBasicAttributes(sourceFile, copy);
           delete(sourceEntry, DeleteMode.ANY, source);
         }
@@ -669,7 +677,7 @@ final class FileSystemView {
    * Returns a file attribute view for the given path in this view.
    */
   public <V extends FileAttributeView> V getFileAttributeView(
-      final JimfsPath path, Class<V> type, final LinkOptions options) {
+      final JimfsPath path, Class<V> type, final ImmutableSet<? super LinkOption> options) {
     return store.getFileAttributeView(new Inode.Lookup() {
       @Override
       public Inode lookup() throws IOException {
@@ -684,7 +692,7 @@ final class FileSystemView {
    * Reads attributes of the file located by the given path in this view as an object.
    */
   public <A extends BasicFileAttributes> A readAttributes(
-      JimfsPath path, Class<A> type, LinkOptions options) throws IOException {
+      JimfsPath path, Class<A> type, ImmutableSet<? super LinkOption> options) throws IOException {
     File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();
@@ -695,7 +703,7 @@ final class FileSystemView {
    * Reads attributes of the file located by the given path in this view as a map.
    */
   public Map<String, Object> readAttributes(
-      JimfsPath path, String attributes, LinkOptions options) throws IOException {
+      JimfsPath path, String attributes, ImmutableSet<? super LinkOption> options) throws IOException {
     File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();
@@ -707,7 +715,7 @@ final class FileSystemView {
    * view.
    */
   public void setAttribute(JimfsPath path, String attribute, Object value,
-      LinkOptions options) throws IOException {
+      ImmutableSet<? super LinkOption> options) throws IOException {
     File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();

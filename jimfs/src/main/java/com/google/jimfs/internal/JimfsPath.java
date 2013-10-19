@@ -364,7 +364,7 @@ final class JimfsPath implements Path, FileContent {
   @Override
   public JimfsPath toRealPath(LinkOption... options) throws IOException {
     return getJimfsFileSystem().getDefaultView()
-        .toRealPath(this, pathService, LinkOptions.from(options));
+        .toRealPath(this, pathService, Options.getLinkOptions(options));
   }
 
   @Override

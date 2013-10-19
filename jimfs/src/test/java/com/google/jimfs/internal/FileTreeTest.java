@@ -422,7 +422,7 @@ public class FileTreeTest {
 
   private DirectoryEntry lookup(String path, LinkOption... options) throws IOException {
     JimfsPath pathObj = pathService.parsePath(path);
-    return fileTree.lookup(workingDirectory, pathObj, LinkOptions.from(options));
+    return fileTree.lookup(workingDirectory, pathObj, Options.getLinkOptions(options));
   }
 
   private void assertExists(DirectoryEntry entry, String parent, String file) {
