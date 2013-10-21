@@ -975,6 +975,57 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   }
 
   @Test
+  public void testDelete_file_whenOpenReferencesRemain() throws IOException {
+    // the open streams should continue to function normally despite the deletion
+
+    Path foo = path("/foo");
+    byte[] bytes = preFilledBytes(100);
+    Files.write(foo, bytes);
+
+    InputStream in = Files.newInputStream(foo);
+    OutputStream out = Files.newOutputStream(foo, APPEND);
+    FileChannel channel = FileChannel.open(foo, READ, WRITE);
+
+    ASSERT.that(channel.size()).is(100L);
+
+    Files.delete(foo);
+    assertThat("/foo").doesNotExist();
+
+    ASSERT.that(channel.size()).is(100L);
+
+    ByteBuffer buf = ByteBuffer.allocate(100);
+    while (buf.hasRemaining()) {
+      channel.read(buf);
+    }
+
+    assertArrayEquals(bytes, buf.array());
+
+    byte[] moreBytes = {1, 2, 3, 4, 5};
+    out.write(moreBytes);
+
+    ASSERT.that(channel.size()).is(105L);
+    buf.clear();
+    ASSERT.that(channel.read(buf)).is(5);
+
+    buf.flip();
+    byte[] b = new byte[5];
+    buf.get(b);
+    assertArrayEquals(moreBytes, b);
+
+    byte[] allBytes = new byte[105];
+    int off = 0;
+    int read;
+    while ((read = in.read(allBytes, off, allBytes.length - off)) != -1) {
+      off += read;
+    }
+    assertArrayEquals(concat(bytes, moreBytes), allBytes);
+
+    channel.close();
+    out.close();
+    in.close();
+  }
+
+  @Test
   public void testDelete_directory() throws IOException {
     Files.createDirectories(path("/foo/bar"));
     assertThat("/foo").isDirectory();
@@ -1364,7 +1415,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         channel.read(readBuffer);
       }
 
-      byte[] expected = concat(preFilledBytes(50), preFilledBytes(50), preFilledBytes(50));
+      byte[] expected = Bytes.concat(preFilledBytes(50), preFilledBytes(50), preFilledBytes(50));
 
       assertArrayEquals(expected, readBuffer.array());
     }

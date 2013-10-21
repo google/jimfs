@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.primitives.Bytes.concat;
 import static com.google.jimfs.testing.TestUtils.buffer;
 import static com.google.jimfs.testing.TestUtils.buffers;
 import static com.google.jimfs.testing.TestUtils.bytes;
@@ -23,6 +24,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.primitives.Bytes;
 import com.google.jimfs.testing.ByteBufferChannel;
 
 import org.junit.Before;
@@ -38,7 +40,7 @@ import java.nio.ByteBuffer;
  */
 public abstract class AbstractByteStoreTest {
 
-  private ByteStore store;
+  protected ByteStore store;
 
   protected abstract ByteStore createByteStore();
 
@@ -723,6 +725,34 @@ public abstract class AbstractByteStoreTest {
     assertContentEquals("123456", store);
   }
 
+  @Test
+  public void testDeletedStoreRemainsUsableWhileOpen() {
+    byte[] bytes = bytes("1234567890");
+    store.write(0, bytes, 0, bytes.length);
+
+    store.opened();
+    store.opened();
+
+    store.delete();
+
+    assertContentEquals(bytes, store);
+
+    byte[] moreBytes = bytes("1234");
+    store.write(bytes.length, moreBytes, 0, 4);
+
+    byte[] totalBytes = concat(bytes, bytes("1234"));
+    assertContentEquals(totalBytes, store);
+
+    store.closed();
+
+    assertContentEquals(totalBytes, store);
+
+    store.closed();
+
+    // don't check anything else; no guarantee of what if anything will happen once the store is
+    // deleted and completely closed
+  }
+
   private static void assertBufferEquals(String expected, ByteBuffer actual) {
     assertEquals(expected.length(), actual.capacity());
     assertArrayEquals(bytes(expected), actual.array());
@@ -737,7 +767,7 @@ public abstract class AbstractByteStoreTest {
     assertContentEquals(bytes(expected), actual);
   }
 
-  private static void assertContentEquals(byte[] expected, ByteStore actual) {
+  protected static void assertContentEquals(byte[] expected, ByteStore actual) {
     assertEquals(expected.length, actual.currentSize());
     byte[] actualBytes = new byte[(int) actual.currentSize()];
     actual.read(0, ByteBuffer.wrap(actualBytes));

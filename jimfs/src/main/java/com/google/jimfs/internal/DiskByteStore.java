@@ -66,15 +66,10 @@ final class DiskByteStore extends ByteStore {
   }
 
   @Override
-  public void delete() {
-    writeLock().lock();
-    try {
-      disk.free(blocks);
-      blocks.clear();
-      size = 0;
-    } finally {
-      writeLock().unlock();
-    }
+  protected final void deleteContents() {
+    disk.free(blocks);
+    blocks.clear();
+    size = 0;
   }
 
   @Override

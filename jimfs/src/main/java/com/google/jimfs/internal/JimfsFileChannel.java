@@ -80,6 +80,8 @@ final class JimfsFileChannel extends FileChannel {
     this.read = options.contains(READ);
     this.write = options.contains(WRITE);
     this.append = options.contains(APPEND);
+
+    store.opened();
   }
 
   /**
@@ -552,9 +554,13 @@ final class JimfsFileChannel extends FileChannel {
   @Override
   protected void implCloseChannel() {
     // interrupt the current blocking thread, if any, causing it to throw ClosedByInterruptException
-    final Thread thread = blockingThread;
-    if (thread != null) {
-      thread.interrupt();
+    try {
+      final Thread thread = blockingThread;
+      if (thread != null) {
+        thread.interrupt();
+      }
+    } finally {
+      store.closed();
     }
   }
 

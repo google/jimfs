@@ -54,7 +54,7 @@ public class StubByteStore extends ByteStore {
   }
 
   @Override
-  public void delete() {
+  public void deleteContents() {
   }
 
   public void setSize(long size) {

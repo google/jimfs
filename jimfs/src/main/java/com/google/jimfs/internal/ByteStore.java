@@ -34,6 +34,9 @@ abstract class ByteStore implements FileContent {
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
+  private int openCount;
+  private boolean deleted;
+
   /**
    * Returns the read lock for this store.
    */
@@ -80,6 +83,57 @@ abstract class ByteStore implements FileContent {
       readLock().unlock();
     }
   }
+
+  /**
+   * Called when a stream or channel to this store is opened.
+   */
+  public final void opened() {
+    writeLock().lock();
+    try {
+      openCount++;
+    } finally {
+      writeLock().unlock();
+    }
+  }
+
+  /**
+   * Called when a stream or channel to this store is closed. If there are no more streams or
+   * channels open to the store and it has been deleted, its contents may be deleted.
+   */
+  public final void closed() {
+    writeLock().lock();
+    try {
+      --openCount;
+      if (deleted && openCount == 0) {
+        deleteContents();
+      }
+    } finally {
+      writeLock().unlock();
+    }
+  }
+
+  /**
+   * Marks this store as deleted. If there are no streams or channels open to the store, its
+   * contents are deleted if necessary.
+   */
+  @Override
+  public final void delete() {
+    writeLock().lock();
+    try {
+      deleted = true;
+      if (openCount == 0) {
+        deleteContents();
+      }
+    } finally {
+      writeLock().unlock();
+    }
+  }
+
+  /**
+   * Deletes the contents of this store. Called when the file that contains this store has been
+   * deleted and all open streams and channels to the file have been closed.
+   */
+  protected abstract void deleteContents();
 
   /**
    * Truncates this store to the given {@code size}. If the given size is less than the current size

@@ -69,20 +69,6 @@ public final class TestUtils {
     return bytes;
   }
 
-  public static byte[] concat(byte[]... byteArrays) {
-    int totalLength = 0;
-    for (byte[] byteArray : byteArrays) {
-      totalLength += byteArray.length;
-    }
-    byte[] result = new byte[totalLength];
-    int pos = 0;
-    for (byte[] array : byteArrays) {
-      System.arraycopy(array, 0, result, pos, array.length);
-      pos += array.length;
-    }
-    return result;
-  }
-
   public static ByteBuffer buffer(String bytes) {
     return ByteBuffer.wrap(bytes(bytes));
   }

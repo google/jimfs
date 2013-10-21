@@ -132,7 +132,7 @@ public class RealFileByteStore extends ByteStore implements Closeable {
   }
 
   @Override
-  public void delete() {
+  protected void deleteContents() {
     try {
       close();
     } catch (IOException e) {

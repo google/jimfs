@@ -16,16 +16,18 @@
 
 package com.google.jimfs.internal;
 
+import org.junit.After;
+
 /**
- * Tests for {@link HeapDisk} that create a new disk for each byte store created (testing fresh
- * state).
+ * Tests for {@link HeapDisk} that reuse a disk for each store created. Stores are deleted after
+ * each test, meaning blocks will be reused.
  *
  * @author Colin Decker
  */
-public class HeapDiskTest extends AbstractByteStoreTest {
+public class HeapDiskReuseWithDeleteTest extends HeapDiskReuseTest {
 
-  @Override
-  protected ByteStore createByteStore() {
-    return new HeapDisk(4).createByteStore();
+  @After
+  public void tearDown() {
+    store.deleteContents();
   }
 }

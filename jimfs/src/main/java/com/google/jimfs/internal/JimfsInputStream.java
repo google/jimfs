@@ -40,6 +40,7 @@ final class JimfsInputStream extends InputStream {
   public JimfsInputStream(File file) {
     this.file = file;
     this.store = file.asByteStore();
+    store.opened();
   }
 
   @Override
@@ -133,8 +134,11 @@ final class JimfsInputStream extends InputStream {
   @Override
   public void close() throws IOException {
     synchronized (this) {
-      file = null;
-      store = null;
+      if (store != null) {
+        store.closed();
+        file = null;
+        store = null;
+      }
     }
   }
 }
