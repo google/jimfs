@@ -27,7 +27,6 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
 import com.google.jimfs.attribute.Inode;
@@ -50,6 +49,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -108,7 +108,7 @@ final class FileSystemView {
    * Attempt to lookup the file at the given path.
    */
   private DirectoryEntry lookupWithLock(
-      JimfsPath path, ImmutableSet<? super LinkOption> options) throws IOException {
+      JimfsPath path, Set<? super LinkOption> options) throws IOException {
     store.readLock().lock();
     try {
       return lookup(path, options);
@@ -121,7 +121,7 @@ final class FileSystemView {
    * Looks up the file at the given path without locking.
    */
   private DirectoryEntry lookup(
-      JimfsPath path, ImmutableSet<? super LinkOption> options) throws IOException {
+      JimfsPath path, Set<? super LinkOption> options) throws IOException {
     return store.lookup(workingDirectory, path, options);
   }
 
@@ -130,8 +130,8 @@ final class FileSystemView {
    * file. If the CREATE or CREATE_NEW option is specified, the file will be created if it does not
    * exist.
    */
-  public File getRegularFile(
-      JimfsPath path, ImmutableSet<OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+  public File getRegularFile(JimfsPath path, Set<OpenOption> options,
+      FileAttribute<?>... attrs) throws IOException {
     File file = getOrCreateRegularFile(path, options, attrs);
     if (!file.isRegularFile()) {
       throw new FileSystemException(path.toString(), null, "not a regular file");
@@ -148,7 +148,7 @@ final class FileSystemView {
   public JimfsSecureDirectoryStream newSecureDirectoryStream(
       JimfsPath dir,
       DirectoryStream.Filter<? super Path> filter,
-      ImmutableSet<? super LinkOption> options,
+      Set<? super LinkOption> options,
       JimfsPath basePathForStream) throws IOException {
     File file = lookupWithLock(dir, options)
         .requireDirectory(dir)
@@ -223,7 +223,7 @@ final class FileSystemView {
    * Gets the real path to the file located by the given path.
    */
   public JimfsPath toRealPath(
-      JimfsPath path, PathService pathService, ImmutableSet<? super LinkOption> options) throws IOException {
+      JimfsPath path, PathService pathService, Set<? super LinkOption> options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
 
@@ -321,7 +321,7 @@ final class FileSystemView {
    * specify that it should be created.
    */
   public File getOrCreateRegularFile(
-      JimfsPath path, ImmutableSet<OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+      JimfsPath path, Set<OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     checkNotNull(path);
     boolean createNew = options.contains(CREATE_NEW);
     boolean create = createNew || options.contains(CREATE);
@@ -367,7 +367,7 @@ final class FileSystemView {
     }
   }
 
-  private static File truncateIfNeeded(File regularFile, ImmutableSet<OpenOption> options) {
+  private static File truncateIfNeeded(File regularFile, Set<OpenOption> options) {
     if (options.contains(TRUNCATE_EXISTING) && options.contains(WRITE)) {
       ByteStore byteStore = regularFile.asByteStore();
       byteStore.writeLock().lock();
@@ -543,7 +543,7 @@ final class FileSystemView {
    * Copies or moves the file at the given source path to the given dest path.
    */
   public void copy(JimfsPath source, FileSystemView destView, JimfsPath dest,
-      ImmutableSet<CopyOption> options, boolean move) throws IOException {
+      Set<CopyOption> options, boolean move) throws IOException {
     checkNotNull(source);
     checkNotNull(destView);
     checkNotNull(dest);
@@ -672,7 +672,7 @@ final class FileSystemView {
    * Returns a file attribute view for the given path in this view.
    */
   public <V extends FileAttributeView> V getFileAttributeView(
-      final JimfsPath path, Class<V> type, final ImmutableSet<? super LinkOption> options) {
+      final JimfsPath path, Class<V> type, final Set<? super LinkOption> options) {
     return store.getFileAttributeView(new Inode.Lookup() {
       @Override
       public Inode lookup() throws IOException {
@@ -687,7 +687,7 @@ final class FileSystemView {
    * Reads attributes of the file located by the given path in this view as an object.
    */
   public <A extends BasicFileAttributes> A readAttributes(
-      JimfsPath path, Class<A> type, ImmutableSet<? super LinkOption> options) throws IOException {
+      JimfsPath path, Class<A> type, Set<? super LinkOption> options) throws IOException {
     File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();
@@ -698,7 +698,7 @@ final class FileSystemView {
    * Reads attributes of the file located by the given path in this view as a map.
    */
   public Map<String, Object> readAttributes(
-      JimfsPath path, String attributes, ImmutableSet<? super LinkOption> options) throws IOException {
+      JimfsPath path, String attributes, Set<? super LinkOption> options) throws IOException {
     File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();
@@ -710,7 +710,7 @@ final class FileSystemView {
    * view.
    */
   public void setAttribute(JimfsPath path, String attribute, Object value,
-      ImmutableSet<? super LinkOption> options) throws IOException {
+      Set<? super LinkOption> options) throws IOException {
     File file = lookupWithLock(path, options)
         .requireExists(path)
         .file();

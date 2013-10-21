@@ -19,13 +19,13 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.util.Iterator;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -79,7 +79,7 @@ final class FileTree {
    * Returns the result of the file lookup for the given path.
    */
   public DirectoryEntry lookup(File workingDirectory,
-      JimfsPath path, ImmutableSet<? super LinkOption> options) throws IOException {
+      JimfsPath path, Set<? super LinkOption> options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
 
@@ -92,7 +92,7 @@ final class FileTree {
   }
 
   private DirectoryEntry lookup(File dir,
-      JimfsPath path, ImmutableSet<? super LinkOption> options, int linkDepth) throws IOException {
+      JimfsPath path, Set<? super LinkOption> options, int linkDepth) throws IOException {
     ImmutableList<Name> names = path.names();
 
     if (path.isAbsolute()) {
@@ -127,7 +127,7 @@ final class FileTree {
    */
   @Nullable
   private DirectoryEntry lookup(@Nullable File dir,
-      Iterable<Name> names, ImmutableSet<? super LinkOption> options, int linkDepth) throws IOException {
+      Iterable<Name> names, Set<? super LinkOption> options, int linkDepth) throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
@@ -165,7 +165,7 @@ final class FileTree {
    */
   @Nullable
   private DirectoryEntry lookupLast(@Nullable File dir,
-      Name name, ImmutableSet<? super LinkOption> options, int linkDepth) throws IOException {
+      Name name, Set<? super LinkOption> options, int linkDepth) throws IOException {
     DirectoryTable table = toDirectoryTable(dir);
     if (table == null) {
       return null;

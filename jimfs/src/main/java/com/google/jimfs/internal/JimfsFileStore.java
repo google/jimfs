@@ -32,6 +32,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -113,7 +114,7 @@ final class JimfsFileStore extends FileStore {
    *    recursion otherwise exceeds a threshold
    */
   DirectoryEntry lookup(File workingDirectory,
-      JimfsPath path, ImmutableSet<? super LinkOption> options) throws IOException {
+      JimfsPath path, Set<? super LinkOption> options) throws IOException {
     return tree.lookup(workingDirectory, path, options);
   }
 
