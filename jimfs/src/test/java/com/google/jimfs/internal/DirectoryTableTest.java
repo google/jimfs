@@ -125,13 +125,13 @@ public class DirectoryTableTest {
     File file = new File(2, new DirectoryTable());
 
     try {
-      file.asDirectoryTable().link(Name.simple("."), new File(2, new DirectoryTable()));
+      file.directory().link(Name.simple("."), new File(2, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      file.asDirectoryTable().link(Name.simple(".."), new File(2, new DirectoryTable()));
+      file.directory().link(Name.simple(".."), new File(2, new DirectoryTable()));
       fail();
     } catch (IllegalArgumentException expected) {
     }

@@ -165,7 +165,7 @@ final class FileSystemView {
     ImmutableSortedSet<Name> names;
     store.readLock().lock();
     try {
-      names = workingDirectory.asDirectoryTable().snapshot();
+      names = workingDirectory.directory().snapshot();
       workingDirectory.updateAccessTime();
     } finally {
       store.readLock().unlock();
@@ -186,7 +186,7 @@ final class FileSystemView {
           .requireDirectory(path)
           .file();
 
-      for (DirectoryEntry entry : dir.asDirectoryTable()) {
+      for (DirectoryEntry entry : dir.directory()) {
         if (!entry.name().equals(Name.SELF) && !entry.name().equals(Name.PARENT)) {
           long modifiedTime = entry.file().getLastModifiedTime();
           modifiedTimes.put(entry.name(), modifiedTime);
@@ -239,7 +239,7 @@ final class FileSystemView {
       if (!entry.file().isRootDirectory()) {
         File file = entry.directory();
         while (true) {
-          DirectoryTable fileTable = file.asDirectoryTable();
+          DirectoryTable fileTable = file.directory();
           names.add(fileTable.name());
           File parent = fileTable.parent();
           if (file.isRootDirectory()) {
@@ -308,7 +308,7 @@ final class FileSystemView {
 
       File newFile = fileSupplier.get();
       store.setInitialAttributes(newFile, attrs);
-      parent.asDirectoryTable().link(name, newFile);
+      parent.directory().link(name, newFile);
       parent.updateModifiedTime();
       return newFile;
     } finally {
@@ -369,7 +369,7 @@ final class FileSystemView {
 
   private static File truncateIfNeeded(File regularFile, Set<OpenOption> options) {
     if (options.contains(TRUNCATE_EXISTING) && options.contains(WRITE)) {
-      ByteStore byteStore = regularFile.asByteStore();
+      ByteStore byteStore = regularFile.bytes();
       byteStore.writeLock().lock();
       try {
         byteStore.truncate(0);
@@ -389,7 +389,7 @@ final class FileSystemView {
         .requireSymbolicLink(path)
         .file();
 
-    return symbolicLink.getTarget();
+    return symbolicLink.target();
   }
 
   /**
@@ -435,7 +435,7 @@ final class FileSystemView {
           .requireDoesNotExist(link)
           .directory();
 
-      linkParent.asDirectoryTable().link(linkName, existingFile);
+      linkParent.directory().link(linkName, existingFile);
       linkParent.updateModifiedTime();
     } finally {
       store.writeLock().unlock();
@@ -472,7 +472,7 @@ final class FileSystemView {
     File file = entry.file();
 
     checkDeletable(file, deleteMode, pathForException);
-    parent.asDirectoryTable().unlink(entry.name());
+    parent.directory().unlink(entry.name());
     parent.updateModifiedTime();
 
     if (file.links() == 0) {
@@ -534,7 +534,7 @@ final class FileSystemView {
    * DirectoryNotEmptyException} if it isn't.
    */
   private void checkEmpty(File file, Path pathForException) throws FileSystemException {
-    if (!file.asDirectoryTable().isEmpty()) {
+    if (!file.directory().isEmpty()) {
       throw new DirectoryNotEmptyException(pathForException.toString());
     }
   }
@@ -591,16 +591,16 @@ final class FileSystemView {
       // can only do an actual move within one file system instance
       // otherwise we have to copy and delete
       if (move && sameFileSystem) {
-        sourceParent.asDirectoryTable().unlink(sourceName);
+        sourceParent.directory().unlink(sourceName);
         sourceParent.updateModifiedTime();
 
-        destParent.asDirectoryTable().link(destName, sourceFile);
+        destParent.directory().link(destName, sourceFile);
         destParent.updateModifiedTime();
       } else {
         // copy
         boolean copyAttributes = options.contains(COPY_ATTRIBUTES) && !move;
         File copy = destView.store.copy(sourceFile, copyAttributes);
-        destParent.asDirectoryTable().link(destName, copy);
+        destParent.directory().link(destName, copy);
         destParent.updateModifiedTime();
 
         if (move) {
@@ -663,7 +663,7 @@ final class FileSystemView {
       if (current.isRootDirectory()) {
         return;
       } else {
-        current = current.asDirectoryTable().parent();
+        current = current.directory().parent();
       }
     }
   }

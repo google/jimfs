@@ -154,7 +154,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   public void link(Name name, File file) {
     DirectoryEntry entry = put(checkNotReserved(name, "link"), file);
     if (file.isDirectory()) {
-      file.asDirectoryTable().linked(entry);
+      file.directory().linked(entry);
     }
   }
 
@@ -168,7 +168,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
     DirectoryEntry entry = remove(checkNotReserved(name, "unlink"));
     File file = entry.file();
     if (file.isDirectory()) {
-      file.asDirectoryTable().unlinked();
+      file.directory().unlinked();
     }
   }
 

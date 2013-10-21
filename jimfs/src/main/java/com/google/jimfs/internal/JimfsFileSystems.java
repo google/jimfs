@@ -56,7 +56,7 @@ final class JimfsFileSystems {
     FileFactory fileFactory = new FileFactory(storage);
 
     File superRoot = fileFactory.createDirectory();
-    superRoot.asDirectoryTable().setSuperRoot(superRoot);
+    superRoot.directory().setSuperRoot(superRoot);
 
     // create roots
     for (String root : config.roots()) {
@@ -70,8 +70,8 @@ final class JimfsFileSystems {
       File rootDir = fileFactory.createDirectory();
       attributeService.setInitialAttributes(rootDir);
 
-      superRoot.asDirectoryTable().link(rootName, rootDir);
-      rootDir.asDirectoryTable().setRoot();
+      superRoot.directory().link(rootName, rootDir);
+      rootDir.directory().setRoot();
     }
 
     return new JimfsFileStore(new FileTree(superRoot), fileFactory, storage, attributeService);
@@ -92,7 +92,7 @@ final class JimfsFileSystems {
     for (Name name : workingDirPath.names()) {
       File newDir = fileStore.createDirectory().get();
       fileStore.setInitialAttributes(newDir);
-      dir.asDirectoryTable().link(name, newDir);
+      dir.directory().link(name, newDir);
 
       dir = newDir;
     }

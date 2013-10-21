@@ -76,27 +76,27 @@ final class File extends Inode {
    */
   public boolean isRootDirectory() {
     // only root directories have their parent link pointing to themselves
-    return isDirectory() && equals(asDirectoryTable().parent());
+    return isDirectory() && equals(directory().parent());
   }
 
   /**
    * Returns a view of this file as a byte store.
    */
-  public ByteStore asByteStore() {
+  public ByteStore bytes() {
     return (ByteStore) content;
   }
 
   /**
    * Returns a view of this file as a directory table.
    */
-  public DirectoryTable asDirectoryTable() {
+  public DirectoryTable directory() {
     return (DirectoryTable) content;
   }
 
   /**
    * Gets the target of this symbolic link.
    */
-  public JimfsPath getTarget() {
+  public JimfsPath target() {
     return (JimfsPath) content;
   }
 

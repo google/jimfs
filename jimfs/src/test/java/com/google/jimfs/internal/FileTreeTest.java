@@ -449,7 +449,7 @@ public class FileTreeTest {
     DirectoryTable table = new DirectoryTable();
     File newFile = new File(new Random().nextInt(), table);
 
-    dir.asDirectoryTable().link(Name.simple(name), newFile);
+    dir.directory().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 
@@ -461,7 +461,7 @@ public class FileTreeTest {
 
     File newFile = new File(new Random().nextInt(), new StubByteStore(0));
 
-    dir.asDirectoryTable().link(Name.simple(name), newFile);
+    dir.directory().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 
@@ -473,7 +473,7 @@ public class FileTreeTest {
 
     File newFile = new File(new Random().nextInt(), pathService.parsePath(target));
 
-    dir.asDirectoryTable().link(Name.simple(name), newFile);
+    dir.directory().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 

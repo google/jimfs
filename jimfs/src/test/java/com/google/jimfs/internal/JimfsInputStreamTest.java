@@ -157,7 +157,7 @@ public class JimfsInputStreamTest {
     ASSERT.that(in.read(new byte[5])).is(5);
     assertEmpty(in);
 
-    in.file.asByteStore().write(5, new byte[10], 0, 10); // append more bytes to file
+    in.file.bytes().write(5, new byte[10], 0, 10); // append more bytes to file
     assertEmpty(in);
   }
 
