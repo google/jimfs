@@ -15,8 +15,8 @@ start using it:
 import com.google.jimfs.Jimfs;
 ...
 
-// For a file system with Unix-style paths and attributes:
-FileSystem fs = Jimfs.newUnixLikeFileSystem();
+// For a simple file system with Unix-style paths and behavior:
+FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 
 Path foo = fs.getPath("/foo");
 Files.createDirectory(foo);
@@ -25,7 +25,7 @@ Path hello = foo.resolve("hello.txt");
 Files.write(hello, ImmutableList.of("hello"), StandardCharsets.UTF_8);
 
 // Or for Windows:
-FileSystem fs = Jimfs.newWindowsLikeFileSystem();
+FileSystem fs = Jimfs.newFileSystem(Configuration.windows());
 ```
 
 What's supported?
@@ -36,8 +36,7 @@ JIMFS supports almost all the APIs under `java.nio.file`. It supports:
 - Creating, deleting, moving and copying files and directories.
 - Reading and writing files with `FileChannel` or `SeekableByteChannel`, `InputStream`,
   `OutputStream`, etc.
-- Symbolic links.
-- Hard links to regular files.
+- Symbolic links. Hard links to regular files.
 - `SecureDirectoryStream`, for operations relative to an _open_ directory.
 - Glob and regex path filtering with `PathMatcher`.
 - Watching for changes to a directory with a `WatchService`.
