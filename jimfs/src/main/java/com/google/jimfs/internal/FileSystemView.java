@@ -126,21 +126,6 @@ final class FileSystemView {
   }
 
   /**
-   * Gets the regular file at the given path, throwing an exception if the file isn't a regular
-   * file. If the CREATE or CREATE_NEW option is specified, the file will be created if it does not
-   * exist.
-   */
-  public File getRegularFile(JimfsPath path, Set<OpenOption> options,
-      FileAttribute<?>... attrs) throws IOException {
-    File file = getOrCreateRegularFile(path, options, attrs);
-    if (!file.isRegularFile()) {
-      throw new FileSystemException(path.toString(), null, "not a regular file");
-    }
-
-    return file;
-  }
-
-  /**
    * Creates a new secure directory stream for the directory located by the given path. The given
    * {@code basePathForStream} is that base path that the returned stream will use. This will be the
    * same as {@code dir} except for streams created relative to another secure stream.
@@ -341,7 +326,7 @@ final class FileSystemView {
             throw new FileSystemException(path.toString(), null, "not a regular file");
           }
 
-          return truncateIfNeeded(file, options);
+          return open(file, options);
         } else if (!create) {
           // if we aren't in create mode and no file was found, throw
           throw new NoSuchFileException(path.toString());
@@ -361,13 +346,13 @@ final class FileSystemView {
       if (!file.isRegularFile()) {
         throw new FileSystemException(path.toString(), null, "not a regular file");
       }
-      return truncateIfNeeded(file, options);
+      return open(file, options);
     } finally {
       store.writeLock().unlock();
     }
   }
 
-  private static File truncateIfNeeded(File regularFile, Set<OpenOption> options) {
+  private static File open(File regularFile, Set<OpenOption> options) {
     if (options.contains(TRUNCATE_EXISTING) && options.contains(WRITE)) {
       ByteStore byteStore = regularFile.bytes();
       byteStore.writeLock().lock();
@@ -377,6 +362,10 @@ final class FileSystemView {
         byteStore.writeLock().unlock();
       }
     }
+
+    // must be opened while holding a file store lock to ensure no race between opening and
+    // deleting the file
+    regularFile.bytes().opened();
 
     return regularFile;
   }

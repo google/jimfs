@@ -36,9 +36,6 @@ import java.util.regex.Pattern;
  */
 final class PathMatchers {
 
-  private static final String GLOB = "glob";
-  private static final String REGEX = "regex";
-
   private PathMatchers() {}
 
   /**
@@ -60,10 +57,10 @@ final class PathMatchers {
     String pattern = syntaxAndPattern.substring(syntaxSeparator + 1);
 
     switch (syntax) {
-      case GLOB:
+      case "glob":
         pattern = GlobToRegex.toRegex(pattern, separators);
         // fall through
-      case REGEX:
+      case "regex":
         return fromRegex(pattern, normalizations);
       default:
         throw new UnsupportedOperationException("Invalid syntax: " + syntaxAndPattern);

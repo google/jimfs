@@ -40,8 +40,6 @@ final class JimfsOutputStream extends OutputStream {
     this.file = file;
     this.store = file.bytes();
     this.append = append;
-
-    store.opened();
   }
 
   @Override

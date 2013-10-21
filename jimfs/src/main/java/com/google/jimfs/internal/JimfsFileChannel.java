@@ -80,8 +80,6 @@ final class JimfsFileChannel extends FileChannel {
     this.read = options.contains(READ);
     this.write = options.contains(WRITE);
     this.append = options.contains(APPEND);
-
-    store.opened();
   }
 
   /**

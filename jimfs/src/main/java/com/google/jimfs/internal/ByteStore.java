@@ -84,31 +84,23 @@ abstract class ByteStore implements FileContent {
     }
   }
 
+  // opened/closed/delete don't use the read/write lock... they only need to ensure that they
+  // are never called concurrently
+
   /**
    * Called when a stream or channel to this store is opened.
    */
-  public final void opened() {
-    writeLock().lock();
-    try {
-      openCount++;
-    } finally {
-      writeLock().unlock();
-    }
+  public synchronized final void opened() {
+    openCount++;
   }
 
   /**
    * Called when a stream or channel to this store is closed. If there are no more streams or
    * channels open to the store and it has been deleted, its contents may be deleted.
    */
-  public final void closed() {
-    writeLock().lock();
-    try {
-      --openCount;
-      if (deleted && openCount == 0) {
-        deleteContents();
-      }
-    } finally {
-      writeLock().unlock();
+  public synchronized final void closed() {
+    if (--openCount == 0 && deleted) {
+      deleteContents();
     }
   }
 
@@ -117,15 +109,10 @@ abstract class ByteStore implements FileContent {
    * contents are deleted if necessary.
    */
   @Override
-  public final void delete() {
-    writeLock().lock();
-    try {
-      deleted = true;
-      if (openCount == 0) {
-        deleteContents();
-      }
-    } finally {
-      writeLock().unlock();
+  public synchronized final void delete() {
+    deleted = true;
+    if (openCount == 0) {
+      deleteContents();
     }
   }
 
