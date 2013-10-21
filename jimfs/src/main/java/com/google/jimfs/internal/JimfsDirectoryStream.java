@@ -69,12 +69,12 @@ abstract class JimfsDirectoryStream implements DirectoryStream<Path> {
   /**
    * Returns a snapshot of names of the entries in the directory.
    */
-  protected abstract Iterable<String> snapshotEntryNames() throws IOException;
+  protected abstract Iterable<Name> snapshotEntryNames() throws IOException;
 
   private final class DirectoryIterator extends AbstractIterator<Path> {
 
     @Nullable
-    private Iterator<String> fileNames;
+    private Iterator<Name> fileNames;
 
     @Override
     protected Path computeNext() {
@@ -84,7 +84,7 @@ abstract class JimfsDirectoryStream implements DirectoryStream<Path> {
         }
 
         while (fileNames.hasNext()) {
-          String name = fileNames.next();
+          Name name = fileNames.next();
           Path path = dirPath.resolve(name);
 
           if (filter.accept(path)) {

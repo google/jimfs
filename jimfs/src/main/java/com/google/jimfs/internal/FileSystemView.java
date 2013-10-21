@@ -161,7 +161,7 @@ final class FileSystemView {
   /**
    * Returns a snapshot of the entries in the working directory of this view.
    */
-  public ImmutableSortedSet<String> snapshotBaseEntries() {
+  public ImmutableSortedSet<Name> snapshotBaseEntries() {
     ImmutableSortedSet<Name> names;
     store.readLock().lock();
     try {
@@ -170,12 +170,7 @@ final class FileSystemView {
     } finally {
       store.readLock().unlock();
     }
-
-    ImmutableSortedSet.Builder<String> builder = ImmutableSortedSet.naturalOrder();
-    for (Name name : names) {
-      builder.add(name.toString());
-    }
-    return builder.build();
+    return names;
   }
 
   /**

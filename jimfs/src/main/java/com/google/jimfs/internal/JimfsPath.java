@@ -269,6 +269,19 @@ final class JimfsPath implements Path, FileContent {
     return normal;
   }
 
+  /**
+   * Resolves the given name against this path. The name is assumed not to be a root name.
+   */
+  JimfsPath resolve(Name name) {
+    if (name.toString().equals("")) {
+      return this;
+    }
+    return pathService.createPathInternal(root, ImmutableList.<Name>builder()
+        .addAll(names)
+        .add(name)
+        .build());
+  }
+
   @Override
   public JimfsPath resolve(Path other) {
     JimfsPath otherPath = checkPath(other);
@@ -282,7 +295,10 @@ final class JimfsPath implements Path, FileContent {
     if (otherPath.isEmptyPath()) {
       return this;
     }
-    return pathService.createPath(root, Iterables.concat(names, otherPath.names));
+    return pathService.createPath(root, ImmutableList.<Name>builder()
+        .addAll(names)
+        .addAll(otherPath.names)
+        .build());
   }
 
   @Override

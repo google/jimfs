@@ -49,7 +49,7 @@ final class JimfsSecureDirectoryStream
   }
 
   @Override
-  protected Iterable<String> snapshotEntryNames() throws IOException {
+  protected Iterable<Name> snapshotEntryNames() throws IOException {
     return view.snapshotBaseEntries();
   }
 
