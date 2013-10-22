@@ -75,4 +75,31 @@ final class Util {
   static int smearHash(int hashCode) {
     return C2 * Integer.rotateLeft(hashCode * C1, 15);
   }
+
+  private static final int ZERO_ARRAY_LEN = 8192;
+  private static final byte[] ZERO_ARRAY = new byte[ZERO_ARRAY_LEN];
+
+  /**
+   * Zeroes all bytes of the given array.
+   */
+  static void zero(byte[] bytes) {
+    zero(bytes, 0, bytes.length);
+  }
+
+  /**
+   * Zeroes all bytes between off (inclusive) and off + len (exclusive) in the given array.
+   */
+  static void zero(byte[] bytes, int off, int len) {
+    // this significantly faster than looping or Arrays.fill (which loops), particularly when the
+    // length of the slice to be zeroed is <= to ZERO_ARRAY_LEN (in that case, it's faster by a
+    // factor of 2)
+    int remaining = len;
+    while (remaining >= ZERO_ARRAY_LEN) {
+      System.arraycopy(ZERO_ARRAY, 0, bytes, off, ZERO_ARRAY_LEN);
+      off += ZERO_ARRAY_LEN;
+      remaining -= ZERO_ARRAY_LEN;
+    }
+
+    System.arraycopy(ZERO_ARRAY, 0, bytes, off, remaining);
+  }
 }

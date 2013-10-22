@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package misc;
+package com.google.jimfs.misc;
 
 import com.google.caliper.AfterExperiment;
 import com.google.caliper.BeforeExperiment;

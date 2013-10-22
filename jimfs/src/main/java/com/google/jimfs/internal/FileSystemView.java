@@ -540,9 +540,6 @@ final class FileSystemView {
 
     boolean sameFileSystem = isSameFileSystem(destView);
 
-    Name sourceName = source.name();
-    Name destName = dest.name();
-
     lockBoth(store.writeLock(), destView.store.writeLock());
     try {
       DirectoryEntry sourceEntry = lookup(source, options)
@@ -580,16 +577,16 @@ final class FileSystemView {
       // can only do an actual move within one file system instance
       // otherwise we have to copy and delete
       if (move && sameFileSystem) {
-        sourceParent.directory().unlink(sourceName);
+        sourceParent.directory().unlink(source.name());
         sourceParent.updateModifiedTime();
 
-        destParent.directory().link(destName, sourceFile);
+        destParent.directory().link(dest.name(), sourceFile);
         destParent.updateModifiedTime();
       } else {
         // copy
         boolean copyAttributes = options.contains(COPY_ATTRIBUTES) && !move;
         File copy = destView.store.copy(sourceFile, copyAttributes);
-        destParent.directory().link(destName, copy);
+        destParent.directory().link(dest.name(), copy);
         destParent.updateModifiedTime();
 
         if (move) {

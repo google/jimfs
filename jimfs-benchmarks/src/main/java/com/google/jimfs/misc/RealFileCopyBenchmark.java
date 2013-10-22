@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package misc;
+package com.google.jimfs.misc;
 
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;

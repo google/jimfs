@@ -58,7 +58,7 @@ final class HeapDisk extends Disk {
 
   @Override
   public int zero(int block, int offset, int len) {
-    Arrays.fill(blocks[block], offset, offset + len, (byte) 0);
+    Util.zero(blocks[block], offset, len);
     return len;
   }
 
