@@ -67,6 +67,31 @@ final class JimfsInputStream extends InputStream {
   }
 
   @Override
+  public int read(byte[] b) throws IOException {
+    synchronized (this) {
+      checkNotClosed();
+      if (finished) {
+        return -1;
+      }
+
+      store.readLock().lock();
+      try {
+        int read = store.read(pos, b, 0, b.length);
+        if (read == -1) {
+          finished = true;
+        } else {
+          pos += read;
+        }
+
+        file.updateAccessTime();
+        return read;
+      } finally {
+        store.readLock().unlock();
+      }
+    }
+  }
+
+  @Override
   public int read(byte[] b, int off, int len) throws IOException {
     checkPositionIndexes(off, off + len, b.length);
 

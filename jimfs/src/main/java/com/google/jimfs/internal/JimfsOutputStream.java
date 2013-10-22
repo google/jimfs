@@ -62,6 +62,25 @@ final class JimfsOutputStream extends OutputStream {
   }
 
   @Override
+  public void write(byte[] b) throws IOException {
+    synchronized (this) {
+      checkNotClosed();
+
+      store.writeLock().lock();
+      try {
+        if (append) {
+          pos = store.currentSize();
+        }
+        pos += store.write(pos, b, 0, b.length);
+
+        file.updateModifiedTime();
+      } finally {
+        store.writeLock().unlock();
+      }
+    }
+  }
+
+  @Override
   public void write(byte[] b, int off, int len) throws IOException {
     checkPositionIndexes(off, off + len, b.length);
 
