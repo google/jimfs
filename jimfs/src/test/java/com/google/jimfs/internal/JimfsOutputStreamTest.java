@@ -176,7 +176,7 @@ public class JimfsOutputStreamTest {
 
   private static void assertStoreContains(JimfsOutputStream out, int... bytes) {
     byte[] actualBytes = new byte[bytes.length];
-    out.file.bytes().read(0, actualBytes);
+    out.file.bytes().read(0, actualBytes, 0, actualBytes.length);
     assertArrayEquals(bytes(bytes), actualBytes);
   }
 }

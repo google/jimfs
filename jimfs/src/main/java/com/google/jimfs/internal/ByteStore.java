@@ -84,8 +84,7 @@ abstract class ByteStore implements FileContent {
     }
   }
 
-  // opened/closed/delete don't use the read/write lock... they only need to ensure that they
-  // are never called concurrently
+  // opened/closed/delete don't use the read/write lock... they only need to ensure that they don'
 
   /**
    * Called when a stream or channel to this store is opened.
@@ -181,15 +180,6 @@ abstract class ByteStore implements FileContent {
    * If {@code pos} is greater than or equal to the size of this store, returns -1 instead.
    */
   public abstract int read(long pos);
-
-  /**
-   * Reads up to {@code b.length} bytes starting at position {@code pos} in this store to the given
-   * byte array. Returns the number of bytes actually read or -1 if {@code pos} is greater than or
-   * equal to the size of this store.
-   */
-  public int read(long pos, byte[] b) {
-    return read(pos, b, 0, b.length);
-  }
 
   /**
    * Reads up to {@code len} bytes starting at position {@code pos} in this store to the given byte

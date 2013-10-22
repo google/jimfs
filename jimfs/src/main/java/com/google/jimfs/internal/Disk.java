@@ -65,11 +65,11 @@ abstract class Disk extends RegularFileStorage {
   }
 
   /**
-   * Allocates at least {@code minBlocks} more blocks if possible. The {@code blocks} queue should
-   * have blocks in it when this returns if an exception is not thrown. Returns the number of new
-   * blocks that were allocated.
+   * Allocates at least {@code minBlocks} more blocks if possible. The {@code freeBlocks} queue
+   * should have blocks in it when this returns if an exception is not thrown. Returns the number
+   * of new blocks that were allocated.
    */
-  protected abstract int allocateMoreBlocks(int minBlocks);
+  protected abstract int allocateMoreBlocks(int count);
 
   /**
    * Returns the size of blocks created by this disk.
@@ -104,9 +104,7 @@ abstract class Disk extends RegularFileStorage {
       blockCount += allocateMoreBlocks(additionalBlocksNeeded);
     }
 
-    for (int i = 0; i < numBlocks; i++) {
-      queue.add(freeBlocks.take());
-    }
+    freeBlocks.transferTo(queue, numBlocks);
   }
 
   /**
@@ -200,6 +198,17 @@ abstract class Disk extends RegularFileStorage {
 
       System.arraycopy(values, 0, this.values, head, len);
       head = end;
+    }
+
+    public void transferTo(BlockQueue queue, int count) {
+      int start = head - count;
+      int queueEnd = queue.head + count;
+      queue.expandIfNecessary(queueEnd);
+
+      System.arraycopy(this.values, start, queue.values, queue.head, count);
+
+      head = start;
+      queue.head = queueEnd;
     }
 
     public void add(int value) {

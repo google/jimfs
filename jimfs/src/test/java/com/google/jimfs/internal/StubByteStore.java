@@ -110,7 +110,7 @@ public class StubByteStore extends ByteStore {
   @Override
   public int read(long pos) {
     byte[] b = new byte[1];
-    if (read(pos, b) != -1) {
+    if (read(pos, b, 0, 1) != -1) {
       return UnsignedBytes.toInt(b[0]);
     }
     return -1;

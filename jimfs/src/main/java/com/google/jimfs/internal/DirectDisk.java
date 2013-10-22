@@ -42,8 +42,8 @@ final class DirectDisk extends Disk {
   }
 
   @Override
-  protected int allocateMoreBlocks(int minBlocks) {
-    int newBlockCount = blockCount() + minBlocks;
+  protected int allocateMoreBlocks(int count) {
+    int newBlockCount = blockCount() + count;
     if (newBlockCount > blocks.length) {
       blocks = Arrays.copyOf(blocks, nextPowerOf2(newBlockCount));
     }
@@ -53,7 +53,7 @@ final class DirectDisk extends Disk {
       freeBlocks.add(i);
     }
 
-    return minBlocks;
+    return count;
   }
 
   @Override

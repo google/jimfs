@@ -352,7 +352,9 @@ final class DiskByteStore extends ByteStore {
    */
   private int blockForWrite(int index) {
     int additionalBlocksNeeded = index - blocks.size() + 1;
-    expandBlocks(additionalBlocksNeeded);
+    if (additionalBlocksNeeded > 0) {
+      expandBlocks(additionalBlocksNeeded);
+    }
 
     return blocks.get(index);
   }

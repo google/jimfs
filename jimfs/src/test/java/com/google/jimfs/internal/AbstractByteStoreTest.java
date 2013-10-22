@@ -24,7 +24,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.Bytes;
 import com.google.jimfs.testing.ByteBufferChannel;
 
 import org.junit.Before;
@@ -68,7 +67,6 @@ public abstract class AbstractByteStoreTest {
   @Test
   public void testEmpty_read_byteArray() {
     byte[] array = new byte[10];
-    assertEquals(-1, store.read(0, array));
     assertEquals(-1, store.read(0, array, 0, array.length));
     assertArrayEquals(bytes("0000000000"), array);
   }
@@ -241,7 +239,7 @@ public abstract class AbstractByteStoreTest {
   public void testNonEmpty_read_all_byteArray() {
     fillContent("222222");
     byte[] array = new byte[6];
-    assertEquals(6, store.read(0, array));
+    assertEquals(6, store.read(0, array, 0, array.length));
     assertArrayEquals(bytes("222222"), array);
   }
 
@@ -267,7 +265,7 @@ public abstract class AbstractByteStoreTest {
   public void testNonEmpty_read_all_byteArray_largerThanContent() {
     fillContent("222222");
     byte[] array = new byte[10];
-    assertEquals(6, store.read(0, array));
+    assertEquals(6, store.read(0, array, 0, array.length));
     assertArrayEquals(bytes("2222220000"), array);
     array = new byte[10];
     assertEquals(6, store.read(0, array, 2, 6));
@@ -309,7 +307,7 @@ public abstract class AbstractByteStoreTest {
   public void testNonEmpty_read_partial_fromStart_byteArray() {
     fillContent("222222");
     byte[] array = new byte[3];
-    assertEquals(3, store.read(0, array));
+    assertEquals(3, store.read(0, array, 0, array.length));
     assertArrayEquals(bytes("222"), array);
     array = new byte[10];
     assertEquals(3, store.read(0, array, 1, 3));
@@ -320,7 +318,7 @@ public abstract class AbstractByteStoreTest {
   public void testNonEmpty_read_partial_fromMiddle_byteArray() {
     fillContent("22223333");
     byte[] array = new byte[3];
-    assertEquals(3, store.read(3, array));
+    assertEquals(3, store.read(3, array, 0, array.length));
     assertArrayEquals(bytes("233"), array);
     array = new byte[10];
     assertEquals(3, store.read(3, array, 1, 3));
@@ -331,7 +329,7 @@ public abstract class AbstractByteStoreTest {
   public void testNonEmpty_read_partial_fromEnd_byteArray() {
     fillContent("2222222222");
     byte[] array = new byte[3];
-    assertEquals(2, store.read(8, array));
+    assertEquals(2, store.read(8, array, 0, array.length));
     assertArrayEquals(bytes("220"), array);
     array = new byte[10];
     assertEquals(2, store.read(8, array, 1, 3));
@@ -396,7 +394,7 @@ public abstract class AbstractByteStoreTest {
   public void testNonEmpty_read_fromPastEnd_byteArray() {
     fillContent("123");
     byte[] array = new byte[3];
-    assertEquals(-1, store.read(3, array));
+    assertEquals(-1, store.read(3, array, 0, array.length));
     assertArrayEquals(bytes("000"), array);
     assertEquals(-1, store.read(3, array, 0, 2));
     assertArrayEquals(bytes("000"), array);
