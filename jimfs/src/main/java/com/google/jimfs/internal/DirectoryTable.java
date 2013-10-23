@@ -36,17 +36,23 @@ import javax.annotation.Nullable;
  */
 final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
 
+  private static final int INITIAL_CAPACITY = 16;
+  private static final int INITIAL_RESIZE_THRESHOLD = (int) (INITIAL_CAPACITY * 0.75);
+
   /*
    * This class uses its own simple hash table implementation to avoid allocation of redundant
    * Map.Entry objects. DirectoryEntry objects are able to serve the same purpose.
    */
-  private DirectoryEntry[] table = new DirectoryEntry[16];
+  private DirectoryEntry[] table = new DirectoryEntry[INITIAL_CAPACITY];
+  private int resizeThreshold = INITIAL_RESIZE_THRESHOLD;
+
   private int size;
 
   /**
-   * The entry linking to this directory in its parent directory.
+   * The entry linking to this directory in its parent directory. Used for accessing the parent
+   * directory, the current name of this directory and this directory's corresponding file object.
    */
-  private DirectoryEntry entry;
+  private DirectoryEntry entryInParent;
 
   /**
    * Creates a copy of this table. The copy does <i>not</i> contain a copy of the entries in this
@@ -71,14 +77,14 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    */
   public void setSuperRoot(File file) {
     // just set this table's entry to include the file
-    this.entry = new DirectoryEntry(file, Name.EMPTY, file);
+    this.entryInParent = new DirectoryEntry(file, Name.EMPTY, file);
   }
 
   /**
    * Sets this directory as a root directory, linking ".." to itself.
    */
   public void setRoot() {
-    this.entry = new DirectoryEntry(self(), name(), self());
+    this.entryInParent = new DirectoryEntry(self(), name(), self());
     remove(PARENT);
     put(PARENT, self());
   }
@@ -87,28 +93,28 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    * Returns the entry linking to this directory in its parent.
    */
   public DirectoryEntry entry() {
-    return entry;
+    return entryInParent;
   }
 
   /**
    * Returns the file for this directory.
    */
   public File self() {
-    return entry.file();
+    return entryInParent.file();
   }
 
   /**
    * Returns the name of this directory.
    */
   public Name name() {
-    return entry.name();
+    return entryInParent.name();
   }
 
   /**
    * Returns the parent of this directory.
    */
   public File parent() {
-    return entry.directory();
+    return entryInParent.directory();
   }
 
   /**
@@ -116,7 +122,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    * linking to this directory.
    */
   public void linked(DirectoryEntry entry) {
-    this.entry = entry;
+    this.entryInParent = entry;
     put(SELF, entry.file());
     put(PARENT, entry.directory());
   }
@@ -127,7 +133,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   public void unlinked() {
     remove(SELF);
     remove(PARENT);
-    entry = null;
+    entryInParent = null;
   }
 
   /**
@@ -159,8 +165,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   }
 
   /**
-   * Unlinks the given name from any key it is linked to in this table. Returns the file key that
-   * was linked to the name, or {@code null} if no such mapping was present.
+   * Unlinks the given name from any the file it is linked to.
    *
    * @throws IllegalArgumentException if {@code name} is a reserved name such as "."
    */
@@ -237,29 +242,29 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
       curr = curr.next;
     }
 
-    DirectoryEntry newEntry = new DirectoryEntry(self(), name, file);
+    DirectoryEntry entry = new DirectoryEntry(self(), name, file);
 
     size++;
     if (expandIfNeeded()) {
       // if the table was expanded, the index/entry we found is no longer applicable, so just add
       // the entry normally
-      put(table, newEntry);
+      put(table, entry);
     } else {
       // otherwise, we just can use the index/entry we found
       if (prev != null) {
-        prev.next = newEntry;
+        prev.next = entry;
       } else {
-        table[index] = newEntry;
+        table[index] = entry;
       }
     }
 
     file.incrementLinkCount();
-    return newEntry;
+    return entry;
   }
 
   private boolean expandIfNeeded() {
-    if (percentFull() > 0.75f) {
-      DirectoryEntry[] newTable = new DirectoryEntry[table.length * 2];
+    if (size > resizeThreshold) {
+      DirectoryEntry[] newTable = new DirectoryEntry[table.length << 1];
 
       // redistribute all current entries in the new table
       for (DirectoryEntry entry : table) {
@@ -273,14 +278,11 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
       }
 
       this.table = newTable;
+      resizeThreshold <<= 1;
       return true;
     }
 
     return false;
-  }
-
-  private float percentFull() {
-    return ((float) size) / table.length;
   }
 
   private static void put(DirectoryEntry[] table, DirectoryEntry entry) {
