@@ -15,17 +15,14 @@
  */
 
 /**
- * This package contains the abstract {@link AttributeProvider} class, which implements the
- * handling of attributes for a file attribute view such as "basic" or "posix". See the Java
- * <a href="http://docs.oracle.com/javase/tutorial/essential/io/fileAttr.html">tutorial</a> on file
- * attributes for more information about attribute views.
+ * Package containing classes used for configuration of file attribute handling.
  *
- * <p>The package also contains the abstract {@link Inode} class, which acts as the interface for
- * storing and retrieving file attributes, and the {@link UserPrincipals} class, which provides
- * methods for creating {@code UserPrincipal} and {@code GroupPrincipal} instances.
+ * <p>Users can create a subclass of {@link AttributeProvider} to implement handling of a custom
+ * file attribute view. In an attribute provider, the {@link Inode} class is used to access and set
+ * file attributes.
  *
- * <p>Finally, the package contains a standard set of {@code AttributeProvider} implementations,
- * accessible through the {@link StandardAttributeProviders} class.
+ * <p>{@link StandardAttributeProviders} provides access to the standard set of
+ * {@code AttributeProvider} implementations that JIMFS supports.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs.attribute;

@@ -562,6 +562,11 @@ final class JimfsFileChannel extends FileChannel {
     }
   }
 
+  @Override
+  protected void finalize() throws Throwable {
+    close();
+  }
+
   /**
    * A file lock that does nothing, since only one JVM process has access to this file system.
    */

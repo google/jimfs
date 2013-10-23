@@ -15,8 +15,11 @@
  */
 
 /**
- * Base package containing the {@link Jimfs} class, the entry point for creating in-memory file
- * system instances. Also contains classes for file system configuration.
+ * Package containing classes uses for creating new JIMFS file systems.
+ *
+ * <p>{@link Configuration} is an immutable class defining a particular file system configuration,
+ * while {@link Jimfs} provides convenience methods for creating a new file system instance from a
+ * configuration.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs;

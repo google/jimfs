@@ -125,4 +125,9 @@ final class JimfsOutputStream extends OutputStream {
       }
     }
   }
+
+  @Override
+  protected void finalize() throws Throwable {
+    close();
+  }
 }

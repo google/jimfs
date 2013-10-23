@@ -15,8 +15,7 @@
  */
 
 /**
- * This package contains classes related to the configuration of paths and path handling in a file
- * system.
+ * Package containing classes used for configuration of paths and file names in a file system.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs.path;
