@@ -351,16 +351,13 @@ final class DiskByteStore extends ByteStore {
    * Gets the block at the given index, expanding to create the block if necessary.
    */
   private int blockForWrite(int index) {
-    int additionalBlocksNeeded = index - blocks.size() + 1;
-    if (additionalBlocksNeeded > 0) {
-      expandBlocks(additionalBlocksNeeded);
+    int blockCount = blocks.size();
+    if (index >= blockCount) {
+      int additionalBlocksNeeded = index - blockCount + 1;
+      disk.alloc(blocks, additionalBlocksNeeded);
     }
 
     return blocks.get(index);
-  }
-
-  private void expandBlocks(int additionalBlocksNeeded) {
-    disk.alloc(blocks, additionalBlocksNeeded);
   }
 
   private int blockIndex(long position) {
