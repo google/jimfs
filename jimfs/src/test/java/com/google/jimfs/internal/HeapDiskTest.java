@@ -17,7 +17,7 @@
 package com.google.jimfs.internal;
 
 /**
- * Tests for {@link HeapDisk} that create a new disk for each byte store created (testing fresh
+ * Tests for {@link HeapMemoryDisk} that create a new disk for each byte store created (testing fresh
  * state).
  *
  * @author Colin Decker
@@ -26,6 +26,6 @@ public class HeapDiskTest extends AbstractByteStoreTest {
 
   @Override
   protected ByteStore createByteStore() {
-    return new HeapDisk(4).createByteStore();
+    return new HeapMemoryDisk(4).createByteStore();
   }
 }

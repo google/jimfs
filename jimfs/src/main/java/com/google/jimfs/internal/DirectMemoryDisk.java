@@ -22,22 +22,23 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * {@link Disk} using {@linkplain ByteBuffer#allocateDirect(int) direct} byte buffers for blocks.
+ * {@link MemoryDisk} using {@linkplain ByteBuffer#allocateDirect(int) direct byte buffers} for
+ * blocks.
  *
  * @author Colin Decker
  */
-final class DirectDisk extends Disk {
+final class DirectMemoryDisk extends MemoryDisk {
 
-  private ByteBuffer[] blocks = new ByteBuffer[256];
+  private ByteBuffer[] blocks = new ByteBuffer[4096];
 
-  DirectDisk() {
+  DirectMemoryDisk() {
     this(DEFAULT_BLOCK_SIZE);
   }
 
   /**
    * Creates a disk with the given block size and max cache size.
    */
-  public DirectDisk(int blockSize) {
+  public DirectMemoryDisk(int blockSize) {
     super(blockSize);
   }
 
@@ -50,7 +51,7 @@ final class DirectDisk extends Disk {
 
     for (int i = blockCount(); i < newBlockCount; i++) {
       blocks[i] = ByteBuffer.allocateDirect(blockSize);
-      freeBlocks.add(i);
+      free.add(i);
     }
 
     return count;

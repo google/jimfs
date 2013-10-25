@@ -17,20 +17,22 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.jimfs.internal.Util.nextPowerOf2;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * A resizable pseudo-disk acting as a shared space for storing file data. A disk allocates fixed
- * size blocks of bytes to files as needed and retains blocks that have been freed for reuse. Each
+ * size blocks of bytes to files as needed and caches blocks that have been freed for reuse. Each
  * block is represented by an integer which is used to locate the block for read and write
  * operations implemented by the disk.
  *
+ * <p>Currently, once a memory disk has allocated a block it will cache that block indefinitely
+ * once freed. This means that the total size of the disk is always the maximum number of bytes
+ * that have been allocated to files at one time so far.
+ *
  * @author Colin Decker
  */
-abstract class Disk extends RegularFileStorage {
+abstract class MemoryDisk {
 
   /**
    * 8K blocks.
@@ -51,21 +53,23 @@ abstract class Disk extends RegularFileStorage {
   /**
    * Queue of free blocks to be allocated to files.
    */
-  protected final BlockQueue freeBlocks = new BlockQueue(1024);
+  protected final IntList free = new IntList(1024);
 
-  protected Disk(int blockSize) {
+  protected MemoryDisk(int blockSize) {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
     checkArgument(blockSize % 2 == 0, "blockSize (%s) must be a multiple of 2", blockSize);
     this.blockSize = blockSize;
   }
 
-  @Override
+  /**
+   * Creates a new, empty byte store.
+   */
   public final ByteStore createByteStore() {
-    return new DiskByteStore(this);
+    return new MemoryDiskByteStore(this);
   }
 
   /**
-   * Allocates at least {@code minBlocks} more blocks if possible. The {@code freeBlocks} queue
+   * Allocates at least {@code minBlocks} more blocks if possible. The {@code free} list
    * should have blocks in it when this returns if an exception is not thrown. Returns the number
    * of new blocks that were allocated.
    */
@@ -85,33 +89,44 @@ abstract class Disk extends RegularFileStorage {
     return blockCount;
   }
 
-  @Override
+  /**
+   * Returns the current total size of this disk.
+   */
   public final synchronized long getTotalSpace() {
     return blockCount * blockSize;
   }
 
-  @Override
+  /**
+   * Returns the current number of unallocated bytes on this disk.
+   */
   public final synchronized long getUnallocatedSpace() {
-    return freeBlocks.size() * blockSize;
+    return free.size() * blockSize;
   }
 
   /**
-   * Allocates the given number of blocks and adds their identifiers to the given queue.
+   * Allocates the given number of blocks and adds their identifiers to the given list.
    */
-  public final synchronized void alloc(BlockQueue queue, int numBlocks) {
-    int additionalBlocksNeeded = numBlocks - freeBlocks.size();
+  public final synchronized void alloc(IntList blocks, int count) {
+    int additionalBlocksNeeded = count - free.size();
     if (additionalBlocksNeeded > 0) {
       blockCount += allocateMoreBlocks(additionalBlocksNeeded);
     }
 
-    freeBlocks.transferTo(queue, numBlocks);
+    free.transferTo(blocks, count);
   }
 
   /**
-   * Frees all blocks in the given queue.
+   * Frees all blocks in the given list.
    */
-  public final synchronized void free(BlockQueue blocks) {
-    freeBlocks.addAll(blocks);
+  public final void free(IntList blocks) {
+    free(blocks, blocks.size());
+  }
+
+  /**
+   * Frees the last count blocks from the given list.
+   */
+  public final synchronized void free(IntList blocks, int count) {
+    blocks.transferTo(free, count);
   }
 
   /**
@@ -160,72 +175,4 @@ abstract class Disk extends RegularFileStorage {
    * having the given length.
    */
   public abstract ByteBuffer asByteBuffer(int block, int offset, int len);
-
-  /**
-   * Simple queue of block identifiers. Can be read like a list, but values can only be added
-   * or removed at the end.
-   */
-  static final class BlockQueue {
-
-    private int[] values;
-    private int head;
-
-    public BlockQueue(int initialCapacity) {
-      this.values = new int[initialCapacity];
-    }
-
-    private void expandIfNecessary(int minSize) {
-      if (minSize > values.length) {
-        this.values = Arrays.copyOf(values, nextPowerOf2(minSize));
-      }
-    }
-
-    public boolean isEmpty() {
-      return head == 0;
-    }
-
-    public int size() {
-      return head;
-    }
-
-    public void addAll(BlockQueue queue) {
-      addAll(queue.values, queue.head);
-    }
-
-    public void addAll(int[] values, int len) {
-      int end = head + len;
-      expandIfNecessary(end);
-
-      System.arraycopy(values, 0, this.values, head, len);
-      head = end;
-    }
-
-    public void transferTo(BlockQueue queue, int count) {
-      int start = head - count;
-      int queueEnd = queue.head + count;
-      queue.expandIfNecessary(queueEnd);
-
-      System.arraycopy(this.values, start, queue.values, queue.head, count);
-
-      head = start;
-      queue.head = queueEnd;
-    }
-
-    public void add(int value) {
-      expandIfNecessary(head + 1);
-      values[head++] = value;
-    }
-
-    public int get(int index) {
-      return values[index];
-    }
-
-    public void clear() {
-      head = 0;
-    }
-
-    public int take() {
-      return values[--head];
-    }
-  }
 }

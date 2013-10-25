@@ -87,19 +87,19 @@ public class TransferFromBenchmark {
     HEAP_DISK_EMPTY {
       @Override
       public ByteStore createByteStore() {
-        return new HeapDisk().createByteStore();
+        return new HeapMemoryDisk().createByteStore();
       }
     },
 
     DIRECT_DISK_EMPTY {
       @Override
       public ByteStore createByteStore() {
-        return new DirectDisk().createByteStore();
+        return new DirectMemoryDisk().createByteStore();
       }
     },
 
     HEAP_DISK_ALREADY_ALLOCATED {
-      private final Disk disk = preAllocate(new HeapDisk(), 10000000);
+      private final MemoryDisk disk = preAllocate(new HeapMemoryDisk(), 10000000);
 
       @Override
       public ByteStore createByteStore() {
@@ -108,7 +108,7 @@ public class TransferFromBenchmark {
     },
 
     DIRECT_DISK_ALREADY_ALLOCATED {
-      private final Disk disk = preAllocate(new DirectDisk(), 10000000);
+      private final MemoryDisk disk = preAllocate(new DirectMemoryDisk(), 10000000);
 
       @Override
       public ByteStore createByteStore() {

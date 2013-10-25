@@ -53,18 +53,18 @@ import javax.annotation.Nullable;
 final class JimfsFileStore extends FileStore {
 
   private final FileTree tree;
-  private final RegularFileStorage storage;
+  private final MemoryDisk disk;
   private final AttributeService attributes;
   private final FileFactory factory;
 
   private final Lock readLock;
   private final Lock writeLock;
 
-  public JimfsFileStore(FileTree tree, FileFactory factory, RegularFileStorage storage,
+  public JimfsFileStore(FileTree tree, FileFactory factory, MemoryDisk disk,
       AttributeService attributes) {
     this.tree = checkNotNull(tree);
     this.factory = checkNotNull(factory);
-    this.storage = checkNotNull(storage);
+    this.disk = checkNotNull(disk);
     this.attributes = checkNotNull(attributes);
 
     ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -224,7 +224,7 @@ final class JimfsFileStore extends FileStore {
 
   @Override
   public long getTotalSpace() throws IOException {
-    return storage.getTotalSpace();
+    return disk.getTotalSpace();
   }
 
   @Override
@@ -234,7 +234,7 @@ final class JimfsFileStore extends FileStore {
 
   @Override
   public long getUnallocatedSpace() throws IOException {
-    return storage.getUnallocatedSpace();
+    return disk.getUnallocatedSpace();
   }
 
   @Override

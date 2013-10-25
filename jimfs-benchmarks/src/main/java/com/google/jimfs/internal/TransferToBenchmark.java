@@ -91,14 +91,14 @@ public class TransferToBenchmark {
     HEAP_DISK {
       @Override
       public ByteStore createByteStore() {
-        return new HeapDisk().createByteStore();
+        return new HeapMemoryDisk().createByteStore();
       }
     },
 
     DIRECT_DISK {
       @Override
       public ByteStore createByteStore() {
-        return new DirectDisk().createByteStore();
+        return new DirectMemoryDisk().createByteStore();
       }
     };
 

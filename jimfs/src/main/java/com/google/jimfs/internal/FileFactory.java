@@ -31,13 +31,13 @@ final class FileFactory {
 
   private final AtomicInteger idGenerator = new AtomicInteger();
 
-  private final RegularFileStorage storage;
+  private final MemoryDisk disk;
 
   /**
-   * Creates a new file factory using the given storage for regular files.
+   * Creates a new file factory using the given disk for regular files.
    */
-  public FileFactory(RegularFileStorage storage) {
-    this.storage = checkNotNull(storage);
+  public FileFactory(MemoryDisk disk) {
+    this.disk = checkNotNull(disk);
   }
 
   private int nextFileId() {
@@ -55,7 +55,7 @@ final class FileFactory {
    * Creates a new regular file and stores it. Returns the key of the new file.
    */
   public File createRegularFile() {
-    return new File(nextFileId(), storage.createByteStore());
+    return new File(nextFileId(), disk.createByteStore());
   }
 
   /**

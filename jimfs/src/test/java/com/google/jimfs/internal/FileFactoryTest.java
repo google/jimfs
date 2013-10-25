@@ -22,6 +22,8 @@ import static org.truth0.Truth.ASSERT;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+
 /**
  * Tests for {@link FileFactory}.
  *
@@ -33,20 +35,53 @@ public class FileFactoryTest {
 
   @Before
   public void setUp() {
-    factory = new FileFactory(new RegularFileStorage() {
+    factory = new FileFactory(new MemoryDisk(2) {
       @Override
-      public ByteStore createByteStore() {
-        return new StubByteStore(0);
-      }
-
-      @Override
-      public long getTotalSpace() {
+      protected int allocateMoreBlocks(int count) {
         return 0;
       }
 
       @Override
-      public long getUnallocatedSpace() {
+      public int zero(int block, int offset, int len) {
         return 0;
+      }
+
+      @Override
+      public void copy(int block, int copy) {
+      }
+
+      @Override
+      public void put(int block, int offset, byte b) {
+      }
+
+      @Override
+      public int put(int block, int offset, byte[] b, int off, int len) {
+        return 0;
+      }
+
+      @Override
+      public int put(int block, int offset, ByteBuffer buf) {
+        return 0;
+      }
+
+      @Override
+      public byte get(int block, int offset) {
+        return 0;
+      }
+
+      @Override
+      public int get(int block, int offset, byte[] b, int off, int len) {
+        return 0;
+      }
+
+      @Override
+      public int get(int block, int offset, ByteBuffer buf, int len) {
+        return 0;
+      }
+
+      @Override
+      public ByteBuffer asByteBuffer(int block, int offset, int len) {
+        return null;
       }
     });
   }

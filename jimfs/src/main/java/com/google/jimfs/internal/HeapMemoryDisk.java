@@ -22,22 +22,22 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * {@link Disk} using byte arrays for blocks.
+ * {@link MemoryDisk} using byte arrays for blocks.
  *
  * @author Colin Decker
  */
-final class HeapDisk extends Disk {
+final class HeapMemoryDisk extends MemoryDisk {
 
-  private byte[][] blocks = new byte[256][];
+  private byte[][] blocks = new byte[4096][];
 
-  HeapDisk() {
+  HeapMemoryDisk() {
     this(DEFAULT_BLOCK_SIZE);
   }
 
   /**
    * Creates a disk with the given block size.
    */
-  public HeapDisk(int blockSize) {
+  public HeapMemoryDisk(int blockSize) {
     super(blockSize);
   }
 
@@ -50,7 +50,7 @@ final class HeapDisk extends Disk {
 
     for (int i = blockCount(); i < newBlockCount; i++) {
       blocks[i] = new byte[blockSize];
-      freeBlocks.add(i);
+      free.add(i);
     }
 
     return count;

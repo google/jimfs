@@ -17,7 +17,6 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.internal.Disk.BlockQueue;
 
 import com.google.common.primitives.UnsignedBytes;
 
@@ -27,21 +26,21 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 
 /**
- * Byte store backed by a {@link Disk}.
+ * Byte store backed by a {@link MemoryDisk}.
  *
  * @author Colin Decker
  */
-final class DiskByteStore extends ByteStore {
+final class MemoryDiskByteStore extends ByteStore {
 
-  private final Disk disk;
-  private final BlockQueue blocks;
+  private final MemoryDisk disk;
+  private final IntList blocks;
   private long size;
 
-  public DiskByteStore(Disk disk) {
-    this(disk, new BlockQueue(32), 0);
+  public MemoryDiskByteStore(MemoryDisk disk) {
+    this(disk, new IntList(32), 0);
   }
 
-  private DiskByteStore(Disk disk, BlockQueue blocks, long size) {
+  private MemoryDiskByteStore(MemoryDisk disk, IntList blocks, long size) {
     this.disk = checkNotNull(disk);
     this.blocks = blocks;
     this.size = size;
@@ -54,7 +53,7 @@ final class DiskByteStore extends ByteStore {
 
   @Override
   protected ByteStore createCopy() {
-    BlockQueue copyBlocks = new BlockQueue(Math.max(blocks.size() * 2, 32));
+    IntList copyBlocks = new IntList(Math.max(blocks.size() * 2, 32));
     disk.alloc(copyBlocks, blocks.size());
 
     for (int i = 0; i < blocks.size(); i++) {
@@ -62,13 +61,12 @@ final class DiskByteStore extends ByteStore {
       int copy = copyBlocks.get(i);
       disk.copy(block, copy);
     }
-    return new DiskByteStore(disk, copyBlocks, size);
+    return new MemoryDiskByteStore(disk, copyBlocks, size);
   }
 
   @Override
   protected final void deleteContents() {
     disk.free(blocks);
-    blocks.clear();
     size = 0;
   }
 
@@ -84,11 +82,7 @@ final class DiskByteStore extends ByteStore {
     int newBlockCount = blockIndex(lastPosition) + 1;
     int blocksToRemove = blocks.size() - newBlockCount;
     if (blocksToRemove > 0) {
-      BlockQueue blocksToFree = new BlockQueue(blocksToRemove);
-      for (int i = 0; i < blocksToRemove; i++) {
-        blocksToFree.add(blocks.take()); // removing blocks from the end
-      }
-      disk.free(blocksToFree);
+      disk.free(blocks, blocksToRemove);
     }
 
     return true;

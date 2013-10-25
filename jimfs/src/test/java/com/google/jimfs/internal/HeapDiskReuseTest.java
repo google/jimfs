@@ -22,14 +22,14 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 /**
- * Tests for {@link HeapDisk} that reuse a disk for each store created. Stores are not deleted
+ * Tests for {@link HeapMemoryDisk} that reuse a disk for each store created. Stores are not deleted
  * after most tests, meaning new blocks must be allocated for each store created.
  *
  * @author Colin Decker
  */
 public class HeapDiskReuseTest extends HeapDiskTest {
 
-  private final Disk disk = new HeapDisk(8);
+  private final MemoryDisk disk = new HeapMemoryDisk(8);
 
   @Override
   protected ByteStore createByteStore() {
@@ -43,19 +43,19 @@ public class HeapDiskReuseTest extends HeapDiskTest {
 
     store.write(0, bytes, 0, bytes.length);
 
-    int freeBlocksAfterWrite = disk.freeBlocks.size();
+    int freeBlocksAfterWrite = disk.free.size();
     assertContentEquals(bytes, store);
 
     store.delete();
 
-    assertEquals(freeBlocksAfterWrite, disk.freeBlocks.size());
+    assertEquals(freeBlocksAfterWrite, disk.free.size());
     assertContentEquals(bytes, store);
 
     store.closed();
 
     assertContentEquals(new byte[0], store);
 
-    int freeBlocksAfterDelete = disk.freeBlocks.size();
+    int freeBlocksAfterDelete = disk.free.size();
     assertTrue(freeBlocksAfterDelete > freeBlocksAfterWrite);
   }
 }

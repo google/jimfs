@@ -30,7 +30,7 @@ public final class BenchmarkUtils {
   /**
    * Pre-allocates enough bytes in the given disk to hold up to maxSize bytes.
    */
-  public static Disk preAllocate(Disk disk, int maxSize) {
+  public static MemoryDisk preAllocate(MemoryDisk disk, int maxSize) {
     disk.allocateMoreBlocks(IntMath.divide(maxSize, disk.blockSize(), RoundingMode.UP));
     return disk;
   }

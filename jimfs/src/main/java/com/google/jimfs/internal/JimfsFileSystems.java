@@ -52,8 +52,8 @@ final class JimfsFileSystems {
   private static JimfsFileStore createFileStore(
       Configuration config, PathService pathService) {
     AttributeService attributeService = new AttributeService(config);
-    RegularFileStorage storage = new HeapDisk();
-    FileFactory fileFactory = new FileFactory(storage);
+    MemoryDisk disk = new HeapMemoryDisk();
+    FileFactory fileFactory = new FileFactory(disk);
 
     File superRoot = fileFactory.createDirectory();
     superRoot.directory().setSuperRoot(superRoot);
@@ -74,7 +74,7 @@ final class JimfsFileSystems {
       rootDir.directory().setRoot();
     }
 
-    return new JimfsFileStore(new FileTree(superRoot), fileFactory, storage, attributeService);
+    return new JimfsFileStore(new FileTree(superRoot), fileFactory, disk, attributeService);
   }
 
   /**
