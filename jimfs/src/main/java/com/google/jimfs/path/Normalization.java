@@ -70,7 +70,14 @@ public enum Normalization implements Function<String, String> {
     // Should there be an option to use the Turkish-correct case folding instead?
     @Override
     public String apply(String string) {
-      return UCharacter.foldCase(string, true);
+      try {
+        return UCharacter.foldCase(string, true);
+      } catch (NoClassDefFoundError e) {
+        NoClassDefFoundError error = new NoClassDefFoundError("Normalization.CASE_FOLD_UNICODE "
+            + "requires ICU4J. Did you forget to include it on your classpath?");
+        error.initCause(e);
+        throw error;
+      }
     }
   },
 
