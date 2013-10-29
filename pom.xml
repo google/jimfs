@@ -30,9 +30,73 @@
     <module>jimfs-benchmarks</module>
   </modules>
 
+  <name>JimFS (Parent)</name>
+
+  <description>
+    JimFS is an in-memory implementation of Java 7's java.nio.file abstract file system API.
+  </description>
+
+  <url>https://github.com/google/jimfs</url>
+
+  <inceptionYear>2013</inceptionYear>
+
+  <organization>
+    <name>Google Inc.</name>
+    <url>http://www.google.com/</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>cgdecker</id>
+      <name>Colin Decker</name>
+      <email>cgdecker@google.com</email>
+      <organization>Google Inc.</organization>
+      <organizationUrl>http://www.google.com/</organizationUrl>
+      <roles>
+        <role>owner</role>
+        <role>developer</role>
+      </roles>
+    </developer>
+  </developers>
+
+  <scm>
+    <url>http://github.com/google/jimfs/</url>
+    <connection>scm:git:git://github.com/google/jimfs.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/google/jimfs.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <prerequisites>
+    <maven>3.0.3</maven>
+  </prerequisites>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>1.7</java.version>
+
+    <!-- Dependency versions -->
     <guava.version>15.0</guava.version>
+    <icu4j.version>51.2</icu4j.version>
+    <jsr305.version>2.0.1</jsr305.version>
+    <caliper.version>1.0-beta-SNAPSHOT</caliper.version>
+    <junit.version>4.11</junit.version>
+    <truth.version>0.13</truth.version>
+
+    <!-- Plugin versions -->
+    <compiler-plugin.version>3.1</compiler-plugin.version>
+    <source-plugin.version>2.2.1</source-plugin.version>
+    <javadoc-plugin.version>2.9.1</javadoc-plugin.version>
+
+    <!-- Misc -->
+    <gpg.skip>true</gpg.skip>
   </properties>
 
   <dependencyManagement>
@@ -52,14 +116,14 @@
       <dependency>
         <groupId>com.ibm.icu</groupId>
         <artifactId>icu4j</artifactId>
-        <version>51.2</version>
+        <version>${icu4j.version}</version>
         <optional>true</optional>
       </dependency>
 
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
-        <version>2.0.1</version>
+        <version>${jsr305.version}</version>
         <scope>provided</scope>
       </dependency>
 
@@ -69,13 +133,13 @@
       <dependency>
         <groupId>com.google.caliper</groupId>
         <artifactId>caliper</artifactId>
-        <version>1.0-beta-SNAPSHOT</version>
+        <version>${caliper.version}</version>
       </dependency>
 
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.11</version>
+        <version>${junit.version}</version>
         <scope>test</scope>
       </dependency>
 
@@ -89,22 +153,103 @@
       <dependency>
         <groupId>org.truth0</groupId>
         <artifactId>truth</artifactId>
-        <version>0.13</version>
+        <version>${truth.version}</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${compiler-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${source-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${javadoc-plugin.version}</version>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>1.4</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.5.1</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <docencoding>UTF-8</docencoding>
+          <charset>UTF-8</charset>
+          <excludePackageNames>com.google.jimfs.internal</excludePackageNames>
+          <links>
+            <link>http://docs.oracle.com/javase/7/docs/api/</link>
+            <link>http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/</link>
+            <link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
+            <link>http://icu-project.org/apiref/icu4j/</link>
+          </links>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-docs</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

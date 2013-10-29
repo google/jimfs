@@ -37,7 +37,7 @@ import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /**
- * {@link FileSystem} implementation for JIMFS. Most behavior for the file system is implemented
+ * {@link FileSystem} implementation for JimFS. Most behavior for the file system is implemented
  * by its {@linkplain #getDefaultView() default file system view}.
  *
  * @author Colin Decker

@@ -46,7 +46,7 @@ enum FileSystemImpl {
   },
 
   /**
-   * A Unix-like JIMFS file system.
+   * A Unix-like JimFS file system.
    */
   JIMFS {
     @Override

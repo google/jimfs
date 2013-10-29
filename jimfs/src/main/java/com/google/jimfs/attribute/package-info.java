@@ -22,7 +22,7 @@
  * file attributes.
  *
  * <p>{@link StandardAttributeProviders} provides access to the standard set of
- * {@code AttributeProvider} implementations that JIMFS supports.
+ * {@code AttributeProvider} implementations that JimFS supports.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs.attribute;

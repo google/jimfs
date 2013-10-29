@@ -31,7 +31,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.Map;
 
 /**
- * Benchmark comparing the times to read and set attributes between JIMFS and the default file
+ * Benchmark comparing the times to read and set attributes between JimFS and the default file
  * system.
  *
  * @author Colin Decker

@@ -35,7 +35,7 @@ import java.nio.file.Path;
 import java.util.Random;
 
 /**
- * Benchmark comparing time to write files between JIMFS and the default file system. Writes in
+ * Benchmark comparing time to write files between JimFS and the default file system. Writes in
  * this benchmark are done as 8k buffered writes on a file that is truncated before writing.
  *
  * @author Colin Decker

@@ -15,7 +15,7 @@
  */
 
 /**
- * Package containing the internal implementation of the JIMFS file system. With the exception of
+ * Package containing the internal implementation of the JimFS file system. With the exception of
  * {@link JimfsFileSystemProvider}, which should not be used directly anyway, all classes in this
  * package are package-private.
  *

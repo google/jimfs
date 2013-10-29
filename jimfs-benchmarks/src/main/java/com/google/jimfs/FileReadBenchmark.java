@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.util.Random;
 
 /**
- * Benchmark comparing time to read files between JIMFS and the default file system. Reads are done
+ * Benchmark comparing time to read files between JimFS and the default file system. Reads are done
  * as 8k buffered reads and the results of reading are simply ignored.
  *
  * @author Colin Decker

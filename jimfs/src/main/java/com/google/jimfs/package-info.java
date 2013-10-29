@@ -15,7 +15,7 @@
  */
 
 /**
- * Package containing classes uses for creating new JIMFS file systems.
+ * Package containing classes uses for creating new JimFS file systems.
  *
  * <p>{@link Configuration} is an immutable class defining a particular file system configuration,
  * while {@link Jimfs} provides convenience methods for creating a new file system instance from a

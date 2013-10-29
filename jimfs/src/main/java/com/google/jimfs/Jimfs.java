@@ -28,14 +28,14 @@ import java.nio.file.FileSystems;
 import java.util.UUID;
 
 /**
- * Static factory methods for JIMFS file systems.
+ * Static factory methods for JimFS file systems.
  *
  * @author Colin Decker
  */
 public final class Jimfs {
 
   /**
-   * The URI scheme for the JIMFS file system ("jimfs").
+   * The URI scheme for the JimFS file system ("jimfs").
    */
   public static final String URI_SCHEME = "jimfs";
 

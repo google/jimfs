@@ -28,7 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 
 /**
- * Benchmark comparing the times to create and delete a file between JIMFS and the default file
+ * Benchmark comparing the times to create and delete a file between JimFS and the default file
  * system.
  *
  * @author Colin Decker

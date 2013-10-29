@@ -59,7 +59,7 @@ import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
 
 /**
- * {@link FileSystemProvider} implementation for JIMFS. Should not be used directly. To create a
+ * {@link FileSystemProvider} implementation for JimFS. Should not be used directly. To create a
  * new file system instance, see {@link Jimfs}. For other operations, use the public APIs in
  * {@code java.nio.file}.
  *
@@ -167,7 +167,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       return (JimfsPath) path;
     }
     throw new ProviderMismatchException(
-        "path " + path + " is not associated with a JIMFS file system");
+        "path " + path + " is not associated with a JimFS file system");
   }
 
   /**

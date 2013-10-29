@@ -1,14 +1,14 @@
-JIMFS
+JimFS
 =====
 
-JIMFS is an in-memory file system for Java 7 and above, implementing the
+JimFS is an in-memory file system for Java 7 and above, implementing the
 [java.nio.file](http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html)
 abstract file system APIs.
 
 Basic use
 ---------
 
-The simplest way to use JIMFS is to just get a new `FileSystem` instance from the `Jimfs` class and
+The simplest way to use JimFS is to just get a new `FileSystem` instance from the `Jimfs` class and
 start using it:
 
 ```java
@@ -31,7 +31,7 @@ FileSystem fs = Jimfs.newFileSystem(Configuration.windows());
 What's supported?
 -----------------
 
-JIMFS supports almost all the APIs under `java.nio.file`. It supports:
+JimFS supports almost all the APIs under `java.nio.file`. It supports:
 
 - Creating, deleting, moving and copying files and directories.
 - Reading and writing files with `FileChannel` or `SeekableByteChannel`, `InputStream`,

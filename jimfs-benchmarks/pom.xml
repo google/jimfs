@@ -27,6 +27,12 @@
 
   <artifactId>jimfs-benchmarks</artifactId>
 
+  <name>JimFS Benchmarks</name>
+
+  <description>
+    Miscellaneous benchmarks for JimFS and other I/O-related things.
+  </description>
+
   <dependencies>
     <dependency>
       <groupId>com.google.jimfs</groupId>
