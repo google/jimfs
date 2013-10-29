@@ -1701,6 +1701,29 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   }
 
   @Test
+  public void testMove_movesSymbolicLinkNotTarget() throws IOException {
+    byte[] bytes = preFilledBytes(100);
+    Files.write(path("/foo.txt"), bytes);
+
+    Files.createSymbolicLink(path("/link"), path("foo.txt"));
+
+    Files.move(path("/link"), path("/link.txt"));
+
+    assertThat("/foo.txt").noFollowLinks()
+        .isRegularFile()
+        .and().containsBytes(bytes);
+
+    assertThat(path("/link")).doesNotExist();
+
+    assertThat(path("/link.txt")).noFollowLinks()
+        .isSymbolicLink();
+
+    assertThat(path("/link.txt"))
+        .isRegularFile()
+        .and().containsBytes(bytes);
+  }
+
+  @Test
   public void testMove_cannotMoveDirIntoOwnSubtree() throws IOException {
     Files.createDirectories(path("/foo"));
 

@@ -25,6 +25,7 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 
 import java.nio.file.CopyOption;
 import java.nio.file.LinkOption;
@@ -140,7 +141,7 @@ final class Options {
    * Returns an immutable set of the given options for a move.
    */
   public static ImmutableSet<CopyOption> getMoveOptions(CopyOption... options) {
-    return ImmutableSet.copyOf(options);
+    return ImmutableSet.copyOf(Lists.asList(LinkOption.NOFOLLOW_LINKS, options));
   }
 
   /**
