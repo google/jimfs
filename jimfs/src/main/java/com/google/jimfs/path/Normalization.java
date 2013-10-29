@@ -43,7 +43,7 @@ public enum Normalization implements Function<String, String> {
   },
 
   /**
-   * Unicode composed normalization (form {@linkplain Normalizer.Form#NFC NFC}).
+   * Unicode composed normalization (form {@linkplain java.text.Normalizer.Form#NFC NFC}).
    */
   NFC(Pattern.CANON_EQ) {
     @Override
@@ -53,7 +53,7 @@ public enum Normalization implements Function<String, String> {
   },
 
   /**
-   * Unicode decomposed normalization (form {@linkplain Normalizer.Form#NFD NFD}).
+   * Unicode decomposed normalization (form {@linkplain java.text.Normalizer.Form#NFD NFD}).
    */
   NFD(Pattern.CANON_EQ) {
     @Override

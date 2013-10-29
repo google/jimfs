@@ -17,12 +17,14 @@
 /**
  * Package containing classes used for configuration of file attribute handling.
  *
- * <p>Users can create a subclass of {@link AttributeProvider} to implement handling of a custom
- * file attribute view. In an attribute provider, the {@link Inode} class is used to access and set
- * file attributes.
+ * <p>Users can create a subclass of
+ * {@link com.google.jimfs.attribute.AttributeProvider AttributeProvider} to implement handling of
+ * a custom file attribute view. In an attribute provider, the
+ * {@link com.google.jimfs.attribute.Inode Inode} class is used to access and set file attributes.
  *
- * <p>{@link StandardAttributeProviders} provides access to the standard set of
- * {@code AttributeProvider} implementations that JimFS supports.
+ * <p>{@link com.google.jimfs.attribute.StandardAttributeProviders StandardAttributeProvideres}
+ * provides access to the standard set of {@code AttributeProvider} implementations that JimFS
+ * supports.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs.attribute;

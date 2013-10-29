@@ -16,50 +16,58 @@
 
 /**
  * Package containing the internal implementation of the JimFS file system. With the exception of
- * {@link JimfsFileSystemProvider}, which should not be used directly anyway, all classes in this
- * package are package-private.
+ * {@link com.google.jimfs.internal.JimfsFileSystemProvider JimfsFileSystemProvider}, which should
+ * not be used directly anyway, all classes in this package are package-private.
  *
  * <h3>Overview</h3>
  *
- * {@link JimfsFileSystem} instances are created by {@link JimfsFileSystems} using a user-provided
+ * {@link com.google.jimfs.internal.JimfsFileSystem JimfsFileSystem} instances are created by
+ * {@link com.google.jimfs.internal.JimfsFileSystems JimfsFileSystems} using a user-provided
  * {@link com.google.jimfs.Configuration Configuration}. The configuration is used to create the
  * various classes that implement the file system with the correct settings and to create the file
  * system root directories and working directory. The file system is then used to create the
  * {@code Path} objects that all file system operations use.
  *
- * <p>Once created, the primary entry points to the file system are {@link JimfsFileSystemProvider},
- * which handles calls to methods in {@link java.nio.file.Files}, and
- * {@link JimfsSecureDirectoryStream}, which provides methods that are similar to those of the file
- * system provider but which treat relative paths as relative to the stream's directory rather than
- * the file system's working directory.
+ * <p>Once created, the primary entry points to the file system are
+ * {@link com.google.jimfs.internal.JimfsFileSystemProvider JimfsFileSystemProvider}, which handles
+ * calls to methods in {@link java.nio.file.Files}, and
+ * {@link com.google.jimfs.internal.JimfsSecureDirectoryStream JimfsSecureDirectoryStream}, which
+ * provides methods that are similar to those of the file system provider but which treat relative
+ * paths as relative to the stream's directory rather than the file system's working directory.
  *
  * <p>The implementation of the methods on both of those classes is handled by the
- * {@link FileSystemView} class, which acts as a view of the file system with a specific working
- * directory. The file system provider uses the file system's default view, while each secure
- * directory stream uses a view specific to that stream.
+ * {@link com.google.jimfs.internal.FileSystemView FileSystemView} class, which acts as a view of
+ * the file system with a specific working directory. The file system provider uses the file
+ * system's default view, while each secure directory stream uses a view specific to that stream.
  *
- * <p>File system views make use of the file system's singleton {@link JimfsFileStore} which
- * handles file creation, storage and attributes. The file store delegates to several other classes
- * to handle each of these:
+ * <p>File system views make use of the file system's singleton
+ * {@link com.google.jimfs.internal.JimfsFileStore JimfsFileStore} which handles file creation,
+ * storage and attributes. The file store delegates to several other classes to handle each of
+ * these:
  *
  * <ul>
- *   <li>{@link FileFactory} handles creation of new file objects.</li>
- *   <li>An implementation of {@link RegularFileStorage} handles creation and storage of
- *   {@link ByteStore} instances, which act as the content of regular files.</li>
- *   <li>{@link FileTree} stores the root of the file hierarchy and handles file lookup.</li>
- *   <li>{@link AttributeService} handles file attributes, using a set of
+ *   <li>{@link com.google.jimfs.internal.FileFactory FileFactory} handles creation of new file
+ *   objects.</li>
+ *   <li>{@link com.google.jimfs.internal.MemoryDisk MemoryDisk} handles creation and storage of
+ *   {@link com.google.jimfs.internal.ByteStore ByteStore} instances, which act as the content of
+ *   regular files.</li>
+ *   <li>{@link com.google.jimfs.internal.FileTree FileTree} stores the root of the file hierarchy
+ *   and handles file lookup.</li>
+ *   <li>{@link com.google.jimfs.internal.AttributeService AttributeService} handles file
+ *   attributes, using a set of
  *   {@link com.google.jimfs.attribute.AttributeProvider AttributeProvider} implementations to
  *   handle each supported file attribute view.</li>
  * </ul>
  *
  * <h3>Paths</h3>
  *
- * The implementation of {@link java.nio.file.Path} for the file system is {@link JimfsPath}. Paths
- * are created by a {@link PathService} with help from the file system's configured
- * {@link com.google.jimfs.path.PathType PathType}.
+ * The implementation of {@link java.nio.file.Path} for the file system is
+ * {@link com.google.jimfs.internal.JimfsPath JimfsPath}. Paths are created by a
+ * {@link com.google.jimfs.internal.PathService PathService} with help from the file system's
+ * configured {@link com.google.jimfs.path.PathType PathType}.
  *
- * <p>Paths are made up of {@link Name} objects, which also serve as the file names in directories.
- * A name has two forms:
+ * <p>Paths are made up of {@link com.google.jimfs.internal.Name Name} objects, which also serve as
+ * the file names in directories. A name has two forms:
  *
  * <ul>
  *   <li>The <b>display form</b> is used in {@code Path} for {@code toString()}. It is also used for
@@ -79,40 +87,47 @@
  *
  * <h3>Files</h3>
  *
- * All files in the file system are an instance of {@link File}. A file object contains the file's
- * attributes as well as a reference to the file's {@linkplain FileContent content}.
+ * All files in the file system are an instance of {@link com.google.jimfs.internal.File File}. A
+ * file object contains the file's attributes as well as a reference to the file's
+ * {@linkplain com.google.jimfs.internal.FileContent content}.
  *
  * <p>There are three types of file content:
  *
  * <ul>
- *   <li>{@link DirectoryTable} - a map linking file names to
- *   {@linkplain DirectoryEntry directory entries}. A file with a directory table as its content
- *   is, obviously, a <i>directory</i>.</li>
- *   <li>{@link ByteStore} - an in-memory store for raw bytes. A file with a byte store as its
- *   content is a <i>regular file</i>.</li>
- *   <li>{@link JimfsPath} - A file with a path as its content is a <i>symbolic link</i>.</li>
+ *   <li>{@link com.google.jimfs.internal.DirectoryTable DirectoryTable} - a map linking file names
+ *   to {@linkplain com.google.jimfs.internal.DirectoryEntry directory entries}. A file with a
+ *   directory table as its content is, obviously, a <i>directory</i>.</li>
+ *   <li>{@link com.google.jimfs.internal.ByteStore ByteStore} - an in-memory store for raw bytes.
+ *   A file with a byte store as its content is a <i>regular file</i>.</li>
+ *   <li>{@link com.google.jimfs.internal.JimfsPath JimfsPath} - A file with a path as its content
+ *   is a <i>symbolic link</i>.</li>
  * </ul>
  *
- * <p>{@link JimfsFileChannel}, {@link JimfsInputStream} and {@link JimfsOutputStream} implement
- * the standard channel/stream APIs for regular files.
+ * <p>{@link com.google.jimfs.internal.JimfsFileChannel JimfsFileChannel},
+ * {@link com.google.jimfs.internal.JimfsInputStream JimfsInputStream} and
+ * {@link com.google.jimfs.internal.JimfsOutputStream JimfsOutputStream} implement the standard
+ * channel/stream APIs for regular files.
  *
- * <p>{@link JimfsDirectoryStream} and {@link JimfsSecureDirectoryStream} handle reading the
- * entries of a directory. The secure directory stream additionally contains a
+ * <p>{@link com.google.jimfs.internal.JimfsDirectoryStream JimfsDirectoryStream} and
+ * {@link com.google.jimfs.internal.JimfsSecureDirectoryStream JimfsSecureDirectoryStream} handle
+ * reading the entries of a directory. The secure directory stream additionally contains a
  * {@code FileSystemView} with its directory as the working directory, allowing for operations
  * relative to the actual directory file rather than just the path to the file. This allows the
  * operations to continue to work as expected even if the directory is moved.
  *
  * <p>A directory can be watched for changes using the {@link java.nio.file.WatchService}
- * implementation, {@link PollingWatchService}.
+ * implementation, {@link com.google.jimfs.internal.PollingWatchService PollingWatchService}.
  *
  * <h3>Regular files</h3>
  *
- * Currently, the only implementation for regular file content is {@link DiskByteStore}, which
- * makes use of a singleton {@link Disk}. A disk (which may either use {@linkplain HeapDisk heap}
- * or {@linkplain DirectDisk direct} memory) is a resizable cache for fixed size blocks of memory.
- * These blocks are allocated to files as needed and returned to the disk when a file is deleted or
- * truncated. When existing free blocks are available, those blocks are allocated to files first.
- * If more blocks are needed, they are created.
+ * Currently, the only implementation for regular file content is
+ * {@link com.google.jimfs.internal.MemoryDiskByteStore MemoryDiskByteStore}, which makes use of a
+ * singleton {@link com.google.jimfs.internal.MemoryDisk MemoryDisk}. A disk (which may either use
+ * {@linkplain com.google.jimfs.internal.HeapMemoryDisk heap} or
+ * {@linkplain com.google.jimfs.internal.DirectMemoryDisk direct} memory) is a resizable cache for
+ * fixed size blocks of memory. These blocks are allocated to files as needed and returned to the
+ * disk when a file is deleted or truncated. When existing free blocks are available, those blocks
+ * are allocated to files first. If more blocks are needed, they are created.
  *
  * <h3>Linking</h3>
  *

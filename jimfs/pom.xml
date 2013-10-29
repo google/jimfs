@@ -66,4 +66,47 @@
     </dependency>
   </dependencies>
 
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <docencoding>UTF-8</docencoding>
+          <charset>UTF-8</charset>
+          <excludePackageNames>com.google.jimfs.internal</excludePackageNames>
+          <links>
+            <link>http://docs.guava-libraries.googlecode.com/git-history/v${guava.version}/javadoc/</link>
+            <link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
+            <link>http://icu-project.org/apiref/icu4j/</link>
+            <link>http://docs.oracle.com/javase/7/docs/api/</link>
+          </links>
+        </configuration>
+        <executions>
+          <execution>
+            <id>attach-docs</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

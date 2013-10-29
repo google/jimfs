@@ -64,6 +64,7 @@
         <role>owner</role>
         <role>developer</role>
       </roles>
+      <timezone>-5</timezone>
     </developer>
   </developers>
 
@@ -73,6 +74,11 @@
     <developerConnection>scm:git:ssh://git@github.com/google/jimfs.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
+
+  <issueManagement>
+    <system>GitHub Issues</system>
+    <url>http://github.com/google/jimfs/issues</url>
+  </issueManagement>
 
   <prerequisites>
     <maven>3.0.3</maven>
@@ -196,46 +202,6 @@
           <source>${java.version}</source>
           <target>${java.version}</target>
         </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <configuration>
-          <encoding>UTF-8</encoding>
-          <docencoding>UTF-8</docencoding>
-          <charset>UTF-8</charset>
-          <excludePackageNames>com.google.jimfs.internal</excludePackageNames>
-          <links>
-            <link>http://docs.oracle.com/javase/7/docs/api/</link>
-            <link>http://docs.guava-libraries.googlecode.com/git-history/v15.0/javadoc/</link>
-            <link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
-            <link>http://icu-project.org/apiref/icu4j/</link>
-          </links>
-        </configuration>
-        <executions>
-          <execution>
-            <id>attach-docs</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
