@@ -92,11 +92,16 @@
     <guava.version>15.0</guava.version>
     <icu4j.version>51.2</icu4j.version>
     <jsr305.version>2.0.1</jsr305.version>
-    <caliper.version>1.0-beta-SNAPSHOT</caliper.version>
     <junit.version>4.11</junit.version>
     <truth.version>0.13</truth.version>
+    <!-- Currently relies on the latest version of Caliper, which must be built from HEAD. -->
+    <caliper.version>1.0-beta-SNAPSHOT</caliper.version>
 
     <!-- Plugin versions -->
+    <!--
+    Note: Using older source/javadoc plugins because newer versions seemed to be hanging for long
+    periods of time during build.
+    -->
     <compiler-plugin.version>3.1</compiler-plugin.version>
     <source-plugin.version>2.1.2</source-plugin.version>
     <javadoc-plugin.version>2.8</javadoc-plugin.version>
@@ -169,25 +174,21 @@
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${compiler-plugin.version}</version>
         </plugin>
 
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>${source-plugin.version}</version>
         </plugin>
 
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${javadoc-plugin.version}</version>
         </plugin>
 
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-gpg-plugin</artifactId>
           <version>1.4</version>
         </plugin>
@@ -196,7 +197,6 @@
 
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <source>${java.version}</source>
@@ -205,7 +205,6 @@
       </plugin>
 
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-gpg-plugin</artifactId>
         <executions>
           <execution>
