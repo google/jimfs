@@ -57,7 +57,7 @@ final class MemoryDiskByteStore extends ByteStore {
     disk.alloc(copyBlocks, blocks.size());
 
     for (int i = 0; i < blocks.size(); i++) {
-      int block = blockForRead(i);
+      int block = blocks.get(i);
       int copy = copyBlocks.get(i);
       disk.copy(block, copy);
     }
@@ -89,36 +89,45 @@ final class MemoryDiskByteStore extends ByteStore {
   }
 
   /**
-   * If pos is greater than the current size of this store, zeroes bytes between the current size
-   * and pos and sets size to pos. New blocks are added to the file if necessary.
+   * Prepares for a write of len bytes starting at position pos.
    */
-  private void zeroForWrite(long pos) {
-    if (pos <= size) {
-      return;
+  private void prepareForWrite(long pos, long len) {
+    long end = pos + len;
+
+    // allocate any additional blocks needed
+    int lastBlockIndex = blocks.size() - 1;
+    int endBlockIndex = blockIndex(end - 1);
+
+    if (endBlockIndex > lastBlockIndex) {
+      int additionalBlocksNeeded = endBlockIndex - lastBlockIndex;
+      disk.alloc(blocks, additionalBlocksNeeded);
     }
 
-    long remaining = pos - size;
+    // zero bytes between current size and pos
+    if (pos > size) {
+      long remaining = pos - size;
 
-    int blockIndex = blockIndex(size);
-    int block = blockForWrite(blockIndex);
-    int off = offsetInBlock(size);
+      int blockIndex = blockIndex(size);
+      int block = blocks.get(blockIndex);
+      int off = offsetInBlock(size);
 
-    remaining -= disk.zero(block, off, length(off, remaining));
+      remaining -= disk.zero(block, off, length(off, remaining));
 
-    while (remaining > 0) {
-      block = blockForWrite(++blockIndex);
+      while (remaining > 0) {
+        block = blocks.get(++blockIndex);
 
-      remaining -= disk.zero(block, 0, length(remaining));
+        remaining -= disk.zero(block, 0, length(remaining));
+      }
+
+      size = pos;
     }
-
-    size = pos;
   }
 
   @Override
   public int write(long pos, byte b) {
-    zeroForWrite(pos);
+    prepareForWrite(pos, 1);
 
-    int block = blockForWrite(blockIndex(pos));
+    int block = blocks.get(blockIndex(pos));
     int off = offsetInBlock(pos);
     disk.put(block, off, b);
 
@@ -131,7 +140,7 @@ final class MemoryDiskByteStore extends ByteStore {
 
   @Override
   public int write(long pos, byte[] b, int off, int len) {
-    zeroForWrite(pos);
+    prepareForWrite(pos, len);
 
     if (len == 0) {
       return 0;
@@ -148,7 +157,7 @@ final class MemoryDiskByteStore extends ByteStore {
     off += written;
 
     while (remaining > 0) {
-      block = blockForWrite(++blockIndex);
+      block = blocks.get(++blockIndex);
 
       written = disk.put(block, 0, b, off, length(remaining));
       remaining -= written;
@@ -165,9 +174,11 @@ final class MemoryDiskByteStore extends ByteStore {
 
   @Override
   public int write(long pos, ByteBuffer buf) {
-    zeroForWrite(pos);
+    int len = buf.remaining();
 
-    if (!buf.hasRemaining()) {
+    prepareForWrite(pos, len);
+
+    if (len == 0) {
       return 0;
     }
 
@@ -180,7 +191,7 @@ final class MemoryDiskByteStore extends ByteStore {
     disk.put(block, off, buf);
 
     while (buf.hasRemaining()) {
-      block = blockForWrite(++blockIndex);
+      block = blocks.get(++blockIndex);
 
       disk.put(block, 0, buf);
     }
@@ -194,7 +205,7 @@ final class MemoryDiskByteStore extends ByteStore {
 
   @Override
   public long transferFrom(ReadableByteChannel src, long pos, long count) throws IOException {
-    zeroForWrite(pos);
+    prepareForWrite(pos, 0);
 
     if (count == 0) {
       return 0;
@@ -249,7 +260,7 @@ final class MemoryDiskByteStore extends ByteStore {
       return -1;
     }
 
-    int block = blockForRead(blockIndex(pos));
+    int block = blocks.get(blockIndex(pos));
     int off = offsetInBlock(pos);
     return UnsignedBytes.toInt(disk.get(block, off));
   }
@@ -262,7 +273,7 @@ final class MemoryDiskByteStore extends ByteStore {
       int remaining = bytesToRead;
 
       int blockIndex = blockIndex(pos);
-      int block = blockForRead(blockIndex);
+      int block = blocks.get(blockIndex);
       int offsetInBlock = offsetInBlock(pos);
 
       int read = disk.get(block, offsetInBlock, b, off, length(offsetInBlock, remaining));
@@ -270,7 +281,8 @@ final class MemoryDiskByteStore extends ByteStore {
       off += read;
 
       while (remaining > 0) {
-        block = blockForRead(++blockIndex);
+        int index = ++blockIndex;
+        block = blocks.get(index);
 
         read = disk.get(block, 0, b, off, length(remaining));
         remaining -= read;
@@ -289,13 +301,14 @@ final class MemoryDiskByteStore extends ByteStore {
       int remaining = bytesToRead;
 
       int blockIndex = blockIndex(pos);
-      int block = blockForRead(blockIndex);
+      int block = blocks.get(blockIndex);
       int off = offsetInBlock(pos);
 
       remaining -= disk.get(block, off, buf, length(off, remaining));
 
       while (remaining > 0) {
-        block = blockForRead(++blockIndex);
+        int index = ++blockIndex;
+        block = blocks.get(index);
         remaining -= disk.get(block, 0, buf, length(remaining));
       }
     }
@@ -311,7 +324,7 @@ final class MemoryDiskByteStore extends ByteStore {
       long remaining = bytesToRead;
 
       int blockIndex = blockIndex(pos);
-      int block = blockForRead(blockIndex);
+      int block = blocks.get(blockIndex);
       int off = offsetInBlock(pos);
 
       ByteBuffer buf = disk.asByteBuffer(block, off, length(off, remaining));
@@ -321,7 +334,8 @@ final class MemoryDiskByteStore extends ByteStore {
       buf.clear();
 
       while (remaining > 0) {
-        block = blockForRead(++blockIndex);
+        int index = ++blockIndex;
+        block = blocks.get(index);
 
         buf = disk.asByteBuffer(block, 0, length(remaining));
         while (buf.hasRemaining()) {
@@ -332,13 +346,6 @@ final class MemoryDiskByteStore extends ByteStore {
     }
 
     return Math.max(bytesToRead, 0); // don't return -1 for this method
-  }
-
-  /**
-   * Gets the block at the given index.
-   */
-  private int blockForRead(int index) {
-    return blocks.get(index);
   }
 
   /**
@@ -388,5 +395,11 @@ final class MemoryDiskByteStore extends ByteStore {
    */
   private int bytesToRead(long pos, int max) {
     return (int) bytesToRead(pos, (long) max);
+  }
+
+  private static void checkNotInterrupted() throws InterruptedException {
+    if (Thread.interrupted()) {
+      throw new InterruptedException();
+    }
   }
 }
