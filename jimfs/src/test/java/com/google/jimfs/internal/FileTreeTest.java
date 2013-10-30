@@ -109,27 +109,21 @@ public class FileTreeTest {
 
   @Before
   public void setUp() {
-    DirectoryTable superRootTable = new DirectoryTable();
-    File superRoot = new File(-1, superRootTable);
-    superRootTable.setSuperRoot(superRoot);
-
-    files.put("SUPER_ROOT", superRoot);
-
-    fileTree = new FileTree(superRoot);
-
     DirectoryTable rootTable = new DirectoryTable();
     File root = new File(0, rootTable);
-    superRootTable.link(Name.simple("/"), root);
-    rootTable.setRoot();
-
+    rootTable.setRoot(root, Name.simple("/"));
     files.put("/", root);
 
     DirectoryTable otherRootTable = new DirectoryTable();
     File otherRoot = new File(2, otherRootTable);
-    superRootTable.link(Name.simple("$"), otherRoot);
-    otherRootTable.setRoot();
-
+    otherRootTable.setRoot(otherRoot, Name.simple("$"));
     files.put("$", otherRoot);
+
+    Map<Name, File> roots = new HashMap<>();
+    roots.put(rootTable.name(), root);
+    roots.put(otherRootTable.name(), otherRoot);
+
+    fileTree = new FileTree(roots);
 
     workingDirectory = createDirectory("/", "work");
 
@@ -152,8 +146,8 @@ public class FileTreeTest {
 
   @Test
   public void testLookup_root() throws IOException {
-    assertExists(lookup("/"), "SUPER_ROOT", "/");
-    assertExists(lookup("$"), "SUPER_ROOT", "$");
+    assertExists(lookup("/"), "/", "/");
+    assertExists(lookup("$"), "$", "$");
   }
 
   @Test

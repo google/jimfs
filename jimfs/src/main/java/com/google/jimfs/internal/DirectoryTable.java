@@ -73,20 +73,12 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   }
 
   /**
-   * Sets this directory as the super root.
-   */
-  public void setSuperRoot(File file) {
-    // just set this table's entry to include the file
-    this.entryInParent = new DirectoryEntry(file, Name.EMPTY, file);
-  }
-
-  /**
    * Sets this directory as a root directory, linking ".." to itself.
    */
-  public void setRoot() {
-    this.entryInParent = new DirectoryEntry(self(), name(), self());
-    remove(PARENT);
-    put(PARENT, self());
+  public void setRoot(File self, Name name) {
+    this.entryInParent = new DirectoryEntry(self, name, self);
+    put(SELF, self);
+    put(PARENT, self);
   }
 
   /**
@@ -302,8 +294,8 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   }
 
   /**
-   * Removes the entry for the given name from this table, returning that entry or {@code null} if
-   * no such entry exists.
+   * Removes and returns the entry for the given name from this table, throwing an exception if no
+   * such entry exists.
    */
   private DirectoryEntry remove(Name name) {
     int index = bucketIndex(name, table.length);

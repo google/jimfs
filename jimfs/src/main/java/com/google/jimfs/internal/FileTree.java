@@ -19,12 +19,14 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedSet;
 
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -42,28 +44,22 @@ final class FileTree {
   private static final ImmutableList<Name> EMPTY_PATH_NAMES = ImmutableList.of(Name.SELF);
 
   /**
-   * Special directory linking root names to root directories.
+   * Map of root names to root directories.
    */
-  private final File superRoot;
+  private final ImmutableSortedMap<Name, File> roots;
 
   /**
-   * Names of the root directories.
+   * Creates a new file tree with the given root directories.
    */
-  private final ImmutableSortedSet<Name> rootDirectoryNames;
-
-  /**
-   * Creates a new file tree with the given super root.
-   */
-  FileTree(File superRoot) {
-    this.superRoot = checkNotNull(superRoot);
-    this.rootDirectoryNames = superRoot.directory().snapshot();
+  FileTree(Map<Name, File> roots) {
+    this.roots = ImmutableSortedMap.copyOf(roots);
   }
 
   /**
    * Returns the names of the root directories in this tree.
    */
   public ImmutableSortedSet<Name> getRootDirectoryNames() {
-    return rootDirectoryNames;
+    return roots.keySet();
   }
 
   /**
@@ -72,7 +68,8 @@ final class FileTree {
    */
   @Nullable
   public DirectoryEntry getRoot(Name name) {
-    return superRoot.directory().get(name);
+    File file = roots.get(name);
+    return file == null ? null : file.directory().entry();
   }
 
   /**
@@ -97,7 +94,7 @@ final class FileTree {
 
     if (path.isAbsolute()) {
       // lookup the root directory
-      DirectoryEntry entry = superRoot.directory().get(path.root());
+      DirectoryEntry entry = getRoot(path.root());
       if (entry == null) {
         // root not found; always return null as no real parent directory exists
         // this prevents new roots from being created in file systems supporting multiple roots

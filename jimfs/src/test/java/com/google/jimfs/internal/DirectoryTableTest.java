@@ -46,15 +46,9 @@ public class DirectoryTableTest {
 
   @Before
   public void setUp() {
-    DirectoryTable superRootTable = new DirectoryTable();
-    File superRoot = new File(-1, superRootTable);
-    superRootTable.setSuperRoot(superRoot);
-
     root = new DirectoryTable();
     rootFile = new File(0, root);
-
-    superRootTable.link(Name.simple("/"), rootFile);
-    root.setRoot();
+    root.setRoot(rootFile, Name.simple("/"));
 
     table = new DirectoryTable();
     dirFile = new File(1, table);

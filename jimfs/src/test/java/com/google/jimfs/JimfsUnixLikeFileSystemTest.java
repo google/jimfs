@@ -1226,8 +1226,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Test
   public void testSymbolicLinks_lookupOfAbsoluteSymlinkPathFromRelativePath() throws IOException {
     // relative path lookups are in the FileSystemView for the working directory
-    // this tests that when an absolute path is encountered, the lookup switches to the super root
-    // FileSystemView
+    // this tests that when an absolute path is encountered, the lookup handles it correctly
 
     Files.createDirectories(path("/foo/bar/baz"));
     Files.createFile(path("/foo/bar/baz/file"));

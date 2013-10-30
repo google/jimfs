@@ -20,6 +20,8 @@ import com.google.jimfs.Configuration;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Initializes and configures new file system instances.
@@ -55,8 +57,7 @@ final class JimfsFileSystems {
     MemoryDisk disk = new HeapMemoryDisk();
     FileFactory fileFactory = new FileFactory(disk);
 
-    File superRoot = fileFactory.createDirectory();
-    superRoot.directory().setSuperRoot(superRoot);
+    Map<Name, File> roots = new HashMap<>();
 
     // create roots
     for (String root : config.roots()) {
@@ -69,12 +70,11 @@ final class JimfsFileSystems {
 
       File rootDir = fileFactory.createDirectory();
       attributeService.setInitialAttributes(rootDir);
-
-      superRoot.directory().link(rootName, rootDir);
-      rootDir.directory().setRoot();
+      rootDir.directory().setRoot(rootDir, rootName);
+      roots.put(rootName, rootDir);
     }
 
-    return new JimfsFileStore(new FileTree(superRoot), fileFactory, disk, attributeService);
+    return new JimfsFileStore(new FileTree(roots), fileFactory, disk, attributeService);
   }
 
   /**
