@@ -113,22 +113,6 @@ public class DirectoryTableTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
-
-    // ensure that even if the parent/self entries do not already exist in the table,
-    // they aren't allowed when calling link()
-    File file = new File(2, new DirectoryTable());
-
-    try {
-      file.directory().link(Name.simple("."), new File(2, new DirectoryTable()));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-
-    try {
-      file.directory().link(Name.simple(".."), new File(2, new DirectoryTable()));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
   }
 
   @Test

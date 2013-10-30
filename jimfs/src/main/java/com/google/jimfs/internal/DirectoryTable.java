@@ -18,14 +18,10 @@ package com.google.jimfs.internal;
 
 import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
-import static com.google.jimfs.internal.Util.smearHash;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Ordering;
-
-import java.util.Iterator;
 
 import javax.annotation.Nullable;
 
@@ -34,19 +30,13 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
+final class DirectoryTable implements FileContent {
 
-  private static final int INITIAL_CAPACITY = 16;
-  private static final int INITIAL_RESIZE_THRESHOLD = (int) (INITIAL_CAPACITY * 0.75);
-
-  /*
-   * This class uses its own simple hash table implementation to avoid allocation of redundant
-   * Map.Entry objects. DirectoryEntry objects are able to serve the same purpose.
+  /**
+   * Simple hash table implementation to avoid allocation of redundant Map.Entry objects.
+   * DirectoryEntry objects are able to serve the same purpose.
    */
-  private DirectoryEntry[] table = new DirectoryEntry[INITIAL_CAPACITY];
-  private int resizeThreshold = INITIAL_RESIZE_THRESHOLD;
-
-  private int size;
+  private final DirectoryEntryMap map = new DirectoryEntryMap();
 
   /**
    * The entry linking to this directory in its parent directory. Used for accessing the parent
@@ -76,9 +66,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    * Sets this directory as a root directory, linking ".." to itself.
    */
   public void setRoot(File self, Name name) {
-    this.entryInParent = new DirectoryEntry(self, name, self);
-    put(SELF, self);
-    put(PARENT, self);
+    linked(new DirectoryEntry(self, name, self));
   }
 
   /**
@@ -115,16 +103,18 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    */
   public void linked(DirectoryEntry entry) {
     this.entryInParent = entry;
-    put(SELF, entry.file());
-    put(PARENT, entry.directory());
+    map.put(new DirectoryEntry(entry.file(), SELF, entry.file()));
+    map.put(new DirectoryEntry(entry.file(), PARENT, entry.directory()));
+    entry.file().incrementLinkCount();
+    entry.directory().incrementLinkCount();
   }
 
   /**
    * Called when this directory is unlinked from its parent directory.
    */
   public void unlinked() {
-    remove(SELF);
-    remove(PARENT);
+    map.remove(SELF).file().decrementLinkCount();
+    map.remove(PARENT).file().decrementLinkCount();
     entryInParent = null;
   }
 
@@ -133,14 +123,22 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    */
   @VisibleForTesting
   int entryCount() {
-    return size;
+    return map.size();
   }
 
   /**
    * Returns true if this directory has no entries other than those to itself and its parent.
    */
   public boolean isEmpty() {
-    return size <= 2;
+    return entryCount() <= 2;
+  }
+
+  /**
+   * Returns the entry for the given name in this table or null if no such entry exists.
+   */
+  @Nullable
+  public DirectoryEntry get(Name name) {
+    return map.get(name);
   }
 
   /**
@@ -150,19 +148,22 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
    *     entry already exists for the it
    */
   public void link(Name name, File file) {
-    DirectoryEntry entry = put(checkNotReserved(name, "link"), file);
+    DirectoryEntry entry = map.put(
+        new DirectoryEntry(self(), checkNotReserved(name, "link"), file));
+    file.incrementLinkCount();
     if (file.isDirectory()) {
       file.directory().linked(entry);
     }
   }
 
   /**
-   * Unlinks the given name from any the file it is linked to.
+   * Unlinks the given name from the file it is linked to.
    *
    * @throws IllegalArgumentException if {@code name} is a reserved name such as "."
    */
   public void unlink(Name name) {
-    DirectoryEntry entry = remove(checkNotReserved(name, "unlink"));
+    DirectoryEntry entry = map.remove(checkNotReserved(name, "unlink"));
+    entry.file().decrementLinkCount();
     File file = entry.file();
     if (file.isDirectory()) {
       file.directory().unlinked();
@@ -181,7 +182,7 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   public ImmutableSortedSet<Name> snapshot() {
     ImmutableSortedSet.Builder<Name> builder = ImmutableSortedSet.orderedBy(ORDERING_BY_STRING);
 
-    for (DirectoryEntry entry : this) {
+    for (DirectoryEntry entry : entries()) {
       if (!isReserved(entry.name())) {
         builder.add(entry.name());
       }
@@ -191,161 +192,10 @@ final class DirectoryTable implements FileContent, Iterable<DirectoryEntry> {
   }
 
   /**
-   * Returns the index of the bucket in the array where an entry for the given name should go.
+   * Returns the entries in this table.
    */
-  private static int bucketIndex(Name name, int tableLength) {
-    return smearHash(name.hashCode()) & (tableLength - 1);
-  }
-
-  /**
-   * Returns the entry for the given name in this table or {@code null} if no such entry exists.
-   */
-  @Nullable
-  public DirectoryEntry get(Name name) {
-    int index = bucketIndex(name, table.length);
-
-    DirectoryEntry entry = table[index];
-    while (entry != null) {
-      if (name.equals(entry.name())) {
-        return entry;
-      }
-
-      entry = entry.next;
-    }
-    return null;
-  }
-
-  /**
-   * Adds an entry for the given name and file to this table.
-   */
-  private DirectoryEntry put(Name name, File file) {
-    int index = bucketIndex(name, table.length);
-
-    // find the place the new entry should go, ensuring an entry with the same name doesn't already
-    // exist along the way
-    DirectoryEntry prev = null;
-    DirectoryEntry curr = table[index];
-    while (curr != null) {
-      if (curr.name().equals(name)) {
-        throw new IllegalArgumentException("entry '" + name + "' already exists");
-      }
-
-      prev = curr;
-      curr = curr.next;
-    }
-
-    DirectoryEntry entry = new DirectoryEntry(self(), name, file);
-
-    size++;
-    if (expandIfNeeded()) {
-      // if the table was expanded, the index/entry we found is no longer applicable, so just add
-      // the entry normally
-      put(table, entry);
-    } else {
-      // otherwise, we just can use the index/entry we found
-      if (prev != null) {
-        prev.next = entry;
-      } else {
-        table[index] = entry;
-      }
-    }
-
-    file.incrementLinkCount();
-    return entry;
-  }
-
-  private boolean expandIfNeeded() {
-    if (size > resizeThreshold) {
-      DirectoryEntry[] newTable = new DirectoryEntry[table.length << 1];
-
-      // redistribute all current entries in the new table
-      for (DirectoryEntry entry : table) {
-        while (entry != null) {
-          put(newTable, entry);
-          DirectoryEntry next = entry.next;
-          // set entry.next to null; it's always the last entry in its bucket after being added
-          entry.next = null;
-          entry = next;
-        }
-      }
-
-      this.table = newTable;
-      resizeThreshold <<= 1;
-      return true;
-    }
-
-    return false;
-  }
-
-  private static void put(DirectoryEntry[] table, DirectoryEntry entry) {
-    int index = bucketIndex(entry.name(), table.length);
-    DirectoryEntry prev = null;
-    DirectoryEntry existing = table[index];
-    while (existing != null) {
-      prev = existing;
-      existing = existing.next;
-    }
-
-    if (prev != null) {
-      prev.next = entry;
-    } else {
-      table[index] = entry;
-    }
-  }
-
-  /**
-   * Removes and returns the entry for the given name from this table, throwing an exception if no
-   * such entry exists.
-   */
-  private DirectoryEntry remove(Name name) {
-    int index = bucketIndex(name, table.length);
-
-    DirectoryEntry prev = null;
-    DirectoryEntry entry = table[index];
-    while (entry != null) {
-      if (name.equals(entry.name())) {
-        if (prev == null) {
-          table[index] = entry.next;
-        } else {
-          prev.next = entry.next;
-        }
-
-        entry.next = null;
-        size--;
-        entry.file().decrementLinkCount();
-        return entry;
-      }
-
-      prev = entry;
-      entry = entry.next;
-    }
-
-    throw new IllegalArgumentException("no entry matching '" + name + "' in this directory");
-  }
-
-  /**
-   * Returns an iterator over the entries in this table.
-   */
-  @Override
-  public Iterator<DirectoryEntry> iterator() {
-    return new AbstractIterator<DirectoryEntry>() {
-      private int index;
-      @Nullable
-      private DirectoryEntry entry;
-
-      @Override
-      protected DirectoryEntry computeNext() {
-        if (entry != null) {
-          entry = entry.next;
-        }
-
-        while (entry == null && index < table.length) {
-          entry = table[index++];
-        }
-
-        return entry != null ? entry : endOfData();
-      }
-    };
+  public Iterable<DirectoryEntry> entries() {
+    return map;
   }
 
   /**

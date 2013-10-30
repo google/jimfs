@@ -171,7 +171,7 @@ final class FileSystemView {
           .requireDirectory(path)
           .file();
 
-      for (DirectoryEntry entry : dir.directory()) {
+      for (DirectoryEntry entry : dir.directory().entries()) {
         if (!entry.name().equals(Name.SELF) && !entry.name().equals(Name.PARENT)) {
           long modifiedTime = entry.file().getLastModifiedTime();
           modifiedTimes.put(entry.name(), modifiedTime);
