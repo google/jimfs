@@ -16,9 +16,13 @@
 
 package com.google.jimfs.internal;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
 /**
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class DirectDiskTest extends AbstractByteStoreTest {
 
   private final MemoryDisk disk = new DirectMemoryDisk();

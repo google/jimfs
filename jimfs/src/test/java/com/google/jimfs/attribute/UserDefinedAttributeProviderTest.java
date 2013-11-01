@@ -24,6 +24,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -36,8 +38,9 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class UserDefinedAttributeProviderTest
-    extends AttributeProviderTest<UserDefinedAttributeProvider> {
+    extends AbstractAttributeProviderTest<UserDefinedAttributeProvider> {
 
   @Override
   protected UserDefinedAttributeProvider createProvider() {

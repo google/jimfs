@@ -25,6 +25,8 @@ import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
@@ -32,8 +34,11 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 
 /**
+ * Tests for {@link JimfsPath}.
+ *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class JimfsPathTest {
 
   private final PathService pathService = fakeUnixPathService();

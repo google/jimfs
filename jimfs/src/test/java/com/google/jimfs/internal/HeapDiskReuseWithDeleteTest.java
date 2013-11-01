@@ -17,6 +17,8 @@
 package com.google.jimfs.internal;
 
 import org.junit.After;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link HeapMemoryDisk} that reuse a disk for each store created. Stores are deleted after
@@ -24,6 +26,7 @@ import org.junit.After;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class HeapDiskReuseWithDeleteTest extends HeapDiskReuseTest {
 
   @After

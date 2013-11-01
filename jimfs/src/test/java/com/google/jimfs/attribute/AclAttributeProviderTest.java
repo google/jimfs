@@ -29,6 +29,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.file.attribute.AclEntry;
@@ -43,7 +45,8 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
-public class AclAttributeProviderTest extends AttributeProviderTest<AclAttributeProvider> {
+@RunWith(JUnit4.class)
+public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclAttributeProvider> {
 
   private static final UserPrincipal USER = createUserPrincipal("user");
   private static final UserPrincipal FOO = createUserPrincipal("foo");

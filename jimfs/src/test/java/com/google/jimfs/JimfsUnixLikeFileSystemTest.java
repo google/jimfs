@@ -56,6 +56,8 @@ import com.google.jimfs.attribute.BasicFileAttribute;
 import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -105,6 +107,7 @@ import java.util.regex.PatternSyntaxException;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Override

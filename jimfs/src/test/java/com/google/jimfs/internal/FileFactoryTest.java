@@ -21,6 +21,8 @@ import static org.truth0.Truth.ASSERT;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.nio.ByteBuffer;
 
@@ -29,6 +31,7 @@ import java.nio.ByteBuffer;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class FileFactoryTest {
 
   private FileFactory factory;

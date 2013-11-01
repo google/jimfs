@@ -22,6 +22,8 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileOwnerAttributeView;
@@ -32,7 +34,9 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
-public class OwnerAttributeProviderTest extends AttributeProviderTest<OwnerAttributeProvider> {
+@RunWith(JUnit4.class)
+public class OwnerAttributeProviderTest extends
+    AbstractAttributeProviderTest<OwnerAttributeProvider> {
 
   @Override
   protected OwnerAttributeProvider createProvider() {

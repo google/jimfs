@@ -26,6 +26,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.file.attribute.FileAttributeView;
@@ -40,7 +42,9 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
-public class PosixAttributeProviderTest extends AttributeProviderTest<PosixAttributeProvider> {
+@RunWith(JUnit4.class)
+public class PosixAttributeProviderTest extends
+    AbstractAttributeProviderTest<PosixAttributeProvider> {
 
   @Override
   protected PosixAttributeProvider createProvider() {

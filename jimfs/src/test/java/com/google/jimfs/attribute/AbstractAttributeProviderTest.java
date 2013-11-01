@@ -29,11 +29,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Base class for tests of individual {@link AttributeProvider} implementations.
+ * Abstract base class for tests of individual {@link AttributeProvider} implementations.
  *
  * @author Colin Decker
  */
-public abstract class AttributeProviderTest<P extends AttributeProvider> {
+public abstract class AbstractAttributeProviderTest<P extends AttributeProvider> {
 
   protected static final ImmutableMap<String, FileAttributeView> NO_INHERITED_VIEWS =
       ImmutableMap.of();

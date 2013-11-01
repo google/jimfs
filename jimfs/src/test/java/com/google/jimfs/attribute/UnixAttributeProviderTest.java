@@ -23,6 +23,8 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -33,8 +35,10 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 @SuppressWarnings("OctalInteger")
-public class UnixAttributeProviderTest extends AttributeProviderTest<UnixAttributeProvider> {
+public class UnixAttributeProviderTest extends
+    AbstractAttributeProviderTest<UnixAttributeProvider> {
 
   @Override
   protected UnixAttributeProvider createProvider() {

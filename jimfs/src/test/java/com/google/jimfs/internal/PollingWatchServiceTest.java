@@ -33,6 +33,8 @@ import com.google.jimfs.internal.AbstractWatchService.Key;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,6 +52,7 @@ import java.util.UUID;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class PollingWatchServiceTest {
 
   private JimfsFileSystem fs;

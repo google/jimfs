@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.path.Normalization;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -29,8 +31,11 @@ import java.nio.file.PathMatcher;
 import java.util.regex.Pattern;
 
 /**
+ * Tests for {@link PathMatcher} instances created by {@link GlobToRegex}.
+ *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class RegexGlobMatcherTest extends AbstractGlobMatcherTest {
 
   @Override

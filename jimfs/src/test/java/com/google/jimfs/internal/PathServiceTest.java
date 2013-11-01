@@ -25,6 +25,8 @@ import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -41,6 +43,7 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class PathServiceTest {
   
   private static final ImmutableSet<Normalization> NO_NORMALIZATIONS = ImmutableSet.of();

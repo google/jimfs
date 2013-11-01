@@ -20,6 +20,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link HeapMemoryDisk} that reuse a disk for each store created. Stores are not deleted
@@ -27,6 +29,7 @@ import org.junit.Test;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class HeapDiskReuseTest extends HeapDiskTest {
 
   private final MemoryDisk disk = new HeapMemoryDisk(8);

@@ -31,6 +31,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -50,8 +52,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
+ * Tests for {@link JimfsAsynchronousFileChannel}.
+ *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class JimfsAsynchronousFileChannelTest {
 
   private static JimfsAsynchronousFileChannel channel(

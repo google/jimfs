@@ -22,12 +22,15 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.testing.EqualsTester;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link File}.
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class FileTest {
 
   @Test

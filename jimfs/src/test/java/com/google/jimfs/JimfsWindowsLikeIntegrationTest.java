@@ -26,6 +26,8 @@ import com.google.common.collect.Ordering;
 import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.net.URI;
@@ -42,6 +44,7 @@ import java.util.regex.PatternSyntaxException;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTest {
 
   @Override

@@ -22,6 +22,8 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 
@@ -30,6 +32,7 @@ import java.io.IOException;
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class JimfsInputStreamTest {
 

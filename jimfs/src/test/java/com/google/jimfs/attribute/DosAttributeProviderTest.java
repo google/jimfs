@@ -24,6 +24,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.file.attribute.DosFileAttributeView;
@@ -37,7 +39,8 @@ import java.util.Set;
  *
  * @author Colin Decker
  */
-public class DosAttributeProviderTest extends AttributeProviderTest<DosAttributeProvider> {
+@RunWith(JUnit4.class)
+public class DosAttributeProviderTest extends AbstractAttributeProviderTest<DosAttributeProvider> {
 
   private static final ImmutableList<String> DOS_ATTRIBUTES =
       ImmutableList.of("hidden", "archive", "readonly", "system");

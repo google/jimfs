@@ -19,12 +19,15 @@ package com.google.jimfs.attribute;
 import static org.truth0.Truth.ASSERT;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link Inode}.
  *
  * @author Colin Decker
  */
+@RunWith(JUnit4.class)
 public class InodeTest {
 
   @Test
