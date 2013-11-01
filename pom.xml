@@ -92,7 +92,7 @@
     <guava.version>15.0</guava.version>
     <icu4j.version>51.2</icu4j.version>
     <jsr305.version>2.0.1</jsr305.version>
-    <junit.version>4.11</junit.version>
+    <junit.version>4.10</junit.version>
     <truth.version>0.13</truth.version>
     <!-- Currently relies on the latest version of Caliper, which must be built from HEAD. -->
     <caliper.version>1.0-beta-SNAPSHOT</caliper.version>

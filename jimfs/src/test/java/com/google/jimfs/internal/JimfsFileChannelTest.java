@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.testing.TestUtils.assertNotEquals;
 import static com.google.jimfs.testing.TestUtils.buffer;
 import static com.google.jimfs.testing.TestUtils.bytes;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -24,7 +25,6 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;

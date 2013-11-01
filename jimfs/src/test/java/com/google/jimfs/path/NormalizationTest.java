@@ -20,9 +20,9 @@ import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
 import static com.google.jimfs.path.Normalization.CASE_FOLD_UNICODE;
 import static com.google.jimfs.path.Normalization.NFC;
 import static com.google.jimfs.path.Normalization.NFD;
+import static com.google.jimfs.testing.TestUtils.assertNotEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableSet;

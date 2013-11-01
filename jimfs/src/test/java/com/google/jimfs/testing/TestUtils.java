@@ -17,7 +17,9 @@
 package com.google.jimfs.testing;
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static org.junit.Assert.assertFalse;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -127,5 +129,11 @@ public final class TestUtils {
       }
     }
     return results;
+  }
+
+  // equivalent to the Junit 4.11 method.
+  public static void assertNotEquals(Object unexpected, Object actual) {
+    assertFalse("Values should be different. Actual: " + actual,
+        Objects.equal(unexpected, actual));
   }
 }
