@@ -30,7 +30,7 @@
     <module>benchmarks</module>
   </modules>
 
-  <name>JimFS (Parent)</name>
+  <name>JimFS Parent</name>
 
   <description>
     JimFS is an in-memory implementation of Java 7's java.nio.file abstract file system API.
