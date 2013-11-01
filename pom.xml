@@ -27,7 +27,7 @@
 
   <modules>
     <module>jimfs</module>
-    <module>jimfs-benchmarks</module>
+    <module>benchmarks</module>
   </modules>
 
   <name>JimFS (Parent)</name>
