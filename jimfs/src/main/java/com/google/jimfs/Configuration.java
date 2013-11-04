@@ -74,14 +74,16 @@ public final class Configuration {
    *       .build();  </pre>
    */
   public static Configuration unix() {
-    return UNIX;
+    return UnixHolder.UNIX;
   }
 
-  private static final Configuration UNIX = Configuration.builder(PathType.unix())
-      .setRoots("/")
-      .setWorkingDirectory("/work")
-      .setAttributeViews("basic")
-      .build();
+  private static final class UnixHolder {
+    private static final Configuration UNIX = Configuration.builder(PathType.unix())
+        .setRoots("/")
+        .setWorkingDirectory("/work")
+        .setAttributeViews("basic")
+        .build();
+  }
 
   /**
    * Returns the default configuration for a Mac OS X-like file system.
@@ -116,13 +118,15 @@ public final class Configuration {
    *       .build();  </pre>
    */
   public static Configuration osx() {
-    return OSX;
+    return OsxHolder.OSX;
   }
 
-  private static final Configuration OSX = UNIX.toBuilder()
-      .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
-      .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
-      .build();
+  private static final class OsxHolder {
+    private static final Configuration OSX = unix().toBuilder()
+        .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
+        .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
+        .build();
+  }
 
   /**
    * Returns the default configuration for a Windows-like file system. A file system created with
@@ -155,16 +159,18 @@ public final class Configuration {
    *       .build();  </pre>
    */
   public static Configuration windows() {
-    return WINDOWS;
+    return WindowsHolder.WINDOWS;
   }
 
-  private static final Configuration WINDOWS = Configuration.builder(PathType.windows())
-      .setRoots("C:\\")
-      .setWorkingDirectory("C:\\work")
-      .setNameCanonicalNormalization(CASE_FOLD_ASCII)
-      .setPathEqualityUsesCanonicalForm(true) // matches real behavior of WindowsPath
-      .setAttributeViews("basic")
-      .build();
+  private static final class WindowsHolder {
+    private static final Configuration WINDOWS = Configuration.builder(PathType.windows())
+        .setRoots("C:\\")
+        .setWorkingDirectory("C:\\work")
+        .setNameCanonicalNormalization(CASE_FOLD_ASCII)
+        .setPathEqualityUsesCanonicalForm(true) // matches real behavior of WindowsPath
+        .setAttributeViews("basic")
+        .build();
+  }
 
   /**
    * Creates a new mutable {@link Configuration} builder using the given path type.
