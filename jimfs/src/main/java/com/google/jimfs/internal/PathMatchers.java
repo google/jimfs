@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Ascii;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.jimfs.path.Normalization;
@@ -53,7 +54,7 @@ final class PathMatchers {
     checkArgument(syntaxSeparator > 0, "Must be of the form 'syntax:pattern': %s",
         syntaxAndPattern);
 
-    String syntax = syntaxAndPattern.substring(0, syntaxSeparator);
+    String syntax = Ascii.toLowerCase(syntaxAndPattern.substring(0, syntaxSeparator));
     String pattern = syntaxAndPattern.substring(syntaxSeparator + 1);
 
     switch (syntax) {
