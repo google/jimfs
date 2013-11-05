@@ -144,11 +144,11 @@ final class PathService implements Comparator<JimfsPath> {
         return Name.SELF;
       case "..":
         return Name.PARENT;
+      default:
+        String display = Normalization.normalize(name, displayNormalizations);
+        String canonical = Normalization.normalize(name, canonicalNormalizations);
+        return Name.create(display, canonical);
     }
-
-    String display = Normalization.normalize(name, displayNormalizations);
-    String canonical = Normalization.normalize(name, canonicalNormalizations);
-    return Name.create(display, canonical);
   }
 
   /**

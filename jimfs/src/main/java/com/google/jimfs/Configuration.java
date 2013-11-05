@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.google.jimfs.attribute.AttributeProvider;
 import com.google.jimfs.attribute.StandardAttributeProviders;
 import com.google.jimfs.path.Normalization;
@@ -366,13 +367,16 @@ public final class Configuration {
           case CASE_FOLD_ASCII:
             checkNormalizationNotSet(n, caseFold);
             caseFold = n;
+            break;
+          default:
+            throw new AssertionError(); // there are no other cases
         }
       }
 
       if (none != null) {
         return ImmutableSet.of();
       }
-      return ImmutableSet.copyOf(normalizations);
+      return Sets.immutableEnumSet(normalizations);
     }
 
     private static void checkNormalizationNotSet(Normalization n, @Nullable Normalization set) {

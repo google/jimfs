@@ -16,6 +16,8 @@
 
 package com.google.jimfs.attribute;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableSet;
 
 import java.nio.file.attribute.FileAttributeView;
@@ -123,9 +125,9 @@ final class UnixAttributeProvider extends AttributeProvider {
         return inode.id();
       case "nlink":
         return inode.links();
+      default:
+        return null;
     }
-
-    return null;
   }
 
   @Override
@@ -138,6 +140,7 @@ final class UnixAttributeProvider extends AttributeProvider {
   private static int toMode(Set<PosixFilePermission> permissions) {
     int result = 0;
     for (PosixFilePermission permission : permissions) {
+      checkNotNull(permission);
       switch (permission) {
         case OWNER_READ:
           result |= 0400;
@@ -166,6 +169,8 @@ final class UnixAttributeProvider extends AttributeProvider {
         case OTHERS_EXECUTE:
           result |= 0001;
           break;
+        default:
+          throw new AssertionError(); // no other possible values
       }
     }
     return result;

@@ -93,17 +93,17 @@ final class AclAttributeProvider extends AttributeProvider {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("unchecked") // only cast after checking each element's type
   private static ImmutableList<AclEntry> toAcl(List<?> list) {
-    for (Object obj : list) {
-      checkNotNull(obj);
+    ImmutableList<?> copy = ImmutableList.copyOf(list);
+    for (Object obj : copy) {
       if (!(obj instanceof AclEntry)) {
         throw new IllegalArgumentException("invalid element for attribute 'acl:acl': "
             + "should be List<AclEntry>, found element of type " + obj.getClass());
       }
     }
 
-    return ImmutableList.copyOf((List<AclEntry>) list);
+    return (ImmutableList<AclEntry>) copy;
   }
 
   @Override

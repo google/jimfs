@@ -319,10 +319,9 @@ abstract class AbstractWatchService implements WatchService {
         if (!events.isEmpty()) {
           signal();
         }
-        return true;
       }
 
-      return false;
+      return isValid();
     }
 
     @Override

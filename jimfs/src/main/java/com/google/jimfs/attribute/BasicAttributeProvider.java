@@ -107,6 +107,7 @@ final class BasicAttributeProvider extends AttributeProvider {
       case "isSymbolicLink":
       case "isOther":
         throw unsettable(view, attribute);
+      default:
     }
   }
 

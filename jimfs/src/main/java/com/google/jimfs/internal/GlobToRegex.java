@@ -409,29 +409,29 @@ final class GlobToRegex {
       switch (c) {
         case '?':
           converter.appendQuestionMark();
-          return;
+          break;
         case '[':
           converter.appendBracketStart();
           converter.pushState(BRACKET_FIRST_CHAR);
-          return;
+          break;
         case '{':
           throw converter.syntaxError("{ not allowed in subpattern group");
         case '*':
           converter.pushState(STAR);
-          return;
+          break;
         case '\\':
           converter.pushState(ESCAPE);
-          return;
+          break;
         case '}':
           converter.appendCurlyBraceEnd();
           converter.popState();
-          return;
+          break;
         case ',':
           converter.appendSubpatternSeparator();
-          return;
+          break;
+        default:
+          converter.append(c);
       }
-
-      converter.append(c);
     }
 
     @Override

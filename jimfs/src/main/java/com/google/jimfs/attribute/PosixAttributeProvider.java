@@ -119,8 +119,9 @@ final class PosixAttributeProvider extends AttributeProvider {
         return inode.getAttribute("posix:group");
       case "permissions":
         return inode.getAttribute("posix:permissions");
+      default:
+        return null;
     }
-    return null;
   }
 
   @Override
@@ -139,20 +140,21 @@ final class PosixAttributeProvider extends AttributeProvider {
       case "permissions":
         inode.setAttribute("posix:permissions",
             toPermissions(checkType(view, attribute, value, Set.class)));
+      default:
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("unchecked") // only cast after checking each element's type
   private static ImmutableSet<PosixFilePermission> toPermissions(Set<?> set) {
-    for (Object obj : set) {
-      checkNotNull(obj);
+    ImmutableSet<?> copy = ImmutableSet.copyOf(set);
+    for (Object obj : copy) {
       if (!(obj instanceof PosixFilePermission)) {
         throw new IllegalArgumentException("invalid element for attribute 'posix:permissions': "
             + "should be Set<PosixFilePermission>, found element of type " + obj.getClass());
       }
     }
 
-    return Sets.immutableEnumSet((Set<PosixFilePermission>) set);
+    return Sets.immutableEnumSet((ImmutableSet<PosixFilePermission>) copy);
   }
 
   @Override
