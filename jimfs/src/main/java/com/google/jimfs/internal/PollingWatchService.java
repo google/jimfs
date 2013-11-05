@@ -155,6 +155,7 @@ final class PollingWatchService extends AbstractWatchService {
     super.close();
 
     synchronized (this) {
+      // synchronize to ensure no new
       for (Key key : snapshots.keySet()) {
         key.cancel();
       }
