@@ -50,8 +50,8 @@ import javax.annotation.Nullable;
 public final class Configuration {
 
   /**
-   * Returns the default configuration for a UNIX-like file system. A file system created with this
-   * configuration:
+   * <p>Returns the default configuration for a UNIX-like file system. A file system created with
+   * this configuration:
    *
    * <ul>
    *   <li>uses "/" as the path name separator (see {@link PathType#unix()} for more information on
@@ -62,7 +62,7 @@ public final class Configuration {
    *   overhead for unneeded attributes</li>
    * </ul>
    *
-   * To create a modified version of this configuration, such as to include the full set of UNIX
+   * <p>To create a modified version of this configuration, such as to include the full set of UNIX
    * file attribute views, {@linkplain #toBuilder() create a builder}.
    *
    * <p>Example:
@@ -86,7 +86,7 @@ public final class Configuration {
   }
 
   /**
-   * Returns the default configuration for a Mac OS X-like file system.
+   * <p>Returns the default configuration for a Mac OS X-like file system.
    *
    * <p>The primary differences between this configuration and the default {@link #unix()}
    * configuration are that this configuration does Unicode normalization on the display and
@@ -104,7 +104,7 @@ public final class Configuration {
    *   attributes</li>
    * </ul>
    *
-   * To create a modified version of this configuration, such as to include the full set of UNIX
+   * <p>To create a modified version of this configuration, such as to include the full set of UNIX
    * file attribute views or to use full Unicode case insensitivity,
    * {@linkplain #toBuilder() create a builder}.
    *
@@ -129,8 +129,8 @@ public final class Configuration {
   }
 
   /**
-   * Returns the default configuration for a Windows-like file system. A file system created with
-   * this configuration:
+   * <p>Returns the default configuration for a Windows-like file system. A file system created
+   * with this configuration:
    *
    * <ul>
    *   <li>uses "\" as the path name separator and recognizes "/" as a separator when parsing
@@ -143,9 +143,7 @@ public final class Configuration {
    *   attributes</li>
    * </ul>
    *
-   * <h3>Advanced configuration</h3>
-   *
-   * To create a modified version of this configuration, such as to include the full set of Windows
+   * <p>To create a modified version of this configuration, such as to include the full set of Windows
    * file attribute views or to use full Unicode case insensitivity,
    * {@linkplain #toBuilder() create a builder}.
    *
