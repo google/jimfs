@@ -74,7 +74,7 @@ final class GlobToRegex {
    * to {@code builder}.
    */
   private String convert() {
-    enterState(NORMAL);
+    pushState(NORMAL);
     for (index = 0; index < glob.length(); index++) {
       currentState().process(this, glob.charAt(index));
     }
@@ -85,23 +85,15 @@ final class GlobToRegex {
   /**
    * Enters the given state. The current state becomes the previous state.
    */
-  private void enterState(State state) {
+  private void pushState(State state) {
     states.push(state);
   }
 
   /**
    * Returns to the previous state.
    */
-  private void enterPreviousState() {
+  private void popState() {
     states.pop();
-  }
-
-  /**
-   * Leaves this state and returns to the previous state, then enters the given state.
-   */
-  private void changeState(State state) {
-    enterPreviousState();
-    enterState(state);
   }
 
   /**
@@ -272,17 +264,17 @@ final class GlobToRegex {
           return;
         case '[':
           converter.appendBracketStart();
-          converter.enterState(BRACKET_FIRST_CHAR);
+          converter.pushState(BRACKET_FIRST_CHAR);
           return;
         case '{':
           converter.appendCurlyBraceStart();
-          converter.enterState(CURLY_BRACE);
+          converter.pushState(CURLY_BRACE);
           return;
         case '*':
-          converter.enterState(STAR);
+          converter.pushState(STAR);
           return;
         case '\\':
-          converter.enterState(ESCAPE);
+          converter.pushState(ESCAPE);
           return;
         default:
           converter.append(c);
@@ -302,7 +294,7 @@ final class GlobToRegex {
     @Override
     void process(GlobToRegex converter, char c) {
       converter.append(c);
-      converter.enterPreviousState();
+      converter.popState();
     }
 
     @Override
@@ -324,10 +316,10 @@ final class GlobToRegex {
     void process(GlobToRegex converter, char c) {
       if (c == '*') {
         converter.appendStarStar();
-        converter.enterPreviousState();
+        converter.popState();
       } else {
         converter.appendStar();
-        converter.enterPreviousState();
+        converter.popState();
         converter.currentState().process(converter, c);
       }
     }
@@ -350,6 +342,15 @@ final class GlobToRegex {
     @Override
     void process(GlobToRegex converter, char c) {
       if (c == ']') {
+        // A glob like "[]]" or "[]q]" is apparently fine in Unix (when used with ls for example)
+        // but doesn't work for the default java.nio.file implementations. In the cases of "[]]" it
+        // produces:
+        // java.util.regex.PatternSyntaxException: Unclosed character class near index 13
+        // ^[[^/]&&[]]\]$
+        //              ^
+        // The error here is slightly different, but trying to make this work would require some
+        // kind of lookahead and break the simplicity of char-by-char conversion here. Also, if
+        // someone wants to include a ']' inside a character class, they should escape it.
         throw converter.syntaxError("Empty []");
       }
       if (c == '!') {
@@ -359,7 +360,8 @@ final class GlobToRegex {
       } else {
         converter.appendInBracket(c);
       }
-      converter.changeState(BRACKET);
+      converter.popState();
+      converter.pushState(BRACKET);
     }
 
     @Override
@@ -381,7 +383,7 @@ final class GlobToRegex {
     void process(GlobToRegex converter, char c) {
       if (c == ']') {
         converter.appendBracketEnd();
-        converter.enterPreviousState();
+        converter.popState();
       } else {
         converter.appendInBracket(c);
       }
@@ -410,19 +412,19 @@ final class GlobToRegex {
           return;
         case '[':
           converter.appendBracketStart();
-          converter.enterState(BRACKET_FIRST_CHAR);
+          converter.pushState(BRACKET_FIRST_CHAR);
           return;
         case '{':
           throw converter.syntaxError("{ not allowed in subpattern group");
         case '*':
-          converter.enterState(STAR);
+          converter.pushState(STAR);
           return;
         case '\\':
-          converter.enterState(ESCAPE);
+          converter.pushState(ESCAPE);
           return;
         case '}':
           converter.appendCurlyBraceEnd();
-          converter.enterPreviousState();
+          converter.popState();
           return;
         case ',':
           converter.appendSubpatternSeparator();

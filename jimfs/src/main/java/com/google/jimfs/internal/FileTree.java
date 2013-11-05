@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
  */
 final class FileTree {
 
-  private static final int MAX_SYMBOLIC_LINK_DEPTH = 10;
+  private static final int MAX_SYMBOLIC_LINK_DEPTH = 40;
 
   private static final ImmutableList<Name> EMPTY_PATH_NAMES = ImmutableList.of(Name.SELF);
 

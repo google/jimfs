@@ -81,7 +81,7 @@ public class RealFileByteStore extends ByteStore implements Closeable {
 
   @Override
   public int write(long pos, byte b) {
-    return write(pos, new byte[]{b}, 0, 1);
+    return write(pos, new byte[] {b}, 0, 1);
   }
 
   @Override
