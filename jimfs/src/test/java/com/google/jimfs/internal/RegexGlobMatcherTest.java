@@ -46,7 +46,7 @@ public class RegexGlobMatcherTest extends AbstractGlobMatcherTest {
   @Override
   protected PathMatcher realMatcher(String pattern) {
     FileSystem defaultFileSystem = FileSystems.getDefault();
-    if ("/" .equals(defaultFileSystem.getSeparator())) {
+    if ("/".equals(defaultFileSystem.getSeparator())) {
       return defaultFileSystem.getPathMatcher("glob:" + pattern);
     }
     return null;

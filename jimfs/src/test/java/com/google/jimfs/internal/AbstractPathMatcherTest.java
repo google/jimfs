@@ -37,6 +37,8 @@ import java.util.regex.PatternSyntaxException;
 import javax.annotation.Nullable;
 
 /**
+ * Abstract base class for tests of {@link PathMatcher} implementations.
+ *
  * @author Colin Decker
  */
 public abstract class AbstractPathMatcherTest {
@@ -49,7 +51,8 @@ public abstract class AbstractPathMatcherTest {
   /**
    * Override to return a real matcher for the given pattern.
    */
-  @Nullable protected PathMatcher realMatcher(String pattern) {
+  @Nullable
+  protected PathMatcher realMatcher(String pattern) {
     return null;
   }
 
@@ -74,7 +77,9 @@ public abstract class AbstractPathMatcherTest {
   protected final class PatternAsserter {
 
     private final PathMatcher matcher;
-    private final @Nullable PathMatcher realMatcher;
+
+    @Nullable
+    private final PathMatcher realMatcher;
 
     PatternAsserter(String pattern) {
       this.matcher = matcher(pattern);

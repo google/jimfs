@@ -176,8 +176,9 @@ abstract class AbstractWatchService implements WatchService {
       return count;
     }
 
+    @Nullable
     @Override
-    public @Nullable T context() {
+    public T context() {
       return context;
     }
 
@@ -292,8 +293,8 @@ abstract class AbstractWatchService implements WatchService {
 
     @Override
     public boolean reset() {
-      // calling reset() multiple times without polling events would cause key to be placed in watcher
-      // queue multiple times, but not much that can be done about that
+      // calling reset() multiple times without polling events would cause key to be placed in
+      // watcher queue multiple times, but not much that can be done about that
       if (isValid() && state.compareAndSet(State.SIGNALLED, State.READY)) {
         // requeue if events are pending
         if (!events.isEmpty()) {

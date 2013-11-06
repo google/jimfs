@@ -97,7 +97,7 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
       ByteBuffer buffer = (ByteBuffer) value;
       bytes = new byte[buffer.remaining()];
       buffer.get(bytes);
-    } else{
+    } else {
       throw invalidType(view, attribute, value, byte[].class, ByteBuffer.class);
     }
 

@@ -21,8 +21,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Tests for {@link HeapMemoryDisk} that reuse a disk for each store created. Stores are deleted after
- * each test, meaning blocks will be reused.
+ * Tests for {@link HeapMemoryDisk} that reuse a disk for each store created. Stores are deleted
+ * after each test, meaning blocks will be reused.
  *
  * @author Colin Decker
  */

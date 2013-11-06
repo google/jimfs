@@ -82,9 +82,11 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testPostEvent() throws IOException {
-    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(
+        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
 
-    AbstractWatchService.Event<Path> event = new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
+    AbstractWatchService.Event<Path> event =
+        new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
     key.post(event);
     key.signal();
 
@@ -103,15 +105,18 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testKeyStates() throws IOException {
-    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(
+        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
 
-    AbstractWatchService.Event<Path> event = new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
+    AbstractWatchService.Event<Path> event =
+        new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
     ASSERT.that(key.state()).is(READY);
     key.post(event);
     key.signal();
     ASSERT.that(key.state()).is(SIGNALLED);
 
-    AbstractWatchService.Event<Path> event2 = new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
+    AbstractWatchService.Event<Path> event2 =
+        new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
     key.post(event2);
     ASSERT.that(key.state()).is(SIGNALLED);
 
@@ -139,7 +144,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testKeyRequeuedOnResetIfEventsArePending() throws IOException {
-    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(
+        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
     key.signal();
 
@@ -158,7 +164,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testOverflow() throws IOException {
-    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(
+        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     for (int i = 0; i < AbstractWatchService.Key.MAX_QUEUE_SIZE + 10; i++) {
       key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
     }
@@ -178,7 +185,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testResetAfterCancelReturnsFalse() throws IOException {
-    AbstractWatchService.Key key = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key = watcher.register(
+        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     key.signal();
     key.cancel();
     ASSERT.that(key.reset()).isFalse();
@@ -186,8 +194,10 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testClosedWatcher() throws IOException, InterruptedException {
-    AbstractWatchService.Key key1 = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
-    AbstractWatchService.Key key2 = watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_MODIFY));
+    AbstractWatchService.Key key1 = watcher.register(
+        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key2 = watcher.register(
+        new StubWatchable(), ImmutableSet.of(ENTRY_MODIFY));
 
     ASSERT.that(key1.isValid()).isTrue();
     ASSERT.that(key2.isValid()).isTrue();

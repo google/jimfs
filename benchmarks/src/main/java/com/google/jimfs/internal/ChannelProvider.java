@@ -63,7 +63,7 @@ public abstract class ChannelProvider {
   public void afterRep() throws IOException {
   }
 
-  public abstract void tearDown() throws IOException ;
+  public abstract void tearDown() throws IOException;
 
   private static final class SocketChannelProvider extends ChannelProvider {
 

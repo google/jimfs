@@ -20,8 +20,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Tests for {@link HeapMemoryDisk} that create a new disk for each byte store created (testing fresh
- * state).
+ * Tests for {@link HeapMemoryDisk} that create a new disk for each byte store created (testing
+ * fresh state).
  *
  * @author Colin Decker
  */

@@ -73,7 +73,7 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
 
   @Override
   protected Set<? extends AttributeProvider> createInheritedProviders() {
-    return ImmutableSet.of( new BasicAttributeProvider(), new OwnerAttributeProvider());
+    return ImmutableSet.of(new BasicAttributeProvider(), new OwnerAttributeProvider());
   }
 
   @Override

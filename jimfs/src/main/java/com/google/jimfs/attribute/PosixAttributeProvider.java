@@ -140,6 +140,7 @@ final class PosixAttributeProvider extends AttributeProvider {
       case "permissions":
         inode.setAttribute("posix:permissions",
             toPermissions(checkType(view, attribute, value, Set.class)));
+        break;
       default:
     }
   }
