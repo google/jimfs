@@ -396,10 +396,4 @@ final class MemoryDiskByteStore extends ByteStore {
   private int bytesToRead(long pos, int max) {
     return (int) bytesToRead(pos, (long) max);
   }
-
-  private static void checkNotInterrupted() throws InterruptedException {
-    if (Thread.interrupted()) {
-      throw new InterruptedException();
-    }
-  }
 }
