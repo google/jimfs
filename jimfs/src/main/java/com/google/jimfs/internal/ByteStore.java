@@ -89,7 +89,7 @@ abstract class ByteStore implements FileContent {
   /**
    * Called when a stream or channel to this store is opened.
    */
-  public synchronized final void opened() {
+  public final synchronized void opened() {
     openCount++;
   }
 
@@ -97,7 +97,7 @@ abstract class ByteStore implements FileContent {
    * Called when a stream or channel to this store is closed. If there are no more streams or
    * channels open to the store and it has been deleted, its contents may be deleted.
    */
-  public synchronized final void closed() {
+  public final synchronized void closed() {
     if (--openCount == 0 && deleted) {
       deleteContents();
     }
@@ -108,7 +108,7 @@ abstract class ByteStore implements FileContent {
    * contents are deleted if necessary.
    */
   @Override
-  public synchronized final void delete() {
+  public final synchronized void delete() {
     deleted = true;
     if (openCount == 0) {
       deleteContents();

@@ -252,8 +252,8 @@ abstract class AbstractWatchService implements WatchService {
     }
 
     /**
-     * Posts the given event to this key. After posting one or more events, {@link #signal()} must be
-     * called to cause the key to be enqueued with the watch service.
+     * Posts the given event to this key. After posting one or more events, {@link #signal()} must
+     * be called to cause the key to be enqueued with the watch service.
      */
     public void post(WatchEvent<?> event) {
       if (!events.offer(event)) {
@@ -262,8 +262,8 @@ abstract class AbstractWatchService implements WatchService {
     }
 
     /**
-     * Sets the state to SIGNALLED and enqueues this key with the watcher if it was previously in the
-     * READY state.
+     * Sets the state to SIGNALLED and enqueues this key with the watcher if it was previously in
+     * the READY state.
      */
     public void signal() {
       if (state.getAndSet(State.SIGNALLED) == State.READY) {

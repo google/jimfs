@@ -144,8 +144,8 @@ public final class Configuration {
    *   attributes</li>
    * </ul>
    *
-   * <p>To create a modified version of this configuration, such as to include the full set of Windows
-   * file attribute views or to use full Unicode case insensitivity,
+   * <p>To create a modified version of this configuration, such as to include the full set of
+   * Windows file attribute views or to use full Unicode case insensitivity,
    * {@linkplain #toBuilder() create a builder}.
    *
    * <p>Example:

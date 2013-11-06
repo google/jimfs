@@ -748,7 +748,8 @@ public class JimfsFileChannelTest {
     }
   }
 
-  private List<Future<?>> queueAllBlockingOperations(final FileChannel channel, ExecutorService executor) {
+  private List<Future<?>> queueAllBlockingOperations(
+      final FileChannel channel, ExecutorService executor) {
     List<Future<?>> futures = new ArrayList<>();
 
     final ByteBuffer buffer = ByteBuffer.allocate(10);

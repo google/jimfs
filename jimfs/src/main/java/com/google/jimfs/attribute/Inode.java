@@ -82,63 +82,63 @@ public abstract class Inode {
   /**
    * Returns the current count of links to this inode.
    */
-  public synchronized final int links() {
+  public final synchronized int links() {
     return links;
   }
 
   /**
    * Increments the link count.
    */
-  public synchronized final void incrementLinkCount() {
+  public final synchronized void incrementLinkCount() {
     links++;
   }
 
   /**
    * Decrements and returns the link count.
    */
-  public synchronized final int decrementLinkCount() {
+  public final synchronized int decrementLinkCount() {
     return --links;
   }
 
   /**
    * Gets the creation time of the file.
    */
-  public synchronized final long getCreationTime() {
+  public final synchronized long getCreationTime() {
     return creationTime;
   }
 
   /**
    * Gets the last access time of the file.
    */
-  public synchronized final long getLastAccessTime() {
+  public final synchronized long getLastAccessTime() {
     return lastAccessTime;
   }
 
   /**
    * Gets the last modified time of the file.
    */
-  public synchronized final long getLastModifiedTime() {
+  public final synchronized long getLastModifiedTime() {
     return lastModifiedTime;
   }
 
   /**
    * Sets the creation time of the file.
    */
-  public synchronized final void setCreationTime(long creationTime) {
+  public final synchronized void setCreationTime(long creationTime) {
     this.creationTime = creationTime;
   }
 
   /**
    * Sets the last access time of the file.
    */
-  public synchronized final void setLastAccessTime(long lastAccessTime) {
+  public final synchronized void setLastAccessTime(long lastAccessTime) {
     this.lastAccessTime = lastAccessTime;
   }
 
   /**
    * Sets the last modified time of the file.
    */
-  public synchronized final void setLastModifiedTime(long lastModifiedTime) {
+  public final synchronized void setLastModifiedTime(long lastModifiedTime) {
     this.lastModifiedTime = lastModifiedTime;
   }
 
@@ -159,7 +159,7 @@ public abstract class Inode {
   /**
    * Returns the attribute keys contained in the attributes map for the file.
    */
-  public synchronized final ImmutableSet<String> getAttributeKeys() {
+  public final synchronized ImmutableSet<String> getAttributeKeys() {
     if (attributes == null) {
       return ImmutableSet.of();
     }
@@ -173,7 +173,7 @@ public abstract class Inode {
    */
   @SuppressWarnings("unchecked")
   @Nullable
-  public synchronized final <T> T getAttribute(String key) {
+  public final synchronized <T> T getAttribute(String key) {
     if (attributes == null) {
       return null;
     }
@@ -183,7 +183,7 @@ public abstract class Inode {
   /**
    * Sets the attribute with the given key to the given value.
    */
-  public synchronized final void setAttribute(String key, Object value) {
+  public final synchronized void setAttribute(String key, Object value) {
     if (attributes == null) {
       attributes = new HashMap<>();
     }
@@ -193,7 +193,7 @@ public abstract class Inode {
   /**
    * Deletes the attribute with the given key.
    */
-  public synchronized final void deleteAttribute(String key) {
+  public final synchronized void deleteAttribute(String key) {
     if (attributes != null) {
       attributes.remove(key);
     }
@@ -202,7 +202,7 @@ public abstract class Inode {
   /**
    * Copies basic attributes (file times) from this inode to the given inode.
    */
-  public synchronized final void copyBasicAttributes(Inode target) {
+  public final synchronized void copyBasicAttributes(Inode target) {
     target.setFileTimes(creationTime, lastModifiedTime, lastAccessTime);
   }
 
@@ -216,7 +216,7 @@ public abstract class Inode {
   /**
    * Copies the attributes from this inode to the given inode.
    */
-  public synchronized final void copyAttributes(Inode target) {
+  public final synchronized void copyAttributes(Inode target) {
     copyBasicAttributes(target);
     target.putAll(attributes);
   }
