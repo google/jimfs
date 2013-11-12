@@ -30,6 +30,8 @@ import java.util.Map;
  */
 final class JimfsFileSystems {
 
+  private JimfsFileSystems() {}
+
   /**
    * Initialize and configure a new file system with the given provider and URI, using the given
    * configuration.

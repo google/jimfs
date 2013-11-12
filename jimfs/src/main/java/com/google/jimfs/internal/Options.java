@@ -33,9 +33,14 @@ import java.nio.file.OpenOption;
 import java.util.Set;
 
 /**
+ * Utility methods for normalizing user-provided options arrays and sets to canonical immutable
+ * sets of options.
+ *
  * @author Colin Decker
  */
 final class Options {
+
+  private Options() {}
 
   /**
    * Immutable set containing LinkOption.NOFOLLOW_LINKS.

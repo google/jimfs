@@ -18,6 +18,7 @@ package com.google.jimfs.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
@@ -25,7 +26,6 @@ import java.nio.ByteBuffer;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Attribute provider that provides the {@link UserDefinedFileAttributeView} ("user"). Unlike most
@@ -111,7 +111,7 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
 
   @Override
   public UserDefinedFileAttributeView view(Inode.Lookup lookup,
-      Map<String, FileAttributeView> inheritedViews) {
+      ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup);
   }
 

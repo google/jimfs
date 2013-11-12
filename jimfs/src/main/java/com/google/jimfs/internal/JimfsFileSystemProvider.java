@@ -142,7 +142,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
    * Returns whether or not the given URI is valid as a base file system URI. It must not have a
    * path, query or fragment.
    */
-  private boolean isValidFileSystemUri(URI uri) {
+  private static boolean isValidFileSystemUri(URI uri) {
     // would like to just check null, but fragment appears to be the empty string when not present
     return isNullOrEmpty(uri.getPath())
         && isNullOrEmpty(uri.getQuery())
@@ -152,7 +152,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   /**
    * Returns the given URI with any path, query or fragment stripped off.
    */
-  private URI toFileSystemUri(URI uri) {
+  private static URI toFileSystemUri(URI uri) {
     try {
       return new URI(
           uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(),

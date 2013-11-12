@@ -218,6 +218,7 @@ final class AttributeService {
     return (V) value;
   }
 
+  @Nullable
   private Object getAttributeInternal(Inode inode, String view, String attribute) {
     AttributeProvider provider = providersByName.get(view);
     if (provider == null) {
@@ -285,7 +286,7 @@ final class AttributeService {
     return null;
   }
 
-  private Map<String, FileAttributeView> createInheritedViews(
+  private ImmutableMap<String, FileAttributeView> createInheritedViews(
       Inode.Lookup lookup, AttributeProvider provider) {
     if (provider.inherits().isEmpty()) {
       return ImmutableMap.of();
@@ -293,7 +294,7 @@ final class AttributeService {
 
     Map<String, FileAttributeView> inheritedViews = new HashMap<>();
     createInheritedViews(lookup, provider, inheritedViews);
-    return Collections.unmodifiableMap(inheritedViews);
+    return ImmutableMap.copyOf(inheritedViews);
   }
 
   private void createInheritedViews(Inode.Lookup lookup, AttributeProvider provider,
@@ -314,7 +315,7 @@ final class AttributeService {
       Class<? extends FileAttributeView> viewType, Map<String, FileAttributeView> inheritedViews) {
     AttributeProvider provider = providersByViewType.get(viewType);
     createInheritedViews(lookup, provider, inheritedViews);
-    return provider.view(lookup, inheritedViews);
+    return provider.view(lookup, ImmutableMap.copyOf(inheritedViews));
   }
 
   /**

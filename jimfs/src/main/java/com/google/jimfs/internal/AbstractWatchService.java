@@ -79,7 +79,7 @@ abstract class AbstractWatchService implements WatchService {
   }
 
   /**
-   * Enqueues the given key.
+   * Enqueues the given key if the watch service is open; does nothing otherwise.
    */
   final void enqueue(Key key) {
     if (isOpen()) {

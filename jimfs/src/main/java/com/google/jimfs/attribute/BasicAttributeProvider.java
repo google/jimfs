@@ -16,6 +16,7 @@
 
 package com.google.jimfs.attribute;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
@@ -23,7 +24,6 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -118,7 +118,7 @@ final class BasicAttributeProvider extends AttributeProvider {
 
   @Override
   public BasicFileAttributeView view(Inode.Lookup lookup,
-      Map<String, FileAttributeView> inheritedViews) {
+      ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup);
   }
 

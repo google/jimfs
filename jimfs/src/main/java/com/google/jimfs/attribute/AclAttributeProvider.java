@@ -113,7 +113,7 @@ final class AclAttributeProvider extends AttributeProvider {
 
   @Override
   public AclFileAttributeView view(Inode.Lookup lookup,
-      Map<String, FileAttributeView> inheritedViews) {
+      ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup, (FileOwnerAttributeView) inheritedViews.get("owner"));
   }
 

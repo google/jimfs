@@ -304,7 +304,7 @@ final class JimfsFileChannel extends FileChannel {
     checkOpen();
 
     synchronized (this) {
-      this.position = (int) newPosition;
+      this.position = newPosition;
     }
 
     return this;

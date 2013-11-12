@@ -108,7 +108,7 @@ final class DosAttributeProvider extends AttributeProvider {
 
   @Override
   public DosFileAttributeView view(Inode.Lookup lookup,
-      Map<String, FileAttributeView> inheritedViews) {
+      ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup, (BasicFileAttributeView) inheritedViews.get("basic"));
   }
 

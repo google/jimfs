@@ -147,7 +147,7 @@ final class DirectoryEntry {
    * Returns the file this entry links to or {@code null} if the file does not exist
    */
   @Nullable
-  public File orNull() {
+  public File fileOrNull() {
     return file;
   }
 

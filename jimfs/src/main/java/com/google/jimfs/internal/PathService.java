@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.jimfs.path.PathType.ParseResult;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ComparisonChain;
@@ -87,13 +88,12 @@ final class PathService implements Comparator<JimfsPath> {
     this.canonicalNormalizations = ImmutableSet.copyOf(canonicalNormalizations);
     this.equalityUsesCanonicalForm = equalityUsesCanonicalForm;
 
-    if (equalityUsesCanonicalForm) {
-      rootOrdering = CANONICAL_ROOT_ORDERING;
-      namesOrdering = CANONICAL_NAMES_ORDERING;
-    } else {
-      rootOrdering = DISPLAY_ROOT_ORDERING;
-      namesOrdering = DISPLAY_NAMES_ORDERING;
-    }
+    this.rootOrdering = equalityUsesCanonicalForm
+        ? CANONICAL_ROOT_ORDERING
+        : DISPLAY_ROOT_ORDERING;
+    this.namesOrdering = equalityUsesCanonicalForm
+        ? CANONICAL_NAMES_ORDERING
+        : DISPLAY_NAMES_ORDERING;
   }
 
   /**
@@ -122,7 +122,7 @@ final class PathService implements Comparator<JimfsPath> {
   /**
    * Returns an empty path which has a single name, the empty string.
    */
-  public final JimfsPath emptyPath() {
+  public JimfsPath emptyPath() {
     JimfsPath result = emptyPath;
     if (result == null) {
       // use createPathInternal to avoid recursive call from createPath()
@@ -154,7 +154,8 @@ final class PathService implements Comparator<JimfsPath> {
   /**
    * Returns the {@link Name} forms of the given strings.
    */
-  public Iterable<Name> names(Iterable<String> names) {
+  @VisibleForTesting
+  List<Name> names(Iterable<String> names) {
     List<Name> result = new ArrayList<>();
     for (String name : names) {
       result.add(name(name));
@@ -165,28 +166,28 @@ final class PathService implements Comparator<JimfsPath> {
   /**
    * Returns a root path with the given name.
    */
-  public final JimfsPath createRoot(Name root) {
+  public JimfsPath createRoot(Name root) {
     return createPath(checkNotNull(root), ImmutableList.<Name>of());
   }
 
   /**
    * Returns a single filename path with the given name.
    */
-  public final JimfsPath createFileName(Name name) {
+  public JimfsPath createFileName(Name name) {
     return createPath(null, ImmutableList.of(name));
   }
 
   /**
    * Returns a relative path with the given names.
    */
-  public final JimfsPath createRelativePath(Iterable<Name> names) {
+  public JimfsPath createRelativePath(Iterable<Name> names) {
     return createPath(null, ImmutableList.copyOf(names));
   }
 
   /**
    * Returns a path with the given root (or no root, if null) and the given names.
    */
-  public final JimfsPath createPath(@Nullable Name root, Iterable<Name> names) {
+  public JimfsPath createPath(@Nullable Name root, Iterable<Name> names) {
     ImmutableList<Name> nameList = ImmutableList.copyOf(Iterables.filter(names, NOT_EMPTY));
     if (root == null && nameList.isEmpty()) {
       // ensure the canonical empty path (one empty string name) is used rather than a path with
@@ -206,7 +207,7 @@ final class PathService implements Comparator<JimfsPath> {
   /**
    * Parses the given strings as a path.
    */
-  public final JimfsPath parsePath(String first, String... more) {
+  public JimfsPath parsePath(String first, String... more) {
     String joined = type.joiner()
         .join(Iterables.filter(Lists.asList(first, more), NOT_EMPTY));
     return toPath(type.parsePath(joined));
@@ -221,7 +222,7 @@ final class PathService implements Comparator<JimfsPath> {
   /**
    * Returns the string form of the given path.
    */
-  public final String toString(JimfsPath path) {
+  public String toString(JimfsPath path) {
     Name root = path.root();
     String rootString = root == null ? null : root.toString();
     Iterable<String> names = Iterables.transform(path.names(), Functions.toStringFunction());
@@ -266,7 +267,7 @@ final class PathService implements Comparator<JimfsPath> {
    * Returns the URI for the given path. The given file system URI is the base against which the
    * path is resolved to create the returned URI.
    */
-  public final URI toUri(URI fileSystemUri, JimfsPath path) {
+  public URI toUri(URI fileSystemUri, JimfsPath path) {
     checkArgument(path.isAbsolute(), "path (%s) must be absolute", path);
     String root = String.valueOf(path.root());
     Iterable<String> names = Iterables.transform(path.names(), Functions.toStringFunction());
@@ -276,7 +277,7 @@ final class PathService implements Comparator<JimfsPath> {
   /**
    * Converts the path of the given URI into a path for this file system.
    */
-  public final JimfsPath fromUri(URI uri) {
+  public JimfsPath fromUri(URI uri) {
     return toPath(type.fromUri(uri));
   }
 
@@ -284,7 +285,7 @@ final class PathService implements Comparator<JimfsPath> {
    * Returns a {@link PathMatcher} for the given syntax and pattern as specified by
    * {@link FileSystem#getPathMatcher(String)}.
    */
-  public final PathMatcher createPathMatcher(String syntaxAndPattern) {
+  public PathMatcher createPathMatcher(String syntaxAndPattern) {
     return PathMatchers.getPathMatcher(
         syntaxAndPattern, type.getSeparator() + type.getOtherSeparators(), displayNormalizations);
   }

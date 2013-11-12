@@ -147,15 +147,14 @@ final class FileSystemView {
    * Returns a snapshot of the entries in the working directory of this view.
    */
   public ImmutableSortedSet<Name> snapshotBaseEntries() {
-    ImmutableSortedSet<Name> names;
     store.readLock().lock();
     try {
-      names = workingDirectory.directory().snapshot();
+      ImmutableSortedSet<Name> names = workingDirectory.directory().snapshot();
       workingDirectory.updateAccessTime();
+      return names;
     } finally {
       store.readLock().unlock();
     }
-    return names;
   }
 
   /**
@@ -196,8 +195,8 @@ final class FileSystemView {
 
     store.readLock().lock();
     try {
-      File file = lookup(path, Options.FOLLOW_LINKS).orNull();
-      File file2 = view2.lookup(path2, Options.FOLLOW_LINKS).orNull();
+      File file = lookup(path, Options.FOLLOW_LINKS).fileOrNull();
+      File file2 = view2.lookup(path2, Options.FOLLOW_LINKS).fileOrNull();
       return file != null && Objects.equal(file, file2);
     } finally {
       store.readLock().unlock();
@@ -683,7 +682,7 @@ final class FileSystemView {
   /**
    * Reads attributes of the file located by the given path in this view as a map.
    */
-  public Map<String, Object> readAttributes(
+  public ImmutableMap<String, Object> readAttributes(
       JimfsPath path, String attributes, Set<? super LinkOption> options) throws IOException {
     File file = lookupWithLock(path, options)
         .requireExists(path)

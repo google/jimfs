@@ -216,8 +216,8 @@ final class PollingWatchService extends AbstractWatchService {
      */
     private final ImmutableMap<Name, Long> modifiedTimes;
 
-    Snapshot(ImmutableMap<Name, Long> modifiedTimes) {
-      this.modifiedTimes = checkNotNull(modifiedTimes);
+    Snapshot(Map<Name, Long> modifiedTimes) {
+      this.modifiedTimes = ImmutableMap.copyOf(modifiedTimes);
     }
 
     /**

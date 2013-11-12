@@ -97,7 +97,7 @@ final class OwnerAttributeProvider extends AttributeProvider {
 
   @Override
   public FileOwnerAttributeView view(Inode.Lookup lookup,
-      Map<String, FileAttributeView> inheritedViews) {
+      ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup);
   }
 

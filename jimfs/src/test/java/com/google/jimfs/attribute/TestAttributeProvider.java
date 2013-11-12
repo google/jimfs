@@ -18,6 +18,7 @@ package com.google.jimfs.attribute;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
@@ -105,7 +106,7 @@ public final class TestAttributeProvider extends AttributeProvider {
 
   @Override
   public TestAttributeView view(
-      Inode.Lookup lookup, Map<String, FileAttributeView> inheritedViews) {
+      Inode.Lookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup, (BasicFileAttributeView) inheritedViews.get("basic"));
   }
 

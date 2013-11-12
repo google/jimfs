@@ -57,7 +57,7 @@ public abstract class AttributeProvider {
    * contains the views inherited by this view.
    */
   public abstract FileAttributeView view(
-      Inode.Lookup lookup, Map<String, FileAttributeView> inheritedViews);
+      Inode.Lookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews);
 
   /**
    * Returns a map containing the default attribute values for this provider. The keys of the map

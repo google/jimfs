@@ -88,6 +88,7 @@ final class FileTree {
     return result;
   }
 
+  @Nullable
   private DirectoryEntry lookup(File dir,
       JimfsPath path, Set<? super LinkOption> options, int linkDepth) throws IOException {
     ImmutableList<Name> names = path.names();
@@ -114,7 +115,8 @@ final class FileTree {
     return lookup(dir, names, options, linkDepth);
   }
 
-  private boolean isEmpty(ImmutableList<Name> names) {
+  private static boolean isEmpty(ImmutableList<Name> names) {
+    // the empty path (created by FileSystem.getPath("")), has no root and a single name, ""
     return names.isEmpty() || names.size() == 1 && names.get(0).toString().equals("");
   }
 
@@ -146,7 +148,7 @@ final class FileTree {
           return null;
         }
 
-        dir = linkResult.orNull();
+        dir = linkResult.fileOrNull();
       } else {
         dir = file;
       }
@@ -212,10 +214,6 @@ final class FileTree {
 
   @Nullable
   private DirectoryTable toDirectoryTable(@Nullable File file) {
-    if (file != null && file.isDirectory()) {
-      return file.directory();
-    }
-
-    return null;
+    return file == null || !file.isDirectory() ? null : file.directory();
   }
 }

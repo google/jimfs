@@ -34,8 +34,8 @@ abstract class ByteStore implements FileContent {
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-  private int openCount;
-  private boolean deleted;
+  private int openCount = 0;
+  private boolean deleted = false;
 
   /**
    * Returns the read lock for this store.

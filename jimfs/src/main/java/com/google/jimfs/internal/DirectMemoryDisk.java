@@ -46,6 +46,7 @@ final class DirectMemoryDisk extends MemoryDisk {
   protected int allocateMoreBlocks(int count) {
     int newBlockCount = blockCount() + count;
     if (newBlockCount > blocks.length) {
+      // using nextPowerOf2 instead of multiplying blocks.length * 2 until it's >= newBlockCount
       blocks = Arrays.copyOf(blocks, nextPowerOf2(newBlockCount));
     }
 

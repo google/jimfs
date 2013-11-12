@@ -165,7 +165,7 @@ final class PosixAttributeProvider extends AttributeProvider {
 
   @Override
   public PosixFileAttributeView view(Inode.Lookup lookup,
-      Map<String, FileAttributeView> inheritedViews) {
+      ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup,
         (BasicFileAttributeView) inheritedViews.get("basic"),
         (FileOwnerAttributeView) inheritedViews.get("owner"));
