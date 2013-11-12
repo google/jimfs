@@ -170,17 +170,13 @@ final class DirectoryTable implements FileContent {
     }
   }
 
-  @SuppressWarnings("unchecked") // safe cast
-  private static final Ordering<Name> ORDERING_BY_STRING =
-      (Ordering<Name>) (Ordering) Ordering.usingToString();
-
   /**
    * Creates an immutable sorted snapshot of the names this directory contains, excluding "." and
    * "..".
    */
-  @SuppressWarnings("unchecked") // safe cast
   public ImmutableSortedSet<Name> snapshot() {
-    ImmutableSortedSet.Builder<Name> builder = ImmutableSortedSet.orderedBy(ORDERING_BY_STRING);
+    ImmutableSortedSet.Builder<Name> builder =
+        new ImmutableSortedSet.Builder<>(Ordering.usingToString());
 
     for (DirectoryEntry entry : entries()) {
       if (!isReserved(entry.name())) {
