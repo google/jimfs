@@ -24,8 +24,6 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -41,7 +39,9 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.file.OpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
 
@@ -74,7 +74,7 @@ final class JimfsFileChannel extends FileChannel {
 
   private long position;
 
-  public JimfsFileChannel(File file, ImmutableSet<OpenOption> options) {
+  public JimfsFileChannel(File file, Set<OpenOption> options) {
     this.file = file;
     this.store = file.bytes();
     this.read = options.contains(READ);
@@ -166,10 +166,7 @@ final class JimfsFileChannel extends FileChannel {
   @Override
   public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
     checkPositionIndexes(offset, offset + length, dsts.length);
-    return read(Arrays.asList(dsts).subList(offset, offset + length));
-  }
-
-  private long read(List<ByteBuffer> buffers) throws IOException {
+    List<ByteBuffer> buffers = Arrays.asList(dsts).subList(offset, offset + length);
     checkNoneNull(buffers);
     checkOpen();
     checkReadable();
@@ -248,11 +245,8 @@ final class JimfsFileChannel extends FileChannel {
   @Override
   public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
     checkPositionIndexes(offset, offset + length, srcs.length);
-    return write(Arrays.asList(srcs).subList(offset, offset + length));
-  }
-
-  private long write(List<ByteBuffer> srcs) throws IOException {
-    checkNoneNull(srcs);
+    List<ByteBuffer> buffers = Arrays.asList(srcs).subList(offset, offset + length);
+    checkNoneNull(buffers);
     checkOpen();
     checkWritable();
 
@@ -269,7 +263,7 @@ final class JimfsFileChannel extends FileChannel {
           if (append) {
             position = store.size();
           }
-          long written = store.write(position, srcs);
+          long written = store.write(position, buffers);
           position += written;
 
           file.updateModifiedTime();
@@ -527,8 +521,6 @@ final class JimfsFileChannel extends FileChannel {
     throw new UnsupportedOperationException();
   }
 
-  // TODO(cgdecker): Throw UOE from these lock methods since we aren't really supporting it?
-
   @Override
   public FileLock lock(long position, long size, boolean shared) throws IOException {
     checkNotNegative(position, "position");
@@ -545,7 +537,7 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   public FileLock tryLock(long position, long size, boolean shared) throws IOException {
-    // lock doesn't wait anyway
+    // lock() doesn't block anyway
     return lock(position, size, shared);
   }
 
@@ -572,7 +564,7 @@ final class JimfsFileChannel extends FileChannel {
    */
   static final class FakeFileLock extends FileLock {
 
-    private boolean valid = true;
+    private final AtomicBoolean valid = new AtomicBoolean(true);
 
     public FakeFileLock(FileChannel channel, long position, long size, boolean shared) {
       super(channel, position, size, shared);
@@ -584,12 +576,12 @@ final class JimfsFileChannel extends FileChannel {
 
     @Override
     public boolean isValid() {
-      return valid;
+      return valid.get();
     }
 
     @Override
     public void release() throws IOException {
-      valid = false;
+      valid.set(false);
     }
   }
 }

@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.primitives.UnsignedBytes;
@@ -42,7 +43,9 @@ final class MemoryDiskByteStore extends ByteStore {
 
   private MemoryDiskByteStore(MemoryDisk disk, IntList blocks, long size) {
     this.disk = checkNotNull(disk);
-    this.blocks = blocks;
+    this.blocks = checkNotNull(blocks);
+
+    checkArgument(size >= 0);
     this.size = size;
   }
 
@@ -54,7 +57,7 @@ final class MemoryDiskByteStore extends ByteStore {
   @Override
   protected ByteStore createCopy() {
     IntList copyBlocks = new IntList(Math.max(blocks.size() * 2, 32));
-    disk.alloc(copyBlocks, blocks.size());
+    disk.allocate(copyBlocks, blocks.size());
 
     for (int i = 0; i < blocks.size(); i++) {
       int block = blocks.get(i);
@@ -100,7 +103,7 @@ final class MemoryDiskByteStore extends ByteStore {
 
     if (endBlockIndex > lastBlockIndex) {
       int additionalBlocksNeeded = endBlockIndex - lastBlockIndex;
-      disk.alloc(blocks, additionalBlocksNeeded);
+      disk.allocate(blocks, additionalBlocksNeeded);
     }
 
     // zero bytes between current size and pos
@@ -267,7 +270,8 @@ final class MemoryDiskByteStore extends ByteStore {
 
   @Override
   public int read(long pos, byte[] b, int off, int len) {
-    int bytesToRead = bytesToRead(pos, len);
+    // since max is len (an int), result is guaranteed to be an int
+    int bytesToRead = (int) bytesToRead(pos, len);
 
     if (bytesToRead > 0) {
       int remaining = bytesToRead;
@@ -295,7 +299,8 @@ final class MemoryDiskByteStore extends ByteStore {
 
   @Override
   public int read(long pos, ByteBuffer buf) {
-    int bytesToRead = bytesToRead(pos, buf.remaining());
+    // since max is buf.remaining() (an int), result is guaranteed to be an int
+    int bytesToRead = (int) bytesToRead(pos, buf.remaining());
 
     if (bytesToRead > 0) {
       int remaining = bytesToRead;
@@ -355,7 +360,7 @@ final class MemoryDiskByteStore extends ByteStore {
     int blockCount = blocks.size();
     if (index >= blockCount) {
       int additionalBlocksNeeded = index - blockCount + 1;
-      disk.alloc(blocks, additionalBlocksNeeded);
+      disk.allocate(blocks, additionalBlocksNeeded);
     }
 
     return blocks.get(index);
@@ -387,13 +392,5 @@ final class MemoryDiskByteStore extends ByteStore {
       return -1;
     }
     return Math.min(available, max);
-  }
-
-  /**
-   * Returns the number of bytes that can be read starting at position {@code pos} (up to a maximum
-   * of {@code max}) or -1 if {@code pos} is greater than or equal to the current size.
-   */
-  private int bytesToRead(long pos, int max) {
-    return (int) bytesToRead(pos, (long) max);
   }
 }

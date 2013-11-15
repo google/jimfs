@@ -31,11 +31,11 @@ import java.io.InputStream;
  */
 final class JimfsInputStream extends InputStream {
 
+  // these fields are guarded by synchronization on "this"
   @VisibleForTesting File file;
   private ByteStore store;
-  private boolean finished;
-
   private long pos;
+  private boolean finished;
 
   public JimfsInputStream(File file) {
     this.file = file;
@@ -43,78 +43,57 @@ final class JimfsInputStream extends InputStream {
   }
 
   @Override
-  public int read() throws IOException {
-    synchronized (this) {
-      checkNotClosed();
-      if (finished) {
-        return -1;
-      }
+  public synchronized int read() throws IOException {
+    checkNotClosed();
+    if (finished) {
+      return -1;
+    }
 
-      store.readLock().lock();
-      try {
+    store.readLock().lock();
+    try {
 
-        int b = store.read(pos++); // it's ok for pos to go beyond size()
-        if (b == -1) {
-          finished = true;
-        } else {
-          file.updateAccessTime();
-        }
-        return b;
-      } finally {
-        store.readLock().unlock();
+      int b = store.read(pos++); // it's ok for pos to go beyond size()
+      if (b == -1) {
+        finished = true;
+      } else {
+        file.updateAccessTime();
       }
+      return b;
+    } finally {
+      store.readLock().unlock();
     }
   }
 
   @Override
   public int read(byte[] b) throws IOException {
-    synchronized (this) {
-      checkNotClosed();
-      if (finished) {
-        return -1;
-      }
-
-      store.readLock().lock();
-      try {
-        int read = store.read(pos, b, 0, b.length);
-        if (read == -1) {
-          finished = true;
-        } else {
-          pos += read;
-        }
-
-        file.updateAccessTime();
-        return read;
-      } finally {
-        store.readLock().unlock();
-      }
-    }
+    return readInternal(b, 0, b.length);
   }
 
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
     checkPositionIndexes(off, off + len, b.length);
+    return readInternal(b, off, len);
+  }
 
-    synchronized (this) {
-      checkNotClosed();
-      if (finished) {
-        return -1;
+  private synchronized int readInternal(byte[] b, int off, int len) throws IOException {
+    checkNotClosed();
+    if (finished) {
+      return -1;
+    }
+
+    store.readLock().lock();
+    try {
+      int read = store.read(pos, b, off, len);
+      if (read == -1) {
+        finished = true;
+      } else {
+        pos += read;
       }
 
-      store.readLock().lock();
-      try {
-        int read = store.read(pos, b, off, len);
-        if (read == -1) {
-          finished = true;
-        } else {
-          pos += read;
-        }
-
-        file.updateAccessTime();
-        return read;
-      } finally {
-        store.readLock().unlock();
-      }
+      file.updateAccessTime();
+      return read;
+    } finally {
+      store.readLock().unlock();
     }
   }
 
@@ -138,15 +117,13 @@ final class JimfsInputStream extends InputStream {
   }
 
   @Override
-  public int available() throws IOException {
-    synchronized (this) {
-      checkNotClosed();
-      if (finished) {
-        return 0;
-      }
-      long available = Math.max(store.size() - pos, 0);
-      return Ints.saturatedCast(available);
+  public synchronized int available() throws IOException {
+    checkNotClosed();
+    if (finished) {
+      return 0;
     }
+    long available = Math.max(store.size() - pos, 0);
+    return Ints.saturatedCast(available);
   }
 
   private void checkNotClosed() throws IOException {
@@ -156,14 +133,18 @@ final class JimfsInputStream extends InputStream {
   }
 
   @Override
-  public void close() throws IOException {
-    synchronized (this) {
-      if (store != null) {
-        store.closed();
-        file = null;
-        store = null;
-      }
+  public synchronized void close() throws IOException {
+    if (isOpen()) {
+      store.closed();
+
+      // file and store are both set to null here and only here
+      file = null;
+      store = null;
     }
+  }
+
+  private boolean isOpen() {
+    return store != null;
   }
 
   @Override

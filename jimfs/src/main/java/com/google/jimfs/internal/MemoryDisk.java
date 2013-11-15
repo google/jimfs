@@ -106,7 +106,7 @@ abstract class MemoryDisk {
   /**
    * Allocates the given number of blocks and adds their identifiers to the given list.
    */
-  public final synchronized void alloc(IntList blocks, int count) {
+  public final synchronized void allocate(IntList blocks, int count) {
     int additionalBlocksNeeded = count - free.size();
     if (additionalBlocksNeeded > 0) {
       blockCount += allocateMoreBlocks(additionalBlocksNeeded);
