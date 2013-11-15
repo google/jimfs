@@ -27,7 +27,6 @@
 
   <modules>
     <module>jimfs</module>
-    <module>benchmarks</module>
   </modules>
 
   <name>JimFS Parent</name>
@@ -94,8 +93,6 @@
     <jsr305.version>2.0.1</jsr305.version>
     <junit.version>4.10</junit.version>
     <truth.version>0.13</truth.version>
-    <!-- Currently relies on the latest version of Caliper, which must be built from HEAD. -->
-    <caliper.version>1.0-beta-SNAPSHOT</caliper.version>
 
     <!-- Plugin versions -->
     <!--
@@ -117,7 +114,6 @@
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
       </dependency>
-
       <!--
       Don't really like needing a dependency on ICU4J here. However, it does seem like the best
       (only?) option for general purpose Unicode case insensitivity. Of course, not many people
@@ -130,37 +126,24 @@
         <version>${icu4j.version}</version>
         <optional>true</optional>
       </dependency>
-
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
         <version>${jsr305.version}</version>
         <scope>provided</scope>
       </dependency>
-
-      <!--
-      This currently relies on the latest version of Caliper which must be built from HEAD.
-       -->
-      <dependency>
-        <groupId>com.google.caliper</groupId>
-        <artifactId>caliper</artifactId>
-        <version>${caliper.version}</version>
-      </dependency>
-
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
         <scope>test</scope>
       </dependency>
-
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava-testlib</artifactId>
         <version>${guava.version}</version>
         <scope>test</scope>
       </dependency>
-
       <dependency>
         <groupId>org.truth0</groupId>
         <artifactId>truth</artifactId>
@@ -177,17 +160,14 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${compiler-plugin.version}</version>
         </plugin>
-
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
           <version>${source-plugin.version}</version>
         </plugin>
-
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>${javadoc-plugin.version}</version>
         </plugin>
-
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
           <version>1.4</version>
@@ -203,7 +183,6 @@
           <target>${java.version}</target>
         </configuration>
       </plugin>
-
       <plugin>
         <artifactId>maven-gpg-plugin</artifactId>
         <executions>
