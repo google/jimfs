@@ -45,7 +45,7 @@ import java.util.regex.PatternSyntaxException;
  * @author Colin Decker
  */
 @RunWith(JUnit4.class)
-public class JimfsWindowsLikeIntegrationTest extends AbstractJimfsIntegrationTest {
+public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Override
   protected FileSystem createFileSystem() {
