@@ -48,12 +48,12 @@ abstract class JimfsDirectoryStream implements DirectoryStream<Path> {
   /**
    * Returns the path to the directory.
    */
-  protected JimfsPath path() {
+  protected final JimfsPath path() {
     return dirPath;
   }
 
   @Override
-  public Iterator<Path> iterator() {
+  public final Iterator<Path> iterator() {
     if (iterator == null) {
       throw new IllegalStateException("iterator() has already been called once");
     }
@@ -63,7 +63,9 @@ abstract class JimfsDirectoryStream implements DirectoryStream<Path> {
   }
 
   @Override
-  public void close() throws IOException {
+  public final void close() throws IOException {
+    iterator = null;
+    // TODO(cgdecker): make this properly disable the stream and its iterator
   }
 
   /**

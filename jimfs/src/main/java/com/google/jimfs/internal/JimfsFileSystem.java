@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.io.Closeable;
@@ -72,7 +73,7 @@ final class JimfsFileSystem extends FileSystem {
   /**
    * Returns the URI for this file system.
    */
-  public URI uri() {
+  public URI getUri() {
     return uri;
   }
 
@@ -88,13 +89,14 @@ final class JimfsFileSystem extends FileSystem {
     return pathService.getSeparator();
   }
 
+  @SuppressWarnings("unchecked") // safe cast of immutable set
   @Override
-  public ImmutableSet<Path> getRootDirectories() {
-    ImmutableSet.Builder<Path> builder = ImmutableSet.builder();
+  public ImmutableSortedSet<Path> getRootDirectories() {
+    ImmutableSortedSet.Builder<JimfsPath> builder = ImmutableSortedSet.orderedBy(pathService);
     for (Name name : fileStore.getRootDirectoryNames()) {
       builder.add(pathService.createRoot(name));
     }
-    return builder.build();
+    return (ImmutableSortedSet<Path>) (ImmutableSortedSet<?>) builder.build();
   }
 
   /**
@@ -160,6 +162,8 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public synchronized WatchService newWatchService() throws IOException {
+    // synchronized for resourceManager to register the watch service so there are no races between
+    // creating a watch service and closing the file system
     return new PollingWatchService(defaultView, pathService, resourceManager);
   }
 
@@ -168,7 +172,8 @@ final class JimfsFileSystem extends FileSystem {
 
   /**
    * Returns a default thread pool to use for asynchronous file channels when users do not provide
-   * an executor themselves.
+   * an executor themselves. (This is required by the spec of newAsynchronousFileChannel in
+   * FileSystemProvider.)
    */
   public synchronized ExecutorService getDefaultThreadPool() {
     if (defaultThreadPool == null) {

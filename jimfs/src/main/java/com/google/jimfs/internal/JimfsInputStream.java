@@ -39,7 +39,7 @@ final class JimfsInputStream extends InputStream {
 
   public JimfsInputStream(File file) {
     this.file = file;
-    this.store = file.bytes();
+    this.store = file.asBytes();
   }
 
   @Override

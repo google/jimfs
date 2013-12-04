@@ -21,7 +21,6 @@ import static com.google.jimfs.internal.Name.SELF;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Ordering;
 
 import javax.annotation.Nullable;
 
@@ -59,13 +58,13 @@ final class DirectoryTable implements FileContent {
   }
 
   @Override
-  public void delete() {
+  public void deleted() {
   }
 
   /**
    * Sets this directory as a root directory, linking ".." to itself.
    */
-  public void setRoot(File self, Name name) {
+  public void setAsRoot(File self, Name name) {
     linked(new DirectoryEntry(self, name, self));
   }
 
@@ -79,7 +78,8 @@ final class DirectoryTable implements FileContent {
   /**
    * Returns the file for this directory.
    */
-  public File self() {
+  @VisibleForTesting
+  File self() {
     return entryInParent.file();
   }
 
@@ -101,20 +101,20 @@ final class DirectoryTable implements FileContent {
    * Called when this directory is linked in a parent directory. The given entry is the new entry
    * linking to this directory.
    */
+  @Override
   public void linked(DirectoryEntry entry) {
     this.entryInParent = entry;
     map.put(new DirectoryEntry(entry.file(), SELF, entry.file()));
     map.put(new DirectoryEntry(entry.file(), PARENT, entry.directory()));
-    entry.file().incrementLinkCount();
-    entry.directory().incrementLinkCount();
   }
 
   /**
    * Called when this directory is unlinked from its parent directory.
    */
+  @Override
   public void unlinked() {
-    map.remove(SELF).file().decrementLinkCount();
-    map.remove(PARENT).file().decrementLinkCount();
+    map.remove(SELF);
+    map.remove(PARENT);
     entryInParent = null;
   }
 
@@ -130,7 +130,7 @@ final class DirectoryTable implements FileContent {
    * Returns true if this directory has no entries other than those to itself and its parent.
    */
   public boolean isEmpty() {
-    return entryCount() <= 2;
+    return entryCount() == 2;
   }
 
   /**
@@ -145,29 +145,24 @@ final class DirectoryTable implements FileContent {
    * Links the given name to the given file in this table.
    *
    * @throws IllegalArgumentException if {@code name} is a reserved name such as "." or if an
-   *     entry already exists for the it
+   *     entry already exists for the name
    */
   public void link(Name name, File file) {
     DirectoryEntry entry = map.put(
         new DirectoryEntry(self(), checkNotReserved(name, "link"), file));
-    file.incrementLinkCount();
-    if (file.isDirectory()) {
-      file.directory().linked(entry);
-    }
+    file.content().linked(entry);
   }
 
   /**
    * Unlinks the given name from the file it is linked to.
    *
-   * @throws IllegalArgumentException if {@code name} is a reserved name such as "."
+   * @throws IllegalArgumentException if {@code name} is a reserved name such as "." or no entry
+   *     exists for the name
    */
   public void unlink(Name name) {
     DirectoryEntry entry = map.remove(checkNotReserved(name, "unlink"));
-    entry.file().decrementLinkCount();
     File file = entry.file();
-    if (file.isDirectory()) {
-      file.directory().unlinked();
-    }
+    file.content().unlinked();
   }
 
   /**
@@ -176,7 +171,7 @@ final class DirectoryTable implements FileContent {
    */
   public ImmutableSortedSet<Name> snapshot() {
     ImmutableSortedSet.Builder<Name> builder =
-        new ImmutableSortedSet.Builder<>(Ordering.usingToString());
+        new ImmutableSortedSet.Builder<>(Name.displayOrdering());
 
     for (DirectoryEntry entry : entries()) {
       if (!isReserved(entry.name())) {

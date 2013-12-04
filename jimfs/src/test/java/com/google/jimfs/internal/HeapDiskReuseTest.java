@@ -49,7 +49,7 @@ public class HeapDiskReuseTest extends HeapDiskTest {
     int freeBlocksAfterWrite = disk.free.size();
     assertContentEquals(bytes, store);
 
-    store.delete();
+    store.deleted();
 
     assertEquals(freeBlocksAfterWrite, disk.free.size());
     assertContentEquals(bytes, store);

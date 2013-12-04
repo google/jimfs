@@ -126,7 +126,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
    * Called when the given file system is closed to remove it from this provider.
    */
   void remove(JimfsFileSystem fileSystem) {
-    fileSystems.remove(fileSystem.uri());
+    fileSystems.remove(fileSystem.getUri());
   }
 
   @Override
@@ -278,7 +278,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public void delete(Path path) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     FileSystemView view = getDefaultView(checkedPath);
-    view.deleteFile(checkedPath);
+    view.deleteFile(checkedPath, FileSystemView.DeleteMode.ANY);
   }
 
   @Override
@@ -348,6 +348,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     getDefaultView(checkedPath).checkAccess(checkedPath);
   }
 
+  @Nullable
   @Override
   public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
       LinkOption... options) {

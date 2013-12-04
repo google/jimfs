@@ -16,6 +16,8 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 /**
  * {@link FileContent} implementation that does nothing.
  *
@@ -34,6 +36,15 @@ public final class FakeFileContent implements FileContent {
   }
 
   @Override
-  public void delete() {
+  public void linked(DirectoryEntry entry) {
+    checkNotNull(entry); // for NullPointerTester
+  }
+
+  @Override
+  public void unlinked() {
+  }
+
+  @Override
+  public void deleted() {
   }
 }

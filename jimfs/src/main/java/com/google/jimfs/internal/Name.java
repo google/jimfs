@@ -17,8 +17,10 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.internal.Util.smearHash;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Ordering;
 
 import javax.annotation.Nullable;
 
@@ -36,7 +38,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class Name implements Comparable<Name> {
+final class Name {
 
   /**
    * The empty name.
@@ -84,11 +86,6 @@ final class Name implements Comparable<Name> {
   }
 
   @Override
-  public int compareTo(Name o) {
-    return canonical.compareTo(o.canonical);
-  }
-
-  @Override
   public boolean equals(@Nullable Object obj) {
     if (obj instanceof Name) {
       Name other = (Name) obj;
@@ -99,11 +96,49 @@ final class Name implements Comparable<Name> {
 
   @Override
   public final int hashCode() {
-    return canonical.hashCode();
+    return smearHash(canonical.hashCode());
   }
 
   @Override
   public final String toString() {
     return display;
   }
+
+  /**
+   * Returns an ordering that orders names by their display representation.
+   */
+  public static Ordering<Name> displayOrdering() {
+    return DISPLAY_ORDERING;
+  }
+
+  /**
+   * Returns an ordering that orders names by their canonical representation.
+   */
+  public static Ordering<Name> canonicalOrdering() {
+    return CANONICAL_ORDERING;
+  }
+
+  private static final Ordering<Name> DISPLAY_ORDERING = new Ordering<Name>() {
+    @Override
+    public int compare(Name left, Name right) {
+      return left.display.compareTo(right.display);
+    }
+
+    @Override
+    public String toString() {
+      return "Name.displayOrdering()";
+    }
+  };
+
+  private static final Ordering<Name> CANONICAL_ORDERING = new Ordering<Name>() {
+    @Override
+    public int compare(Name left, Name right) {
+      return left.canonical.compareTo(right.canonical);
+    }
+
+    @Override
+    public String toString() {
+      return "Name.canonicalOrdering()";
+    }
+  };
 }

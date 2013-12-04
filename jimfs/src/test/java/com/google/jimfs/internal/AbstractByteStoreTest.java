@@ -731,7 +731,7 @@ public abstract class AbstractByteStoreTest {
     store.opened();
     store.opened();
 
-    store.delete();
+    store.deleted();
 
     assertContentEquals(bytes, store);
 

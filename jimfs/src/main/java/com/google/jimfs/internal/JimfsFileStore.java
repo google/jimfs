@@ -113,30 +113,30 @@ final class JimfsFileStore extends FileStore {
    * @throws IOException if a symbolic link cycle is detected or the depth of symbolic link
    *    recursion otherwise exceeds a threshold
    */
-  DirectoryEntry lookup(File workingDirectory,
+  DirectoryEntry lookUp(File workingDirectory,
       JimfsPath path, Set<? super LinkOption> options) throws IOException {
-    return tree.lookup(workingDirectory, path, options);
+    return tree.lookUp(workingDirectory, path, options);
   }
 
   /**
    * Returns a supplier that creates a new regular file.
    */
-  Supplier<File> createRegularFile() {
-    return factory.regularFileSupplier();
+  Supplier<File> regularFileCreator() {
+    return factory.regularFileCreator();
   }
 
   /**
    * Returns a supplier that creates a new directory.
    */
-  Supplier<File> createDirectory() {
-    return factory.directorySupplier();
+  Supplier<File> directoryCreator() {
+    return factory.directoryCreator();
   }
 
   /**
    * Returns a supplier that creates a new symbolic link with the given target.
    */
-  Supplier<File> createSymbolicLink(JimfsPath target) {
-    return factory.symbolicLinkSupplier(target);
+  Supplier<File> symbolicLinkCreator(JimfsPath target) {
+    return factory.symbolicLinkCreator(target);
   }
 
   /**
@@ -153,7 +153,8 @@ final class JimfsFileStore extends FileStore {
   }
 
   /**
-   * Sets initial attributes on the given file, including the given attributes if possible.
+   * Sets initial attributes on the given file. Sets default attributes first, then attempts to set
+   * the given user-provided attributes.
    */
   void setInitialAttributes(File file, FileAttribute<?>... attrs) {
     attributes.setInitialAttributes(file, attrs);

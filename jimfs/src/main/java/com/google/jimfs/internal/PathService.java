@@ -51,14 +51,14 @@ import javax.annotation.Nullable;
 final class PathService implements Comparator<JimfsPath> {
 
   private static final Ordering<Name> DISPLAY_ROOT_ORDERING =
-      Ordering.usingToString().nullsLast();
+      Name.displayOrdering().nullsLast();
   private static final Ordering<Iterable<Name>> DISPLAY_NAMES_ORDERING =
-      Ordering.usingToString().lexicographical();
+      Name.displayOrdering().lexicographical();
 
   private static final Ordering<Name> CANONICAL_ROOT_ORDERING =
-      Ordering.natural().nullsLast();
+      Name.canonicalOrdering().nullsLast();
   private static final Ordering<Iterable<Name>> CANONICAL_NAMES_ORDERING =
-      Ordering.natural().lexicographical();
+      Name.canonicalOrdering().lexicographical();
 
   private final PathType type;
 

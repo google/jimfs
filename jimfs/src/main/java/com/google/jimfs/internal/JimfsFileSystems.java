@@ -72,7 +72,7 @@ final class JimfsFileSystems {
 
       File rootDir = fileFactory.createDirectory();
       attributeService.setInitialAttributes(rootDir);
-      rootDir.directory().setRoot(rootDir, rootName);
+      rootDir.asDirectory().setAsRoot(rootDir, rootName);
       roots.put(rootName, rootDir);
     }
 
@@ -92,9 +92,9 @@ final class JimfsFileSystems {
     }
 
     for (Name name : workingDirPath.names()) {
-      File newDir = fileStore.createDirectory().get();
+      File newDir = fileStore.directoryCreator().get();
       fileStore.setInitialAttributes(newDir);
-      dir.directory().link(name, newDir);
+      dir.asDirectory().link(name, newDir);
 
       dir = newDir;
     }

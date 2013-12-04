@@ -106,15 +106,15 @@ public class FileFactoryTest {
 
   @Test
   public void testCreateFiles_withSupplier() {
-    File file = factory.directorySupplier().get();
+    File file = factory.directoryCreator().get();
     ASSERT.that(file.id()).is(0L);
     ASSERT.that(file.isDirectory()).isTrue();
 
-    file = factory.regularFileSupplier().get();
+    file = factory.regularFileCreator().get();
     ASSERT.that(file.id()).is(1L);
     ASSERT.that(file.isRegularFile()).isTrue();
 
-    file = factory.symbolicLinkSupplier(fakePath()).get();
+    file = factory.symbolicLinkCreator(fakePath()).get();
     ASSERT.that(file.id()).is(2L);
     ASSERT.that(file.isSymbolicLink()).isTrue();
   }

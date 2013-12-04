@@ -78,7 +78,16 @@ final class JimfsPath implements Path, FileContent {
   }
 
   @Override
-  public void delete() {
+  public void linked(DirectoryEntry entry) {
+    checkNotNull(entry); // for NullPointerTester
+  }
+
+  @Override
+  public void unlinked() {
+  }
+
+  @Override
+  public void deleted() {
   }
 
   /**

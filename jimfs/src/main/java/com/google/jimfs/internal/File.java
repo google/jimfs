@@ -19,7 +19,6 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Objects;
-import com.google.common.primitives.Longs;
 import com.google.jimfs.attribute.Inode;
 
 /**
@@ -76,48 +75,35 @@ final class File extends Inode {
    */
   public boolean isRootDirectory() {
     // only root directories have their parent link pointing to themselves
-    return isDirectory() && equals(directory().parent());
+    return isDirectory() && equals(asDirectory().parent());
   }
 
   /**
    * Returns a view of this file as a byte store.
    */
-  public ByteStore bytes() {
+  public ByteStore asBytes() {
     return (ByteStore) content;
   }
 
   /**
    * Returns a view of this file as a directory table.
    */
-  public DirectoryTable directory() {
+  public DirectoryTable asDirectory() {
     return (DirectoryTable) content;
   }
 
   /**
    * Gets the target of this symbolic link.
    */
-  public JimfsPath target() {
+  public JimfsPath asTargetPath() {
     return (JimfsPath) content;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof File) {
-      File other = (File) obj;
-      return id() == other.id();
-    }
-    return false;
-  }
-
-  @Override
-  public int hashCode() {
-    return Longs.hashCode(id());
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
         .add("id", id())
+        .add("contentType", content.getClass().getSimpleName())
         .toString();
   }
 }

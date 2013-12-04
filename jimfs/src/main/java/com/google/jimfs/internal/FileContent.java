@@ -16,6 +16,10 @@
 
 package com.google.jimfs.internal;
 
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 /**
  * Marker interface for implementations of content for different types of files.
  *
@@ -24,17 +28,34 @@ package com.google.jimfs.internal;
 interface FileContent {
 
   /**
-   * Creates a copy of this content.
+   * Creates a copy of this content. How this functions depends on the type of file content and is
+   * defined by {@link Files#copy(Path, Path, CopyOption...)}. The copy need not be equivalent to
+   * the original; for example, a copy of a directory is an empty directory regardless of what the
+   * original directory contains.
    */
   FileContent copy();
 
   /**
-   * Returns the size, in bytes, of this content.
+   * Returns the size, in bytes, of this content. This may be 0 when there is no logical size we
+   * can use for the content since it's implemented using Java objects.
    */
   long size();
 
   /**
-   * Called when the file is deleted.
+   * Called when the file containing this content is linked in a parent directory. The given entry
+   * is the new entry linking to the file.
    */
-  void delete();
+  void linked(DirectoryEntry entry);
+
+  /**
+   * Called when the file containing this content is unlinked from its parent directory.
+   */
+  void unlinked();
+
+  /**
+   * Called when the file containing this content has been deleted by the user. This method may
+   * either do any cleanup needed immediately or may mark this content as deleted and do cleanup
+   * once no open references to the file (such as streams) remain.
+   */
+  void deleted();
 }

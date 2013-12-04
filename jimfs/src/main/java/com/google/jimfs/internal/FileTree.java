@@ -33,12 +33,17 @@ import javax.annotation.Nullable;
 
 /**
  * The tree of directories and files for the file system. Contains the file system root directories
- * and provides the ability to lookup files by path. One piece of the file store implementation.
+ * and provides the ability to look up files by path. One piece of the file store implementation.
  *
  * @author Colin Decker
  */
 final class FileTree {
 
+  /**
+   * Doesn't much matter, but this number comes from MIN_ELOOP_THRESHOLD
+   * <a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob_plain;f=sysdeps/generic/eloop-threshold.h;hb=HEAD">
+   * here</a>
+   */
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 40;
 
   private static final ImmutableList<Name> EMPTY_PATH_NAMES = ImmutableList.of(Name.SELF);
@@ -52,7 +57,7 @@ final class FileTree {
    * Creates a new file tree with the given root directories.
    */
   FileTree(Map<Name, File> roots) {
-    this.roots = ImmutableSortedMap.copyOf(roots);
+    this.roots = ImmutableSortedMap.copyOf(roots, Name.canonicalOrdering());
   }
 
   /**
@@ -69,18 +74,18 @@ final class FileTree {
   @Nullable
   public DirectoryEntry getRoot(Name name) {
     File file = roots.get(name);
-    return file == null ? null : file.directory().entry();
+    return file == null ? null : file.asDirectory().entry();
   }
 
   /**
    * Returns the result of the file lookup for the given path.
    */
-  public DirectoryEntry lookup(File workingDirectory,
+  public DirectoryEntry lookUp(File workingDirectory,
       JimfsPath path, Set<? super LinkOption> options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
 
-    DirectoryEntry result = lookup(workingDirectory, path, options, 0);
+    DirectoryEntry result = lookUp(workingDirectory, path, options, 0);
     if (result == null) {
       // an intermediate file in the path did not exist or was not a directory
       throw new NoSuchFileException(path.toString());
@@ -89,12 +94,12 @@ final class FileTree {
   }
 
   @Nullable
-  private DirectoryEntry lookup(File dir,
+  private DirectoryEntry lookUp(File dir,
       JimfsPath path, Set<? super LinkOption> options, int linkDepth) throws IOException {
     ImmutableList<Name> names = path.names();
 
     if (path.isAbsolute()) {
-      // lookup the root directory
+      // look up the root directory
       DirectoryEntry entry = getRoot(path.root());
       if (entry == null) {
         // root not found; always return null as no real parent directory exists
@@ -112,7 +117,7 @@ final class FileTree {
       names = EMPTY_PATH_NAMES;
     }
 
-    return lookup(dir, names, options, linkDepth);
+    return lookUp(dir, names, options, linkDepth);
   }
 
   private static boolean isEmpty(ImmutableList<Name> names) {
@@ -121,12 +126,12 @@ final class FileTree {
   }
 
   /**
-   * Looks up the given names against the given base file. If the file does not exist ({@code dir}
-   * is null) or is not a directory, the lookup fails.
+   * Looks up the given names against the given base file. If the file is not a directory, the
+   * lookup fails.
    */
   @Nullable
-  private DirectoryEntry lookup(@Nullable File dir,
-      Iterable<Name> names, Set<? super LinkOption> options, int linkDepth) throws IOException {
+  private DirectoryEntry lookUp(File dir, Iterable<Name> names,
+      Set<? super LinkOption> options, int linkDepth) throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
@@ -156,14 +161,14 @@ final class FileTree {
       name = nameIterator.next();
     }
 
-    return lookupLast(dir, name, options, linkDepth);
+    return lookUpLast(dir, name, options, linkDepth);
   }
 
   /**
    * Looks up the last element of a path.
    */
   @Nullable
-  private DirectoryEntry lookupLast(@Nullable File dir,
+  private DirectoryEntry lookUpLast(@Nullable File dir,
       Name name, Set<? super LinkOption> options, int linkDepth) throws IOException {
     DirectoryTable table = toDirectoryTable(dir);
     if (table == null) {
@@ -193,20 +198,23 @@ final class FileTree {
       throw new IOException("too many levels of symbolic links");
     }
 
-    return lookup(dir, link.target(), Options.FOLLOW_LINKS, linkDepth + 1);
+    return lookUp(dir, link.asTargetPath(), Options.FOLLOW_LINKS, linkDepth + 1);
   }
 
   /**
    * Returns the entry for the file in its parent directory. This will be the given entry unless the
    * name for the entry is "." or "..", in which the directory linking to the file is not the file's
    * parent directory. In that case, we know the file must be a directory ("." and ".." can only
-   * link to directories), so we can just get the entry that links to the directory in its parent.
+   * link to directories), so we can just get the entry in the directory's parent directory that
+   * links to it. So, for example, if we have a directory "foo" that contains a directory "bar" and
+   * we find an entry [bar -> "." -> bar], we instead return the entry for bar in its parent,
+   * [foo -> "bar" -> bar].
    */
   private DirectoryEntry getRealEntry(DirectoryEntry entry) {
     Name name = entry.name();
 
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
-      return entry.file().directory().entry();
+      return entry.file().asDirectory().entry();
     } else {
       return entry;
     }
@@ -214,6 +222,6 @@ final class FileTree {
 
   @Nullable
   private DirectoryTable toDirectoryTable(@Nullable File file) {
-    return file == null || !file.isDirectory() ? null : file.directory();
+    return file == null || !file.isDirectory() ? null : file.asDirectory();
   }
 }

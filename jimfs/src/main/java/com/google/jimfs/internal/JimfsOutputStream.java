@@ -39,7 +39,7 @@ final class JimfsOutputStream extends OutputStream {
 
   JimfsOutputStream(File file, boolean append) {
     this.file = file;
-    this.store = file.bytes();
+    this.store = file.asBytes();
     this.append = append;
   }
 

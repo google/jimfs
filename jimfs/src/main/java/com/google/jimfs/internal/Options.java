@@ -109,7 +109,7 @@ final class Options {
   /**
    * Returns an immutable set of open options for opening a new input stream.
    */
-  @SuppressWarnings("unchecked") // safe cast
+  @SuppressWarnings("unchecked") // safe covariant cast
   public static ImmutableSet<OpenOption> getOptionsForInputStream(OpenOption... options) {
     boolean nofollowLinks = false;
     for (OpenOption option : options) {
@@ -123,7 +123,7 @@ final class Options {
     }
 
     // just return the link options for finding the file, nothing else is needed
-    return (ImmutableSet<OpenOption>) (ImmutableSet)
+    return (ImmutableSet<OpenOption>) (ImmutableSet<?>)
         (nofollowLinks ? NOFOLLOW_LINKS : FOLLOW_LINKS);
   }
 

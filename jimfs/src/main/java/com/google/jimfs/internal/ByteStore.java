@@ -16,6 +16,8 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -103,12 +105,21 @@ abstract class ByteStore implements FileContent {
     }
   }
 
+  @Override
+  public void linked(DirectoryEntry entry) {
+    checkNotNull(entry); // for NullPointerTester
+  }
+
+  @Override
+  public void unlinked() {
+  }
+
   /**
    * Marks this store as deleted. If there are no streams or channels open to the store, its
    * contents are deleted if necessary.
    */
   @Override
-  public final synchronized void delete() {
+  public final synchronized void deleted() {
     deleted = true;
     if (openCount == 0) {
       deleteContents();

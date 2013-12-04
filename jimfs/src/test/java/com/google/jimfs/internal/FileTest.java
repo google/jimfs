@@ -19,8 +19,6 @@ package com.google.jimfs.internal;
 import static com.google.jimfs.internal.FileFactoryTest.fakePath;
 import static org.truth0.Truth.ASSERT;
 
-import com.google.common.testing.EqualsTester;
-
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -74,12 +72,12 @@ public class FileTest {
   public void testRootDirectory() {
     DirectoryTable table = new DirectoryTable();
     File file = new File(0, table);
-    table.setRoot(file, Name.simple("/"));
+    table.setAsRoot(file, Name.simple("/"));
     ASSERT.that(file.isRootDirectory()).isTrue();
 
     DirectoryTable otherTable = new DirectoryTable();
     File otherFile = new File(1, otherTable);
-    otherTable.setRoot(otherFile, Name.simple("$"));
+    otherTable.setAsRoot(otherFile, Name.simple("$"));
     ASSERT.that(otherFile.isRootDirectory()).isTrue();
   }
 
@@ -99,18 +97,5 @@ public class FileTest {
 
     file.decrementLinkCount();
     ASSERT.that(file.links()).is(0);
-  }
-
-  @Test
-  public void testEquality() {
-    File file1 = new File(0, new FakeFileContent());
-    File file2 = new File(0, new DirectoryTable());
-    File file3 = new File(1, new StubByteStore(10));
-    File file4 = new File(1, new FakeFileContent());
-
-    new EqualsTester()
-        .addEqualityGroup(file1, file2)
-        .addEqualityGroup(file3, file4)
-        .testEquals();
   }
 }

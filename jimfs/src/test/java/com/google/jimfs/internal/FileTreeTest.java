@@ -114,12 +114,12 @@ public class FileTreeTest {
   public void setUp() {
     DirectoryTable rootTable = new DirectoryTable();
     File root = new File(0, rootTable);
-    rootTable.setRoot(root, Name.simple("/"));
+    rootTable.setAsRoot(root, Name.simple("/"));
     files.put("/", root);
 
     DirectoryTable otherRootTable = new DirectoryTable();
     File otherRoot = new File(2, otherRootTable);
-    otherRootTable.setRoot(otherRoot, Name.simple("$"));
+    otherRootTable.setAsRoot(otherRoot, Name.simple("$"));
     files.put("$", otherRoot);
 
     Map<Name, File> roots = new HashMap<>();
@@ -419,7 +419,7 @@ public class FileTreeTest {
 
   private DirectoryEntry lookup(String path, LinkOption... options) throws IOException {
     JimfsPath pathObj = pathService.parsePath(path);
-    return fileTree.lookup(workingDirectory, pathObj, Options.getLinkOptions(options));
+    return fileTree.lookUp(workingDirectory, pathObj, Options.getLinkOptions(options));
   }
 
   private void assertExists(DirectoryEntry entry, String parent, String file) {
@@ -446,7 +446,7 @@ public class FileTreeTest {
     DirectoryTable table = new DirectoryTable();
     File newFile = new File(new Random().nextInt(), table);
 
-    dir.directory().link(Name.simple(name), newFile);
+    dir.asDirectory().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 
@@ -458,7 +458,7 @@ public class FileTreeTest {
 
     File newFile = new File(new Random().nextInt(), new StubByteStore(0));
 
-    dir.directory().link(Name.simple(name), newFile);
+    dir.asDirectory().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 
@@ -470,7 +470,7 @@ public class FileTreeTest {
 
     File newFile = new File(new Random().nextInt(), pathService.parsePath(target));
 
-    dir.directory().link(Name.simple(name), newFile);
+    dir.asDirectory().link(Name.simple(name), newFile);
 
     files.put(name, newFile);
 

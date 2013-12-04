@@ -51,7 +51,7 @@ public class DirectoryTableTest {
   public void setUp() {
     root = new DirectoryTable();
     rootFile = new File(0, root);
-    root.setRoot(rootFile, Name.simple("/"));
+    root.setAsRoot(rootFile, Name.simple("/"));
 
     table = new DirectoryTable();
     dirFile = new File(1, table);

@@ -18,6 +18,7 @@ package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,24 +46,25 @@ final class FileFactory {
   }
 
   /**
-   * Creates a new directory and stores it. Returns the key of the new file.
+   * Creates a new directory.
    */
   public File createDirectory() {
     return new File(nextFileId(), new DirectoryTable());
   }
 
   /**
-   * Creates a new regular file and stores it. Returns the key of the new file.
+   * Creates a new regular file.
    */
-  public File createRegularFile() {
+  @VisibleForTesting
+  File createRegularFile() {
     return new File(nextFileId(), disk.createByteStore());
   }
 
   /**
-   * Creates a new symbolic link referencing the given target path and stores it. Returns the key of
-   * the new file.
+   * Creates a new symbolic link referencing the given target path.
    */
-  public File createSymbolicLink(JimfsPath target) {
+  @VisibleForTesting
+  File createSymbolicLink(JimfsPath target) {
     return new File(nextFileId(), target);
   }
 
@@ -75,40 +77,32 @@ final class FileFactory {
 
   // suppliers to act as file creation callbacks
 
-  /**
-   * Directory supplier instance.
-   */
   private final Supplier<File> directorySupplier = new DirectorySupplier();
 
-  /**
-   * Regular file supplier instance.
-   */
   private final Supplier<File> regularFileSupplier = new RegularFileSupplier();
 
   /**
-   * Returns a supplier that creates directories and sets the given attributes.
+   * Returns a supplier that creates directories.
    */
-  public Supplier<File> directorySupplier() {
+  public Supplier<File> directoryCreator() {
     return directorySupplier;
   }
 
   /**
-   * Returns a supplier that creates a regular files and sets the given attributes.
+   * Returns a supplier that creates regular files.
    */
-  public Supplier<File> regularFileSupplier() {
+  public Supplier<File> regularFileCreator() {
     return regularFileSupplier;
   }
 
   /**
-   * Returns a supplier that creates a symbolic links to the given path and sets the given
-   * attributes.
+   * Returns a supplier that creates a symbolic links to the given path.
    */
-  public Supplier<File> symbolicLinkSupplier(JimfsPath target) {
+  public Supplier<File> symbolicLinkCreator(JimfsPath target) {
     return new SymbolicLinkSupplier(target);
   }
 
   private final class DirectorySupplier implements Supplier<File> {
-
     @Override
     public File get() {
       return createDirectory();
@@ -116,7 +110,6 @@ final class FileFactory {
   }
 
   private final class RegularFileSupplier implements Supplier<File> {
-
     @Override
     public File get() {
       return createRegularFile();
