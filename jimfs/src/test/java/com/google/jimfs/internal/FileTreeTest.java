@@ -72,7 +72,10 @@ public class FileTreeTest {
 
   /**
    * This path service is for unix-like paths, with the exception that it recognizes $ and ! as
-   * roots in addition to /, allowing for up to three roots.
+   * roots in addition to /, allowing for up to three roots. When creating a
+   * {@linkplain PathType#toUriPath URI path}, we prefix the path with / to differentiate between
+   * a path like "$foo/bar" and one like "/$foo/bar". They would become "/$foo/bar" and
+   * "//$foo/bar" respectively.
    */
   private final PathService pathService = fakePathService(
       new PathType(true, '/') {

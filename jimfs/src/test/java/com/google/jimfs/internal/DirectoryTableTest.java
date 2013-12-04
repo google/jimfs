@@ -58,7 +58,6 @@ public class DirectoryTableTest {
     root.link(Name.simple("foo"), dirFile);
   }
 
-  @SuppressWarnings("ConstantConditions")
   @Test
   public void testRootDirectory() {
     ASSERT.that(root.entryCount()).is(3); // two for parent/self, one for table
@@ -243,7 +242,6 @@ public class DirectoryTableTest {
     return new DirectoryEntry(dir, Name.simple(name), file);
   }
 
-  @SuppressWarnings("ConstantConditions")
   private static void assertParentAndSelf(DirectoryTable table, File parent, File self) {
     ASSERT.that(table.get(PARENT)).is(entry(self, "..", parent));
     ASSERT.that(table.parent()).is(parent);

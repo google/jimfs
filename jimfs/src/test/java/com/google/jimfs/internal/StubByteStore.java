@@ -31,16 +31,12 @@ import java.nio.channels.WritableByteChannel;
  */
 public class StubByteStore extends ByteStore {
 
-  private Bytes bytes = new Bytes();
+  private final Bytes bytes = new Bytes();
   private long size;
   private boolean throwException;
 
-  StubByteStore(int initialSize) {
+  StubByteStore(long initialSize) {
     setSize(initialSize);
-  }
-
-  StubByteStore(StubByteStore other) {
-    setSize(other.size);
   }
 
   @Override
@@ -50,7 +46,7 @@ public class StubByteStore extends ByteStore {
 
   @Override
   public ByteStore createCopy() {
-    return new StubByteStore(this);
+    return new StubByteStore(size);
   }
 
   @Override
@@ -59,7 +55,6 @@ public class StubByteStore extends ByteStore {
 
   public void setSize(long size) {
     this.size = size;
-
   }
 
   public void setThrowException(boolean throwException) {
@@ -78,7 +73,7 @@ public class StubByteStore extends ByteStore {
 
   @Override
   public int write(long pos, byte b) {
-    return write(pos, new byte[]{b}, 0, 1);
+    return write(pos, new byte[] {b}, 0, 1);
   }
 
   @Override
