@@ -19,8 +19,11 @@ package com.google.jimfs.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.math.LongMath;
+import com.google.jimfs.Configuration;
 
 import java.io.IOException;
+import java.math.RoundingMode;
 
 /**
  * A resizable pseudo-disk acting as a shared space for storing file data. A disk allocates fixed
@@ -36,9 +39,9 @@ final class HeapDisk {
   /** 8 KB blocks. */
   public static final int DEFAULT_BLOCK_SIZE = 8192;
 
-  /** 16 GB of space with 8 KB blocks. */
+  /** 4 GB of space with 8 KB blocks. */
   public static final int DEFAULT_MAX_BLOCK_COUNT =
-      (int) ((16L * 1024 * 1024 * 1024) / DEFAULT_BLOCK_SIZE);
+      (int) ((4L * 1024 * 1024 * 1024) / DEFAULT_BLOCK_SIZE);
 
   /** Fixed size of each block for this disk. */
   private final int blockSize;
@@ -56,11 +59,25 @@ final class HeapDisk {
   private int allocatedBlockCount;
 
   /**
-   * Creates a new heap disk with 8 KB blocks that can store up to 16 GB of data and caches all
+   * Creates a new heap disk with 8 KB blocks that can store up to 4 GB of data and caches all
    * blocks that are freed.
    */
   public HeapDisk() {
     this(DEFAULT_BLOCK_SIZE, DEFAULT_MAX_BLOCK_COUNT, DEFAULT_MAX_BLOCK_COUNT);
+  }
+
+  public HeapDisk(Configuration config) {
+    this.blockSize = config.blockSize();
+    this.maxBlockCount = toBlockCount(config.maxSize(), blockSize);
+    this.maxCachedBlockCount = config.maxCacheSize() == -1
+        ? maxBlockCount
+        : toBlockCount(config.maxCacheSize(), blockSize);
+    this.blockCache = new BlockList(Math.min(maxCachedBlockCount, 8192));
+  }
+
+  /**  Returns the nearest multiple of {@code blockSize} that is <= {@code size}. */
+  private static int toBlockCount(long size, int blockSize) {
+    return (int) LongMath.divide(size, blockSize, RoundingMode.FLOOR);
   }
 
   /**
@@ -69,7 +86,6 @@ final class HeapDisk {
    */
   public HeapDisk(int blockSize, int maxBlockCount, int maxCachedBlockCount) {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
-    checkArgument(blockSize % 2 == 0, "blockSize (%s) must be a multiple of 2", blockSize);
     checkArgument(maxBlockCount > 0, "maxBlockCount (%s) must be positive", maxBlockCount);
     checkArgument(maxCachedBlockCount >= 0,
         "maxCachedBlockCount must be non-negative", maxCachedBlockCount);

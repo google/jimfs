@@ -58,7 +58,7 @@ final class JimfsFileSystems {
     AttributeService attributeService = new AttributeService(config);
 
     // TODO(cgdecker): Make disk values configurable
-    HeapDisk disk = new HeapDisk();
+    HeapDisk disk = new HeapDisk(config);
     FileFactory fileFactory = new FileFactory(disk);
 
     Map<Name, File> roots = new HashMap<>();
