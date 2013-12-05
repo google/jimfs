@@ -20,8 +20,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /**
- * Tests for {@link HeapMemoryDisk} that create a new disk for each byte store created (testing
- * fresh state).
+ * Tests for {@link HeapDisk} that create a new disk for each byte store created (testing fresh
+ * state).
  *
  * @author Colin Decker
  */
@@ -30,6 +30,6 @@ public class HeapDiskTest extends AbstractByteStoreTest {
 
   @Override
   protected ByteStore createByteStore() {
-    return new HeapMemoryDisk(4).createByteStore();
+    return new HeapDisk(4, 100, 10).createByteStore();
   }
 }

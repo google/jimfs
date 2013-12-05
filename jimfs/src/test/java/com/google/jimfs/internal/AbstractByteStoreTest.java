@@ -48,7 +48,7 @@ public abstract class AbstractByteStoreTest {
     store = createByteStore();
   }
 
-  private void fillContent(String fill) {
+  private void fillContent(String fill) throws IOException {
     store.write(0, buffer(fill));
   }
 
@@ -90,65 +90,65 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testEmpty_write_singleByte_atStart() {
+  public void testEmpty_write_singleByte_atStart() throws IOException {
     store.write(0, (byte) 1);
     assertContentEquals("1", store);
   }
 
   @Test
-  public void testEmpty_write_byteArray_atStart() {
+  public void testEmpty_write_byteArray_atStart() throws IOException {
     byte[] bytes = bytes("111111");
     store.write(0, bytes, 0, bytes.length);
     assertContentEquals(bytes, store);
   }
 
   @Test
-  public void testEmpty_write_partialByteArray_atStart() {
+  public void testEmpty_write_partialByteArray_atStart() throws IOException {
     byte[] bytes = bytes("2211111122");
     store.write(0, bytes, 2, 6);
     assertContentEquals("111111", store);
   }
 
   @Test
-  public void testEmpty_write_singleBuffer_atStart() {
+  public void testEmpty_write_singleBuffer_atStart() throws IOException {
     store.write(0, buffer("111111"));
     assertContentEquals("111111", store);
   }
 
   @Test
-  public void testEmpty_write_multipleBuffers_atStart() {
+  public void testEmpty_write_multipleBuffers_atStart() throws IOException {
     store.write(0, buffers("111", "111"));
     assertContentEquals("111111", store);
   }
 
   @Test
-  public void testEmpty_write_singleByte_atNonZeroPosition() {
+  public void testEmpty_write_singleByte_atNonZeroPosition() throws IOException {
     store.write(5, (byte) 1);
     assertContentEquals("000001", store);
   }
 
   @Test
-  public void testEmpty_write_byteArray_atNonZeroPosition() {
+  public void testEmpty_write_byteArray_atNonZeroPosition() throws IOException {
     byte[] bytes = bytes("111111");
     store.write(5, bytes, 0, bytes.length);
     assertContentEquals("00000111111", store);
   }
 
   @Test
-  public void testEmpty_write_partialByteArray_atNonZeroPosition() {
+  public void testEmpty_write_partialByteArray_atNonZeroPosition() throws IOException {
     byte[] bytes = bytes("2211111122");
     store.write(5, bytes, 2, 6);
     assertContentEquals("00000111111", store);
   }
 
   @Test
-  public void testEmpty_write_singleBuffer_atNonZeroPosition() {
+  public void testEmpty_write_singleBuffer_atNonZeroPosition() throws IOException {
     store.write(5, buffer("111"));
     assertContentEquals("00000111", store);
   }
 
   @Test
-  public void testEmpty_write_multipleBuffers_atNonZeroPosition() {
+  public void testEmpty_write_multipleBuffers_atNonZeroPosition() throws IOException {
     store.write(5, buffers("111", "222"));
     assertContentEquals("00000111222", store);
   }
@@ -202,31 +202,31 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testEmpty_copy() {
+  public void testEmpty_copy() throws IOException {
     ByteStore copy = store.copy();
     assertContentEquals("", copy);
   }
 
   @Test
-  public void testEmpty_truncate_toZero() {
+  public void testEmpty_truncate_toZero() throws IOException {
     store.truncate(0);
     assertContentEquals("", store);
   }
 
   @Test
-  public void testEmpty_truncate_sizeUp() {
+  public void testEmpty_truncate_sizeUp() throws IOException {
     store.truncate(10);
     assertContentEquals("", store);
   }
 
   @Test
-  public void testNonEmpty() {
+  public void testNonEmpty() throws IOException {
     fillContent("222222");
     assertContentEquals("222222", store);
   }
 
   @Test
-  public void testNonEmpty_read_singleByte() {
+  public void testNonEmpty_read_singleByte() throws IOException {
     fillContent("123456");
     assertEquals(1, store.read(0));
     assertEquals(2, store.read(1));
@@ -236,7 +236,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_all_byteArray() {
+  public void testNonEmpty_read_all_byteArray() throws IOException {
     fillContent("222222");
     byte[] array = new byte[6];
     assertEquals(6, store.read(0, array, 0, array.length));
@@ -244,7 +244,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_all_singleBuffer() {
+  public void testNonEmpty_read_all_singleBuffer() throws IOException {
     fillContent("222222");
     ByteBuffer buffer = ByteBuffer.allocate(6);
     assertEquals(6, store.read(0, buffer));
@@ -252,7 +252,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_all_multipleBuffers() {
+  public void testNonEmpty_read_all_multipleBuffers() throws IOException {
     fillContent("223334");
     ByteBuffer buf1 = ByteBuffer.allocate(3);
     ByteBuffer buf2 = ByteBuffer.allocate(3);
@@ -262,7 +262,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_all_byteArray_largerThanContent() {
+  public void testNonEmpty_read_all_byteArray_largerThanContent() throws IOException {
     fillContent("222222");
     byte[] array = new byte[10];
     assertEquals(6, store.read(0, array, 0, array.length));
@@ -273,7 +273,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_all_singleBuffer_largerThanContent() {
+  public void testNonEmpty_read_all_singleBuffer_largerThanContent() throws IOException {
     fillContent("222222");
     ByteBuffer buffer = ByteBuffer.allocate(16);
     assertBufferEquals("0000000000000000", 16, buffer);
@@ -282,7 +282,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_all_multipleBuffers_largerThanContent() {
+  public void testNonEmpty_read_all_multipleBuffers_largerThanContent() throws IOException {
     fillContent("222222");
     ByteBuffer buf1 = ByteBuffer.allocate(4);
     ByteBuffer buf2 = ByteBuffer.allocate(8);
@@ -292,7 +292,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_all_multipleBuffers_extraBuffers() {
+  public void testNonEmpty_read_all_multipleBuffers_extraBuffers() throws IOException {
     fillContent("222222");
     ByteBuffer buf1 = ByteBuffer.allocate(4);
     ByteBuffer buf2 = ByteBuffer.allocate(8);
@@ -304,7 +304,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromStart_byteArray() {
+  public void testNonEmpty_read_partial_fromStart_byteArray() throws IOException {
     fillContent("222222");
     byte[] array = new byte[3];
     assertEquals(3, store.read(0, array, 0, array.length));
@@ -315,7 +315,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromMiddle_byteArray() {
+  public void testNonEmpty_read_partial_fromMiddle_byteArray() throws IOException {
     fillContent("22223333");
     byte[] array = new byte[3];
     assertEquals(3, store.read(3, array, 0, array.length));
@@ -326,7 +326,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromEnd_byteArray() {
+  public void testNonEmpty_read_partial_fromEnd_byteArray() throws IOException {
     fillContent("2222222222");
     byte[] array = new byte[3];
     assertEquals(2, store.read(8, array, 0, array.length));
@@ -337,7 +337,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromStart_singleBuffer() {
+  public void testNonEmpty_read_partial_fromStart_singleBuffer() throws IOException {
     fillContent("222222");
     ByteBuffer buffer = ByteBuffer.allocate(3);
     assertEquals(3, store.read(0, buffer));
@@ -345,7 +345,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromMiddle_singleBuffer() {
+  public void testNonEmpty_read_partial_fromMiddle_singleBuffer() throws IOException {
     fillContent("22223333");
     ByteBuffer buffer = ByteBuffer.allocate(3);
     assertEquals(3, store.read(3, buffer));
@@ -353,7 +353,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromEnd_singleBuffer() {
+  public void testNonEmpty_read_partial_fromEnd_singleBuffer() throws IOException {
     fillContent("2222222222");
     ByteBuffer buffer = ByteBuffer.allocate(3);
     assertEquals(2, store.read(8, buffer));
@@ -361,7 +361,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromStart_multipleBuffers() {
+  public void testNonEmpty_read_partial_fromStart_multipleBuffers() throws IOException {
     fillContent("12345678");
     ByteBuffer buf1 = ByteBuffer.allocate(2);
     ByteBuffer buf2 = ByteBuffer.allocate(2);
@@ -371,7 +371,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromMiddle_multipleBuffers() {
+  public void testNonEmpty_read_partial_fromMiddle_multipleBuffers() throws IOException {
     fillContent("12345678");
     ByteBuffer buf1 = ByteBuffer.allocate(2);
     ByteBuffer buf2 = ByteBuffer.allocate(2);
@@ -381,7 +381,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_partial_fromEnd_multipleBuffers() {
+  public void testNonEmpty_read_partial_fromEnd_multipleBuffers() throws IOException {
     fillContent("123456789");
     ByteBuffer buf1 = ByteBuffer.allocate(2);
     ByteBuffer buf2 = ByteBuffer.allocate(2);
@@ -391,7 +391,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_fromPastEnd_byteArray() {
+  public void testNonEmpty_read_fromPastEnd_byteArray() throws IOException {
     fillContent("123");
     byte[] array = new byte[3];
     assertEquals(-1, store.read(3, array, 0, array.length));
@@ -401,7 +401,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_fromPastEnd_singleBuffer() {
+  public void testNonEmpty_read_fromPastEnd_singleBuffer() throws IOException {
     fillContent("123");
     ByteBuffer buffer = ByteBuffer.allocate(3);
     store.read(3, buffer);
@@ -409,7 +409,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_read_fromPastEnd_multipleBuffers() {
+  public void testNonEmpty_read_fromPastEnd_multipleBuffers() throws IOException {
     fillContent("123");
     ByteBuffer buf1 = ByteBuffer.allocate(2);
     ByteBuffer buf2 = ByteBuffer.allocate(2);
@@ -419,28 +419,28 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromStart_singleByte() {
+  public void testNonEmpty_write_partial_fromStart_singleByte() throws IOException {
     fillContent("222222");
     assertEquals(1, store.write(0, (byte) 1));
     assertContentEquals("122222", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromMiddle_singleByte() {
+  public void testNonEmpty_write_partial_fromMiddle_singleByte() throws IOException {
     fillContent("222222");
     assertEquals(1, store.write(3, (byte) 1));
     assertContentEquals("222122", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromEnd_singleByte() {
+  public void testNonEmpty_write_partial_fromEnd_singleByte() throws IOException {
     fillContent("222222");
     assertEquals(1, store.write(6, (byte) 1));
     assertContentEquals("2222221", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromStart_byteArray() {
+  public void testNonEmpty_write_partial_fromStart_byteArray() throws IOException {
     fillContent("222222");
     assertEquals(3, store.write(0, bytes("111"), 0, 3));
     assertContentEquals("111222", store);
@@ -449,7 +449,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromMiddle_byteArray() {
+  public void testNonEmpty_write_partial_fromMiddle_byteArray() throws IOException {
     fillContent("22222222");
     assertEquals(3, store.write(3, buffer("111")));
     assertContentEquals("22211122", store);
@@ -458,7 +458,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromBeforeEnd_byteArray() {
+  public void testNonEmpty_write_partial_fromBeforeEnd_byteArray() throws IOException {
     fillContent("22222222");
     assertEquals(3, store.write(6, bytes("111"), 0, 3));
     assertContentEquals("222222111", store);
@@ -467,7 +467,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromEnd_byteArray() {
+  public void testNonEmpty_write_partial_fromEnd_byteArray() throws IOException {
     fillContent("222222");
     assertEquals(3, store.write(6, bytes("111"), 0, 3));
     assertContentEquals("222222111", store);
@@ -476,7 +476,7 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromPastEnd_byteArray() {
+  public void testNonEmpty_write_partial_fromPastEnd_byteArray() throws IOException {
     fillContent("222222");
     assertEquals(3, store.write(8, bytes("111"), 0, 3));
     assertContentEquals("22222200111", store);
@@ -485,84 +485,84 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromStart_singleBuffer() {
+  public void testNonEmpty_write_partial_fromStart_singleBuffer() throws IOException {
     fillContent("222222");
     assertEquals(3, store.write(0, buffer("111")));
     assertContentEquals("111222", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromMiddle_singleBuffer() {
+  public void testNonEmpty_write_partial_fromMiddle_singleBuffer() throws IOException {
     fillContent("22222222");
     assertEquals(3, store.write(3, buffer("111")));
     assertContentEquals("22211122", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromBeforeEnd_singleBuffer() {
+  public void testNonEmpty_write_partial_fromBeforeEnd_singleBuffer() throws IOException {
     fillContent("22222222");
     assertEquals(3, store.write(6, buffer("111")));
     assertContentEquals("222222111", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromEnd_singleBuffer() {
+  public void testNonEmpty_write_partial_fromEnd_singleBuffer() throws IOException {
     fillContent("222222");
     assertEquals(3, store.write(6, buffer("111")));
     assertContentEquals("222222111", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromPastEnd_singleBuffer() {
+  public void testNonEmpty_write_partial_fromPastEnd_singleBuffer() throws IOException {
     fillContent("222222");
     assertEquals(3, store.write(8, buffer("111")));
     assertContentEquals("22222200111", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromStart_multipleBuffers() {
+  public void testNonEmpty_write_partial_fromStart_multipleBuffers() throws IOException {
     fillContent("222222");
     assertEquals(4, store.write(0, buffers("11", "33")));
     assertContentEquals("113322", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromMiddle_multipleBuffers() {
+  public void testNonEmpty_write_partial_fromMiddle_multipleBuffers() throws IOException {
     fillContent("22222222");
     assertEquals(4, store.write(2, buffers("11", "33")));
     assertContentEquals("22113322", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromBeforeEnd_multipleBuffers() {
+  public void testNonEmpty_write_partial_fromBeforeEnd_multipleBuffers() throws IOException {
     fillContent("22222222");
     assertEquals(6, store.write(6, buffers("111", "333")));
     assertContentEquals("222222111333", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromEnd_multipleBuffers() {
+  public void testNonEmpty_write_partial_fromEnd_multipleBuffers() throws IOException {
     fillContent("222222");
     assertEquals(6, store.write(6, buffers("111", "333")));
     assertContentEquals("222222111333", store);
   }
 
   @Test
-  public void testNonEmpty_write_partial_fromPastEnd_multipleBuffers() {
+  public void testNonEmpty_write_partial_fromPastEnd_multipleBuffers() throws IOException {
     fillContent("222222");
     assertEquals(4, store.write(10, buffers("11", "33")));
     assertContentEquals("22222200001133", store);
   }
 
   @Test
-  public void testNonEmpty_write_overwrite_sameLength() {
+  public void testNonEmpty_write_overwrite_sameLength() throws IOException {
     fillContent("2222");
     assertEquals(4, store.write(0, buffer("1234")));
     assertContentEquals("1234", store);
   }
 
   @Test
-  public void testNonEmpty_write_overwrite_greaterLength() {
+  public void testNonEmpty_write_overwrite_greaterLength() throws IOException {
     fillContent("2222");
     assertEquals(8, store.write(0, buffer("12345678")));
     assertContentEquals("12345678", store);
@@ -682,14 +682,14 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_copy() {
+  public void testNonEmpty_copy() throws IOException {
     fillContent("123456");
     ByteStore copy = store.copy();
     assertContentEquals("123456", copy);
   }
 
   @Test
-  public void testNonEmpty_copy_multipleTimes() {
+  public void testNonEmpty_copy_multipleTimes() throws IOException {
     /*
     This test exposes a bug where the position of the new buffer in ByteBufferByteStore wasn't
     being reset to 0 after the old buffer's content was copied into it. If the buffer was then
@@ -703,28 +703,28 @@ public abstract class AbstractByteStoreTest {
   }
 
   @Test
-  public void testNonEmpty_truncate_toZero() {
+  public void testNonEmpty_truncate_toZero() throws IOException {
     fillContent("123456");
     store.truncate(0);
     assertContentEquals("", store);
   }
 
   @Test
-  public void testNonEmpty_truncate_partial() {
+  public void testNonEmpty_truncate_partial() throws IOException {
     fillContent("12345678");
     store.truncate(5);
     assertContentEquals("12345", store);
   }
 
   @Test
-  public void testNonEmpty_truncate_sizeUp() {
+  public void testNonEmpty_truncate_sizeUp() throws IOException {
     fillContent("123456");
     store.truncate(12);
     assertContentEquals("123456", store);
   }
 
   @Test
-  public void testDeletedStoreRemainsUsableWhileOpen() {
+  public void testDeletedStoreRemainsUsableWhileOpen() throws IOException {
     byte[] bytes = bytes("1234567890");
     store.write(0, bytes, 0, bytes.length);
 

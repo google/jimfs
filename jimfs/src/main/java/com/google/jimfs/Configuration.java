@@ -184,6 +184,11 @@ public final class Configuration {
   private final ImmutableSet<Normalization> nameCanonicalNormalization;
   private final boolean pathEqualityUsesCanonicalForm;
 
+  // Disk configuration
+  private final int blockSize;
+  private final long maxSize;
+  private final long maxCacheSize;
+
   // Attribute configuration
   private final ImmutableSet<String> attributeViews;
   private final ImmutableSet<AttributeProvider> attributeProviders;
@@ -201,6 +206,9 @@ public final class Configuration {
     this.nameDisplayNormalization = builder.nameDisplayNormalization;
     this.nameCanonicalNormalization = builder.nameCanonicalNormalization;
     this.pathEqualityUsesCanonicalForm = builder.pathEqualityUsesCanonicalForm;
+    this.blockSize = builder.blockSize;
+    this.maxSize = builder.maxSize;
+    this.maxCacheSize = builder.maxCacheSize;
     this.attributeViews = builder.attributeViews;
     this.attributeProviders = builder.attributeProviders == null
         ? ImmutableSet.<AttributeProvider>of()
@@ -258,6 +266,51 @@ public final class Configuration {
   }
 
   /**
+   * Returns the block size (in bytes) for the file system to use. All regular files will be
+   * allocated blocks of the given size, so this is the minimum granularity for file size.
+   *
+   * <p>The default is 8192 bytes (8 KB).
+   */
+  public int blockSize() {
+    return blockSize;
+  }
+
+  /**
+   * Returns the maximum size (in bytes) for the file system's in-memory file storage. This maximum
+   * size determines the maximum number of blocks that can be allocated to regular files, so it
+   * should generally be a multiple of the {@linkplain #blockSize() block size}. The actual
+   * maximum size will be the nearest multiple of the block size that is less than or equal to this
+   * size.
+   *
+   * <p><b>Note:</b> The in-memory file storage will not be eagerly initialized to this size, so
+   * it won't use more memory than is needed for the files you create. Also note that in addition
+   * to this limit, you will of course be limited by the amount of heap space available to the
+   * JVM and the amount of heap used by other objects, both in the file system and elsewhere.
+   *
+   * <p>The default is 4 GB.
+   */
+  public long maxSize() {
+    return maxSize;
+  }
+
+  /**
+   * Returns the maximum amount of unused space (in bytes) in the file system's in-memory file
+   * storage that should be cached for reuse. By default, this will be equal to the
+   * {@linkplain #maxSize() max size} of the storage, meaning that all space that is freed
+   * when files are truncated or deleted is cached for reuse. This helps to avoid lots of garbage
+   * collection when creating and deleting many files quickly. This can be set to 0 to disable
+   * caching entirely (all freed blocks become available for garbage collection) or to some other
+   * number to put an upper bound on the maximum amount of unused space the file system will keep
+   * around.
+   *
+   * <p>Like the max size, the actual value will be the closest multiple of the block size that
+   * is less than or equal to this size.
+   */
+  public long maxCacheSize() {
+    return maxCacheSize;
+  }
+
+  /**
    * Returns the set of file attribute views the file system supports.
    */
   public ImmutableSet<String> attributeViews() {
@@ -298,6 +351,11 @@ public final class Configuration {
     private ImmutableSet<Normalization> nameCanonicalNormalization = ImmutableSet.of();
     private boolean pathEqualityUsesCanonicalForm;
 
+    // Disk configuration
+    private int blockSize = 8192; // 8 KB
+    private long maxSize = 4L * 1024 * 1024 * 1024; // 4 GB
+    private long maxCacheSize = -1; // same as maxSize
+
     // Attribute configuration
     private ImmutableSet<String> attributeViews = ImmutableSet.of();
     private Set<AttributeProvider> attributeProviders = null;
@@ -316,6 +374,9 @@ public final class Configuration {
       this.nameDisplayNormalization = configuration.nameDisplayNormalization;
       this.nameCanonicalNormalization = configuration.nameCanonicalNormalization;
       this.pathEqualityUsesCanonicalForm = configuration.pathEqualityUsesCanonicalForm;
+      this.blockSize = configuration.blockSize;
+      this.maxSize = configuration.maxSize;
+      this.maxCacheSize = configuration.maxCacheSize;
       this.attributeViews = configuration.attributeViews;
       this.attributeProviders = configuration.attributeProviders.isEmpty()
           ? null
@@ -403,6 +464,57 @@ public final class Configuration {
      */
     public Builder setAttributeViews(String first, String... more) {
       this.attributeViews = ImmutableSet.copyOf(Lists.asList(first, more));
+      return this;
+    }
+
+    /**
+     * Sets the block size (in bytes) for the file system to use. All regular files will be
+     * allocated blocks of the given size, so this is the minimum granularity for file size.
+     *
+     * <p>The default is 8192 bytes (8 KB).
+     */
+    public Builder setBlockSize(int blockSize) {
+      checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
+      this.blockSize = blockSize;
+      return this;
+    }
+
+    /**
+     * Sets the maximum size (in bytes) for the file system's in-memory file storage. This maximum
+     * size determines the maximum number of blocks that can be allocated to regular files, so it
+     * should generally be a multiple of the {@linkplain #setBlockSize(int) block size}. The actual
+     * maximum size will be the nearest multiple of the block size that is less than or equal to
+     * the given size.
+     *
+     * <p><b>Note:</b> The in-memory file storage will not be eagerly initialized to this size, so
+     * it won't use more memory than is needed for the files you create. Also note that in addition
+     * to this limit, you will of course be limited by the amount of heap space available to the
+     * JVM and the amount of heap used by other objects, both in the file system and elsewhere.
+     *
+     * <p>The default is 4 GB.
+     */
+    public Builder setMaxSize(long maxSize) {
+      checkArgument(maxSize > 0, "maxSize (%s) must be positive", maxSize);
+      this.maxSize = maxSize;
+      return this;
+    }
+
+    /**
+     * Sets the maximum amount of unused space (in bytes) in the file system's in-memory file
+     * storage that should be cached for reuse. By default, this will be equal to the
+     * {@linkplain #setMaxSize(long) max size} of the storage, meaning that all space that is freed
+     * when files are truncated or deleted is cached for reuse. This helps to avoid lots of garbage
+     * collection when creating and deleting many files quickly. This can be set to 0 to disable
+     * caching entirely (all freed blocks become available for garbage collection) or to some other
+     * number to put an upper bound on the maximum amount of unused space the file system will keep
+     * around.
+     *
+     * <p>Like the max size, the actual value will be the closest multiple of the block size that
+     * is less than or equal to the given size.
+     */
+    public Builder setMaxCacheSize(long maxCacheSize) {
+      checkArgument(maxCacheSize >= 0, "maxCacheSize (%s) may not be negative", maxCacheSize);
+      this.maxCacheSize = maxCacheSize;
       return this;
     }
 

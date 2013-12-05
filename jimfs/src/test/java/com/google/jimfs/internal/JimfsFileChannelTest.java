@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.InternalTestUtils.byteStore;
 import static com.google.jimfs.testing.TestUtils.assertNotEquals;
 import static com.google.jimfs.testing.TestUtils.buffer;
 import static com.google.jimfs.testing.TestUtils.bytes;
@@ -76,13 +77,9 @@ public class JimfsFileChannelTest {
         Options.getOptionsForChannel(ImmutableSet.copyOf(options)));
   }
 
-  private static StubByteStore store(int size) throws IOException {
-    return new StubByteStore(size);
-  }
-
   @Test
   public void testPosition() throws IOException {
-    FileChannel channel = channel(store(10), READ);
+    FileChannel channel = channel(byteStore(10), READ);
     assertEquals(0, channel.position());
     assertSame(channel, channel.position(100));
     assertEquals(100, channel.position());
@@ -90,18 +87,18 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testSize() throws IOException {
-    StubByteStore store = store(10);
+    ByteStore store = byteStore(10);
     FileChannel channel = channel(store, READ);
 
     assertEquals(10, channel.size());
 
-    store.setSize(100);
+    store.write(10, new byte[90], 0, 90);
     assertEquals(100, channel.size());
   }
 
   @Test
   public void testRead() throws IOException {
-    StubByteStore store = store(20);
+    ByteStore store = byteStore(20);
     FileChannel channel = channel(store, READ);
     assertEquals(0, channel.position());
 
@@ -116,7 +113,7 @@ public class JimfsFileChannelTest {
 
     buf.flip();
     buf2.flip();
-    store.setSize(30);
+    store.write(20, new byte[10], 0, 10);
     assertEquals(10, channel.read(new ByteBuffer[]{buf, buf2}, 0, 2));
     assertEquals(30, channel.position());
 
@@ -131,7 +128,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testWrite() throws IOException {
-    ByteStore store = store(0);
+    ByteStore store = byteStore(0);
     FileChannel channel = channel(store, WRITE);
     assertEquals(0, channel.position());
 
@@ -156,7 +153,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testAppend() throws IOException {
-    ByteStore store = store(0);
+    ByteStore store = byteStore(0);
     FileChannel channel = channel(store, WRITE, APPEND);
     assertEquals(0, channel.position());
 
@@ -190,7 +187,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testTransferTo() throws IOException {
-    ByteStore store = store(10);
+    ByteStore store = byteStore(10);
     FileChannel channel = channel(store, READ);
 
     ByteBufferChannel writeChannel = new ByteBufferChannel(buffer("1234567890"));
@@ -200,7 +197,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testTransferFrom() throws IOException {
-    ByteStore store = store(0);
+    ByteStore store = byteStore(0);
     FileChannel channel = channel(store, WRITE);
 
     ByteBufferChannel readChannel = new ByteBufferChannel(buffer("1234567890"));
@@ -210,7 +207,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testTruncate() throws IOException {
-    ByteStore store = store(10);
+    ByteStore store = byteStore(10);
     FileChannel channel = channel(store, WRITE);
 
     channel.truncate(10); // no resize, >= size
@@ -229,7 +226,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testFileTimeUpdates() throws IOException {
-    File file = new File(-1, new StubByteStore(10));
+    File file = new File(-1, byteStore(10));
     FileChannel channel = new JimfsFileChannel(file, ImmutableSet.<OpenOption>of(READ, WRITE));
 
     // accessed
@@ -303,7 +300,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testClose() throws IOException {
-    FileChannel channel = channel(store(0), READ, WRITE);
+    FileChannel channel = channel(byteStore(0), READ, WRITE);
     ExecutorService executor = Executors.newSingleThreadExecutor();
     assertTrue(channel.isOpen());
     channel.close();
@@ -422,7 +419,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testWritesInReadOnlyMode() throws IOException {
-    FileChannel channel = channel(store(0), READ);
+    FileChannel channel = channel(byteStore(0), READ);
 
     try {
       channel.write(buffer("111"));
@@ -468,7 +465,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testReadsInWriteOnlyMode() throws IOException {
-    FileChannel channel = channel(store(0), WRITE);
+    FileChannel channel = channel(byteStore(0), WRITE);
 
     try {
       channel.read(buffer("111"));
@@ -508,7 +505,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testPositionNegative() throws IOException {
-    FileChannel channel = channel(store(0), READ, WRITE);
+    FileChannel channel = channel(byteStore(0), READ, WRITE);
 
     try {
       channel.position(-1);
@@ -519,7 +516,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testTruncateNegative() throws IOException {
-    FileChannel channel = channel(store(0), READ, WRITE);
+    FileChannel channel = channel(byteStore(0), READ, WRITE);
 
     try {
       channel.truncate(-1);
@@ -530,7 +527,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testWriteNegative() throws IOException {
-    FileChannel channel = channel(store(0), READ, WRITE);
+    FileChannel channel = channel(byteStore(0), READ, WRITE);
 
     try {
       channel.write(buffer("111"), -1);
@@ -554,7 +551,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testReadNegative() throws IOException {
-    FileChannel channel = channel(store(0), READ, WRITE);
+    FileChannel channel = channel(byteStore(0), READ, WRITE);
 
     try {
       channel.read(buffer("111"), -1);
@@ -578,7 +575,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testTransferToNegative() throws IOException {
-    FileChannel channel = channel(store(0), READ, WRITE);
+    FileChannel channel = channel(byteStore(0), READ, WRITE);
 
     try {
       channel.transferTo(-1, 0, new ByteBufferChannel(10));
@@ -595,7 +592,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testTransferFromNegative() throws IOException {
-    FileChannel channel = channel(store(0), READ, WRITE);
+    FileChannel channel = channel(byteStore(0), READ, WRITE);
 
     try {
       channel.transferFrom(new ByteBufferChannel(10), -1, 0);
@@ -612,7 +609,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testLockNegative() throws IOException {
-    FileChannel channel = channel(store(0), READ, WRITE);
+    FileChannel channel = channel(byteStore(0), READ, WRITE);
 
     try {
       channel.lock(-1, 10, true);
@@ -641,7 +638,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testNullPointerExceptions() throws IOException {
-    FileChannel channel = channel(store(100), READ, WRITE);
+    FileChannel channel = channel(byteStore(100), READ, WRITE);
 
     NullPointerTester tester = new NullPointerTester();
     tester.testAllPublicInstanceMethods(channel);
@@ -649,7 +646,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testLock() throws IOException {
-    FileChannel channel = channel(store(10), READ, WRITE);
+    FileChannel channel = channel(byteStore(10), READ, WRITE);
 
     assertNotNull(channel.lock());
     assertNotNull(channel.lock(0, 10, false));
@@ -667,7 +664,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testAsynchronousClose() throws IOException, InterruptedException {
-    ByteStore store = store(10);
+    ByteStore store = byteStore(10);
     final FileChannel channel = channel(store, READ, WRITE);
 
     store.writeLock().lock(); // ensure all operations on the channel will block
@@ -693,7 +690,7 @@ public class JimfsFileChannelTest {
 
   @Test
   public void testCloseByInterrupt() throws IOException, InterruptedException {
-    ByteStore store = store(10);
+    ByteStore store = byteStore(10);
     final FileChannel channel = channel(store, READ, WRITE);
 
     store.writeLock().lock(); // ensure all operations on the channel will block

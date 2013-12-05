@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.jimfs.internal.FileFactoryTest.fakePath;
+import static com.google.jimfs.internal.InternalTestUtils.byteStore;
 import static org.truth0.Truth.ASSERT;
 
 import org.junit.Test;
@@ -52,11 +53,11 @@ public class FileTest {
 
   @Test
   public void testRegularFile() {
-    File file = new File(0, new StubByteStore(10));
+    File file = new File(0, byteStore(10));
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isTrue();
     ASSERT.that(file.isSymbolicLink()).isFalse();
-    ASSERT.that(file.content()).isA(StubByteStore.class);
+    ASSERT.that(file.content()).isA(ByteStore.class);
   }
 
   @Test

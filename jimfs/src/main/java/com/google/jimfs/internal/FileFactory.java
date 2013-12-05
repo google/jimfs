@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -32,12 +33,12 @@ final class FileFactory {
 
   private final AtomicInteger idGenerator = new AtomicInteger();
 
-  private final MemoryDisk disk;
+  private final HeapDisk disk;
 
   /**
    * Creates a new file factory using the given disk for regular files.
    */
-  public FileFactory(MemoryDisk disk) {
+  public FileFactory(HeapDisk disk) {
     this.disk = checkNotNull(disk);
   }
 
@@ -71,7 +72,7 @@ final class FileFactory {
   /**
    * Creates and returns a copy of the given file.
    */
-  public File copy(File file) {
+  public File copy(File file) throws IOException {
     return new File(nextFileId(), file.content().copy());
   }
 

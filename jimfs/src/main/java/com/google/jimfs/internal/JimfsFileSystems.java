@@ -56,7 +56,9 @@ final class JimfsFileSystems {
   private static JimfsFileStore createFileStore(
       Configuration config, PathService pathService) {
     AttributeService attributeService = new AttributeService(config);
-    MemoryDisk disk = new HeapMemoryDisk();
+
+    // TODO(cgdecker): Make disk values configurable
+    HeapDisk disk = new HeapDisk(config);
     FileFactory fileFactory = new FileFactory(disk);
 
     Map<Name, File> roots = new HashMap<>();

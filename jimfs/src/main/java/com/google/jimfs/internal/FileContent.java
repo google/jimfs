@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import java.io.IOException;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,7 +34,7 @@ interface FileContent {
    * the original; for example, a copy of a directory is an empty directory regardless of what the
    * original directory contains.
    */
-  FileContent copy();
+  FileContent copy() throws IOException;
 
   /**
    * Returns the size, in bytes, of this content. This may be 0 when there is no logical size we

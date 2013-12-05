@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.InternalTestUtils.byteStore;
 import static com.google.jimfs.testing.TestUtils.buffer;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -66,17 +67,13 @@ public class JimfsAsynchronousFileChannelTest {
             Options.getOptionsForChannel(ImmutableSet.copyOf(options))), executor);
   }
 
-  private static StubByteStore store(int size) throws IOException {
-    return new StubByteStore(size);
-  }
-
   /**
    * Just tests the main read/write methods... the methods all delegate to the non-async channel
    * anyway.
    */
   @Test
   public void testAsyncChannel() throws Throwable {
-    StubByteStore store = store(15);
+    ByteStore store = byteStore(15);
     ExecutorService executor = Executors.newSingleThreadExecutor();
     JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
 
@@ -86,9 +83,8 @@ public class JimfsAsynchronousFileChannelTest {
       assertSame(channel, channel.truncate(5));
       assertEquals(5, channel.size());
 
-      store.setSize(10);
+      store.write(5, new byte[5], 0, 5);
       checkAsyncRead(channel);
-      checkAsyncReadFailure(executor);
       checkAsyncWrite(channel);
       checkAsyncLock(channel);
 
@@ -101,7 +97,7 @@ public class JimfsAsynchronousFileChannelTest {
 
   @Test
   public void testClosedChannel() throws IOException, InterruptedException {
-    StubByteStore store = store(15);
+    ByteStore store = byteStore(15);
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
     try {
@@ -119,7 +115,7 @@ public class JimfsAsynchronousFileChannelTest {
 
   @Test
   public void testAsyncClose_write() throws IOException, InterruptedException {
-    StubByteStore store = store(15);
+    ByteStore store = byteStore(15);
     ExecutorService executor = Executors.newFixedThreadPool(4);
 
     try {
@@ -166,7 +162,7 @@ public class JimfsAsynchronousFileChannelTest {
 
   @Test
   public void testAsyncClose_read() throws IOException, InterruptedException {
-    StubByteStore store = store(15);
+    ByteStore store = byteStore(15);
     ExecutorService executor = Executors.newFixedThreadPool(2);
 
     try {
@@ -239,46 +235,6 @@ public class JimfsAsynchronousFileChannelTest {
       throw exception;
     } else {
       assertEquals(10, resultHolder.get());
-    }
-  }
-
-  private static void checkAsyncReadFailure(ExecutorService executor) throws Throwable {
-    StubByteStore store = store(10);
-    store.setThrowException(true);
-    AsynchronousFileChannel channel = channel(store, executor, READ);
-
-    ByteBuffer buf = buffer("1234567890");
-    try {
-      channel.read(buf, 0).get();
-      fail();
-    } catch (ExecutionException expected) {
-      assertTrue(expected.getCause() instanceof RuntimeException);
-      assertEquals("error", expected.getCause().getMessage());
-    }
-
-    buf.flip();
-    final AtomicReference<Throwable> exceptionHolder = new AtomicReference<>();
-    final CountDownLatch completionLatch = new CountDownLatch(1);
-    channel.read(buf, 0, null, new CompletionHandler<Integer, Object>() {
-      @Override
-      public void completed(Integer result, Object attachment) {
-        completionLatch.countDown();
-      }
-
-      @Override
-      public void failed(Throwable exc, Object attachment) {
-        exceptionHolder.set(exc);
-        completionLatch.countDown();
-      }
-    });
-
-    completionLatch.await();
-    Throwable exception = exceptionHolder.get();
-    if (exception == null) {
-      fail();
-    } else {
-      assertTrue(exception instanceof RuntimeException);
-      assertEquals("error", exception.getMessage());
     }
   }
 

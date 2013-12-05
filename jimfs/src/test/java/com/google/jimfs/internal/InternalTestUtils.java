@@ -16,19 +16,23 @@
 
 package com.google.jimfs.internal;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import java.io.IOException;
 
 /**
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
-public class DirectDiskTest extends AbstractByteStoreTest {
+class InternalTestUtils {
 
-  private final MemoryDisk disk = new DirectMemoryDisk();
+  private InternalTestUtils() {}
 
-  @Override
-  protected ByteStore createByteStore() {
-    return disk.createByteStore();
+
+  static ByteStore byteStore(int size) {
+    ByteStore store = new ByteStore(new HeapDisk());
+    try {
+      store.write(0, new byte[size], 0, size);
+      return store;
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
   }
 }

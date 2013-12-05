@@ -114,6 +114,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   protected FileSystem createFileSystem() {
     return Jimfs.newFileSystem("unix", Configuration.unix().toBuilder()
         .setAttributeViews("basic", "owner", "posix", "unix")
+        .setMaxSize(1024 * 1024 * 1024) // 1 GB
+        .setMaxCacheSize(256 * 1024 * 1024) // 256 MB
         .build());
   }
 
@@ -135,10 +137,10 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     ASSERT.that(fileStore.type()).is("jimfs");
     ASSERT.that(fileStore.isReadOnly()).isFalse();
 
-    // no regular files have been created and written to, so no blocks have been allocated yet
-    ASSERT.that(fileStore.getTotalSpace()).is(0);
-    ASSERT.that(fileStore.getUnallocatedSpace()).is(0);
-    ASSERT.that(fileStore.getUsableSpace()).is(0);
+    long expectedSize = 1024 * 1024 * 1024; // 1 GB
+    ASSERT.that(fileStore.getTotalSpace()).is(expectedSize);
+    ASSERT.that(fileStore.getUnallocatedSpace()).is(expectedSize);
+    ASSERT.that(fileStore.getUsableSpace()).is(expectedSize);
   }
 
   @Test

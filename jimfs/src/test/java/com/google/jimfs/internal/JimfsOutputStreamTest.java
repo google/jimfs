@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.InternalTestUtils.byteStore;
 import static com.google.jimfs.testing.TestUtils.bytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
@@ -165,11 +166,11 @@ public class JimfsOutputStreamTest {
   }
 
   private static JimfsOutputStream newOutputStream(boolean append) {
-    File file = new File(1, new StubByteStore(0));
+    File file = new File(1, byteStore(0));
     return new JimfsOutputStream(file, append);
   }
 
-  private static void addBytesToStore(JimfsOutputStream out, int... bytes) {
+  private static void addBytesToStore(JimfsOutputStream out, int... bytes) throws IOException {
     ByteStore store = out.file.asBytes();
     long pos = store.currentSize();
     for (int b : bytes) {
