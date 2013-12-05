@@ -16,6 +16,7 @@
 
 package com.google.jimfs.internal;
 
+import static com.google.jimfs.internal.InternalTestUtils.byteStore;
 import static com.google.jimfs.testing.TestUtils.bytes;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
@@ -165,7 +166,7 @@ public class JimfsInputStreamTest {
   }
 
   @Test
-  public void testMark_unsupported() {
+  public void testMark_unsupported() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3);
     ASSERT.that(in.markSupported()).isFalse();
 
@@ -218,13 +219,13 @@ public class JimfsInputStreamTest {
     in.close(); // does nothing
   }
 
-  private static JimfsInputStream newInputStream(int... bytes) {
+  private static JimfsInputStream newInputStream(int... bytes) throws IOException {
     byte[] b = new byte[bytes.length];
     for (int i = 0; i < bytes.length; i++) {
       b[i] = (byte) bytes[i];
     }
 
-    ByteStore store = new StubByteStore(0);
+    ByteStore store = byteStore(0);
     store.write(0, b, 0, b.length);
     return new JimfsInputStream(new File(1, store));
   }

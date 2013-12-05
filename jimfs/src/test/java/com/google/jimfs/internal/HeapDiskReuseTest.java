@@ -23,8 +23,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.IOException;
+
 /**
- * Tests for {@link HeapMemoryDisk} that reuse a disk for each store created. Stores are not deleted
+ * Tests for {@link HeapDisk} that reuse a disk for each store created. Stores are not deleted
  * after most tests, meaning new blocks must be allocated for each store created.
  *
  * @author Colin Decker
@@ -32,7 +34,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class HeapDiskReuseTest extends HeapDiskTest {
 
-  private final MemoryDisk disk = new HeapMemoryDisk(8);
+  private final HeapDisk disk = new HeapDisk(8, 1000, 1000);
 
   @Override
   protected ByteStore createByteStore() {
@@ -40,25 +42,25 @@ public class HeapDiskReuseTest extends HeapDiskTest {
   }
 
   @Test
-  public void testDeletedStore_contentsReturnedToDisk() {
+  public void testDeletedStore_contentsReturnedToDisk() throws IOException {
     byte[] bytes = new byte[1000];
     store.opened();
 
     store.write(0, bytes, 0, bytes.length);
 
-    int freeBlocksAfterWrite = disk.free.size();
+    int cachedBlocksAfterWrite = disk.blockCache.size();
     assertContentEquals(bytes, store);
 
     store.deleted();
 
-    assertEquals(freeBlocksAfterWrite, disk.free.size());
+    assertEquals(cachedBlocksAfterWrite, disk.blockCache.size());
     assertContentEquals(bytes, store);
 
     store.closed();
 
     assertContentEquals(new byte[0], store);
 
-    int freeBlocksAfterDelete = disk.free.size();
-    assertTrue(freeBlocksAfterDelete > freeBlocksAfterWrite);
+    int cachedBlocksAfterDelete = disk.blockCache.size();
+    assertTrue(cachedBlocksAfterDelete > cachedBlocksAfterWrite);
   }
 }

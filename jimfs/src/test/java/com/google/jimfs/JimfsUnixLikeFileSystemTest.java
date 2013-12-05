@@ -135,10 +135,10 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     ASSERT.that(fileStore.type()).is("jimfs");
     ASSERT.that(fileStore.isReadOnly()).isFalse();
 
-    // no regular files have been created and written to, so no blocks have been allocated yet
-    ASSERT.that(fileStore.getTotalSpace()).is(0);
-    ASSERT.that(fileStore.getUnallocatedSpace()).is(0);
-    ASSERT.that(fileStore.getUsableSpace()).is(0);
+    long expectedSize = 16L * 1024 * 1024 * 1024; // 16 GB
+    ASSERT.that(fileStore.getTotalSpace()).is(expectedSize);
+    ASSERT.that(fileStore.getUnallocatedSpace()).is(expectedSize);
+    ASSERT.that(fileStore.getUsableSpace()).is(expectedSize);
   }
 
   @Test

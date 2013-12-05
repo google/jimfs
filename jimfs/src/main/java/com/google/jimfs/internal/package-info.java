@@ -48,7 +48,7 @@
  * <ul>
  *   <li>{@link com.google.jimfs.internal.FileFactory FileFactory} handles creation of new file
  *   objects.</li>
- *   <li>{@link com.google.jimfs.internal.MemoryDisk MemoryDisk} handles creation and storage of
+ *   <li>{@link com.google.jimfs.internal.HeapDisk HeapDisk} handles creation and storage of
  *   {@link com.google.jimfs.internal.ByteStore ByteStore} instances, which act as the content of
  *   regular files.</li>
  *   <li>{@link com.google.jimfs.internal.FileTree FileTree} stores the root of the file hierarchy
@@ -121,12 +121,10 @@
  * <h3>Regular files</h3>
  *
  * Currently, the only implementation for regular file content is
- * {@link com.google.jimfs.internal.MemoryDiskByteStore MemoryDiskByteStore}, which makes use of a
- * singleton {@link com.google.jimfs.internal.MemoryDisk MemoryDisk}. A disk (which may either use
- * {@linkplain com.google.jimfs.internal.HeapMemoryDisk heap} or
- * {@linkplain com.google.jimfs.internal.DirectMemoryDisk direct} memory) is a resizable cache for
+ * {@link com.google.jimfs.internal.ByteStore ByteStore}, which makes use of a singleton
+ * {@link com.google.jimfs.internal.HeapDisk HeapDisk}. A disk is a resizable factory and cache for
  * fixed size blocks of memory. These blocks are allocated to files as needed and returned to the
- * disk when a file is deleted or truncated. When existing free blocks are available, those blocks
+ * disk when a file is deleted or truncated. When cached free blocks are available, those blocks
  * are allocated to files first. If more blocks are needed, they are created.
  *
  * <h3>Linking</h3>

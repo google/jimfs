@@ -53,14 +53,14 @@ import javax.annotation.Nullable;
 final class JimfsFileStore extends FileStore {
 
   private final FileTree tree;
-  private final MemoryDisk disk;
+  private final HeapDisk disk;
   private final AttributeService attributes;
   private final FileFactory factory;
 
   private final Lock readLock;
   private final Lock writeLock;
 
-  public JimfsFileStore(FileTree tree, FileFactory factory, MemoryDisk disk,
+  public JimfsFileStore(FileTree tree, FileFactory factory, HeapDisk disk,
       AttributeService attributes) {
     this.tree = checkNotNull(tree);
     this.factory = checkNotNull(factory);
@@ -143,7 +143,7 @@ final class JimfsFileStore extends FileStore {
    * Creates a copy of the given file, copying its attributes as well if copy attributes is true.
    * Returns the copy.
    */
-  File copy(File file, boolean copyAttributes) {
+  File copy(File file, boolean copyAttributes) throws IOException {
     File copy = factory.copy(file);
     setInitialAttributes(copy);
     if (copyAttributes) {

@@ -17,6 +17,7 @@
 package com.google.jimfs.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.jimfs.internal.InternalTestUtils.byteStore;
 import static com.google.jimfs.internal.PathServiceTest.fakePathService;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.fail;
@@ -459,7 +460,7 @@ public class FileTreeTest {
   private File createFile(String parent, String name) {
     File dir = files.get(parent);
 
-    File newFile = new File(new Random().nextInt(), new StubByteStore(0));
+    File newFile = new File(new Random().nextInt(), byteStore(0));
 
     dir.asDirectory().link(Name.simple(name), newFile);
 
