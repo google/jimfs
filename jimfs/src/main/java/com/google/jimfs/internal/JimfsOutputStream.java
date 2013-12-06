@@ -50,7 +50,7 @@ final class JimfsOutputStream extends OutputStream {
     store.writeLock().lock();
     try {
       if (append) {
-        pos = store.currentSize();
+        pos = store.sizeWithoutLocking();
       }
       store.write(pos++, (byte) b);
 
@@ -77,7 +77,7 @@ final class JimfsOutputStream extends OutputStream {
     store.writeLock().lock();
     try {
       if (append) {
-        pos = store.currentSize();
+        pos = store.sizeWithoutLocking();
       }
       pos += store.write(pos, b, off, len);
 

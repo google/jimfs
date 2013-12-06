@@ -63,7 +63,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Most of the behavior of {@link JimfsFileChannel} is handled by the {@link ByteStore}
- * implementations, so the thorough tests of that are in {@link AbstractByteStoreTest}. This mostly
+ * implementations, so the thorough tests of that are in {@link ByteStoreTest}. This mostly
  * tests interactions with the store and channel positions.
  *
  * @author Colin Decker

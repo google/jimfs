@@ -58,7 +58,7 @@ final class FileFactory {
    */
   @VisibleForTesting
   File createRegularFile() {
-    return new File(nextFileId(), disk.createByteStore());
+    return new File(nextFileId(), new ByteStore(disk));
   }
 
   /**

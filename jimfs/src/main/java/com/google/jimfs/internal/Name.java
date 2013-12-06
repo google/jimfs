@@ -95,12 +95,12 @@ final class Name {
   }
 
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return smearHash(canonical.hashCode());
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return display;
   }
 

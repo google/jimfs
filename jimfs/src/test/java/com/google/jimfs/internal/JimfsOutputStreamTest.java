@@ -172,7 +172,7 @@ public class JimfsOutputStreamTest {
 
   private static void addBytesToStore(JimfsOutputStream out, int... bytes) throws IOException {
     ByteStore store = out.file.asBytes();
-    long pos = store.currentSize();
+    long pos = store.sizeWithoutLocking();
     for (int b : bytes) {
       store.write(pos++, (byte) b);
     }

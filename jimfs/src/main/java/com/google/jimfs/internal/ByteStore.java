@@ -61,14 +61,14 @@ final class ByteStore implements FileContent {
   /**
    * Returns the read lock for this store.
    */
-  public final Lock readLock() {
+  public Lock readLock() {
     return lock.readLock();
   }
 
   /**
    * Returns the write lock for this store.
    */
-  public final Lock writeLock() {
+  public Lock writeLock() {
     return lock.writeLock();
   }
 
@@ -76,25 +76,8 @@ final class ByteStore implements FileContent {
    * Gets the current size of this store in bytes. Does not do locking, so should only be called
    * when holding a lock.
    */
-  public long currentSize() {
+  public long sizeWithoutLocking() {
     return size;
-  }
-
-  /**
-   * Creates a copy of this byte store.
-   *
-   * @throws IOException if the disk cannot allocate enough new blocks to create a copy
-   */
-  protected ByteStore createCopy() throws IOException {
-    BlockList copyBlocks = new BlockList(Math.max(blocks.size() * 2, 32));
-    disk.allocate(copyBlocks, blocks.size());
-
-    for (int i = 0; i < blocks.size(); i++) {
-      byte[] block = blocks.get(i);
-      byte[] copy = copyBlocks.get(i);
-      System.arraycopy(block, 0, copy, 0, block.length);
-    }
-    return new ByteStore(disk, copyBlocks, size);
   }
 
   // need to lock in these methods since they're defined by an interface
@@ -113,13 +96,22 @@ final class ByteStore implements FileContent {
   public ByteStore copy() throws IOException {
     readLock().lock();
     try {
-      return createCopy();
+      BlockList copyBlocks = new BlockList(Math.max(blocks.size() * 2, 32));
+      disk.allocate(copyBlocks, blocks.size());
+
+      for (int i = 0; i < blocks.size(); i++) {
+        byte[] block = blocks.get(i);
+        byte[] copy = copyBlocks.get(i);
+        System.arraycopy(block, 0, copy, 0, block.length);
+      }
+      return new ByteStore(disk, copyBlocks, size);
     } finally {
       readLock().unlock();
     }
   }
 
-  // opened/closed/delete don't use the read/write lock... they only need to ensure that they don'
+  // opened/closed/delete don't use the read/write lock... they only need to ensure that they are
+  // synchronized among themselves
 
   /**
    * Called when a stream or channel to this store is opened.
@@ -163,7 +155,7 @@ final class ByteStore implements FileContent {
    * Deletes the contents of this store. Called when the file that contains this store has been
    * deleted and all open streams and channels to the file have been closed.
    */
-  protected void deleteContents() {
+  private void deleteContents() {
     disk.free(blocks);
     size = 0;
   }

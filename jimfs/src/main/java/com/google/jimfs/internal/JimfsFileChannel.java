@@ -488,7 +488,7 @@ final class JimfsFileChannel extends FileChannel {
         store.writeLock().lockInterruptibly();
         try {
           if (append) {
-            position = store.currentSize();
+            position = store.sizeWithoutLocking();
           }
 
           int written = store.write((int) position, src);

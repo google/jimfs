@@ -96,13 +96,6 @@ final class HeapDisk {
   }
 
   /**
-   * Creates a new, empty byte store.
-   */
-  public ByteStore createByteStore() {
-    return new ByteStore(this);
-  }
-
-  /**
    * Returns the size of blocks created by this disk.
    */
   public int blockSize() {
@@ -160,7 +153,7 @@ final class HeapDisk {
    */
   public synchronized void free(BlockList blocks, int count) {
     int remainingCacheSpace = maxCachedBlockCount - blocks.size();
-    if (remainingCacheSpace != 0) {
+    if (remainingCacheSpace > 0) {
       blocks.copyTo(blockCache, Math.min(count, remainingCacheSpace));
     }
     blocks.truncate(blocks.size() - count);
