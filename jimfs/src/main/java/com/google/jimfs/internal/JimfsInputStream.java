@@ -146,9 +146,4 @@ final class JimfsInputStream extends InputStream {
   private boolean isOpen() {
     return store != null;
   }
-
-  @Override
-  protected void finalize() throws Throwable {
-    close();
-  }
 }

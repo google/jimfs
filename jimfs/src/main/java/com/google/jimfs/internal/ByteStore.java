@@ -258,7 +258,7 @@ final class ByteStore implements FileContent {
     int remaining = len;
 
     int blockIndex = blockIndex(pos);
-    byte[] block = blockForWrite(blockIndex);
+    byte[] block = blocks.get(blockIndex);
     int offInBlock = offsetInBlock(pos);
 
     int written = put(block, offInBlock, b, off, length(offInBlock, remaining));
@@ -273,9 +273,9 @@ final class ByteStore implements FileContent {
       off += written;
     }
 
-    long newPos = pos + len;
-    if (newPos > size) {
-      size = newPos;
+    long endPos = pos + len;
+    if (endPos > size) {
+      size = endPos;
     }
 
     return len;
@@ -298,10 +298,8 @@ final class ByteStore implements FileContent {
       return 0;
     }
 
-    int bytesToWrite = buf.remaining();
-
     int blockIndex = blockIndex(pos);
-    byte[] block = blockForWrite(blockIndex);
+    byte[] block = blocks.get(blockIndex);
     int off = offsetInBlock(pos);
 
     put(block, off, buf);
@@ -312,11 +310,12 @@ final class ByteStore implements FileContent {
       put(block, 0, buf);
     }
 
-    if (pos + bytesToWrite > size) {
-      size = pos + bytesToWrite;
+    long endPos = pos + len;
+    if (endPos > size) {
+      size = endPos;
     }
 
-    return bytesToWrite;
+    return len;
   }
 
   /**
@@ -345,7 +344,7 @@ final class ByteStore implements FileContent {
    */
   public long transferFrom(
       ReadableByteChannel src, long pos, long count) throws IOException {
-    prepareForWrite(pos, 0);
+    prepareForWrite(pos, 0); // don't assume the full count bytes will be written
 
     if (count == 0) {
       return 0;
@@ -359,6 +358,7 @@ final class ByteStore implements FileContent {
 
     ByteBuffer buf = ByteBuffer.wrap(block, off, length(off, remaining));
 
+    long currentPos = pos;
     int read = 0;
     while (buf.hasRemaining()) {
       read = src.read(buf);
@@ -366,7 +366,13 @@ final class ByteStore implements FileContent {
         break;
       }
 
+      currentPos += read;
       remaining -= read;
+    }
+
+    // update size before trying to get next block in case the disk is out of space
+    if (currentPos > size) {
+      size = currentPos;
     }
 
     if (read != -1) {
@@ -380,18 +386,21 @@ final class ByteStore implements FileContent {
             break outer;
           }
 
+          currentPos += read;
           remaining -= read;
+        }
+
+        if (currentPos > size) {
+          size = currentPos;
         }
       }
     }
 
-    long written = count - remaining;
-    long newPos = pos + written;
-    if (newPos > size) {
-      size = newPos;
+    if (currentPos > size) {
+      size = currentPos;
     }
 
-    return written;
+    return currentPos - pos;
   }
 
   /**

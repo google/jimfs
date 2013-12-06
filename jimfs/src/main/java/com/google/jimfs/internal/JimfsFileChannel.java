@@ -326,9 +326,9 @@ final class JimfsFileChannel extends FileChannel {
 
         store.writeLock().lockInterruptibly();
         try {
-          store.truncate((int) size);
+          store.truncate(size);
           if (position > size) {
-            position = (int) size;
+            position = size;
           }
 
           file.updateModifiedTime();
@@ -372,7 +372,7 @@ final class JimfsFileChannel extends FileChannel {
 
         store.readLock().lockInterruptibly();
         try {
-          long transferred = store.transferTo((int) position, (int) count, target);
+          long transferred = store.transferTo(position, count, target);
           file.updateAccessTime();
           completed = true;
           return transferred;
@@ -412,7 +412,7 @@ final class JimfsFileChannel extends FileChannel {
             position = store.size();
           }
 
-          long transferred = store.transferFrom(src, (int) position, (int) count);
+          long transferred = store.transferFrom(src, position, count);
 
           if (append) {
             this.position = position + transferred;
@@ -452,7 +452,7 @@ final class JimfsFileChannel extends FileChannel {
 
         store.readLock().lockInterruptibly();
         try {
-          int read = store.read((int) position, dst);
+          int read = store.read(position, dst);
           file.updateAccessTime();
           completed = true;
           return read;
@@ -491,7 +491,7 @@ final class JimfsFileChannel extends FileChannel {
             position = store.sizeWithoutLocking();
           }
 
-          int written = store.write((int) position, src);
+          int written = store.write(position, src);
 
           if (append) {
             this.position = position + written;
@@ -552,11 +552,6 @@ final class JimfsFileChannel extends FileChannel {
     } finally {
       store.closed();
     }
-  }
-
-  @Override
-  protected void finalize() throws Throwable {
-    close();
   }
 
   /**
