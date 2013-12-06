@@ -34,6 +34,7 @@ import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
 import java.nio.file.InvalidPathException;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,12 +56,12 @@ public final class Configuration {
    * this configuration:
    *
    * <ul>
-   *   <li>uses "/" as the path name separator (see {@link PathType#unix()} for more information on
-   *   the path format)</li>
-   *   <li>has root "/" and working directory "/work"</li>
+   *   <li>uses {@code /} as the path name separator (see {@link PathType#unix()} for more
+   *   information on the path format)</li>
+   *   <li>has root {@code /} and working directory "/work"</li>
    *   <li>performs case-sensitive file lookup</li>
-   *   <li>supports only the {@code basic} file attribute view, in the interest of avoiding
-   *   overhead for unneeded attributes</li>
+   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
+   *   avoid overhead for unneeded attributes</li>
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of UNIX
@@ -96,13 +97,13 @@ public final class Configuration {
    * <p>A file system created with this configuration:
    *
    * <ul>
-   *   <li>uses "/" as the path name separator (see {@link PathType#unix()} for more information
-   *   on the path format)</li>
-   *   <li>has root "/" and working directory "/work"</li>
+   *   <li>uses {@code /} as the path name separator (see {@link PathType#unix()} for more
+   *   information on the path format)</li>
+   *   <li>has root {@code /} and working directory "/work"</li>
    *   <li>does Unicode normalization on paths, both for lookup and for {@code Path} objects</li>
    *   <li>does case-insensitive (for ASCII characters only) lookup</li>
-   *   <li>supports only the {@code basic} file attribute view, to avoid overhead for unneeded
-   *   attributes</li>
+   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
+   *   avoid overhead for unneeded attributes</li>
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of UNIX
@@ -112,18 +113,18 @@ public final class Configuration {
    * <p>Example:
    *
    * <pre>
-   *   Configuration config = Configuration.osx().toBuilder()
+   *   Configuration config = Configuration.osX().toBuilder()
    *       .setAttributeViews("basic", "owner", "posix", "unix")
    *       .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
    *       .setWorkingDirectory("/Users/user")
    *       .build();  </pre>
    */
-  public static Configuration osx() {
-    return OsxHolder.OSX;
+  public static Configuration osX() {
+    return OsxHolder.OS_X;
   }
 
   private static final class OsxHolder {
-    private static final Configuration OSX = unix().toBuilder()
+    private static final Configuration OS_X = unix().toBuilder()
         .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
         .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
         .build();
@@ -134,14 +135,14 @@ public final class Configuration {
    * with this configuration:
    *
    * <ul>
-   *   <li>uses "\" as the path name separator and recognizes "/" as a separator when parsing
-   *   paths (see {@link PathType#windows()} for more information on path format)</li>
+   *   <li>uses {@code \} as the path name separator and recognizes {@code /} as a separator when
+   *   parsing paths (see {@link PathType#windows()} for more information on path format)</li>
    *   <li>has root "C:\" and working directory "C:\work"</li>
    *   <li>performs case-insensitive (for ASCII characters only) file lookup</li>
    *   <li>creates {@code Path} objects that use case-insensitive (for ASCII characters only)
    *   equality</li>
-   *   <li>supports only the {@code basic} file attribute view, to avoid overhead for unneeded
-   *   attributes</li>
+   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
+   *   avoid overhead for unneeded attributes</li>
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of
@@ -154,7 +155,7 @@ public final class Configuration {
    *   Configuration config = Configuration.windows().toBuilder()
    *       .setAttributeViews("basic", "owner", "dos", "acl", "user")
    *       .setNameCanonicalNormalization(CASE_FOLD_UNICODE)
-   *       .setWorkingDirectory("C:\\Users\dir")
+   *       .setWorkingDirectory("C:\\Users\\dir")
    *       .build();  </pre>
    */
   public static Configuration windows() {
@@ -296,14 +297,14 @@ public final class Configuration {
   /**
    * Returns the maximum amount of unused space (in bytes) in the file system's in-memory file
    * storage that should be cached for reuse. By default, this will be equal to the
-   * {@linkplain #maxSize() max size} of the storage, meaning that all space that is freed
+   * {@linkplain #maxSize() maximum size} of the storage, meaning that all space that is freed
    * when files are truncated or deleted is cached for reuse. This helps to avoid lots of garbage
    * collection when creating and deleting many files quickly. This can be set to 0 to disable
    * caching entirely (all freed blocks become available for garbage collection) or to some other
    * number to put an upper bound on the maximum amount of unused space the file system will keep
    * around.
    *
-   * <p>Like the max size, the actual value will be the closest multiple of the block size that
+   * <p>Like the maximum size, the actual value will be the closest multiple of the block size that
    * is less than or equal to this size.
    */
   public long maxCacheSize() {
@@ -450,6 +451,8 @@ public final class Configuration {
     /**
      * Sets whether {@code Path} objects in the file system use the canonical form (true) or the
      * display form (false) of filenames for determining equality of two paths.
+     *
+     * <p>The default is false.
      */
     public Builder setPathEqualityUsesCanonicalForm(boolean useCanonicalForm) {
       this.pathEqualityUsesCanonicalForm = useCanonicalForm;
@@ -502,15 +505,15 @@ public final class Configuration {
     /**
      * Sets the maximum amount of unused space (in bytes) in the file system's in-memory file
      * storage that should be cached for reuse. By default, this will be equal to the
-     * {@linkplain #setMaxSize(long) max size} of the storage, meaning that all space that is freed
+     * {@linkplain #setMaxSize(long) maximum size} of the storage, meaning that all space that is freed
      * when files are truncated or deleted is cached for reuse. This helps to avoid lots of garbage
      * collection when creating and deleting many files quickly. This can be set to 0 to disable
      * caching entirely (all freed blocks become available for garbage collection) or to some other
      * number to put an upper bound on the maximum amount of unused space the file system will keep
      * around.
      *
-     * <p>Like the max size, the actual value will be the closest multiple of the block size that
-     * is less than or equal to the given size.
+     * <p>Like the maximum size, the actual value will be the closest multiple of the block size
+     * that is less than or equal to the given size.
      */
     public Builder setMaxCacheSize(long maxCacheSize) {
       checkArgument(maxCacheSize >= 0, "maxCacheSize (%s) may not be negative", maxCacheSize);
@@ -603,9 +606,8 @@ public final class Configuration {
       List<String> roots = Lists.asList(first, more);
       for (String root : roots) {
         PathType.ParseResult parseResult = pathType.parsePath(root);
-        if (parseResult.root() == null || !Iterables.isEmpty(parseResult.names())) {
-          throw new IllegalArgumentException("invalid root: " + root);
-        }
+        checkArgument(parseResult.root() != null && Iterables.isEmpty(parseResult.names()),
+            "invalid root: %s", root);
       }
       this.roots = ImmutableSet.copyOf(roots);
       return this;
@@ -621,10 +623,8 @@ public final class Configuration {
      */
     public Builder setWorkingDirectory(String workingDirectory) {
       PathType.ParseResult parseResult = pathType.parsePath(workingDirectory);
-      if (!parseResult.isAbsolute()) {
-        throw new IllegalArgumentException(
-            "working directory must be an absolute path: " + workingDirectory);
-      }
+      checkArgument(parseResult.isAbsolute(),
+          "working directory must be an absolute path: %s", workingDirectory);
       this.workingDirectory = checkNotNull(workingDirectory);
       return this;
     }
