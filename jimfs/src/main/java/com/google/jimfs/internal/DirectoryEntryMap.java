@@ -120,7 +120,7 @@ final class DirectoryEntryMap implements Iterable<DirectoryEntry> {
     // redistribute all current entries in the new table
     for (DirectoryEntry entry : table) {
       while (entry != null) {
-        int index = bucketIndex(entry.name(), table.length);
+        int index = bucketIndex(entry.name(), newTable.length);
         addToBucket(index, newTable, entry);
         DirectoryEntry next = entry.next;
         // set entry.next to null; it's always the last entry in its bucket after being added
