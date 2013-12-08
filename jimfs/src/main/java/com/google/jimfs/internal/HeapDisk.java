@@ -36,13 +36,6 @@ import java.math.RoundingMode;
  */
 final class HeapDisk {
 
-  /** 8 KB blocks. */
-  public static final int DEFAULT_BLOCK_SIZE = 8192;
-
-  /** 4 GB of space with 8 KB blocks. */
-  public static final int DEFAULT_MAX_BLOCK_COUNT =
-      (int) ((4L * 1024 * 1024 * 1024) / DEFAULT_BLOCK_SIZE);
-
   /** Fixed size of each block for this disk. */
   private final int blockSize;
 
@@ -59,13 +52,8 @@ final class HeapDisk {
   private int allocatedBlockCount;
 
   /**
-   * Creates a new heap disk with 8 KB blocks that can store up to 4 GB of data and caches all
-   * blocks that are freed.
+   * Creates a new disk using settings from the given configuration.
    */
-  public HeapDisk() {
-    this(DEFAULT_BLOCK_SIZE, DEFAULT_MAX_BLOCK_COUNT, DEFAULT_MAX_BLOCK_COUNT);
-  }
-
   public HeapDisk(Configuration config) {
     this.blockSize = config.blockSize();
     this.maxBlockCount = toBlockCount(config.maxSize(), blockSize);
@@ -152,7 +140,7 @@ final class HeapDisk {
    * Frees the last count blocks from the given list.
    */
   public synchronized void free(BlockList blocks, int count) {
-    int remainingCacheSpace = maxCachedBlockCount - blocks.size();
+    int remainingCacheSpace = maxCachedBlockCount - blockCache.size();
     if (remainingCacheSpace > 0) {
       blocks.copyTo(blockCache, Math.min(count, remainingCacheSpace));
     }

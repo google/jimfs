@@ -16,7 +16,6 @@
 
 package com.google.jimfs.internal;
 
-import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.primitives.Bytes;
