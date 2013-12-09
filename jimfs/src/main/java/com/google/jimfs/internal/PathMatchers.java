@@ -68,7 +68,6 @@ final class PathMatchers {
     }
   }
 
-  @SuppressWarnings("MagicConstant")
   private static PathMatcher fromRegex(String regex, Iterable<Normalization> normalizations) {
     return new RegexPathMatcher(Normalization.compilePattern(regex, normalizations));
   }
