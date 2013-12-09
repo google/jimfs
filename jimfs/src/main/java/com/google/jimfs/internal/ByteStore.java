@@ -31,7 +31,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * A mutable, resizable store for bytes.
+ * A mutable, resizable store for the bytes of a regular file. Bytes are stored in fixed-sized
+ * byte arrays (blocks) allocated by a {@link HeapDisk}.
  *
  * @author Colin Decker
  */

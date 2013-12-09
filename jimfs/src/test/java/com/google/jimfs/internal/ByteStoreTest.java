@@ -300,6 +300,37 @@ public class ByteStoreTest {
       assertContentEquals("00000111222", store);
     }
 
+    public void testEmpty_write_noBytesArray_atStart() throws IOException {
+      store.write(0, bytes(), 0, 0);
+      assertContentEquals(bytes(), store);
+    }
+
+    public void testEmpty_write_noBytesArray_atNonZeroPosition() throws IOException {
+      store.write(5, bytes(), 0, 0);
+      assertContentEquals(bytes("00000"), store);
+    }
+
+    public void testEmpty_write_noBytesBuffer_atStart() throws IOException {
+      store.write(0, buffer(""));
+      assertContentEquals(bytes(), store);
+    }
+
+    public void testEmpty_write_noBytesBuffer_atNonZeroPosition() throws IOException {
+      ByteBuffer buffer = ByteBuffer.allocate(0);
+      store.write(5, buffer);
+      assertContentEquals(bytes("00000"), store);
+    }
+
+    public void testEmpty_write_noBytesBuffers_atStart() throws IOException {
+      store.write(0, ImmutableList.of(buffer(""), buffer(""), buffer("")));
+      assertContentEquals(bytes(), store);
+    }
+
+    public void testEmpty_write_noBytesBuffers_atNonZeroPosition() throws IOException {
+      store.write(5, ImmutableList.of(buffer(""), buffer(""), buffer("")));
+      assertContentEquals(bytes("00000"), store);
+    }
+
     public void testEmpty_transferFrom_fromStart_countEqualsSrcSize() throws IOException {
       long transferred = store.transferFrom(new ByteBufferChannel(buffer("111111")), 0, 6);
       assertEquals(6, transferred);
@@ -330,10 +361,38 @@ public class ByteStoreTest {
       assertContentEquals("0000111", store);
     }
 
-    public void testEmpty_transferFrom_fromBeyondStart_countGreaterThanSrcSize() throws IOException {
+    public void testEmpty_transferFrom_fromBeyondStart_countGreaterThanSrcSize()
+        throws IOException {
       long transferred = store.transferFrom(new ByteBufferChannel(buffer("111111")), 4, 12);
       assertEquals(6, transferred);
       assertContentEquals("0000111111", store);
+    }
+
+    public void testEmpty_transferFrom_fromStart_noBytes_countEqualsSrcSize() throws IOException {
+      long transferred = store.transferFrom(new ByteBufferChannel(buffer("")), 0, 0);
+      assertEquals(0, transferred);
+      assertContentEquals(bytes(), store);
+    }
+
+    public void testEmpty_transferFrom_fromStart_noBytes_countGreaterThanSrcSize()
+        throws IOException {
+      long transferred = store.transferFrom(new ByteBufferChannel(buffer("")), 0, 10);
+      assertEquals(0, transferred);
+      assertContentEquals(bytes(), store);
+    }
+
+    public void testEmpty_transferFrom_fromBeyondStart_noBytes_countEqualsSrcSize()
+        throws IOException {
+      long transferred = store.transferFrom(new ByteBufferChannel(buffer("")), 5, 0);
+      assertEquals(0, transferred);
+      assertContentEquals(bytes("00000"), store);
+    }
+
+    public void testEmpty_transferFrom_fromBeyondStart_noBytes_countGreaterThanSrcSize()
+        throws IOException {
+      long transferred = store.transferFrom(new ByteBufferChannel(buffer("")), 5, 10);
+      assertEquals(0, transferred);
+      assertContentEquals(bytes("00000"), store);
     }
 
     public void testEmpty_transferTo() throws IOException {
