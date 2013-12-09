@@ -47,11 +47,11 @@ public class HeapDiskTest {
 
   @Test
   public void testInitialSettings_basic() {
-    HeapDisk disk = new HeapDisk(8096, 100, 100);
+    HeapDisk disk = new HeapDisk(8192, 100, 100);
 
-    ASSERT.that(disk.blockSize()).is(8096);
-    ASSERT.that(disk.getTotalSpace()).is(809600);
-    ASSERT.that(disk.getUnallocatedSpace()).is(809600);
+    ASSERT.that(disk.blockSize()).is(8192);
+    ASSERT.that(disk.getTotalSpace()).is(819200);
+    ASSERT.that(disk.getUnallocatedSpace()).is(819200);
     ASSERT.that(disk.blockCache.isEmpty()).isTrue();
   }
 

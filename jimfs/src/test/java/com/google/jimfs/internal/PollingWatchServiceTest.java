@@ -210,7 +210,7 @@ public class PollingWatchServiceTest {
   }
 
   private static void ensureTimeToPoll() {
-    Uninterruptibles.sleepUninterruptibly(8, MILLISECONDS);
+    Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
   }
 
   private JimfsPath createDirectory() throws IOException {
