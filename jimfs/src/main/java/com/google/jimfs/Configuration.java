@@ -155,7 +155,7 @@ public final class Configuration {
    *   Configuration config = Configuration.windows().toBuilder()
    *       .setAttributeViews("basic", "owner", "dos", "acl", "user")
    *       .setNameCanonicalNormalization(CASE_FOLD_UNICODE)
-   *       .setWorkingDirectory("C:\\Users\\dir")
+   *       .setWorkingDirectory("C:\\Users\\user") // or "C:/Users/user"
    *       .build();  </pre>
    */
   public static Configuration windows() {
