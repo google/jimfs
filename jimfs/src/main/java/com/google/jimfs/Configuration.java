@@ -58,7 +58,7 @@ public final class Configuration {
    * <ul>
    *   <li>uses {@code /} as the path name separator (see {@link PathType#unix()} for more
    *   information on the path format)</li>
-   *   <li>has root {@code /} and working directory "/work"</li>
+   *   <li>has root {@code /} and working directory {@code /work}</li>
    *   <li>performs case-sensitive file lookup</li>
    *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
    *   avoid overhead for unneeded attributes</li>
@@ -99,7 +99,7 @@ public final class Configuration {
    * <ul>
    *   <li>uses {@code /} as the path name separator (see {@link PathType#unix()} for more
    *   information on the path format)</li>
-   *   <li>has root {@code /} and working directory "/work"</li>
+   *   <li>has root {@code /} and working directory {@code /work}</li>
    *   <li>does Unicode normalization on paths, both for lookup and for {@code Path} objects</li>
    *   <li>does case-insensitive (for ASCII characters only) lookup</li>
    *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
@@ -137,7 +137,7 @@ public final class Configuration {
    * <ul>
    *   <li>uses {@code \} as the path name separator and recognizes {@code /} as a separator when
    *   parsing paths (see {@link PathType#windows()} for more information on path format)</li>
-   *   <li>has root "C:\" and working directory "C:\work"</li>
+   *   <li>has root {@code C:\} and working directory {@code C:\work}</li>
    *   <li>performs case-insensitive (for ASCII characters only) file lookup</li>
    *   <li>creates {@code Path} objects that use case-insensitive (for ASCII characters only)
    *   equality</li>
@@ -268,9 +268,7 @@ public final class Configuration {
 
   /**
    * Returns the block size (in bytes) for the file system to use. All regular files will be
-   * allocated blocks of the given size, so this is the minimum granularity for file size.
-   *
-   * <p>The default is 8192 bytes (8 KB).
+   * allocated blocks of the given size, so this is the minimum granularity for actual file size.
    */
   public int blockSize() {
     return blockSize;
@@ -279,16 +277,7 @@ public final class Configuration {
   /**
    * Returns the maximum size (in bytes) for the file system's in-memory file storage. This maximum
    * size determines the maximum number of blocks that can be allocated to regular files, so it
-   * should generally be a multiple of the {@linkplain #blockSize() block size}. The actual
-   * maximum size will be the nearest multiple of the block size that is less than or equal to this
-   * size.
-   *
-   * <p><b>Note:</b> The in-memory file storage will not be eagerly initialized to this size, so
-   * it won't use more memory than is needed for the files you create. Also note that in addition
-   * to this limit, you will of course be limited by the amount of heap space available to the
-   * JVM and the amount of heap used by other objects, both in the file system and elsewhere.
-   *
-   * <p>The default is 4 GB.
+   * should generally be a multiple of the {@linkplain #blockSize() block size}.
    */
   public long maxSize() {
     return maxSize;
@@ -299,13 +288,7 @@ public final class Configuration {
    * storage that should be cached for reuse. By default, this will be equal to the
    * {@linkplain #maxSize() maximum size} of the storage, meaning that all space that is freed
    * when files are truncated or deleted is cached for reuse. This helps to avoid lots of garbage
-   * collection when creating and deleting many files quickly. This can be set to 0 to disable
-   * caching entirely (all freed blocks become available for garbage collection) or to some other
-   * number to put an upper bound on the maximum amount of unused space the file system will keep
-   * around.
-   *
-   * <p>Like the maximum size, the actual value will be the closest multiple of the block size that
-   * is less than or equal to this size.
+   * collection when creating and deleting many files quickly.
    */
   public long maxCacheSize() {
     return maxCacheSize;
@@ -346,16 +329,25 @@ public final class Configuration {
    */
   public static final class Builder {
 
+    /** 8 KB. */
+    public static final int DEFAULT_BLOCK_SIZE = 8192;
+
+    /** 4 GB. */
+    public static final long DEFAULT_MAX_SIZE = 4L * 1024 * 1024 * 1024;
+
+    /** Equal to the configured max size. */
+    public static final long DEFAULT_MAX_CACHE_SIZE = -1;
+
     // Path configuration
     private final PathType pathType;
     private ImmutableSet<Normalization> nameDisplayNormalization = ImmutableSet.of();
     private ImmutableSet<Normalization> nameCanonicalNormalization = ImmutableSet.of();
-    private boolean pathEqualityUsesCanonicalForm;
+    private boolean pathEqualityUsesCanonicalForm = false;
 
     // Disk configuration
-    private int blockSize = 8192; // 8 KB
-    private long maxSize = 4L * 1024 * 1024 * 1024; // 4 GB
-    private long maxCacheSize = -1; // same as maxSize
+    private int blockSize = DEFAULT_BLOCK_SIZE;
+    private long maxSize = DEFAULT_MAX_SIZE;
+    private long maxCacheSize = DEFAULT_MAX_CACHE_SIZE;
 
     // Attribute configuration
     private ImmutableSet<String> attributeViews = ImmutableSet.of();
@@ -460,17 +452,6 @@ public final class Configuration {
     }
 
     /**
-     * Sets the attribute views the file system should support. By default, the views that may be
-     * specified are those listed by {@link StandardAttributeProviders}. If any other views should
-     * be supported, attribute providers for those views must be
-     * {@linkplain #addAttributeProvider(AttributeProvider) added}.
-     */
-    public Builder setAttributeViews(String first, String... more) {
-      this.attributeViews = ImmutableSet.copyOf(Lists.asList(first, more));
-      return this;
-    }
-
-    /**
      * Sets the block size (in bytes) for the file system to use. All regular files will be
      * allocated blocks of the given size, so this is the minimum granularity for file size.
      *
@@ -505,12 +486,12 @@ public final class Configuration {
     /**
      * Sets the maximum amount of unused space (in bytes) in the file system's in-memory file
      * storage that should be cached for reuse. By default, this will be equal to the
-     * {@linkplain #setMaxSize(long) maximum size} of the storage, meaning that all space that is freed
-     * when files are truncated or deleted is cached for reuse. This helps to avoid lots of garbage
-     * collection when creating and deleting many files quickly. This can be set to 0 to disable
-     * caching entirely (all freed blocks become available for garbage collection) or to some other
-     * number to put an upper bound on the maximum amount of unused space the file system will keep
-     * around.
+     * {@linkplain #setMaxSize(long) maximum size} of the storage, meaning that all space that is
+     * freed when files are truncated or deleted is cached for reuse. This helps to avoid lots of
+     * garbage collection when creating and deleting many files quickly. This can be set to 0 to
+     * disable caching entirely (all freed blocks become available for garbage collection) or to
+     * some other number to put an upper bound on the maximum amount of unused space the file
+     * system will keep around.
      *
      * <p>Like the maximum size, the actual value will be the closest multiple of the block size
      * that is less than or equal to the given size.
@@ -518,6 +499,17 @@ public final class Configuration {
     public Builder setMaxCacheSize(long maxCacheSize) {
       checkArgument(maxCacheSize >= 0, "maxCacheSize (%s) may not be negative", maxCacheSize);
       this.maxCacheSize = maxCacheSize;
+      return this;
+    }
+
+    /**
+     * Sets the attribute views the file system should support. By default, the views that may be
+     * specified are those listed by {@link StandardAttributeProviders}. If any other views should
+     * be supported, attribute providers for those views must be
+     * {@linkplain #addAttributeProvider(AttributeProvider) added}.
+     */
+    public Builder setAttributeViews(String first, String... more) {
+      this.attributeViews = ImmutableSet.copyOf(Lists.asList(first, more));
       return this;
     }
 
@@ -606,8 +598,7 @@ public final class Configuration {
       List<String> roots = Lists.asList(first, more);
       for (String root : roots) {
         PathType.ParseResult parseResult = pathType.parsePath(root);
-        checkArgument(parseResult.root() != null && Iterables.isEmpty(parseResult.names()),
-            "invalid root: %s", root);
+        checkArgument(parseResult.isRoot(), "invalid root: %s", root);
       }
       this.roots = ImmutableSet.copyOf(roots);
       return this;

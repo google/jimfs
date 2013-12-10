@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -232,6 +233,13 @@ public abstract class PathType {
      */
     public boolean isAbsolute() {
       return root != null;
+    }
+
+    /**
+     * Returns whether or not this result represents a root path.
+     */
+    public boolean isRoot() {
+      return root != null && Iterables.isEmpty(names);
     }
 
     /**
