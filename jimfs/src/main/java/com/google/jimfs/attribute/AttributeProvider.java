@@ -71,7 +71,7 @@ public abstract class AttributeProvider {
    * that should be done. The resulting values should be included in the result map along with
    * default values for any attributes the user did not provide a value for.
    */
-  public Map<String, ?> defaultValues(Map<String, ?> userDefaults) {
+  public ImmutableMap<String, ?> defaultValues(Map<String, ?> userDefaults) {
     return ImmutableMap.of();
   }
 
@@ -151,17 +151,9 @@ public abstract class AttributeProvider {
    */
   protected static void checkNotCreate(String view, String attribute, boolean create) {
     if (create) {
-      throw unsettableOnCreate(view, attribute);
+      throw new UnsupportedOperationException(
+          "cannot set attribute '" + view + ":" + attribute + "' during file creation");
     }
-  }
-
-  /**
-   * Throws an unsupported operation exception indicating that the given attribute cannot be set
-   * during file creation.
-   */
-  protected static UnsupportedOperationException unsettableOnCreate(String view, String attribute) {
-    throw new UnsupportedOperationException(
-        "cannot set attribute '" + view + ":" + attribute + "' during file creation");
   }
 
   /**

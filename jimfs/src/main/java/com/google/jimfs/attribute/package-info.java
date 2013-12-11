@@ -15,7 +15,8 @@
  */
 
 /**
- * Package containing classes used for configuration of file attribute handling.
+ * Package containing classes used for configuration of
+ * <a href="https://www.google.com/url?sa=D&q=http%3A%2F%2Fen.wikipedia.org%2Fwiki%2FFile_attribute">file attribute</a> handling.
  *
  * <p>Users can create a subclass of
  * {@link com.google.jimfs.attribute.AttributeProvider AttributeProvider} to implement handling of

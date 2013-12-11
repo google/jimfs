@@ -142,7 +142,7 @@ public class PollingWatchServiceTest {
     ASSERT.that(watcher.isPolling()).isFalse();
   }
 
-  @Test(timeout = 100)
+  @Test(timeout = 200)
   public void testWatchForOneEventType() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE));

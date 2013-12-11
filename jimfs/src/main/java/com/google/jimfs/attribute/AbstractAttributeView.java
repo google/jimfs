@@ -30,14 +30,14 @@ abstract class AbstractAttributeView implements FileAttributeView {
 
   private final Inode.Lookup lookup;
 
-  public AbstractAttributeView(Inode.Lookup lookup) {
+  protected AbstractAttributeView(Inode.Lookup lookup) {
     this.lookup = checkNotNull(lookup);
   }
 
   /**
    * Gets the inode object to get or set attributes on.
    */
-  public final Inode lookupInode() throws IOException {
+  protected final Inode lookupInode() throws IOException {
     return lookup.lookup();
   }
 }

@@ -28,6 +28,8 @@ import java.nio.file.attribute.UserPrincipal;
  */
 public final class UserPrincipals {
 
+  private UserPrincipals() {}
+
   /**
    * Creates a {@link UserPrincipal} for the given user name.
    */

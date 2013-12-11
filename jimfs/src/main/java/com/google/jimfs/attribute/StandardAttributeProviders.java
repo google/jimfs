@@ -80,7 +80,6 @@ public final class StandardAttributeProviders {
           .put("basic", new BasicAttributeProvider())
           .put("owner", new OwnerAttributeProvider())
           .put("posix", new PosixAttributeProvider())
-          .put("unix", new UnixAttributeProvider())
           .put("dos", new DosAttributeProvider())
           .put("acl", new AclAttributeProvider())
           .put("user", new UserDefinedAttributeProvider())

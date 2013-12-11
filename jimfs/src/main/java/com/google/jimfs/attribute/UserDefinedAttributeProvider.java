@@ -135,7 +135,7 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
     }
 
     private byte[] getStoredBytes(String name) throws IOException {
-      byte[] bytes = lookupInode().getAttribute(name() + ":" + name);
+      byte[] bytes = (byte[]) lookupInode().getAttribute(name() + ":" + name);
       if (bytes == null) {
         throw new IllegalArgumentException("attribute '" + name() + ":" + name + "' is not set");
       }

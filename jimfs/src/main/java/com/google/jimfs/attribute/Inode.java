@@ -167,17 +167,14 @@ public abstract class Inode {
   }
 
   /**
-   * Gets the value of the attribute with the given key. The value is automatically cast to the
-   * target type inferred by the call site, as it is assumed that the caller knows what type the
-   * value will be.
+   * Gets the value of the attribute with the given key.
    */
-  @SuppressWarnings("unchecked")
   @Nullable
-  public final synchronized <T> T getAttribute(String key) {
+  public final synchronized Object getAttribute(String key) {
     if (attributes == null) {
       return null;
     }
-    return (T) attributes.get(key);
+    return attributes.get(key);
   }
 
   /**

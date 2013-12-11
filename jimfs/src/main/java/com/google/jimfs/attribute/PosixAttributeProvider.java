@@ -74,7 +74,7 @@ final class PosixAttributeProvider extends AttributeProvider {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Map<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
+  public ImmutableMap<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
     Object userProvidedGroup = userProvidedDefaults.get("posix:group");
 
     UserPrincipal group = DEFAULT_GROUP;
@@ -245,9 +245,10 @@ final class PosixAttributeProvider extends AttributeProvider {
     @SuppressWarnings("unchecked")
     protected Attributes(Inode inode) {
       super(inode);
-      this.owner = inode.getAttribute("owner:owner");
-      this.group = inode.getAttribute("posix:group");
-      this.permissions = inode.getAttribute("posix:permissions");
+      this.owner = (UserPrincipal) inode.getAttribute("owner:owner");
+      this.group = (GroupPrincipal) inode.getAttribute("posix:group");
+      this.permissions =
+          (ImmutableSet<PosixFilePermission>) inode.getAttribute("posix:permissions");
     }
 
     @Override

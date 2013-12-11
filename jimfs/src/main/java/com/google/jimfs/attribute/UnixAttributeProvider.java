@@ -77,7 +77,9 @@ final class UnixAttributeProvider extends AttributeProvider {
   @Override
   public UnixFileAttributeView view(Inode.Lookup lookup,
       ImmutableMap<String, FileAttributeView> inheritedViews) {
-    throw new UnsupportedOperationException(); // should not be called
+    // This method should not be called... and it cannot be called through the public APIs in
+    // java.nio.file since there is no public UnixFileAttributeView type.
+    throw new UnsupportedOperationException();
   }
 
   // TODO(cgdecker): Since we can now guarantee that the owner/group for an inode are our own
@@ -107,13 +109,14 @@ final class UnixAttributeProvider extends AttributeProvider {
   public Object get(Inode inode, String attribute) {
     switch (attribute) {
       case "uid":
-        UserPrincipal user = inode.getAttribute("owner:owner");
+        UserPrincipal user = (UserPrincipal) inode.getAttribute("owner:owner");
         return getUniqueId(user);
       case "gid":
-        GroupPrincipal group = inode.getAttribute("posix:group");
+        GroupPrincipal group = (GroupPrincipal) inode.getAttribute("posix:group");
         return getUniqueId(group);
       case "mode":
-        Set<PosixFilePermission> permissions = inode.getAttribute("posix:permissions");
+        Set<PosixFilePermission> permissions =
+            (Set<PosixFilePermission>) inode.getAttribute("posix:permissions");
         return toMode(permissions);
       case "ctime":
         return FileTime.fromMillis(inode.getCreationTime());

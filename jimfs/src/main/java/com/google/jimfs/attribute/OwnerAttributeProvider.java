@@ -52,7 +52,7 @@ final class OwnerAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public Map<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
+  public ImmutableMap<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
     Object userProvidedOwner = userProvidedDefaults.get("owner:owner");
 
     UserPrincipal owner = DEFAULT_OWNER;
@@ -117,7 +117,7 @@ final class OwnerAttributeProvider extends AttributeProvider {
 
     @Override
     public UserPrincipal getOwner() throws IOException {
-      return lookupInode().getAttribute("owner:owner");
+      return (UserPrincipal) lookupInode().getAttribute("owner:owner");
     }
 
     @Override

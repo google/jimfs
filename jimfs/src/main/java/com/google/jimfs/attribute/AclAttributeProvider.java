@@ -62,7 +62,7 @@ final class AclAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public Map<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
+  public ImmutableMap<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
     Object userProvidedAcl = userProvidedDefaults.get("acl:acl");
 
     ImmutableList<AclEntry> acl = DEFAULT_ACL;
@@ -137,7 +137,7 @@ final class AclAttributeProvider extends AttributeProvider {
     @SuppressWarnings("unchecked")
     @Override
     public List<AclEntry> getAcl() throws IOException {
-      return lookupInode().getAttribute("acl:acl");
+      return (List<AclEntry>) lookupInode().getAttribute("acl:acl");
     }
 
     @Override

@@ -56,7 +56,7 @@ public final class TestAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public Map<String, ?> defaultValues(Map<String, ?> userDefaults) {
+  public ImmutableMap<String, ?> defaultValues(Map<String, ?> userDefaults) {
     Map<String, Object> result = new HashMap<>();
 
     Long bar = 0L;
@@ -70,7 +70,7 @@ public final class TestAttributeProvider extends AttributeProvider {
 
     result.put("test:bar", bar);
     result.put("test:baz", baz);
-    return result;
+    return ImmutableMap.copyOf(result);
   }
 
   @Override
@@ -165,8 +165,8 @@ public final class TestAttributeProvider extends AttributeProvider {
     private final Integer baz;
 
     public Attributes(Inode inode) {
-      this.bar = inode.getAttribute("test:bar");
-      this.baz = inode.getAttribute("test:baz");
+      this.bar = (Long) inode.getAttribute("test:bar");
+      this.baz = (Integer) inode.getAttribute("test:baz");
     }
 
     @Override

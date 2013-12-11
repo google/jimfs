@@ -63,7 +63,7 @@ final class DosAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public Map<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
+  public ImmutableMap<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
     return ImmutableMap.of(
         "dos:readonly", getDefaultValue("dos:readonly", userProvidedDefaults),
         "dos:hidden", getDefaultValue("dos:hidden", userProvidedDefaults),
@@ -183,10 +183,10 @@ final class DosAttributeProvider extends AttributeProvider {
 
     protected Attributes(Inode inode) {
       super(inode);
-      this.readOnly = inode.getAttribute("dos:readonly");
-      this.hidden = inode.getAttribute("dos:hidden");
-      this.archive = inode.getAttribute("dos:archive");
-      this.system = inode.getAttribute("dos:system");
+      this.readOnly = (boolean) inode.getAttribute("dos:readonly");
+      this.hidden = (boolean) inode.getAttribute("dos:hidden");
+      this.archive = (boolean) inode.getAttribute("dos:archive");
+      this.system = (boolean) inode.getAttribute("dos:system");
     }
 
     @Override
