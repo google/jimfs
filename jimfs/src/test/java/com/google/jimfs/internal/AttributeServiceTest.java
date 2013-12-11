@@ -80,15 +80,12 @@ public class AttributeServiceTest {
     Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode);
 
-    ASSERT.that(ImmutableSet.copyOf(inode.getAttributeKeys())).is(
-        ImmutableSet.of(
-            "test:bar",
-            "test:baz",
-            "owner:owner"));
+    ASSERT.that(inode.getAttributeNames("test")).has().exactly("bar", "baz");
+    ASSERT.that(inode.getAttributeNames("owner")).has().exactly("owner");
 
     ASSERT.that(service.getAttribute(inode, "basic:lastModifiedTime")).isA(FileTime.class);
-    ASSERT.that(inode.getAttribute("test:bar")).is(0L);
-    ASSERT.that(inode.getAttribute("test:baz")).is(1);
+    ASSERT.that(inode.getAttribute("test", "bar")).is(0L);
+    ASSERT.that(inode.getAttribute("test", "baz")).is(1);
   }
 
   @Test
@@ -132,17 +129,17 @@ public class AttributeServiceTest {
   public void testSetAttribute() {
     Inode inode = new FakeInode(0);
     service.setAttribute(inode, "test:bar", 10L, false);
-    ASSERT.that(inode.getAttribute("test:bar")).is(10L);
+    ASSERT.that(inode.getAttribute("test", "bar")).is(10L);
 
     service.setAttribute(inode, "test:baz", 100, false);
-    ASSERT.that(inode.getAttribute("test:baz")).is(100);
+    ASSERT.that(inode.getAttribute("test", "baz")).is(100);
   }
 
   @Test
   public void testSetAttribute_forInheritedProvider() {
     Inode inode = new FakeInode(0);
     service.setAttribute(inode, "test:lastModifiedTime", FileTime.fromMillis(0), false);
-    ASSERT.that(inode.getAttribute("test:lastModifiedTime")).isNull();
+    ASSERT.that(inode.getAttribute("test", "lastModifiedTime")).isNull();
     ASSERT.that(service.getAttribute(inode, "basic:lastModifiedTime")).is(FileTime.fromMillis(0));
   }
 
@@ -150,17 +147,17 @@ public class AttributeServiceTest {
   public void testSetAttribute_withAlternateAcceptedType() {
     Inode inode = new FakeInode(0);
     service.setAttribute(inode, "test:bar", 10F, false);
-    ASSERT.that(inode.getAttribute("test:bar")).is(10L);
+    ASSERT.that(inode.getAttribute("test", "bar")).is(10L);
 
     service.setAttribute(inode, "test:bar", BigInteger.valueOf(123), false);
-    ASSERT.that(inode.getAttribute("test:bar")).is(123L);
+    ASSERT.that(inode.getAttribute("test", "bar")).is(123L);
   }
 
   @Test
   public void testSetAttribute_onCreate() {
     Inode inode = new FakeInode(0);
     service.setInitialAttributes(inode, new BasicFileAttribute<>("test:baz", 123));
-    ASSERT.that(inode.getAttribute("test:baz")).is(123);
+    ASSERT.that(inode.getAttribute("test", "baz")).is(123);
   }
 
   @Test
@@ -181,7 +178,7 @@ public class AttributeServiceTest {
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(inode.getAttribute("test:baz")).is(1);
+    ASSERT.that(inode.getAttribute("test", "baz")).is(1);
   }
 
   @Test
@@ -194,7 +191,7 @@ public class AttributeServiceTest {
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(inode.getAttribute("test:bar")).is(0L);
+    ASSERT.that(inode.getAttribute("test", "bar")).is(0L);
   }
 
   @Test
@@ -207,7 +204,7 @@ public class AttributeServiceTest {
     } catch (NullPointerException expected) {
     }
 
-    ASSERT.that(inode.getAttribute("test:bar")).is(0L);
+    ASSERT.that(inode.getAttribute("test", "bar")).is(0L);
   }
 
   @Test
@@ -219,7 +216,7 @@ public class AttributeServiceTest {
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(inode.getAttribute("test:foo")).isNull();
+    ASSERT.that(inode.getAttribute("test", "foo")).isNull();
   }
 
   @Test
@@ -356,7 +353,7 @@ public class AttributeServiceTest {
     ASSERT.that(testAttrs.bar()).is(0);
     ASSERT.that(testAttrs.baz()).is(1);
 
-    inode.setAttribute("test:baz", 100);
+    inode.setAttribute("test", "baz", 100);
     ASSERT.that(service.readAttributes(inode, TestAttributes.class).baz()).is(100);
   }
 

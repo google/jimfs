@@ -82,7 +82,7 @@ public class PosixAttributeProviderTest extends
 
   @Test
   public void testView() throws IOException {
-    inode.setAttribute("owner:owner", createUserPrincipal("user"));
+    inode.setAttribute("owner", "owner", createUserPrincipal("user"));
 
     PosixFileAttributeView view = provider.view(inodeLookup(),
         ImmutableMap.<String, FileAttributeView>of(
@@ -101,16 +101,16 @@ public class PosixAttributeProviderTest extends
 
     view.setOwner(createUserPrincipal("root"));
     ASSERT.that(view.getOwner()).is(createUserPrincipal("root"));
-    ASSERT.that(inode.getAttribute("owner:owner")).is(createUserPrincipal("root"));
+    ASSERT.that(inode.getAttribute("owner", "owner")).is(createUserPrincipal("root"));
 
     view.setGroup(createGroupPrincipal("root"));
     ASSERT.that(view.readAttributes().group()).is(createGroupPrincipal("root"));
-    ASSERT.that(inode.getAttribute("posix:group")).is(createGroupPrincipal("root"));
+    ASSERT.that(inode.getAttribute("posix", "group")).is(createGroupPrincipal("root"));
 
     view.setPermissions(PosixFilePermissions.fromString("rwx------"));
     ASSERT.that(view.readAttributes().permissions())
         .is(PosixFilePermissions.fromString("rwx------"));
-    ASSERT.that(inode.getAttribute("posix:permissions"))
+    ASSERT.that(inode.getAttribute("posix", "permissions"))
         .is(PosixFilePermissions.fromString("rwx------"));
   }
 

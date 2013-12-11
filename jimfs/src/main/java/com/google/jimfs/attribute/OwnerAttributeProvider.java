@@ -73,7 +73,7 @@ final class OwnerAttributeProvider extends AttributeProvider {
   @Override
   public Object get(Inode inode, String attribute) {
     if (attribute.equals("owner")) {
-      return inode.getAttribute("owner:owner");
+      return inode.getAttribute("owner", "owner");
     }
     return null;
   }
@@ -86,7 +86,7 @@ final class OwnerAttributeProvider extends AttributeProvider {
       if (!(user instanceof UserPrincipals.JimfsUserPrincipal)) {
         user = createUserPrincipal(user.getName());
       }
-      inode.setAttribute("owner:owner", user);
+      inode.setAttribute("owner", "owner", user);
     }
   }
 
@@ -117,12 +117,12 @@ final class OwnerAttributeProvider extends AttributeProvider {
 
     @Override
     public UserPrincipal getOwner() throws IOException {
-      return (UserPrincipal) lookupInode().getAttribute("owner:owner");
+      return (UserPrincipal) lookupInode().getAttribute("owner", "owner");
     }
 
     @Override
     public void setOwner(UserPrincipal owner) throws IOException {
-      lookupInode().setAttribute("owner:owner", checkNotNull(owner));
+      lookupInode().setAttribute("owner", "owner", checkNotNull(owner));
     }
   }
 }

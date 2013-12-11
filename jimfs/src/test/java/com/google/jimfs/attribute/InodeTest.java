@@ -38,18 +38,18 @@ public class InodeTest {
     Inode inode = new FakeInode(0, false, true, false, 0);
 
     ASSERT.that(inode.getAttributeKeys()).isEmpty();
-    ASSERT.that(inode.getAttribute("foo:foo")).isNull();
+    ASSERT.that(inode.getAttribute("foo", "foo")).isNull();
 
-    inode.deleteAttribute("foo:foo"); // doesn't throw
+    inode.deleteAttribute("foo", "foo"); // doesn't throw
 
-    inode.setAttribute("foo:foo", "foo");
+    inode.setAttribute("foo", "foo", "foo");
 
     ASSERT.that(inode.getAttributeKeys()).iteratesAs("foo:foo");
-    ASSERT.that(inode.getAttribute("foo:foo")).is("foo");
+    ASSERT.that(inode.getAttribute("foo", "foo")).is("foo");
 
-    inode.deleteAttribute("foo:foo");
+    inode.deleteAttribute("foo", "foo");
 
     ASSERT.that(inode.getAttributeKeys()).isEmpty();
-    ASSERT.that(inode.getAttribute("foo:foo")).isNull();
+    ASSERT.that(inode.getAttribute("foo", "foo")).isNull();
   }
 }

@@ -72,6 +72,6 @@ public class OwnerAttributeProviderTest extends
 
     view.setOwner(createUserPrincipal("root"));
     ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("root"));
-    ASSERT.that(inode.getAttribute("owner:owner")).isEqualTo(createUserPrincipal("root"));
+    ASSERT.that(inode.getAttribute("owner", "owner")).isEqualTo(createUserPrincipal("root"));
   }
 }

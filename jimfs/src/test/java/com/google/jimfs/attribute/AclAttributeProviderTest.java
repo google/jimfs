@@ -111,6 +111,6 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
     ASSERT.that(view.getAcl()).is(ImmutableList.<AclEntry>of());
     ASSERT.that(view.getOwner()).is(FOO);
 
-    ASSERT.that(inode.getAttribute("acl:acl")).is(ImmutableList.<AclEntry>of());
+    ASSERT.that(inode.getAttribute("acl", "acl")).is(ImmutableList.<AclEntry>of());
   }
 }

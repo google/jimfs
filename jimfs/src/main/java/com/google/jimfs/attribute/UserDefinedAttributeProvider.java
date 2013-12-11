@@ -37,13 +37,11 @@ import java.util.List;
  */
 final class UserDefinedAttributeProvider extends AttributeProvider {
 
-  public static final String VIEW = "user";
-
   UserDefinedAttributeProvider() {}
 
   @Override
   public String name() {
-    return VIEW;
+    return "user";
   }
 
   @Override
@@ -65,17 +63,15 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
 
   private static ImmutableSet<String> userDefinedAttributes(Inode inode) {
     ImmutableSet.Builder<String> builder = ImmutableSet.builder();
-    for (String attribute : inode.getAttributeKeys()) {
-      if (attribute.startsWith("user:")) {
-        builder.add(attribute.substring(5));
-      }
+    for (String attribute : inode.getAttributeNames("user")) {
+      builder.add(attribute);
     }
     return builder.build();
   }
 
   @Override
   public Object get(Inode inode, String attribute) {
-    Object value = inode.getAttribute("user:" + attribute);
+    Object value = inode.getAttribute("user", attribute);
     if (value instanceof byte[]) {
       byte[] bytes = (byte[]) value;
       return bytes.clone();
@@ -101,7 +97,7 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
       throw invalidType(view, attribute, value, byte[].class, ByteBuffer.class);
     }
 
-    inode.setAttribute(VIEW + ":" + attribute, bytes);
+    inode.setAttribute("user", attribute, bytes);
   }
 
   @Override
@@ -135,7 +131,7 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
     }
 
     private byte[] getStoredBytes(String name) throws IOException {
-      byte[] bytes = (byte[]) lookupInode().getAttribute(name() + ":" + name);
+      byte[] bytes = (byte[]) lookupInode().getAttribute(name(), name);
       if (bytes == null) {
         throw new IllegalArgumentException("attribute '" + name() + ":" + name + "' is not set");
       }
@@ -158,13 +154,13 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
     public int write(String name, ByteBuffer src) throws IOException {
       byte[] bytes = new byte[src.remaining()];
       src.get(bytes);
-      lookupInode().setAttribute(name() + ":" + name, bytes);
+      lookupInode().setAttribute(name(), name, bytes);
       return bytes.length;
     }
 
     @Override
     public void delete(String name) throws IOException {
-      lookupInode().deleteAttribute(name() + ":" + name);
+      lookupInode().deleteAttribute(name(), name);
     }
   }
 }

@@ -172,7 +172,11 @@ final class AttributeService {
     // default values should already be sanitized by their providers
     for (int i = 0; i < defaultValues.size(); i++) {
       FileAttribute<?> attribute = defaultValues.get(i);
-      inode.setAttribute(attribute.name(), attribute.value());
+
+      int separatorIndex = attribute.name().indexOf(':');
+      String view = attribute.name().substring(0, separatorIndex);
+      String attr = attribute.name().substring(separatorIndex + 1);
+      inode.setAttribute(view, attr, attribute.value());
     }
 
     for (FileAttribute<?> attr : attrs) {

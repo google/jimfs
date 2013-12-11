@@ -77,7 +77,7 @@ final class AclAttributeProvider extends AttributeProvider {
   @Override
   public Object get(Inode inode, String attribute) {
     if (attribute.equals("acl")) {
-      return inode.getAttribute("acl:acl");
+      return inode.getAttribute("acl", "acl");
     }
 
     return null;
@@ -88,8 +88,7 @@ final class AclAttributeProvider extends AttributeProvider {
       Inode inode, String view, String attribute, Object value, boolean create) {
     if (attribute.equals("acl")) {
       checkNotCreate(view, attribute, create);
-      inode.setAttribute("acl:acl",
-          toAcl(checkType(view, attribute, value, List.class)));
+      inode.setAttribute("acl", "acl", toAcl(checkType(view, attribute, value, List.class)));
     }
   }
 
@@ -137,13 +136,13 @@ final class AclAttributeProvider extends AttributeProvider {
     @SuppressWarnings("unchecked")
     @Override
     public List<AclEntry> getAcl() throws IOException {
-      return (List<AclEntry>) lookupInode().getAttribute("acl:acl");
+      return (List<AclEntry>) lookupInode().getAttribute("acl", "acl");
     }
 
     @Override
     public void setAcl(List<AclEntry> acl) throws IOException {
       checkNotNull(acl);
-      lookupInode().setAttribute("acl:acl", ImmutableList.copyOf(acl));
+      lookupInode().setAttribute("acl", "acl", ImmutableList.copyOf(acl));
     }
 
     @Override

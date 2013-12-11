@@ -116,9 +116,9 @@ final class PosixAttributeProvider extends AttributeProvider {
   public Object get(Inode inode, String attribute) {
     switch (attribute) {
       case "group":
-        return inode.getAttribute("posix:group");
+        return inode.getAttribute("posix", "group");
       case "permissions":
-        return inode.getAttribute("posix:permissions");
+        return inode.getAttribute("posix", "permissions");
       default:
         return null;
     }
@@ -135,10 +135,10 @@ final class PosixAttributeProvider extends AttributeProvider {
         if (!(group instanceof UserPrincipals.JimfsGroupPrincipal)) {
           group = UserPrincipals.createGroupPrincipal(group.getName());
         }
-        inode.setAttribute("posix:group", group);
+        inode.setAttribute("posix", "group", group);
         break;
       case "permissions":
-        inode.setAttribute("posix:permissions",
+        inode.setAttribute("posix", "permissions",
             toPermissions(checkType(view, attribute, value, Set.class)));
         break;
       default:
@@ -214,12 +214,12 @@ final class PosixAttributeProvider extends AttributeProvider {
 
     @Override
     public void setPermissions(Set<PosixFilePermission> perms) throws IOException {
-      lookupInode().setAttribute("posix:permissions", ImmutableSet.copyOf(perms));
+      lookupInode().setAttribute("posix", "permissions", ImmutableSet.copyOf(perms));
     }
 
     @Override
     public void setGroup(GroupPrincipal group) throws IOException {
-      lookupInode().setAttribute("posix:group", checkNotNull(group));
+      lookupInode().setAttribute("posix", "group", checkNotNull(group));
     }
 
     @Override
@@ -245,10 +245,10 @@ final class PosixAttributeProvider extends AttributeProvider {
     @SuppressWarnings("unchecked")
     protected Attributes(Inode inode) {
       super(inode);
-      this.owner = (UserPrincipal) inode.getAttribute("owner:owner");
-      this.group = (GroupPrincipal) inode.getAttribute("posix:group");
+      this.owner = (UserPrincipal) inode.getAttribute("owner", "owner");
+      this.group = (GroupPrincipal) inode.getAttribute("posix", "group");
       this.permissions =
-          (ImmutableSet<PosixFilePermission>) inode.getAttribute("posix:permissions");
+          (ImmutableSet<PosixFilePermission>) inode.getAttribute("posix", "permissions");
     }
 
     @Override

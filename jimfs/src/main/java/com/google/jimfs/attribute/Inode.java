@@ -16,11 +16,12 @@
 
 package com.google.jimfs.attribute;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Table;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.annotation.Nullable;
 
@@ -40,8 +41,8 @@ public abstract class Inode {
   private long lastAccessTime;
   private long lastModifiedTime;
 
-  @Nullable
-  private Map<String, Object> attributes; // null when only the basic view is used (default)
+  @Nullable // null when only the basic view is used (default)
+  private Table<String, String, Object> attributes;
 
   protected Inode(int id) {
     this.id = id;
@@ -157,42 +158,59 @@ public abstract class Inode {
   }
 
   /**
-   * Returns the attribute keys contained in the attributes map for the file.
+   * Returns the names of the attributes contained in the given attribute view in the file's
+   * attributes table.
    */
-  public final synchronized ImmutableSet<String> getAttributeKeys() {
+  public final synchronized ImmutableSet<String> getAttributeNames(String view) {
     if (attributes == null) {
       return ImmutableSet.of();
     }
-    return ImmutableSet.copyOf(attributes.keySet());
+    return ImmutableSet.copyOf(attributes.row(view).keySet());
   }
 
   /**
-   * Gets the value of the attribute with the given key.
+   * Returns the attribute keys contained in the attributes map for the file.
+   */
+  @VisibleForTesting
+  final synchronized ImmutableSet<String> getAttributeKeys() {
+    if (attributes == null) {
+      return ImmutableSet.of();
+    }
+
+    ImmutableSet.Builder<String> builder = ImmutableSet.builder();
+    for (Table.Cell<String, String, Object> cell : attributes.cellSet()) {
+      builder.add(cell.getRowKey() + ':' + cell.getColumnKey());
+    }
+    return builder.build();
+  }
+
+  /**
+   * Gets the value of the given attribute in the given view.
    */
   @Nullable
-  public final synchronized Object getAttribute(String key) {
+  public final synchronized Object getAttribute(String view, String attribute) {
     if (attributes == null) {
       return null;
     }
-    return attributes.get(key);
+    return attributes.get(view, attribute);
   }
 
   /**
-   * Sets the attribute with the given key to the given value.
+   * Sets the given attribute in the given view to the given value.
    */
-  public final synchronized void setAttribute(String key, Object value) {
+  public final synchronized void setAttribute(String view, String attribute, Object value) {
     if (attributes == null) {
-      attributes = new HashMap<>();
+      attributes = HashBasedTable.create();
     }
-    attributes.put(key, value);
+    attributes.put(view, attribute, value);
   }
 
   /**
-   * Deletes the attribute with the given key.
+   * Deletes the given attribute from the given view.
    */
-  public final synchronized void deleteAttribute(String key) {
+  public final synchronized void deleteAttribute(String view, String attribute) {
     if (attributes != null) {
-      attributes.remove(key);
+      attributes.remove(view, attribute);
     }
   }
 
@@ -218,10 +236,10 @@ public abstract class Inode {
     target.putAll(attributes);
   }
 
-  private synchronized void putAll(@Nullable Map<String, Object> attributes) {
+  private synchronized void putAll(@Nullable Table<String, String, Object> attributes) {
     if (attributes != null && this.attributes != attributes) {
       if (this.attributes == null) {
-        this.attributes = new HashMap<>();
+        this.attributes = HashBasedTable.create();
       }
       this.attributes.putAll(attributes);
     }

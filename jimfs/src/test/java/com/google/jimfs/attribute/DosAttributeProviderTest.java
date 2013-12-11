@@ -113,7 +113,7 @@ public class DosAttributeProviderTest extends AbstractAttributeProviderTest<DosA
     ASSERT.that(attrs.isReadOnly()).isFalse();
     ASSERT.that(attrs.isSystem()).isFalse();
 
-    inode.setAttribute("dos:hidden", true);
+    inode.setAttribute("dos", "hidden", true);
 
     attrs = provider.readAttributes(inode);
     ASSERT.that(attrs.isHidden()).isTrue();

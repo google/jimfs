@@ -109,14 +109,14 @@ final class UnixAttributeProvider extends AttributeProvider {
   public Object get(Inode inode, String attribute) {
     switch (attribute) {
       case "uid":
-        UserPrincipal user = (UserPrincipal) inode.getAttribute("owner:owner");
+        UserPrincipal user = (UserPrincipal) inode.getAttribute("owner", "owner");
         return getUniqueId(user);
       case "gid":
-        GroupPrincipal group = (GroupPrincipal) inode.getAttribute("posix:group");
+        GroupPrincipal group = (GroupPrincipal) inode.getAttribute("posix", "group");
         return getUniqueId(group);
       case "mode":
         Set<PosixFilePermission> permissions =
-            (Set<PosixFilePermission>) inode.getAttribute("posix:permissions");
+            (Set<PosixFilePermission>) inode.getAttribute("posix", "permissions");
         return toMode(permissions);
       case "ctime":
         return FileTime.fromMillis(inode.getCreationTime());

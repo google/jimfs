@@ -79,11 +79,11 @@ public final class TestAttributeProvider extends AttributeProvider {
     switch (attribute) {
       case "bar":
         checkNotCreate(view, attribute, create);
-        inode.setAttribute("test:bar",
+        inode.setAttribute("test", "bar",
             checkType(view, attribute, value, Number.class).longValue());
         break;
       case "baz":
-        inode.setAttribute("test:baz",
+        inode.setAttribute("test", "baz",
             checkType(view, attribute, value, Integer.class));
         break;
       default:
@@ -96,7 +96,7 @@ public final class TestAttributeProvider extends AttributeProvider {
     if (attribute.equals("foo")) {
       return "hello";
     }
-    return inode.getAttribute("test:" + attribute);
+    return inode.getAttribute("test", attribute);
   }
 
   @Override
@@ -150,12 +150,12 @@ public final class TestAttributeProvider extends AttributeProvider {
 
     @Override
     public void setBar(long bar) throws IOException {
-      lookup.lookup().setAttribute("test:bar", bar);
+      lookup.lookup().setAttribute("test", "bar", bar);
     }
 
     @Override
     public void setBaz(int baz) throws IOException {
-      lookup.lookup().setAttribute("test:baz", baz);
+      lookup.lookup().setAttribute("test", "baz", baz);
     }
   }
 
@@ -165,8 +165,8 @@ public final class TestAttributeProvider extends AttributeProvider {
     private final Integer baz;
 
     public Attributes(Inode inode) {
-      this.bar = (Long) inode.getAttribute("test:bar");
-      this.baz = (Integer) inode.getAttribute("test:baz");
+      this.bar = (Long) inode.getAttribute("test", "bar");
+      this.baz = (Integer) inode.getAttribute("test", "baz");
     }
 
     @Override

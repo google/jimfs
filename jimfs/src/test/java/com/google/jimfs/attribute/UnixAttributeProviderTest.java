@@ -56,9 +56,9 @@ public class UnixAttributeProviderTest extends
   @Test
   public void testInitialAttributes() {
     // unix provider relies on other providers to set their initial attributes
-    inode.setAttribute("owner:owner", createUserPrincipal("foo"));
-    inode.setAttribute("posix:group", createGroupPrincipal("bar"));
-    inode.setAttribute("posix:permissions",
+    inode.setAttribute("owner", "owner", createUserPrincipal("foo"));
+    inode.setAttribute("posix", "group", createGroupPrincipal("bar"));
+    inode.setAttribute("posix", "permissions",
         ImmutableSet.copyOf(PosixFilePermissions.fromString("rw-r--r--")));
 
     // these are pretty much meaningless here since they aren't properties this

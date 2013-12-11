@@ -78,7 +78,10 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
       Inode inode, AttributeProvider provider, Map<String, ?> defaultValues) {
     Map<String, ?> defaults = provider.defaultValues(defaultValues);
     for (Map.Entry<String, ?> entry : defaults.entrySet()) {
-      inode.setAttribute(entry.getKey(), entry.getValue());
+      int separatorIndex = entry.getKey().indexOf(':');
+      String view = entry.getKey().substring(0, separatorIndex);
+      String attr = entry.getKey().substring(separatorIndex + 1);
+      inode.setAttribute(view, attr, entry.getValue());
     }
   }
 

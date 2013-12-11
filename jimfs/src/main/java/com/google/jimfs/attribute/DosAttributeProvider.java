@@ -85,7 +85,7 @@ final class DosAttributeProvider extends AttributeProvider {
   @Override
   public Object get(Inode inode, String attribute) {
     if (ATTRIBUTES.contains(attribute)) {
-      return inode.getAttribute("dos:" + attribute);
+      return inode.getAttribute("dos", attribute);
     }
 
     return null;
@@ -96,8 +96,7 @@ final class DosAttributeProvider extends AttributeProvider {
       boolean create) {
     if (supports(attribute)) {
       checkNotCreate(view, attribute, create);
-      inode.setAttribute("dos:" + attribute,
-          checkType(view, attribute, value, Boolean.class));
+      inode.setAttribute("dos", attribute, checkType(view, attribute, value, Boolean.class));
     }
   }
 
@@ -152,22 +151,22 @@ final class DosAttributeProvider extends AttributeProvider {
 
     @Override
     public void setReadOnly(boolean value) throws IOException {
-      lookupInode().setAttribute("dos:readonly", value);
+      lookupInode().setAttribute("dos", "readonly", value);
     }
 
     @Override
     public void setHidden(boolean value) throws IOException {
-      lookupInode().setAttribute("dos:hidden", value);
+      lookupInode().setAttribute("dos", "hidden", value);
     }
 
     @Override
     public void setSystem(boolean value) throws IOException {
-      lookupInode().setAttribute("dos:system", value);
+      lookupInode().setAttribute("dos", "system", value);
     }
 
     @Override
     public void setArchive(boolean value) throws IOException {
-      lookupInode().setAttribute("dos:archive", value);
+      lookupInode().setAttribute("dos", "archive", value);
     }
   }
 
@@ -183,10 +182,10 @@ final class DosAttributeProvider extends AttributeProvider {
 
     protected Attributes(Inode inode) {
       super(inode);
-      this.readOnly = (boolean) inode.getAttribute("dos:readonly");
-      this.hidden = (boolean) inode.getAttribute("dos:hidden");
-      this.archive = (boolean) inode.getAttribute("dos:archive");
-      this.system = (boolean) inode.getAttribute("dos:system");
+      this.readOnly = (boolean) inode.getAttribute("dos", "readonly");
+      this.hidden = (boolean) inode.getAttribute("dos", "hidden");
+      this.archive = (boolean) inode.getAttribute("dos", "archive");
+      this.system = (boolean) inode.getAttribute("dos", "system");
     }
 
     @Override
