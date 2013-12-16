@@ -51,10 +51,9 @@ final class UnixPathType extends PathType {
   }
 
   private static void checkValid(String path) {
-    for (int i = 0; i < path.length(); i++) {
-      if (path.charAt(i) == '\0') {
-        throw new InvalidPathException(path, "nul character not allowed", i);
-      }
+    int nulIndex = path.indexOf('\0');
+    if (nulIndex != -1) {
+      throw new InvalidPathException(path, "nul character not allowed", nulIndex);
     }
   }
 

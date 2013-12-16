@@ -32,6 +32,7 @@ import com.google.jimfs.attribute.StandardAttributeProviders;
 import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
+import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.util.HashMap;
@@ -44,7 +45,9 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
- * Immutable configuration for an in-memory file system instance.
+ * Immutable configuration for an in-memory file system. A {@code Configuration} is passed to a
+ * method in {@link Jimfs} such as {@link Jimfs#newFileSystem(Configuration)} to create a new
+ * {@link FileSystem} instance.
  *
  * @author Colin Decker
  */

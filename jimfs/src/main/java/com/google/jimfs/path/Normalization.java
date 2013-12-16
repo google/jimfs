@@ -25,8 +25,10 @@ import java.text.Normalizer;
 import java.util.regex.Pattern;
 
 /**
- * Normalizations that can be applied to names in paths. Includes both Unicode normalizations and
- * case folding normalizations for case insensitive paths.
+ * Normalizations that can be applied to names in paths. Includes Unicode normalizations and
+ * normalizations for case insensitive paths. These normalizations can be set in
+ * {@code Configuration.Builder} when creating a JimFS file system instance and are automatically
+ * applied to paths in the file system.
  *
  * @author Colin Decker
  */
@@ -107,7 +109,7 @@ public enum Normalization implements Function<String, String> {
    * Returns the flags that should be used when creating a regex {@link Pattern} in order to
    * approximate this normalization.
    */
-  public final int patternFlags() {
+  public int patternFlags() {
     return patternFlags;
   }
 
@@ -126,7 +128,6 @@ public enum Normalization implements Function<String, String> {
   /**
    * Compiles a regex pattern using flags based on the given normalizations.
    */
-  @SuppressWarnings("MagicConstant")
   public static Pattern compilePattern(String regex, Iterable<Normalization> normalizations) {
     int flags = 0;
     for (Normalization normalization : normalizations) {

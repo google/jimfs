@@ -15,11 +15,8 @@
  */
 
 /**
- * Package containing classes used for creating new JimFS file systems.
- *
- * <p>{@link com.google.jimfs.Configuration Configuration} is an immutable class defining a
- * particular file system configuration, while {@link com.google.jimfs.Jimfs Jimfs} provides
- * convenience methods for creating a new file system instance from a configuration.
+ * Package containing the {@link com.google.jimfs.Jimfs Jimfs} class, used for creating new JimFS
+ * file systems.
  */
 @ParametersAreNonnullByDefault
 package com.google.jimfs;
