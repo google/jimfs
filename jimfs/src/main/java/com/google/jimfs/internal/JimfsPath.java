@@ -22,6 +22,7 @@ import static com.google.jimfs.internal.Name.PARENT;
 import static com.google.jimfs.internal.Name.SELF;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 
@@ -47,9 +48,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Abstract base implementation of {@link Path}. Implements all path query and manipulation methods,
- * leaving methods that need to access the file system itself in any way to subclasses. A
- * {@link PathService} is used to handle creating new path objects as needed.
+ * JimFS implementation of {@link Path}. Creation of new {@code Path} objects is delegated to the
+ * file system's {@link PathService}.
  *
  * @author Colin Decker
  */
@@ -234,14 +234,14 @@ final class JimfsPath implements Path, FileContent {
     Deque<Name> newNames = new ArrayDeque<>();
     for (Name name : names) {
       if (name.equals(PARENT)) {
-        Name lastName = Iterables.getLast(newNames, null);
+        Name lastName = newNames.peekLast();
         if (lastName != null && !lastName.equals(PARENT)) {
           newNames.removeLast();
         } else if (!isAbsolute()) {
           // if there's a root and we have an extra ".." that would go up above the root, ignore it
           newNames.add(name);
         }
-      } else if (!SELF.equals(name)) {
+      } else if (!name.equals(SELF)) {
         newNames.add(name);
       }
     }
@@ -344,8 +344,8 @@ final class JimfsPath implements Path, FileContent {
       throw new ProviderMismatchException(other.toString());
     }
 
-    checkArgument(Objects.equal(root, otherPath.root), "Cannot relativize %s against %s--" +
-        "both paths must have no root or the same root.", other, this);
+    checkArgument(Objects.equal(root, otherPath.root),
+        "Paths have different roots: %s, %s", this, other);
 
     if (equals(other)) {
       return pathService.emptyPath();
@@ -444,21 +444,17 @@ final class JimfsPath implements Path, FileContent {
 
   @Override
   public int compareTo(Path other) {
-    JimfsPath otherPath = checkPath(other);
-    if (otherPath == null) {
-      return -1;
-    }
-
-    return pathService.compare(this, otherPath);
+    // documented to throw CCE if other is associated with a different FileSystemProvider
+    JimfsPath otherPath = (JimfsPath) other;
+    return ComparisonChain.start()
+        .compare(getJimfsFileSystem().getUri(), ((JimfsPath) other).getJimfsFileSystem().getUri())
+        .compare(this, otherPath, pathService)
+        .result();
   }
 
   @Override
   public boolean equals(@Nullable Object obj) {
-    if (obj instanceof JimfsPath) {
-      JimfsPath other = (JimfsPath) obj;
-      return getFileSystem().equals(other.getFileSystem()) && compareTo(other) == 0;
-    }
-    return false;
+    return obj instanceof JimfsPath && compareTo((JimfsPath) obj) == 0;
   }
 
   @Override

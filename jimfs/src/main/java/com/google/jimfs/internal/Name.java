@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.jimfs.internal.Util.smearHash;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
 
 import javax.annotation.Nullable;
@@ -40,19 +41,13 @@ import javax.annotation.Nullable;
  */
 final class Name {
 
-  /**
-   * The empty name.
-   */
-  public static final Name EMPTY = new Name("", "");
+  /** The empty name. */
+  static final Name EMPTY = new Name("", "");
 
-  /**
-   * The name to use for a link from a directory to itself.
-   */
+  /** The name to use for a link from a directory to itself. */
   public static final Name SELF = new Name(".", ".");
 
-  /**
-   * The name to use for a link from a directory to its parent directory.
-   */
+  /** The name to use for a link from a directory to its parent directory. */
   public static final Name PARENT = new Name("..", "..");
 
   /**
@@ -118,27 +113,19 @@ final class Name {
     return CANONICAL_ORDERING;
   }
 
-  private static final Ordering<Name> DISPLAY_ORDERING = new Ordering<Name>() {
-    @Override
-    public int compare(Name left, Name right) {
-      return left.display.compareTo(right.display);
-    }
+  private static final Ordering<Name> DISPLAY_ORDERING = Ordering.natural()
+      .onResultOf(new Function<Name, String>() {
+        @Override
+        public String apply(Name name) {
+          return name.display;
+        }
+      });
 
-    @Override
-    public String toString() {
-      return "Name.displayOrdering()";
-    }
-  };
-
-  private static final Ordering<Name> CANONICAL_ORDERING = new Ordering<Name>() {
-    @Override
-    public int compare(Name left, Name right) {
-      return left.canonical.compareTo(right.canonical);
-    }
-
-    @Override
-    public String toString() {
-      return "Name.canonicalOrdering()";
-    }
-  };
+  private static final Ordering<Name> CANONICAL_ORDERING = Ordering.natural()
+      .onResultOf(new Function<Name, String>() {
+        @Override
+        public String apply(Name name) {
+          return name.canonical;
+        }
+      });
 }

@@ -21,6 +21,7 @@ import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.jimfs.Configuration;
 import com.google.jimfs.path.Normalization;
 import com.google.jimfs.path.PathType;
 
@@ -29,14 +30,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.IOException;
-import java.nio.file.FileStore;
+import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.WatchService;
-import java.nio.file.attribute.UserPrincipalLookupService;
-import java.nio.file.spi.FileSystemProvider;
-import java.util.Set;
 
 /**
  * Tests for {@link PathService}.
@@ -183,68 +178,18 @@ public class PathServiceTest {
   public static PathService fakePathService(PathType type, boolean equalityUsesCanonicalForm) {
     PathService service = new PathService(
         type, NO_NORMALIZATIONS, NO_NORMALIZATIONS, equalityUsesCanonicalForm);
-    service.setFileSystem(FAKE_FILE_SYSTEM);
+    service.setFileSystem(FILE_SYSTEM);
     return service;
   }
 
-  private static final FileSystem FAKE_FILE_SYSTEM = new FileSystem() {
-    @Override
-    public FileSystemProvider provider() {
-      return null;
-    }
+  private static final FileSystem FILE_SYSTEM;
 
-    @Override
-    public void close() throws IOException {
+  static {
+    try {
+      FILE_SYSTEM = JimfsFileSystems.newFileSystem(
+          new JimfsFileSystemProvider(), URI.create("jimfs://foo"), Configuration.unix());
+    } catch (IOException e) {
+      throw new AssertionError(e);
     }
-
-    @Override
-    public boolean isOpen() {
-      return false;
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return false;
-    }
-
-    @Override
-    public String getSeparator() {
-      return null;
-    }
-
-    @Override
-    public Iterable<Path> getRootDirectories() {
-      return null;
-    }
-
-    @Override
-    public Iterable<FileStore> getFileStores() {
-      return null;
-    }
-
-    @Override
-    public Set<String> supportedFileAttributeViews() {
-      return null;
-    }
-
-    @Override
-    public Path getPath(String first, String... more) {
-      return null;
-    }
-
-    @Override
-    public PathMatcher getPathMatcher(String syntaxAndPattern) {
-      return null;
-    }
-
-    @Override
-    public UserPrincipalLookupService getUserPrincipalLookupService() {
-      return null;
-    }
-
-    @Override
-    public WatchService newWatchService() throws IOException {
-      return null;
-    }
-  };
+  }
 }
