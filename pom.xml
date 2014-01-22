@@ -88,7 +88,7 @@
     <java.version>1.7</java.version>
 
     <!-- Dependency versions -->
-    <guava.version>15.0</guava.version>
+    <guava.version>16.0</guava.version>
     <icu4j.version>51.2</icu4j.version>
     <jsr305.version>2.0.1</jsr305.version>
     <junit.version>4.10</junit.version>
