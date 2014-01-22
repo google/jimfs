@@ -29,10 +29,10 @@
     <module>jimfs</module>
   </modules>
 
-  <name>JimFS Parent</name>
+  <name>Jimfs Parent</name>
 
   <description>
-    JimFS is an in-memory implementation of Java 7's java.nio.file abstract file system API.
+    Jimfs is an in-memory implementation of Java 7's java.nio.file abstract file system API.
   </description>
 
   <url>https://github.com/google/jimfs</url>

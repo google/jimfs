@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
 
 /**
  * Static registry of {@link AttributeProvider} implementations for the standard set of file
- * attribute views JimFS supports.
+ * attribute views Jimfs supports.
  *
  * <p>The supported views are:
  *

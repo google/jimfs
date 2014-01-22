@@ -15,7 +15,7 @@
  */
 
 /**
- * Package containing the {@link com.google.jimfs.Jimfs Jimfs} class, used for creating new JimFS
+ * Package containing the {@link com.google.jimfs.Jimfs Jimfs} class, used for creating new Jimfs
  * file systems.
  */
 @ParametersAreNonnullByDefault

@@ -46,7 +46,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * JimFS implementation of {@link Path}. Creation of new {@code Path} objects is delegated to the
+ * Jimfs implementation of {@link Path}. Creation of new {@code Path} objects is delegated to the
  * file system's {@link PathService}.
  *
  * @author Colin Decker

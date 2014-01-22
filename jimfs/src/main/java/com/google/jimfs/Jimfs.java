@@ -29,7 +29,7 @@ import java.nio.file.FileSystems;
 import java.util.UUID;
 
 /**
- * Static factory methods for creating new JimFS file systems. File systems may either be created
+ * Static factory methods for creating new Jimfs file systems. File systems may either be created
  * with a basic configuration matching the current operating system or by providing a specific
  * {@link Configuration}. Basic {@linkplain Configuration#unix() UNIX},
  * {@linkplain Configuration#osX() Mac OS X} and {@linkplain Configuration#windows() Windows}
@@ -72,7 +72,7 @@ import java.util.UUID;
 public final class Jimfs {
 
   /**
-   * The URI scheme for the JimFS file system ("jimfs").
+   * The URI scheme for the Jimfs file system ("jimfs").
    */
   public static final String URI_SCHEME = "jimfs";
 

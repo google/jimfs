@@ -114,6 +114,6 @@ final class JimfsSecureDirectoryStream
       return (JimfsPath) path;
     }
     throw new ProviderMismatchException(
-        "path " + path + " is not associated with a JimFS file system");
+        "path " + path + " is not associated with a Jimfs file system");
   }
 }

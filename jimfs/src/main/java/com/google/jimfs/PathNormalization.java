@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 /**
  * Normalizations that can be applied to names in paths. Includes Unicode normalizations and
  * normalizations for case insensitive paths. These normalizations can be set in
- * {@code Configuration.Builder} when creating a JimFS file system instance and are automatically
+ * {@code Configuration.Builder} when creating a Jimfs file system instance and are automatically
  * applied to paths in the file system.
  *
  * @author Colin Decker

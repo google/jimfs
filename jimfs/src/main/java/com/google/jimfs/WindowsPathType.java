@@ -67,7 +67,7 @@ final class WindowsPathType extends PathType {
     path = path.replace('/', '\\');
 
     if (WORKING_DIR_WITH_DRIVE.matcher(path).matches()) {
-      throw new InvalidPathException(original, "JimFS does not currently support the Windows "
+      throw new InvalidPathException(original, "Jimfs does not currently support the Windows "
           + "syntax for a relative path on a specific drive (e.g. \"C:foo\\bar\"");
     }
 
@@ -75,7 +75,7 @@ final class WindowsPathType extends PathType {
     if (path.startsWith("\\\\")) {
       root = parseUncRoot(path, original);
     } else if (path.startsWith("\\")) {
-      throw new InvalidPathException(original, "JimFS does not currently support the Windows "
+      throw new InvalidPathException(original, "Jimfs does not currently support the Windows "
           + "syntax for an absolute path on the current drive (e.g. \"\\foo\\bar\"");
     } else {
       root = parseDriveRoot(path);
