@@ -23,7 +23,6 @@ import static org.truth0.Truth.ASSERT;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
-import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

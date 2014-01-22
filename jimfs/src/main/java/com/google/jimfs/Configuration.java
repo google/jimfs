@@ -18,19 +18,14 @@ package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
-import static com.google.jimfs.path.Normalization.NFC;
-import static com.google.jimfs.path.Normalization.NFD;
+import static com.google.jimfs.PathNormalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.PathNormalization.NFC;
+import static com.google.jimfs.PathNormalization.NFD;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.StandardAttributeProviders;
-import com.google.jimfs.path.Normalization;
-import com.google.jimfs.path.PathType;
 
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
@@ -182,24 +177,24 @@ public final class Configuration {
   }
 
   // Path configuration
-  private final PathType pathType;
-  private final ImmutableSet<Normalization> nameDisplayNormalization;
-  private final ImmutableSet<Normalization> nameCanonicalNormalization;
-  private final boolean pathEqualityUsesCanonicalForm;
+  final PathType pathType;
+  final ImmutableSet<PathNormalization> nameDisplayNormalization;
+  final ImmutableSet<PathNormalization> nameCanonicalNormalization;
+  final boolean pathEqualityUsesCanonicalForm;
 
   // Disk configuration
-  private final int blockSize;
-  private final long maxSize;
-  private final long maxCacheSize;
+  final int blockSize;
+  final long maxSize;
+  final long maxCacheSize;
 
   // Attribute configuration
-  private final ImmutableSet<String> attributeViews;
-  private final ImmutableSet<AttributeProvider> attributeProviders;
-  private final ImmutableMap<String, Object> defaultAttributeValues;
+  final ImmutableSet<String> attributeViews;
+  final ImmutableSet<AttributeProvider> attributeProviders;
+  final ImmutableMap<String, Object> defaultAttributeValues;
 
   // Other
-  private final ImmutableSet<String> roots;
-  private final String workingDirectory;
+  final ImmutableSet<String> roots;
+  final String workingDirectory;
 
   /**
    * Creates an immutable configuration object from the given builder.
@@ -221,102 +216,6 @@ public final class Configuration {
         : ImmutableMap.copyOf(builder.defaultAttributeValues);
     this.roots = builder.roots;
     this.workingDirectory = builder.workingDirectory;
-  }
-
-  /**
-   * Returns the roots for the file system.
-   */
-  public ImmutableList<String> roots() {
-    return ImmutableList.copyOf(roots);
-  }
-
-  /**
-   * Returns the working directory for the file system.
-   */
-  public String workingDirectory() {
-    return workingDirectory;
-  }
-
-  /**
-   * Returns the path type for the file system.
-   */
-  public PathType pathType() {
-    return pathType;
-  }
-
-  /**
-   * Returns the normalizations that will be applied to filenames for the string form of
-   * {@code Path} objects in the file system.
-   */
-  public ImmutableSet<Normalization> nameDisplayNormalization() {
-    return nameDisplayNormalization;
-  }
-
-  /**
-   * Returns the normalizations that will be applied to the canonical form of filenames in the file
-   * system.
-   */
-  public ImmutableSet<Normalization> nameCanonicalNormalization() {
-    return nameCanonicalNormalization;
-  }
-
-  /**
-   * Returns true if {@code Path} objects in the file system use the canonical form of filenames
-   * for determining equality of two paths; false if they use the display form.
-   */
-  public boolean pathEqualityUsesCanonicalForm() {
-    return pathEqualityUsesCanonicalForm;
-  }
-
-  /**
-   * Returns the block size (in bytes) for the file system to use. All regular files will be
-   * allocated blocks of the given size, so this is the minimum granularity for actual file size.
-   */
-  public int blockSize() {
-    return blockSize;
-  }
-
-  /**
-   * Returns the maximum size (in bytes) for the file system's in-memory file storage. This maximum
-   * size determines the maximum number of blocks that can be allocated to regular files, so it
-   * should generally be a multiple of the {@linkplain #blockSize() block size}.
-   */
-  public long maxSize() {
-    return maxSize;
-  }
-
-  /**
-   * Returns the maximum amount of unused space (in bytes) in the file system's in-memory file
-   * storage that should be cached for reuse. By default, this will be equal to the
-   * {@linkplain #maxSize() maximum size} of the storage, meaning that all space that is freed
-   * when files are truncated or deleted is cached for reuse. This helps to avoid lots of garbage
-   * collection when creating and deleting many files quickly.
-   */
-  public long maxCacheSize() {
-    return maxCacheSize;
-  }
-
-  /**
-   * Returns the set of file attribute views the file system supports.
-   */
-  public ImmutableSet<String> attributeViews() {
-    return attributeViews;
-  }
-
-  /**
-   * Returns the set of custom attribute providers the file system uses to implement custom file
-   * attribute views.
-   */
-  public ImmutableSet<AttributeProvider> attributeProviders() {
-    return attributeProviders;
-  }
-
-  /**
-   * Returns the set of default file attribute values for the file system. The values in the
-   * returned map override the file system defaults.
-   */
-  public ImmutableMap<String, Object> defaultAttributeValues() {
-    return defaultAttributeValues;
   }
 
   /**
@@ -342,8 +241,8 @@ public final class Configuration {
 
     // Path configuration
     private final PathType pathType;
-    private ImmutableSet<Normalization> nameDisplayNormalization = ImmutableSet.of();
-    private ImmutableSet<Normalization> nameCanonicalNormalization = ImmutableSet.of();
+    private ImmutableSet<PathNormalization> nameDisplayNormalization = ImmutableSet.of();
+    private ImmutableSet<PathNormalization> nameCanonicalNormalization = ImmutableSet.of();
     private boolean pathEqualityUsesCanonicalForm = false;
 
     // Disk configuration
@@ -387,7 +286,8 @@ public final class Configuration {
      * Sets the normalizations that will be applied to the display form of filenames. The display
      * form is used in the {@code toString()} of {@code Path} objects.
      */
-    public Builder setNameDisplayNormalization(Normalization first, Normalization... more) {
+    public Builder setNameDisplayNormalization(
+        PathNormalization first, PathNormalization... more) {
       this.nameDisplayNormalization = checkNormalizations(Lists.asList(first, more));
       return this;
     }
@@ -397,16 +297,18 @@ public final class Configuration {
      * file system. The canonical form is used to determine the equality of two filenames when
      * performing a file lookup.
      */
-    public Builder setNameCanonicalNormalization(Normalization first, Normalization... more) {
+    public Builder setNameCanonicalNormalization(
+        PathNormalization first, PathNormalization... more) {
       this.nameCanonicalNormalization = checkNormalizations(Lists.asList(first, more));
       return this;
     }
 
-    private ImmutableSet<Normalization> checkNormalizations(List<Normalization> normalizations) {
-      Normalization none = null;
-      Normalization normalization = null;
-      Normalization caseFold = null;
-      for (Normalization n : normalizations) {
+    private ImmutableSet<PathNormalization> checkNormalizations(
+        List<PathNormalization> normalizations) {
+      PathNormalization none = null;
+      PathNormalization normalization = null;
+      PathNormalization caseFold = null;
+      for (PathNormalization n : normalizations) {
         checkNotNull(n);
         checkNormalizationNotSet(n, none);
 
@@ -435,7 +337,8 @@ public final class Configuration {
       return Sets.immutableEnumSet(normalizations);
     }
 
-    private static void checkNormalizationNotSet(Normalization n, @Nullable Normalization set) {
+    private static void checkNormalizationNotSet(
+        PathNormalization n, @Nullable PathNormalization set) {
       if (set != null) {
         throw new IllegalArgumentException("can't set normalization " + n
             + ": normalization " + set + " already set");

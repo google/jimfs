@@ -16,19 +16,15 @@
 
 package com.google.jimfs;
 
-import static com.google.jimfs.path.Normalization.CASE_FOLD_ASCII;
-import static com.google.jimfs.path.Normalization.CASE_FOLD_UNICODE;
-import static com.google.jimfs.path.Normalization.NFC;
-import static com.google.jimfs.path.Normalization.NFD;
+import static com.google.jimfs.PathNormalization.CASE_FOLD_ASCII;
+import static com.google.jimfs.PathNormalization.CASE_FOLD_UNICODE;
+import static com.google.jimfs.PathNormalization.NFC;
+import static com.google.jimfs.PathNormalization.NFD;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import com.google.jimfs.attribute.AttributeProvider;
-import com.google.jimfs.attribute.StandardAttributeProviders;
-import com.google.jimfs.path.Normalization;
-import com.google.jimfs.path.PathType;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -53,18 +49,18 @@ public class ConfigurationTest {
   public void testDefaultUnixConfiguration() {
     Configuration config = Configuration.unix();
 
-    ASSERT.that(config.pathType()).is(PathType.unix());
-    ASSERT.that(config.roots()).has().exactly("/");
-    ASSERT.that(config.workingDirectory()).is("/work");
-    ASSERT.that(config.nameCanonicalNormalization()).isEmpty();
-    ASSERT.that(config.nameDisplayNormalization()).isEmpty();
-    ASSERT.that(config.pathEqualityUsesCanonicalForm()).isFalse();
-    ASSERT.that(config.blockSize()).is(8192);
-    ASSERT.that(config.maxSize()).is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(config.maxCacheSize()).is(-1);
-    ASSERT.that(config.attributeViews()).has().exactly("basic");
-    ASSERT.that(config.attributeProviders()).isEmpty();
-    ASSERT.that(config.defaultAttributeValues()).isEmpty();
+    ASSERT.that(config.pathType).is(PathType.unix());
+    ASSERT.that(config.roots).has().exactly("/");
+    ASSERT.that(config.workingDirectory).is("/work");
+    ASSERT.that(config.nameCanonicalNormalization).isEmpty();
+    ASSERT.that(config.nameDisplayNormalization).isEmpty();
+    ASSERT.that(config.pathEqualityUsesCanonicalForm).isFalse();
+    ASSERT.that(config.blockSize).is(8192);
+    ASSERT.that(config.maxSize).is(4L * 1024 * 1024 * 1024);
+    ASSERT.that(config.maxCacheSize).is(-1);
+    ASSERT.that(config.attributeViews).has().exactly("basic");
+    ASSERT.that(config.attributeProviders).isEmpty();
+    ASSERT.that(config.defaultAttributeValues).isEmpty();
   }
 
   @Test
@@ -85,18 +81,18 @@ public class ConfigurationTest {
   public void testDefaultOsXConfiguration() {
     Configuration config = Configuration.osX();
 
-    ASSERT.that(config.pathType()).is(PathType.unix());
-    ASSERT.that(config.roots()).has().exactly("/");
-    ASSERT.that(config.workingDirectory()).is("/work");
-    ASSERT.that(config.nameCanonicalNormalization()).has().exactly(NFD, CASE_FOLD_ASCII);
-    ASSERT.that(config.nameDisplayNormalization()).has().exactly(NFC);
-    ASSERT.that(config.pathEqualityUsesCanonicalForm()).isFalse();
-    ASSERT.that(config.blockSize()).is(8192);
-    ASSERT.that(config.maxSize()).is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(config.maxCacheSize()).is(-1);
-    ASSERT.that(config.attributeViews()).has().exactly("basic");
-    ASSERT.that(config.attributeProviders()).isEmpty();
-    ASSERT.that(config.defaultAttributeValues()).isEmpty();
+    ASSERT.that(config.pathType).is(PathType.unix());
+    ASSERT.that(config.roots).has().exactly("/");
+    ASSERT.that(config.workingDirectory).is("/work");
+    ASSERT.that(config.nameCanonicalNormalization).has().exactly(NFD, CASE_FOLD_ASCII);
+    ASSERT.that(config.nameDisplayNormalization).has().exactly(NFC);
+    ASSERT.that(config.pathEqualityUsesCanonicalForm).isFalse();
+    ASSERT.that(config.blockSize).is(8192);
+    ASSERT.that(config.maxSize).is(4L * 1024 * 1024 * 1024);
+    ASSERT.that(config.maxCacheSize).is(-1);
+    ASSERT.that(config.attributeViews).has().exactly("basic");
+    ASSERT.that(config.attributeProviders).isEmpty();
+    ASSERT.that(config.defaultAttributeValues).isEmpty();
   }
 
   @Test
@@ -122,18 +118,18 @@ public class ConfigurationTest {
   public void testDefaultWindowsConfiguration() {
     Configuration config = Configuration.windows();
 
-    ASSERT.that(config.pathType()).is(PathType.windows());
-    ASSERT.that(config.roots()).has().exactly("C:\\");
-    ASSERT.that(config.workingDirectory()).is("C:\\work");
-    ASSERT.that(config.nameCanonicalNormalization()).has().exactly(CASE_FOLD_ASCII);
-    ASSERT.that(config.nameDisplayNormalization()).isEmpty();
-    ASSERT.that(config.pathEqualityUsesCanonicalForm()).isTrue();
-    ASSERT.that(config.blockSize()).is(8192);
-    ASSERT.that(config.maxSize()).is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(config.maxCacheSize()).is(-1);
-    ASSERT.that(config.attributeViews()).has().exactly("basic");
-    ASSERT.that(config.attributeProviders()).isEmpty();
-    ASSERT.that(config.defaultAttributeValues()).isEmpty();
+    ASSERT.that(config.pathType).is(PathType.windows());
+    ASSERT.that(config.roots).has().exactly("C:\\");
+    ASSERT.that(config.workingDirectory).is("C:\\work");
+    ASSERT.that(config.nameCanonicalNormalization).has().exactly(CASE_FOLD_ASCII);
+    ASSERT.that(config.nameDisplayNormalization).isEmpty();
+    ASSERT.that(config.pathEqualityUsesCanonicalForm).isTrue();
+    ASSERT.that(config.blockSize).is(8192);
+    ASSERT.that(config.maxSize).is(4L * 1024 * 1024 * 1024);
+    ASSERT.that(config.maxCacheSize).is(-1);
+    ASSERT.that(config.attributeViews).has().exactly("basic");
+    ASSERT.that(config.attributeProviders).isEmpty();
+    ASSERT.that(config.defaultAttributeValues).isEmpty();
   }
 
   @Test
@@ -174,18 +170,18 @@ public class ConfigurationTest {
             "posix:permissions", PosixFilePermissions.fromString("---------"))
         .build();
 
-    ASSERT.that(config.pathType()).is(PathType.unix());
-    ASSERT.that(config.roots()).has().exactly("/");
-    ASSERT.that(config.workingDirectory()).is("/hello/world");
-    ASSERT.that(config.nameCanonicalNormalization()).has().exactly(NFD, CASE_FOLD_UNICODE);
-    ASSERT.that(config.nameDisplayNormalization()).has().exactly(NFC);
-    ASSERT.that(config.pathEqualityUsesCanonicalForm()).isTrue();
-    ASSERT.that(config.blockSize()).is(10);
-    ASSERT.that(config.maxSize()).is(100);
-    ASSERT.that(config.maxCacheSize()).is(50);
-    ASSERT.that(config.attributeViews()).has().exactly("basic", "posix");
-    ASSERT.that(config.attributeProviders()).has().exactly(unixProvider);
-    ASSERT.that(config.defaultAttributeValues())
+    ASSERT.that(config.pathType).is(PathType.unix());
+    ASSERT.that(config.roots).has().exactly("/");
+    ASSERT.that(config.workingDirectory).is("/hello/world");
+    ASSERT.that(config.nameCanonicalNormalization).has().exactly(NFD, CASE_FOLD_UNICODE);
+    ASSERT.that(config.nameDisplayNormalization).has().exactly(NFC);
+    ASSERT.that(config.pathEqualityUsesCanonicalForm).isTrue();
+    ASSERT.that(config.blockSize).is(10);
+    ASSERT.that(config.maxSize).is(100);
+    ASSERT.that(config.maxCacheSize).is(50);
+    ASSERT.that(config.attributeViews).has().exactly("basic", "posix");
+    ASSERT.that(config.attributeProviders).has().exactly(unixProvider);
+    ASSERT.that(config.defaultAttributeValues)
         .hasKey("posix:permissions").withValue(PosixFilePermissions.fromString("---------"));
   }
 
@@ -231,18 +227,18 @@ public class ConfigurationTest {
         .setAttributeViews("basic", "posix")
         .build();
 
-    ASSERT.that(config.pathType()).is(PathType.unix());
-    ASSERT.that(config.roots()).has().exactly("/");
-    ASSERT.that(config.workingDirectory()).is("/hello/world");
-    ASSERT.that(config.nameCanonicalNormalization()).isEmpty();
-    ASSERT.that(config.nameDisplayNormalization()).isEmpty();
-    ASSERT.that(config.pathEqualityUsesCanonicalForm()).isFalse();
-    ASSERT.that(config.blockSize()).is(8192);
-    ASSERT.that(config.maxSize()).is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(config.maxCacheSize()).is(-1);
-    ASSERT.that(config.attributeViews()).has().exactly("basic", "posix");
-    ASSERT.that(config.attributeProviders()).isEmpty();
-    ASSERT.that(config.defaultAttributeValues()).isEmpty();
+    ASSERT.that(config.pathType).is(PathType.unix());
+    ASSERT.that(config.roots).has().exactly("/");
+    ASSERT.that(config.workingDirectory).is("/hello/world");
+    ASSERT.that(config.nameCanonicalNormalization).isEmpty();
+    ASSERT.that(config.nameDisplayNormalization).isEmpty();
+    ASSERT.that(config.pathEqualityUsesCanonicalForm).isFalse();
+    ASSERT.that(config.blockSize).is(8192);
+    ASSERT.that(config.maxSize).is(4L * 1024 * 1024 * 1024);
+    ASSERT.that(config.maxCacheSize).is(-1);
+    ASSERT.that(config.attributeViews).has().exactly("basic", "posix");
+    ASSERT.that(config.attributeProviders).isEmpty();
+    ASSERT.that(config.defaultAttributeValues).isEmpty();
   }
 
   @Test
@@ -284,7 +280,7 @@ public class ConfigurationTest {
     assertIllegalNormalizations(CASE_FOLD_ASCII, CASE_FOLD_UNICODE);
   }
 
-  private static void assertIllegalNormalizations(Normalization first, Normalization... more) {
+  private static void assertIllegalNormalizations(PathNormalization first, PathNormalization... more) {
     try {
       Configuration.builder(PathType.unix()).setNameCanonicalNormalization(first, more);
       fail();

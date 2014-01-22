@@ -27,10 +27,10 @@
 
   <artifactId>jimfs</artifactId>
 
-  <name>JimFS</name>
+  <name>Jimfs</name>
 
   <description>
-    JimFS is an in-memory implementation of Java 7's java.nio.file abstract file system API.
+    Jimfs is an in-memory implementation of Java 7's java.nio.file abstract file system API.
   </description>
 
   <dependencies>

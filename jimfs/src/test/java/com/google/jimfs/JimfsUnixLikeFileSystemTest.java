@@ -17,10 +17,10 @@
 package com.google.jimfs;
 
 import static com.google.common.primitives.Bytes.concat;
-import static com.google.jimfs.attribute.UserPrincipals.createUserPrincipal;
-import static com.google.jimfs.testing.TestUtils.bytes;
-import static com.google.jimfs.testing.TestUtils.permutations;
-import static com.google.jimfs.testing.TestUtils.preFilledBytes;
+import static com.google.jimfs.TestUtils.bytes;
+import static com.google.jimfs.TestUtils.permutations;
+import static com.google.jimfs.TestUtils.preFilledBytes;
+import static com.google.jimfs.UserPrincipals.createUserPrincipal;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -52,8 +52,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.Uninterruptibles;
-import com.google.jimfs.attribute.BasicFileAttribute;
-import com.google.jimfs.internal.JimfsFileSystemProvider;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
