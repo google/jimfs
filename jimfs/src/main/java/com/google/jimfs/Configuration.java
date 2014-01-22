@@ -286,7 +286,8 @@ public final class Configuration {
      * Sets the normalizations that will be applied to the display form of filenames. The display
      * form is used in the {@code toString()} of {@code Path} objects.
      */
-    public Builder setNameDisplayNormalization(PathNormalization first, PathNormalization... more) {
+    public Builder setNameDisplayNormalization(
+        PathNormalization first, PathNormalization... more) {
       this.nameDisplayNormalization = checkNormalizations(Lists.asList(first, more));
       return this;
     }
@@ -296,12 +297,14 @@ public final class Configuration {
      * file system. The canonical form is used to determine the equality of two filenames when
      * performing a file lookup.
      */
-    public Builder setNameCanonicalNormalization(PathNormalization first, PathNormalization... more) {
+    public Builder setNameCanonicalNormalization(
+        PathNormalization first, PathNormalization... more) {
       this.nameCanonicalNormalization = checkNormalizations(Lists.asList(first, more));
       return this;
     }
 
-    private ImmutableSet<PathNormalization> checkNormalizations(List<PathNormalization> normalizations) {
+    private ImmutableSet<PathNormalization> checkNormalizations(
+        List<PathNormalization> normalizations) {
       PathNormalization none = null;
       PathNormalization normalization = null;
       PathNormalization caseFold = null;
@@ -334,7 +337,8 @@ public final class Configuration {
       return Sets.immutableEnumSet(normalizations);
     }
 
-    private static void checkNormalizationNotSet(PathNormalization n, @Nullable PathNormalization set) {
+    private static void checkNormalizationNotSet(
+        PathNormalization n, @Nullable PathNormalization set) {
       if (set != null) {
         throw new IllegalArgumentException("can't set normalization " + n
             + ": normalization " + set + " already set");
