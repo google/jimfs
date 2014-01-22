@@ -16,10 +16,8 @@
 
 package com.google.jimfs;
 
-import static com.google.jimfs.testing.PathSubject.paths;
+import static com.google.jimfs.PathSubject.paths;
 import static org.truth0.Truth.ASSERT;
-
-import com.google.jimfs.testing.PathSubject;
 
 import org.junit.After;
 import org.junit.Before;
