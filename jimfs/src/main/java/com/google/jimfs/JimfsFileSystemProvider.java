@@ -31,10 +31,12 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
@@ -76,7 +78,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   private final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new ConcurrentHashMap<>();
 
   @Override
-  public JimfsFileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
+  public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
     checkArgument(uri.getScheme().equalsIgnoreCase(URI_SCHEME),
         "uri (%s) scheme must be '%s'", uri, URI_SCHEME);
     checkArgument(isValidFileSystemUri(uri),
@@ -94,7 +96,11 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public JimfsFileSystem getFileSystem(URI uri) {
+  public FileSystem getFileSystem(URI uri) {
+    return getJimfsFileSystem(uri);
+  }
+
+  private JimfsFileSystem getJimfsFileSystem(URI uri) {
     JimfsFileSystem fileSystem = fileSystems.get(uri);
     if (fileSystem == null) {
       throw new FileSystemNotFoundException(uri.toString());
@@ -133,7 +139,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
         "uri scheme does not match this provider: %s", uri);
     checkArgument(!isNullOrEmpty(uri.getPath()), "uri must have a path: %s", uri);
 
-    return getFileSystem(toFileSystemUri(uri)).toPath(uri);
+    return getJimfsFileSystem(toFileSystemUri(uri)).toPath(uri);
   }
 
   /**
@@ -183,7 +189,12 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public JimfsFileChannel newFileChannel(
+  public FileChannel newFileChannel(
+      Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+    return newJimfsFileChannel(path, options, attrs);
+  }
+
+  private JimfsFileChannel newJimfsFileChannel(
       Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
@@ -202,7 +213,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       Path path, Set<? extends OpenOption> options,
       @Nullable ExecutorService executor, FileAttribute<?>... attrs)
       throws IOException {
-    JimfsFileChannel channel = newFileChannel(path, options, attrs);
+    JimfsFileChannel channel = newJimfsFileChannel(path, options, attrs);
     if (executor == null) {
       JimfsFileSystem fileSystem = (JimfsFileSystem) path.getFileSystem();
       executor = fileSystem.getDefaultThreadPool();
@@ -336,7 +347,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public JimfsFileStore getFileStore(Path path) throws IOException {
+  public FileStore getFileStore(Path path) throws IOException {
     return getFileSystem(path).getFileStore();
   }
 
