@@ -3,7 +3,8 @@
 *.iml
 
 .classpath
-.project/
+.project
+.settings/
 
 target/
 
