@@ -69,6 +69,10 @@ final class DirectoryTable implements FileContent {
    * Returns the entry linking to this directory in its parent.
    */
   public DirectoryEntry entry() {
+    // This is technically nullable, but the code should not call it at any point where it's null
+    // TODO(cgdecker): Check if there's any issue with a SecureDirectoryStream to the directory
+    // when the directory is deleted... it would be unlinked, but could still be accessed through
+    // the stream.
     return entryInParent;
   }
 

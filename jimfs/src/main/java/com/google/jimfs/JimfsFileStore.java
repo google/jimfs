@@ -195,6 +195,7 @@ final class JimfsFileStore extends FileStore {
    * Sets the given attribute to the given value for the given file.
    */
   void setAttribute(File file, String attribute, Object value) {
+    // TODO(cgdecker): Change attribute stuff to avoid the sad boolean parameter
     attributes.setAttribute(file, attribute, value, false);
   }
 

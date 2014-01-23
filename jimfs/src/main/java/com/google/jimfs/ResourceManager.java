@@ -30,6 +30,8 @@ import java.util.Set;
  */
 final class ResourceManager implements Closeable {
 
+  // TODO(cgdecker): Give this full responsibility for closing a FileSystem and a different name.
+
   private final Set<Closeable> resources = Sets.newConcurrentHashSet();
 
   /**

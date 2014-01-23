@@ -24,51 +24,6 @@ import javax.annotation.Nullable;
  * Static registry of {@link AttributeProvider} implementations for the standard set of file
  * attribute views Jimfs supports.
  *
- * <p>The supported views are:
- *
- * <table>
- *   <tr>
- *     <td><b>View Name</b></td>
- *     <td><b>View Interface</b></td>
- *     <td><b>Attributes Interface</b></td>
- *   </tr>
- *   <tr>
- *     <td>{@code "basic"}</td>
- *     <td>{@link java.nio.file.attribute.BasicFileAttributeView BasicFileAttributeView}</td>
- *     <td>{@link java.nio.file.attribute.BasicFileAttributes BasicFileAttributes}</td>
- *   </tr>
- *   <tr>
- *     <td>{@code "owner"}</td>
- *     <td>{@link java.nio.file.attribute.FileOwnerAttributeView FileOwnerAttributeView}</td>
- *     <td>--</td>
- *   </tr>
- *   <tr>
- *     <td>{@code "posix"}</td>
- *     <td>{@link java.nio.file.attribute.PosixFileAttributeView PosixFileAttributeView}</td>
- *     <td>{@link java.nio.file.attribute.PosixFileAttributes PosixFileAttributes}</td>
- *   </tr>
- *   <tr>
- *     <td>{@code "unix"}</td>
- *     <td>--</td>
- *     <td>--</td>
- *   </tr>
- *   <tr>
- *     <td>{@code "dos"}</td>
- *     <td>{@link java.nio.file.attribute.DosFileAttributeView DosFileAttributeView}</td>
- *     <td>{@link java.nio.file.attribute.DosFileAttributes DosFileAttributes}</td>
- *   </tr>
- *   <tr>
- *     <td>{@code "acl"}</td>
- *     <td>{@link java.nio.file.attribute.AclFileAttributeView AclFileAttributeView}</td>
- *     <td>--</td>
- *   </tr>
- *   <tr>
- *     <td>{@code "user"}</td>
- *     <td>{@link java.nio.file.attribute.UserDefinedFileAttributeView UserDefinedFileAttributeView}</td>
- *     <td>--</td>
- *   </tr>
- * </table>
- *
  * @author Colin Decker
  */
 final class StandardAttributeProviders {

@@ -83,6 +83,7 @@ final class OwnerAttributeProvider extends AttributeProvider {
       boolean create) {
     if (attribute.equals("owner")) {
       UserPrincipal user = checkType(view, attribute, value, UserPrincipal.class);
+      // TODO(cgdecker): Do we really need to do this? Any reason not to allow any UserPrincipal?
       if (!(user instanceof UserPrincipals.JimfsUserPrincipal)) {
         user = createUserPrincipal(user.getName());
       }

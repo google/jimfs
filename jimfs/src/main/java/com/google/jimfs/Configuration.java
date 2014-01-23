@@ -408,9 +408,53 @@ public final class Configuration {
     }
 
     /**
-     * Sets the attribute views the file system should support. By default, the views that may be
-     * specified are those listed by {@link StandardAttributeProviders}. If any other views should
-     * be supported, attribute providers for those views must be
+     * Sets the attribute views the file system should support. By default, the following views may
+     * be specified:
+     *
+     * <table>
+     *   <tr>
+     *     <td><b>Name</b></td>
+     *     <td><b>View Interface</b></td>
+     *     <td><b>Attributes Interface</b></td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "basic"}</td>
+     *     <td>{@link java.nio.file.attribute.BasicFileAttributeView BasicFileAttributeView}</td>
+     *     <td>{@link java.nio.file.attribute.BasicFileAttributes BasicFileAttributes}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "owner"}</td>
+     *     <td>{@link java.nio.file.attribute.FileOwnerAttributeView FileOwnerAttributeView}</td>
+     *     <td>--</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "posix"}</td>
+     *     <td>{@link java.nio.file.attribute.PosixFileAttributeView PosixFileAttributeView}</td>
+     *     <td>{@link java.nio.file.attribute.PosixFileAttributes PosixFileAttributes}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "unix"}</td>
+     *     <td>--</td>
+     *     <td>--</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "dos"}</td>
+     *     <td>{@link java.nio.file.attribute.DosFileAttributeView DosFileAttributeView}</td>
+     *     <td>{@link java.nio.file.attribute.DosFileAttributes DosFileAttributes}</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "acl"}</td>
+     *     <td>{@link java.nio.file.attribute.AclFileAttributeView AclFileAttributeView}</td>
+     *     <td>--</td>
+     *   </tr>
+     *   <tr>
+     *     <td>{@code "user"}</td>
+     *     <td>{@link java.nio.file.attribute.UserDefinedFileAttributeView UserDefinedFileAttributeView}</td>
+     *     <td>--</td>
+     *   </tr>
+     * </table>
+     *
+     * <p>If any other views should be supported, attribute providers for those views must be
      * {@linkplain #addAttributeProvider(AttributeProvider) added}.
      */
     public Builder setAttributeViews(String first, String... more) {
