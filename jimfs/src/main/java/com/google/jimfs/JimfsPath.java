@@ -280,7 +280,7 @@ final class JimfsPath implements Path, FileContent {
    * Resolves the given name against this path. The name is assumed not to be a root name.
    */
   JimfsPath resolve(Name name) {
-    if (name.toString().equals("")) {
+    if (name.toString().isEmpty()) {
       return this;
     }
     return pathService.createPathInternal(root, ImmutableList.<Name>builder()
@@ -372,9 +372,9 @@ final class JimfsPath implements Path, FileContent {
     List<Name> parts = new ArrayList<>(extraNamesInThis + extraNamesInOther.size());
 
     // add .. for each extra name in this path
-    Iterables.addAll(parts, Collections.nCopies(extraNamesInThis, Name.PARENT));
+    parts.addAll(Collections.nCopies(extraNamesInThis, Name.PARENT));
     // add each extra name in the other path
-    Iterables.addAll(parts, extraNamesInOther);
+    parts.addAll(extraNamesInOther);
 
     return pathService.createRelativePath(parts);
   }

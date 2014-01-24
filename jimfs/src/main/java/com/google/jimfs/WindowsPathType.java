@@ -183,9 +183,9 @@ final class WindowsPathType extends PathType {
   @Override
   public String toUriPath(String root, Iterable<String> names) {
     if (root.startsWith("\\\\")) {
-      root = root.replace("\\", "/");
+      root = root.replace('\\', '/');
     } else {
-      root = "/" + root.replace("\\", "/");
+      root = "/" + root.replace('\\', '/');
     }
 
     StringBuilder builder = new StringBuilder();
@@ -203,7 +203,7 @@ final class WindowsPathType extends PathType {
 
   @Override
   public ParseResult parseUriPath(String uriPath) {
-    uriPath = uriPath.replace("/", "\\");
+    uriPath = uriPath.replace('/', '\\');
     if (uriPath.charAt(0) == '\\' && uriPath.charAt(1) != '\\') {
       // non-UNC path, so the leading / was just there for the URI path format and isn't part
       // of what should be parsed
