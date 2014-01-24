@@ -23,6 +23,7 @@ import static com.google.jimfs.Jimfs.CONFIG_KEY;
 import static com.google.jimfs.Jimfs.URI_SCHEME;
 import static java.nio.file.StandardOpenOption.APPEND;
 
+import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
@@ -65,6 +66,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
+@AutoService(FileSystemProvider.class)
 public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
