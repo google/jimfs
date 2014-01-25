@@ -50,10 +50,12 @@ public class DirectoryTableTest {
   public void setUp() {
     root = new DirectoryTable();
     rootFile = new File(0, root);
+    root.setSelf(rootFile);
     root.setAsRoot(rootFile, Name.simple("/"));
 
     table = new DirectoryTable();
     dirFile = new File(1, table);
+    table.setSelf(dirFile);
     root.link(Name.simple("foo"), dirFile);
   }
 
@@ -62,7 +64,7 @@ public class DirectoryTableTest {
     ASSERT.that(root.entryCount()).is(3); // two for parent/self, one for table
     ASSERT.that(root.isEmpty()).isFalse();
     ASSERT.that(root.entry()).is(entry(rootFile, "/", rootFile));
-    ASSERT.that(root.name()).is(Name.simple("/"));
+    ASSERT.that(root.entry().name()).is(Name.simple("/"));
 
     assertParentAndSelf(root, rootFile, rootFile);
   }
@@ -178,17 +180,18 @@ public class DirectoryTableTest {
   public void testLinkDirectory() {
     DirectoryTable newTable = new DirectoryTable();
     File newDir = new File(10, newTable);
+    newTable.setSelf(newDir);
 
     ASSERT.that(newTable.entry()).isNull();
-    ASSERT.that(newTable.get(Name.SELF)).isNull();
+    ASSERT.that(newTable.get(Name.SELF).file()).is(newDir);
     ASSERT.that(newTable.get(Name.PARENT)).isNull();
-    ASSERT.that(newDir.links()).is(0);
+    ASSERT.that(newDir.links()).is(1);
 
     table.link(Name.simple("foo"), newDir);
 
     ASSERT.that(newTable.entry()).is(entry(dirFile, "foo", newDir));
     ASSERT.that(newTable.parent()).is(dirFile);
-    ASSERT.that(newTable.name()).is(Name.simple("foo"));
+    ASSERT.that(newTable.entry().name()).is(Name.simple("foo"));
     ASSERT.that(newTable.self()).is(newDir);
     ASSERT.that(newTable.get(Name.SELF)).is(entry(newDir, ".", newDir));
     ASSERT.that(newTable.get(Name.PARENT)).is(entry(newDir, "..", dirFile));
@@ -199,6 +202,7 @@ public class DirectoryTableTest {
   public void testUnlinkDirectory() {
     DirectoryTable newTable = new DirectoryTable();
     File newDir = new File(10, newTable);
+    newTable.setSelf(newDir);
 
     table.link(Name.simple("foo"), newDir);
 
@@ -208,9 +212,9 @@ public class DirectoryTableTest {
     table.unlink(Name.simple("foo"));
 
     ASSERT.that(newTable.entry()).isNull();
-    ASSERT.that(newTable.get(Name.SELF)).isNull();
+    ASSERT.that(newTable.get(Name.SELF).file()).is(newDir);
     ASSERT.that(newTable.get(Name.PARENT)).isNull();
-    ASSERT.that(newDir.links()).is(0);
+    ASSERT.that(newDir.links()).is(1);
   }
 
   @Test

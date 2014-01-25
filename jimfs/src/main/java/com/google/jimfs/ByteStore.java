@@ -145,10 +145,12 @@ final class ByteStore implements FileContent {
    * contents are deleted if necessary.
    */
   @Override
-  public synchronized void deleted() {
-    deleted = true;
-    if (openCount == 0) {
-      deleteContents();
+  public synchronized void deleted(int linksRemaining) {
+    if (linksRemaining == 0) {
+      deleted = true;
+      if (openCount == 0) {
+        deleteContents();
+      }
     }
   }
 

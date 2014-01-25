@@ -45,6 +45,6 @@ public final class FakeFileContent implements FileContent {
   }
 
   @Override
-  public void deleted() {
+  public void deleted(int linksRemaining) {
   }
 }

@@ -115,17 +115,19 @@ public class FileTreeTest {
   public void setUp() {
     DirectoryTable rootTable = new DirectoryTable();
     File root = new File(0, rootTable);
+    rootTable.setSelf(root);
     rootTable.setAsRoot(root, Name.simple("/"));
     files.put("/", root);
 
     DirectoryTable otherRootTable = new DirectoryTable();
     File otherRoot = new File(2, otherRootTable);
+    otherRootTable.setSelf(otherRoot);
     otherRootTable.setAsRoot(otherRoot, Name.simple("$"));
     files.put("$", otherRoot);
 
     Map<Name, File> roots = new HashMap<>();
-    roots.put(rootTable.name(), root);
-    roots.put(otherRootTable.name(), otherRoot);
+    roots.put(Name.simple("/"), root);
+    roots.put(Name.simple("$"), otherRoot);
 
     fileTree = new FileTree(roots);
 
@@ -446,6 +448,7 @@ public class FileTreeTest {
 
     DirectoryTable table = new DirectoryTable();
     File newFile = new File(new Random().nextInt(), table);
+    table.setSelf(newFile);
 
     dir.asDirectory().link(Name.simple(name), newFile);
 

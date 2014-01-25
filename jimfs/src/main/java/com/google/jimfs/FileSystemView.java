@@ -212,6 +212,8 @@ final class FileSystemView {
       List<Name> names = new ArrayList<>();
       names.add(entry.name());
       while (!entry.file().isRootDirectory()) {
+        // entry can't be null here since this operation isn't available
+        // through SecureDirectoryStream
         entry = entry.directory().asDirectory().entry();
         names.add(entry.name());
       }
@@ -453,9 +455,7 @@ final class FileSystemView {
     parent.asDirectory().unlink(entry.name());
     parent.updateModifiedTime();
 
-    if (file.links() == 0) {
-      file.content().deleted();
-    }
+    file.content().deleted(file.links());
   }
 
   /**
