@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Jimfs : An in-memory file system for Java 7+" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Jimfs</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/google/jimfs">View on GitHub</a>
+
+          <h1 id="project_title">Jimfs</h1>
+          <h2 id="project_tagline">An in-memory file system for Java 7+</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/google/jimfs/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/google/jimfs/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="jimfs" class="anchor" href="#jimfs"><span class="octicon octicon-link"></span></a>Jimfs</h1>
+
+<p>Jimfs is an in-memory file system for Java 7 and above, implementing the
+<a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html">java.nio.file</a>
+abstract file system APIs.</p>
+
+<h2>
+<a name="basic-use" class="anchor" href="#basic-use"><span class="octicon octicon-link"></span></a>Basic use</h2>
+
+<p>The simplest way to use Jimfs is to just get a new <code>FileSystem</code> instance from the <code>Jimfs</code> class and
+start using it:</p>
+
+<div class="highlight highlight-java"><pre><span class="kn">import</span> <span class="nn">com.google.jimfs.Jimfs</span><span class="o">;</span>
+<span class="o">...</span>
+
+<span class="c1">// For a simple file system with Unix-style paths and behavior:</span>
+<span class="n">FileSystem</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">Jimfs</span><span class="o">.</span><span class="na">newFileSystem</span><span class="o">(</span><span class="n">Configuration</span><span class="o">.</span><span class="na">unix</span><span class="o">());</span>
+
+<span class="n">Path</span> <span class="n">foo</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="na">getPath</span><span class="o">(</span><span class="s">"/foo"</span><span class="o">);</span>
+<span class="n">Files</span><span class="o">.</span><span class="na">createDirectory</span><span class="o">(</span><span class="n">foo</span><span class="o">);</span>
+
+<span class="n">Path</span> <span class="n">hello</span> <span class="o">=</span> <span class="n">foo</span><span class="o">.</span><span class="na">resolve</span><span class="o">(</span><span class="s">"hello.txt"</span><span class="o">);</span>
+<span class="n">Files</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">hello</span><span class="o">,</span> <span class="n">ImmutableList</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">"hello"</span><span class="o">),</span> <span class="n">StandardCharsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">);</span>
+
+<span class="c1">// Or for Windows:</span>
+<span class="n">FileSystem</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">Jimfs</span><span class="o">.</span><span class="na">newFileSystem</span><span class="o">(</span><span class="n">Configuration</span><span class="o">.</span><span class="na">windows</span><span class="o">());</span>
+</pre></div>
+
+<h2>
+<a name="whats-supported" class="anchor" href="#whats-supported"><span class="octicon octicon-link"></span></a>What's supported?</h2>
+
+<p>Jimfs supports almost all the APIs under <code>java.nio.file</code>. It supports:</p>
+
+<ul>
+<li>Creating, deleting, moving and copying files and directories.</li>
+<li>Reading and writing files with <code>FileChannel</code> or <code>SeekableByteChannel</code>, <code>InputStream</code>,
+<code>OutputStream</code>, etc.</li>
+<li>Symbolic links. Hard links to regular files.</li>
+<li>
+<code>SecureDirectoryStream</code>, for operations relative to an <em>open</em> directory.</li>
+<li>Glob and regex path filtering with <code>PathMatcher</code>.</li>
+<li>Watching for changes to a directory with a <code>WatchService</code>.</li>
+<li>File attributes. Built-in attribute views that can be supported include "basic", "owner",
+"posix", "unix", "dos", "acl" and "user". Do note, however, that not all attribute views provide
+<em>useful</em> attributes. For example, while setting and reading POSIX file permissions is possible
+with the "posix" view, those permissions will not actually affect the behavior of the file system.</li>
+</ul><h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+
+<pre><code>Copyright 2013 Google Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+</code></pre>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Jimfs maintained by <a href="https://github.com/google">google</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
