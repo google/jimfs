@@ -54,9 +54,10 @@ interface FileContent {
   void unlinked();
 
   /**
-   * Called when the file containing this content has been deleted by the user. This method may
-   * either do any cleanup needed immediately or may mark this content as deleted and do cleanup
-   * once no open references to the file (such as streams) remain.
+   * Called when a link to the file containing this content has been deleted by the user. The
+   * {@code linksRemaining} parameter indicates the number of links that still exist to the file.
+   * This method may either do any cleanup needed immediately or may mark this content as deleted
+   * and do cleanup once no open references to the file (such as streams) remain.
    */
-  void deleted();
+  void deleted(int linksRemaining);
 }

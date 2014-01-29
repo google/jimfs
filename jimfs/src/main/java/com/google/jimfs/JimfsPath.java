@@ -85,7 +85,7 @@ final class JimfsPath implements Path, FileContent {
   }
 
   @Override
-  public void deleted() {
+  public void deleted(int linksRemaining) {
   }
 
   /**

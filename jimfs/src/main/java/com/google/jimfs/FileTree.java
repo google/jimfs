@@ -210,6 +210,7 @@ final class FileTree {
    * we find an entry [bar -> "." -> bar], we instead return the entry for bar in its parent,
    * [foo -> "bar" -> bar].
    */
+  @Nullable
   private DirectoryEntry getRealEntry(DirectoryEntry entry) {
     Name name = entry.name();
 

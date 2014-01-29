@@ -212,6 +212,10 @@ final class FileSystemView {
       List<Name> names = new ArrayList<>();
       names.add(entry.name());
       while (!entry.file().isRootDirectory()) {
+        // entry(), though @Nullable, won't return null here. The only way to get a null entry is
+        // to look up a file relative to a SecureDirectoryStream that is open against a deleted
+        // directory. toRealPath doesn't do this: It looks up a file relative to a Path, not a
+        // SecureDirectoryStream.
         entry = entry.directory().asDirectory().entry();
         names.add(entry.name());
       }
@@ -453,9 +457,7 @@ final class FileSystemView {
     parent.asDirectory().unlink(entry.name());
     parent.updateModifiedTime();
 
-    if (file.links() == 0) {
-      file.content().deleted();
-    }
+    file.content().deleted(file.links());
   }
 
   /**

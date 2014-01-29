@@ -35,10 +35,11 @@ final class DirectoryTable implements FileContent {
   private final DirectoryEntryMap map = new DirectoryEntryMap();
 
   /**
-   * The entry linking to this directory in its parent directory. Used for accessing the parent
-   * directory, the current name of this directory and this directory's corresponding file object.
+   * The entry linking to this directory in its parent directory.
    */
   private DirectoryEntry entryInParent;
+
+  public DirectoryTable() {}
 
   /**
    * Creates a copy of this table. The copy does <i>not</i> contain a copy of the entries in this
@@ -55,7 +56,15 @@ final class DirectoryTable implements FileContent {
   }
 
   @Override
-  public void deleted() {
+  public void deleted(int linksRemaining) {
+  }
+
+  /**
+   * Sets the self entry (".") linking this directory table to the file object that contains it.
+   * Called immediately after creating the directory table.
+   */
+  public void setSelf(File self) {
+    map.put(new DirectoryEntry(self, Name.SELF, self));
   }
 
   /**
@@ -68,11 +77,8 @@ final class DirectoryTable implements FileContent {
   /**
    * Returns the entry linking to this directory in its parent.
    */
+  @Nullable // only when the directory is open in a SecureDirectoryStream but has been deleted
   public DirectoryEntry entry() {
-    // This is technically nullable, but the code should not call it at any point where it's null
-    // TODO(cgdecker): Check if there's any issue with a SecureDirectoryStream to the directory
-    // when the directory is deleted... it would be unlinked, but could still be accessed through
-    // the stream.
     return entryInParent;
   }
 
@@ -81,14 +87,7 @@ final class DirectoryTable implements FileContent {
    */
   @VisibleForTesting
   File self() {
-    return entryInParent.file();
-  }
-
-  /**
-   * Returns the name of this directory.
-   */
-  public Name name() {
-    return entryInParent.name();
+    return get(Name.SELF).file(); // not null
   }
 
   /**
@@ -105,16 +104,11 @@ final class DirectoryTable implements FileContent {
   @Override
   public void linked(DirectoryEntry entry) {
     this.entryInParent = entry;
-    map.put(new DirectoryEntry(entry.file(), Name.SELF, entry.file()));
     map.put(new DirectoryEntry(entry.file(), Name.PARENT, entry.directory()));
   }
 
-  /**
-   * Called when this directory is unlinked from its parent directory.
-   */
   @Override
   public void unlinked() {
-    map.remove(Name.SELF);
     map.remove(Name.PARENT);
     entryInParent = null;
   }
@@ -162,8 +156,7 @@ final class DirectoryTable implements FileContent {
    */
   public void unlink(Name name) {
     DirectoryEntry entry = map.remove(checkNotReserved(name, "unlink"));
-    File file = entry.file();
-    file.content().unlinked();
+    entry.file().content().unlinked();
   }
 
   /**

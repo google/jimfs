@@ -50,7 +50,10 @@ final class FileFactory {
    * Creates a new directory.
    */
   public File createDirectory() {
-    return new File(nextFileId(), new DirectoryTable());
+    DirectoryTable table = new DirectoryTable();
+    File file = new File(nextFileId(), table);
+    table.setSelf(file);
+    return file;
   }
 
   /**
@@ -73,6 +76,11 @@ final class FileFactory {
    * Creates and returns a copy of the given file.
    */
   public File copy(File file) throws IOException {
+    if (file.isDirectory()) {
+      // directory contents are not copied
+      return createDirectory();
+    }
+
     return new File(nextFileId(), file.content().copy());
   }
 

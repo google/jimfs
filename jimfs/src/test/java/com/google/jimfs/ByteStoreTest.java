@@ -160,11 +160,11 @@ public class ByteStoreTest {
     public void tearDown(ByteStore store) {
       switch (reuseStrategy) {
         case DELETE_FILES:
-          store.deleted();
+          store.deleted(0);
           break;
         case KEEP_OR_DELETE_FILES:
           if (new Random().nextBoolean()) {
-            store.deleted();
+            store.deleted(0);
           }
           break;
         case KEEP_FILES:
@@ -865,7 +865,7 @@ public class ByteStoreTest {
       store.opened();
       store.opened();
 
-      store.deleted();
+      store.deleted(0);
 
       assertContentEquals(bytes, store);
 
