@@ -1093,8 +1093,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.delete(path("/work"));
 
     assertThat("/work").doesNotExist();
-    assertThat("").doesNotExist();
-    assertThat(".").doesNotExist();
+    assertThat("").exists();
+    assertThat(".").exists();
   }
 
   @Test

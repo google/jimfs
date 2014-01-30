@@ -68,35 +68,33 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   }
 
   /**
-   * Returns the entry linking to this directory in its parent.
+   * Returns the entry linking to this directory in its parent. If this directory has been deleted,
+   * this returns the entry for it in the directory it was in when it was deleted.
    */
-  @Nullable // only when the directory is open in a SecureDirectoryStream but has been deleted
   public DirectoryEntry entryInParent() {
     return entryInParent;
   }
 
   /**
-   * Returns the parent of this directory.
+   * Returns the parent of this directory. If this directory has been deleted, this returns the
+   * directory it was in when it was deleted.
    */
   public Directory parent() {
     return entryInParent.directory();
   }
 
-  /**
-   * Called when this directory is linked in a parent directory. The given entry is the new entry
-   * linking to this directory.
-   */
   @Override
-  public void linked(DirectoryEntry entry) {
+  void linked(DirectoryEntry entry) {
     File parent = entry.directory(); // handles null check
     this.entryInParent = entry;
-    put(new DirectoryEntry(this, Name.PARENT, parent));
+    forcePut(new DirectoryEntry(this, Name.PARENT, parent));
   }
 
   @Override
-  public void unlinked() {
-    remove(Name.PARENT);
-    entryInParent = null;
+  void unlinked() {
+    // we don't actually remove the parent link when this directory is unlinked, but the parent's
+    // link count should go down all the same
+    parent().decrementLinkCount();
   }
 
   /**
@@ -119,7 +117,17 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
    */
   @Nullable
   public DirectoryEntry get(Name name) {
-    return getEntry(name);
+    int index = bucketIndex(name, table.length);
+
+    DirectoryEntry entry = table[index];
+    while (entry != null) {
+      if (name.equals(entry.name())) {
+        return entry;
+      }
+
+      entry = entry.next;
+    }
+    return null;
   }
 
   /**
@@ -129,8 +137,8 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
    *     entry already exists for the name
    */
   public void link(Name name, File file) {
-    DirectoryEntry entry = put(
-        new DirectoryEntry(this, checkNotReserved(name, "link"), file));
+    DirectoryEntry entry = new DirectoryEntry(this, checkNotReserved(name, "link"), file);
+    put(entry);
     file.linked(entry);
   }
 
@@ -199,31 +207,29 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   }
 
   /**
-   * Returns the entry for the given name in the map.
+   * Adds the given entry to the directory.
+   *
+   * @throws IllegalArgumentException if an entry with the given entry's name already exists in the
+   *     directory
    */
-  @Nullable
-  private DirectoryEntry getEntry(Name name) {
-    int index = bucketIndex(name, table.length);
-
-    DirectoryEntry entry = table[index];
-    while (entry != null) {
-      if (name.equals(entry.name())) {
-        return entry;
-      }
-
-      entry = entry.next;
-    }
-    return null;
+  @VisibleForTesting
+  void put(DirectoryEntry entry) {
+    put(entry, false);
   }
 
   /**
-   * Adds the given entry to the map.
-   *
-   * @throws IllegalArgumentException if an entry with the given entry's name already exists in the
-   *     map
+   * Adds the given entry to the directory, overwriting an existing entry with the same name if
+   * such an entry exists.
    */
-  @VisibleForTesting
-  DirectoryEntry put(DirectoryEntry entry) {
+  private void forcePut(DirectoryEntry entry) {
+    put(entry, true);
+  }
+
+  /**
+   * Adds the given entry to the directory. {@code overwriteExisting} determines whether an existing
+   * entry with the same name should be overwritten or an exception should be thrown.
+   */
+  private void put(DirectoryEntry entry, boolean overwriteExisting) {
     int index = bucketIndex(entry.name(), table.length);
 
     // find the place the new entry should go, ensuring an entry with the same name doesn't already
@@ -232,7 +238,20 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
     DirectoryEntry curr = table[index];
     while (curr != null) {
       if (curr.name().equals(entry.name())) {
-        throw new IllegalArgumentException("entry '" + entry.name() + "' already exists");
+        if (overwriteExisting) {
+          // just replace the existing entry; no need to expand, and entryCount doesn't change
+          if (prev != null) {
+            prev.next = entry;
+          } else {
+            table[index] = entry;
+          }
+          entry.next = curr.next;
+          curr.next = null;
+          entry.file().incrementLinkCount();
+          return;
+        } else {
+          throw new IllegalArgumentException("entry '" + entry.name() + "' already exists");
+        }
       }
 
       prev = curr;
@@ -255,7 +274,6 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
     }
 
     entry.file().incrementLinkCount();
-    return entry;
   }
 
   private boolean expandIfNeeded() {
@@ -299,9 +317,9 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   }
 
   /**
-   * Removes and returns the entry for the given name from the map.
+   * Removes and returns the entry for the given name from the directory.
    *
-   * @throws IllegalArgumentException if there is no entry with the given name in the map
+   * @throws IllegalArgumentException if there is no entry with the given name in the directory
    */
   @VisibleForTesting
   DirectoryEntry remove(Name name) {

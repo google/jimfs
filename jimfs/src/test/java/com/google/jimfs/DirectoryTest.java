@@ -198,14 +198,18 @@ public class DirectoryTest {
 
     dir.link(Name.simple("foo"), newDir);
 
+    ASSERT.that(dir.links()).is(3);
+
     ASSERT.that(newDir.entryInParent()).is(entry(dir, "foo", newDir));
     ASSERT.that(newDir.links()).is(2);
 
     dir.unlink(Name.simple("foo"));
 
-    ASSERT.that(newDir.entryInParent()).isNull();
+    ASSERT.that(dir.links()).is(2);
+
+    ASSERT.that(newDir.entryInParent()).is(entry(dir, "foo", newDir));
     ASSERT.that(newDir.get(Name.SELF).file()).is(newDir);
-    ASSERT.that(newDir.get(Name.PARENT)).isNull();
+    ASSERT.that(newDir.get(Name.PARENT)).is(entry(newDir, "..", dir));
     ASSERT.that(newDir.links()).is(1);
   }
 
