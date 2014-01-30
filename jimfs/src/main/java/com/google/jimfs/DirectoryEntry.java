@@ -38,16 +38,16 @@ import javax.annotation.Nullable;
  */
 final class DirectoryEntry {
 
-  private final File directory;
+  private final Directory directory;
   private final Name name;
 
   @Nullable
   private final File file;
 
   @Nullable
-  DirectoryEntry next; // for use in DirectoryTable
+  DirectoryEntry next; // for use in Directory
 
-  DirectoryEntry(File directory, Name name, @Nullable File file) {
+  DirectoryEntry(Directory directory, Name name, @Nullable File file) {
     this.directory = checkNotNull(directory);
     this.name = checkNotNull(name);
     this.file = file;
@@ -122,7 +122,7 @@ final class DirectoryEntry {
   /**
    * Returns the directory containing this entry.
    */
-  public File directory() {
+  public Directory directory() {
     return directory;
   }
 

@@ -200,7 +200,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
-    File file = getDefaultView(checkedPath).getOrCreateRegularFile(checkedPath, opts, attrs);
+    RegularFile file = getDefaultView(checkedPath).getOrCreateRegularFile(checkedPath, opts, attrs);
     return new JimfsFileChannel(file, opts);
   }
 
@@ -227,7 +227,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForInputStream(options);
-    File file = getDefaultView(checkedPath)
+    RegularFile file = getDefaultView(checkedPath)
         .getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
     return new JimfsInputStream(file);
   }
@@ -238,7 +238,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForOutputStream(options);
-    File file = getDefaultView(checkedPath)
+    RegularFile file = getDefaultView(checkedPath)
         .getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
     return new JimfsOutputStream(file, opts.contains(APPEND));
   }

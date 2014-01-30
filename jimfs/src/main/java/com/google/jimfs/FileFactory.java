@@ -49,83 +49,82 @@ final class FileFactory {
   /**
    * Creates a new directory.
    */
-  public File createDirectory() {
-    DirectoryTable table = new DirectoryTable();
-    File file = new File(nextFileId(), table);
-    table.setSelf(file);
-    return file;
+  public Directory createDirectory() {
+    return Directory.create(nextFileId());
+  }
+
+  /**
+   * Creates a new root directory with the given name.
+   */
+  public Directory createRootDirectory(Name name) {
+    return Directory.createRoot(nextFileId(), name);
   }
 
   /**
    * Creates a new regular file.
    */
   @VisibleForTesting
-  File createRegularFile() {
-    return new File(nextFileId(), new ByteStore(disk));
+  RegularFile createRegularFile() {
+    return RegularFile.create(nextFileId(), disk);
   }
 
   /**
    * Creates a new symbolic link referencing the given target path.
    */
   @VisibleForTesting
-  File createSymbolicLink(JimfsPath target) {
-    return new File(nextFileId(), target);
+  SymbolicLink createSymbolicLink(JimfsPath target) {
+    return SymbolicLink.create(nextFileId(), target);
   }
 
   /**
    * Creates and returns a copy of the given file.
    */
   public File copy(File file) throws IOException {
-    if (file.isDirectory()) {
-      // directory contents are not copied
-      return createDirectory();
-    }
-
-    return new File(nextFileId(), file.content().copy());
+    return file.copy(nextFileId());
   }
 
   // suppliers to act as file creation callbacks
 
-  private final Supplier<File> directorySupplier = new DirectorySupplier();
+  private final Supplier<Directory> directorySupplier = new DirectorySupplier();
 
-  private final Supplier<File> regularFileSupplier = new RegularFileSupplier();
+  private final Supplier<RegularFile> regularFileSupplier = new RegularFileSupplier();
 
   /**
    * Returns a supplier that creates directories.
    */
-  public Supplier<File> directoryCreator() {
+  public Supplier<Directory> directoryCreator() {
     return directorySupplier;
   }
 
   /**
    * Returns a supplier that creates regular files.
    */
-  public Supplier<File> regularFileCreator() {
+  public Supplier<RegularFile> regularFileCreator() {
     return regularFileSupplier;
   }
 
   /**
    * Returns a supplier that creates a symbolic links to the given path.
    */
-  public Supplier<File> symbolicLinkCreator(JimfsPath target) {
+  public Supplier<SymbolicLink> symbolicLinkCreator(JimfsPath target) {
     return new SymbolicLinkSupplier(target);
   }
 
-  private final class DirectorySupplier implements Supplier<File> {
+  private final class DirectorySupplier implements Supplier<Directory> {
     @Override
-    public File get() {
+    public Directory get() {
       return createDirectory();
     }
   }
 
-  private final class RegularFileSupplier implements Supplier<File> {
+  private final class RegularFileSupplier implements Supplier<RegularFile> {
     @Override
-    public File get() {
+    public RegularFile get() {
       return createRegularFile();
     }
   }
 
-  private final class SymbolicLinkSupplier implements Supplier<File> {
+  private final class SymbolicLinkSupplier implements Supplier<SymbolicLink> {
 
     private final JimfsPath target;
 
@@ -134,7 +133,7 @@ final class FileFactory {
     }
 
     @Override
-    public File get() {
+    public SymbolicLink get() {
       return createSymbolicLink(target);
     }
   }

@@ -75,8 +75,8 @@ public class UnixAttributeProviderTest extends
         .isEqualTo(FileTime.fromMillis(file.getCreationTime()));
 
     // this is based on a property this file system does actually have
-    ASSERT.that(provider.get(file, "nlink")).is(0);
-    file.incrementLinkCount();
+    ASSERT.that(provider.get(file, "nlink")).is(1);
+
     file.incrementLinkCount();
     ASSERT.that(provider.get(file, "nlink")).is(2);
     file.decrementLinkCount();

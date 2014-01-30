@@ -24,14 +24,16 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Table;
 
+import java.io.IOException;
+
 import javax.annotation.Nullable;
 
 /**
- * A file object, containing both the file's metadata and a reference to its content.
+ * A file object, containing both the file's metadata and content.
  *
  * @author Colin Decker
  */
-public final class File {
+public abstract class File {
 
   private final int id;
 
@@ -44,16 +46,13 @@ public final class File {
   @Nullable // null when only the basic view is used (default)
   private Table<String, String, Object> attributes;
 
-  private final FileContent content;
-
-  File(int id, FileContent content) {
+  File(int id) {
     this.id = id;
 
     long now = System.currentTimeMillis(); // TODO(cgdecker): Use a Clock
     this.creationTime = now;
     this.lastAccessTime = now;
     this.lastModifiedTime = now;
-    this.content = checkNotNull(content);
   }
 
   /**
@@ -64,144 +63,142 @@ public final class File {
   }
 
   /**
-   * Returns the content of this file.
-   */
-  FileContent content() {
-    return content;
-  }
-
-  /**
    * Returns the size, in bytes, of this file's content. Directories and symbolic links have a size
    * of 0.
    */
   public long size() {
-    return content.size();
+    return 0;
   }
 
   /**
    * Returns whether or not this file is a directory.
    */
-  public boolean isDirectory() {
-    return content instanceof DirectoryTable;
+  public final boolean isDirectory() {
+    return this instanceof Directory;
   }
 
   /**
    * Returns whether or not this file is a regular file.
    */
-  public boolean isRegularFile() {
-    return content instanceof ByteStore;
+  public final boolean isRegularFile() {
+    return this instanceof RegularFile;
   }
 
   /**
    * Returns whether or not this file is a symbolic link.
    */
-  public boolean isSymbolicLink() {
-    return content instanceof JimfsPath;
+  public final boolean isSymbolicLink() {
+    return this instanceof SymbolicLink;
+  }
+
+  /**
+   * Creates a copy of this file with the given ID.
+   */
+  abstract File copy(int id) throws IOException;
+
+  /**
+   * Called when (a single link to) this file is deleted. There may be links remaining. Does
+   * nothing by default.
+   */
+  void deleted() {
   }
 
   /**
    * Returns whether or not this file is a root directory of the file system.
    */
-  boolean isRootDirectory() {
+  final boolean isRootDirectory() {
     // only root directories have their parent link pointing to themselves
-    return isDirectory() && equals(asDirectory().parent());
-  }
-
-  /**
-   * Returns a view of this file as a byte store.
-   */
-  ByteStore asBytes() {
-    return (ByteStore) content;
-  }
-
-  /**
-   * Returns a view of this file as a directory table.
-   */
-  DirectoryTable asDirectory() {
-    return (DirectoryTable) content;
-  }
-
-  /**
-   * Gets the target of this symbolic link.
-   */
-  public JimfsPath asTargetPath() {
-    return (JimfsPath) content;
+    return isDirectory() && equals(((Directory) this).parent());
   }
 
   /**
    * Returns the current count of links to this file.
    */
-  public synchronized int links() {
+  public synchronized final int links() {
     return links;
   }
 
   /**
-   * Increments the link count.
+   * Called when this file has been linked in a directory. The given entry is the new directory
+   * entry that links to this file.
    */
-  synchronized void incrementLinkCount() {
+  void linked(DirectoryEntry entry) {
+    checkNotNull(entry);
+  }
+
+  /**
+   * Called when this file has been unlinked from a directory, either for a move or delete.
+   */
+  void unlinked() {
+  }
+
+  /**
+   * Increments the link count for this file.
+   */
+  synchronized final void incrementLinkCount() {
     links++;
   }
 
   /**
-   * Decrements and returns the link count.
+   * Decrements the link count for this file.
    */
-  synchronized int decrementLinkCount() {
-    return --links;
+  synchronized final void decrementLinkCount() {
+    links--;
   }
 
   /**
    * Gets the creation time of the file.
    */
-  public synchronized long getCreationTime() {
+  public synchronized final long getCreationTime() {
     return creationTime;
   }
 
   /**
    * Gets the last access time of the file.
    */
-  public synchronized long getLastAccessTime() {
+  public synchronized final long getLastAccessTime() {
     return lastAccessTime;
   }
 
   /**
    * Gets the last modified time of the file.
    */
-  public synchronized long getLastModifiedTime() {
+  public synchronized final long getLastModifiedTime() {
     return lastModifiedTime;
   }
 
   /**
    * Sets the creation time of the file.
    */
-  synchronized void setCreationTime(long creationTime) {
+  synchronized final void setCreationTime(long creationTime) {
     this.creationTime = creationTime;
   }
 
   /**
    * Sets the last access time of the file.
    */
-  synchronized void setLastAccessTime(long lastAccessTime) {
+  synchronized final void setLastAccessTime(long lastAccessTime) {
     this.lastAccessTime = lastAccessTime;
   }
 
   /**
    * Sets the last modified time of the file.
    */
-  synchronized void setLastModifiedTime(long lastModifiedTime) {
+  synchronized final void setLastModifiedTime(long lastModifiedTime) {
     this.lastModifiedTime = lastModifiedTime;
   }
 
   /**
    * Sets the last access time of the file to the current time.
    */
-  void updateAccessTime() {
+  final void updateAccessTime() {
     setLastAccessTime(System.currentTimeMillis());
   }
 
   /**
    * Sets the last modified time of the file to the current time.
    */
-  void updateModifiedTime() {
+  final void updateModifiedTime() {
     setLastModifiedTime(System.currentTimeMillis());
   }
 
@@ -209,7 +206,7 @@ public final class File {
    * Returns the names of the attributes contained in the given attribute view in the file's
    * attributes table.
    */
-  public synchronized ImmutableSet<String> getAttributeNames(String view) {
+  public synchronized final ImmutableSet<String> getAttributeNames(String view) {
     if (attributes == null) {
       return ImmutableSet.of();
     }
@@ -220,7 +217,7 @@ public final class File {
    * Returns the attribute keys contained in the attributes map for the file.
    */
   @VisibleForTesting
-  synchronized ImmutableSet<String> getAttributeKeys() {
+  synchronized final ImmutableSet<String> getAttributeKeys() {
     if (attributes == null) {
       return ImmutableSet.of();
     }
@@ -236,7 +233,7 @@ public final class File {
    * Gets the value of the given attribute in the given view.
    */
   @Nullable
-  public synchronized Object getAttribute(String view, String attribute) {
+  public synchronized final Object getAttribute(String view, String attribute) {
     if (attributes == null) {
       return null;
     }
@@ -246,7 +243,7 @@ public final class File {
   /**
    * Sets the given attribute in the given view to the given value.
    */
-  public synchronized void setAttribute(String view, String attribute, Object value) {
+  public synchronized final void setAttribute(String view, String attribute, Object value) {
     if (attributes == null) {
       attributes = HashBasedTable.create();
     }
@@ -256,7 +253,7 @@ public final class File {
   /**
    * Deletes the given attribute from the given view.
    */
-  public synchronized void deleteAttribute(String view, String attribute) {
+  public synchronized final void deleteAttribute(String view, String attribute) {
     if (attributes != null) {
       attributes.remove(view, attribute);
     }
@@ -265,7 +262,7 @@ public final class File {
   /**
    * Copies basic attributes (file times) from this file to the given file.
    */
-  synchronized void copyBasicAttributes(File target) {
+  synchronized final void copyBasicAttributes(File target) {
     target.setFileTimes(creationTime, lastModifiedTime, lastAccessTime);
   }
 
@@ -279,7 +276,7 @@ public final class File {
   /**
    * Copies the attributes from this file to the given file.
    */
-  synchronized void copyAttributes(File target) {
+  synchronized final void copyAttributes(File target) {
     copyBasicAttributes(target);
     target.putAll(attributes);
   }
@@ -294,10 +291,9 @@ public final class File {
   }
 
   @Override
-  public String toString() {
+  public final String toString() {
     return Objects.toStringHelper(this)
         .add("id", id())
-        .add("contentType", content.getClass().getSimpleName())
         .toString();
   }
 }

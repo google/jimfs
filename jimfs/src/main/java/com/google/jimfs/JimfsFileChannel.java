@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /**
- * A {@link FileChannel} implementation that reads and writes to a {@link ByteStore} object. The
+ * A {@link FileChannel} implementation that reads and writes to a {@link RegularFile} object. The
  * read and write methods and other methods that read or change the position of the channel are
  * locked because the {@link ReadableByteChannel} and {@link WritableByteChannel} interfaces specify
  * that the read and write methods block when another thread is currently doing a read or write
@@ -56,15 +56,14 @@ final class JimfsFileChannel extends FileChannel {
 
   /**
    * Thread that is currently doing an interruptible blocking operation; that is, doing something
-   * that requires acquiring the byte store's lock. Since a thread has to already have this
-   * channel's lock to do that, there can only be one such thread at a time. This thread must be
-   * interrupted if the channel is closed by another thread.
+   * that requires acquiring the file's lock. Since a thread has to already have this channel's
+   * lock to do that, there can only be one such thread at a time. This thread must be interrupted
+   * if the channel is closed by another thread.
    */
   @Nullable
   private volatile Thread blockingThread;
 
-  private final File file;
-  private final ByteStore store;
+  private final RegularFile file;
 
   private final boolean read;
   private final boolean write;
@@ -72,9 +71,8 @@ final class JimfsFileChannel extends FileChannel {
 
   private long position;
 
-  public JimfsFileChannel(File file, Set<OpenOption> options) {
+  public JimfsFileChannel(RegularFile file, Set<OpenOption> options) {
     this.file = file;
-    this.store = file.asBytes();
     this.read = options.contains(READ);
     this.write = options.contains(WRITE);
     this.append = options.contains(APPEND);
@@ -137,9 +135,9 @@ final class JimfsFileChannel extends FileChannel {
           return 0; // AsynchronousCloseException will be thrown
         }
 
-        store.readLock().lockInterruptibly();
+        file.readLock().lockInterruptibly();
         try {
-          int read = store.read(position, dst);
+          int read = file.read(position, dst);
           if (read != -1) {
             position += read;
           }
@@ -148,7 +146,7 @@ final class JimfsFileChannel extends FileChannel {
           completed = true;
           return read;
         } finally {
-          store.readLock().unlock();
+          file.readLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -177,9 +175,9 @@ final class JimfsFileChannel extends FileChannel {
           return 0; // AsynchronousCloseException will be thrown
         }
 
-        store.readLock().lockInterruptibly();
+        file.readLock().lockInterruptibly();
         try {
-          long read = store.read(position, buffers);
+          long read = file.read(position, buffers);
           if (read != -1) {
             position += read;
           }
@@ -188,7 +186,7 @@ final class JimfsFileChannel extends FileChannel {
           completed = true;
           return read;
         } finally {
-          store.readLock().unlock();
+          file.readLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -215,19 +213,19 @@ final class JimfsFileChannel extends FileChannel {
           return 0; // AsynchronousCloseException will be thrown
         }
 
-        store.writeLock().lockInterruptibly();
+        file.writeLock().lockInterruptibly();
         try {
           if (append) {
-            position = store.size();
+            position = file.size();
           }
-          int written = store.write(position, src);
+          int written = file.write(position, src);
           position += written;
 
           file.updateModifiedTime();
           completed = true;
           return written;
         } finally {
-          store.writeLock().unlock();
+          file.writeLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -256,19 +254,19 @@ final class JimfsFileChannel extends FileChannel {
           return 0; // AsynchronousCloseException will be thrown
         }
 
-        store.writeLock().lockInterruptibly();
+        file.writeLock().lockInterruptibly();
         try {
           if (append) {
-            position = store.size();
+            position = file.size();
           }
-          long written = store.write(position, buffers);
+          long written = file.write(position, buffers);
           position += written;
 
           file.updateModifiedTime();
           completed = true;
           return written;
         } finally {
-          store.writeLock().unlock();
+          file.writeLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -305,7 +303,7 @@ final class JimfsFileChannel extends FileChannel {
   @Override
   public long size() throws IOException {
     checkOpen();
-    return store.size();
+    return file.size();
   }
 
   @Override
@@ -322,9 +320,9 @@ final class JimfsFileChannel extends FileChannel {
           return this; // AsynchronousCloseException will be thrown
         }
 
-        store.writeLock().lockInterruptibly();
+        file.writeLock().lockInterruptibly();
         try {
-          store.truncate(size);
+          file.truncate(size);
           if (position > size) {
             position = size;
           }
@@ -333,7 +331,7 @@ final class JimfsFileChannel extends FileChannel {
           completed = true;
           return this;
         } finally {
-          store.writeLock().unlock();
+          file.writeLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -368,14 +366,14 @@ final class JimfsFileChannel extends FileChannel {
           return 0; // AsynchronousCloseException will be thrown
         }
 
-        store.readLock().lockInterruptibly();
+        file.readLock().lockInterruptibly();
         try {
-          long transferred = store.transferTo(position, count, target);
+          long transferred = file.transferTo(position, count, target);
           file.updateAccessTime();
           completed = true;
           return transferred;
         } finally {
-          store.readLock().unlock();
+          file.readLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -404,13 +402,13 @@ final class JimfsFileChannel extends FileChannel {
           return 0; // AsynchronousCloseException will be thrown
         }
 
-        store.writeLock().lockInterruptibly();
+        file.writeLock().lockInterruptibly();
         try {
           if (append) {
-            position = store.size();
+            position = file.size();
           }
 
-          long transferred = store.transferFrom(src, position, count);
+          long transferred = file.transferFrom(src, position, count);
 
           if (append) {
             this.position = position + transferred;
@@ -420,7 +418,7 @@ final class JimfsFileChannel extends FileChannel {
           completed = true;
           return transferred;
         } finally {
-          store.writeLock().unlock();
+          file.writeLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -448,14 +446,14 @@ final class JimfsFileChannel extends FileChannel {
           return 0; // AsynchronousCloseException will be thrown
         }
 
-        store.readLock().lockInterruptibly();
+        file.readLock().lockInterruptibly();
         try {
-          int read = store.read(position, dst);
+          int read = file.read(position, dst);
           file.updateAccessTime();
           completed = true;
           return read;
         } finally {
-          store.readLock().unlock();
+          file.readLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -483,13 +481,13 @@ final class JimfsFileChannel extends FileChannel {
           return 0; // AsynchronousCloseException will be thrown
         }
 
-        store.writeLock().lockInterruptibly();
+        file.writeLock().lockInterruptibly();
         try {
           if (append) {
-            position = store.sizeWithoutLocking();
+            position = file.sizeWithoutLocking();
           }
 
-          int written = store.write(position, src);
+          int written = file.write(position, src);
 
           if (append) {
             this.position = position + written;
@@ -499,7 +497,7 @@ final class JimfsFileChannel extends FileChannel {
           completed = true;
           return written;
         } finally {
-          store.writeLock().unlock();
+          file.writeLock().unlock();
         }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
@@ -548,7 +546,7 @@ final class JimfsFileChannel extends FileChannel {
         thread.interrupt();
       }
     } finally {
-      store.closed();
+      file.closed();
     }
   }
 

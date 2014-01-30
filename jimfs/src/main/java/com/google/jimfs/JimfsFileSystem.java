@@ -70,9 +70,8 @@ import javax.annotation.Nullable;
  * <ul>
  *   <li>{@link com.google.jimfs.FileFactory FileFactory} handles creation of new file
  *   objects.</li>
- *   <li>{@link com.google.jimfs.HeapDisk HeapDisk} handles creation and storage of
- *   {@link com.google.jimfs.ByteStore ByteStore} instances, which act as the content of
- *   regular files.</li>
+ *   <li>{@link com.google.jimfs.HeapDisk HeapDisk} handles allocation of blocks to
+ *   {@link RegularFile RegularFile} instances.</li>
  *   <li>{@link com.google.jimfs.FileTree FileTree} stores the root of the file hierarchy
  *   and handles file lookup.</li>
  *   <li>{@link com.google.jimfs.AttributeService AttributeService} handles file
@@ -110,19 +109,15 @@ import javax.annotation.Nullable;
  * <h3>Files</h3>
  *
  * All files in the file system are an instance of {@link com.google.jimfs.File File}. A
- * file object contains the file's attributes as well as a reference to the file's
- * {@linkplain com.google.jimfs.FileContent content}.
+ * file object contains both the file's attributes and content.
  *
- * <p>There are three types of file content:
+ * <p>There are three types of files:
  *
  * <ul>
- *   <li>{@link com.google.jimfs.DirectoryTable DirectoryTable} - a map linking file names
- *   to {@linkplain com.google.jimfs.DirectoryEntry directory entries}. A file with a
- *   directory table as its content is, obviously, a <i>directory</i>.</li>
- *   <li>{@link com.google.jimfs.ByteStore ByteStore} - an in-memory store for raw bytes.
- *   A file with a byte store as its content is a <i>regular file</i>.</li>
- *   <li>{@link com.google.jimfs.JimfsPath JimfsPath} - A file with a path as its content
- *   is a <i>symbolic link</i>.</li>
+ *   <li>{@link Directory Directory} - contains a table linking file names
+ *   to {@linkplain com.google.jimfs.DirectoryEntry directory entries}.
+ *   <li>{@link RegularFile RegularFile} - an in-memory store for raw bytes.
+ *   <li>{@link com.google.jimfs.SymbolicLink SymbolicLink} - contains a path.
  * </ul>
  *
  * <p>{@link com.google.jimfs.JimfsFileChannel JimfsFileChannel},
@@ -142,8 +137,7 @@ import javax.annotation.Nullable;
  *
  * <h3>Regular files</h3>
  *
- * Currently, the only implementation for regular file content is
- * {@link com.google.jimfs.ByteStore ByteStore}, which makes use of a singleton
+ * {@link RegularFile RegularFile} makes use of a singleton
  * {@link com.google.jimfs.HeapDisk HeapDisk}. A disk is a resizable factory and cache for
  * fixed size blocks of memory. These blocks are allocated to files as needed and returned to the
  * disk when a file is deleted or truncated. When cached free blocks are available, those blocks
@@ -170,9 +164,8 @@ import javax.annotation.Nullable;
  * All file system operations should be safe in a multithreaded environment. The file hierarchy
  * itself is protected by a file system level read-write lock. This ensures safety of all
  * modifications to directory tables as well as atomicity of operations like file moves. Regular
- * files are each protected by a read-write lock on their content which is obtained for each read
- * or write operation. File attributes are not protected by locks, but are stored in thread-safe
- * concurrent maps and atomic numbers.
+ * files are each protected by a read-write lock which is obtained for each read or write operation.
+ * File attributes are protected by synchronization on the file object itself.
  *
  * @author Colin Decker
  */

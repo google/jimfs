@@ -70,9 +70,8 @@ final class JimfsFileSystems {
 
       Name rootName = path.root();
 
-      File rootDir = fileFactory.createDirectory();
+      File rootDir = fileFactory.createRootDirectory(rootName);
       attributeService.setInitialAttributes(rootDir);
-      rootDir.asDirectory().setAsRoot(rootDir, rootName);
       roots.put(rootName, rootDir);
     }
 
@@ -86,15 +85,15 @@ final class JimfsFileSystems {
       JimfsFileStore fileStore, PathService pathService) throws IOException {
     JimfsPath workingDirPath = pathService.parsePath(config.workingDirectory);
 
-    File dir = fileStore.getRoot(workingDirPath.root());
+    Directory dir = fileStore.getRoot(workingDirPath.root());
     if (dir == null) {
       throw new IllegalArgumentException("Invalid working dir path: " + workingDirPath);
     }
 
     for (Name name : workingDirPath.names()) {
-      File newDir = fileStore.directoryCreator().get();
+      Directory newDir = fileStore.directoryCreator().get();
       fileStore.setInitialAttributes(newDir);
-      dir.asDirectory().link(name, newDir);
+      dir.link(name, newDir);
 
       dir = newDir;
     }

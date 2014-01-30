@@ -31,12 +31,12 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * A mutable, resizable store for the bytes of a regular file. Bytes are stored in fixed-sized
- * byte arrays (blocks) allocated by a {@link HeapDisk}.
+ * A mutable, resizable store for bytes. Bytes are stored in fixed-sized byte arrays (blocks)
+ * allocated by a {@link HeapDisk}.
  *
  * @author Colin Decker
  */
-final class ByteStore implements FileContent {
+final class RegularFile extends File {
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -44,11 +44,15 @@ final class ByteStore implements FileContent {
   private final BlockList blocks;
   private long size;
 
-  public ByteStore(HeapDisk disk) {
-    this(disk, new BlockList(32), 0);
+  /**
+   * Creates a new regular file with the given ID and using the given disk.
+   */
+  public static RegularFile create(int id, HeapDisk disk) {
+    return new RegularFile(id, disk, new BlockList(32), 0);
   }
 
-  private ByteStore(HeapDisk disk, BlockList blocks, long size) {
+  private RegularFile(int id, HeapDisk disk, BlockList blocks, long size) {
+    super(id);
     this.disk = checkNotNull(disk);
     this.blocks = checkNotNull(blocks);
 
@@ -60,21 +64,21 @@ final class ByteStore implements FileContent {
   private boolean deleted = false;
 
   /**
-   * Returns the read lock for this store.
+   * Returns the read lock for this file.
    */
   public Lock readLock() {
     return lock.readLock();
   }
 
   /**
-   * Returns the write lock for this store.
+   * Returns the write lock for this file.
    */
   public Lock writeLock() {
     return lock.writeLock();
   }
 
   /**
-   * Gets the current size of this store in bytes. Does not do locking, so should only be called
+   * Gets the current size of this file in bytes. Does not do locking, so should only be called
    * when holding a lock.
    */
   public long sizeWithoutLocking() {
@@ -94,7 +98,7 @@ final class ByteStore implements FileContent {
   }
 
   @Override
-  public ByteStore copy() throws IOException {
+  RegularFile copy(int id) throws IOException {
     readLock().lock();
     try {
       BlockList copyBlocks = new BlockList(Math.max(blocks.size() * 2, 32));
@@ -105,7 +109,7 @@ final class ByteStore implements FileContent {
         byte[] copy = copyBlocks.get(i);
         System.arraycopy(block, 0, copy, 0, block.length);
       }
-      return new ByteStore(disk, copyBlocks, size);
+      return new RegularFile(id, disk, copyBlocks, size);
     } finally {
       readLock().unlock();
     }
@@ -115,15 +119,15 @@ final class ByteStore implements FileContent {
   // synchronized among themselves
 
   /**
-   * Called when a stream or channel to this store is opened.
+   * Called when a stream or channel to this file is opened.
    */
   public synchronized void opened() {
     openCount++;
   }
 
   /**
-   * Called when a stream or channel to this store is closed. If there are no more streams or
-   * channels open to the store and it has been deleted, its contents may be deleted.
+   * Called when a stream or channel to this file is closed. If there are no more streams or
+   * channels open to the file and it has been deleted, its contents may be deleted.
    */
   public synchronized void closed() {
     if (--openCount == 0 && deleted) {
@@ -131,22 +135,13 @@ final class ByteStore implements FileContent {
     }
   }
 
-  @Override
-  public void linked(DirectoryEntry entry) {
-    checkNotNull(entry); // for NullPointerTester
-  }
-
-  @Override
-  public void unlinked() {
-  }
-
   /**
-   * Marks this store as deleted. If there are no streams or channels open to the store, its
+   * Marks this file as deleted. If there are no streams or channels open to the file, its
    * contents are deleted if necessary.
    */
   @Override
-  public synchronized void deleted(int linksRemaining) {
-    if (linksRemaining == 0) {
+  public synchronized void deleted() {
+    if (links() == 0) {
       deleted = true;
       if (openCount == 0) {
         deleteContents();
@@ -155,8 +150,8 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Deletes the contents of this store. Called when the file that contains this store has been
-   * deleted and all open streams and channels to the file have been closed.
+   * Deletes the contents of this file. Called when this file has been deleted and all open streams
+   * and channels to it have been closed.
    */
   private void deleteContents() {
     disk.free(blocks);
@@ -164,10 +159,10 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Truncates this store to the given {@code size}. If the given size is less than the current size
-   * of this store, the size of the store is reduced to the given size and any bytes beyond that
-   * size are lost. If the given size is greater than the current size of the store, this method
-   * does nothing. Returns {@code true} if this store was modified by the call (its size changed)
+   * Truncates this file to the given {@code size}. If the given size is less than the current size
+   * of this file, the size of the file is reduced to the given size and any bytes beyond that
+   * size are lost. If the given size is greater than the current size of the file, this method
+   * does nothing. Returns {@code true} if this file was modified by the call (its size changed)
    * and {@code false} otherwise.
    */
   public boolean truncate(long size) {
@@ -223,11 +218,11 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Writes the given byte to this store at position {@code pos}. {@code pos} may be greater than
-   * the current size of this store, in which case this store is resized and all bytes between the
+   * Writes the given byte to this file at position {@code pos}. {@code pos} may be greater than
+   * the current size of this file, in which case this file is resized and all bytes between the
    * current size and {@code pos} are set to 0. Returns the number of bytes written.
    *
-   * @throws IOException if the store needs more blocks but the disk is full
+   * @throws IOException if the file needs more blocks but the disk is full
    */
   public int write(long pos, byte b) throws IOException {
     prepareForWrite(pos, 1);
@@ -244,12 +239,12 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Writes {@code len} bytes starting at offset {@code off} in the given byte array to this store
+   * Writes {@code len} bytes starting at offset {@code off} in the given byte array to this file
    * starting at position {@code pos}. {@code pos} may be greater than the current size of this
-   * store, in which case this store is resized and all bytes between the current size and {@code
+   * file, in which case this file is resized and all bytes between the current size and {@code
    * pos} are set to 0. Returns the number of bytes written.
    *
-   * @throws IOException if the store needs more blocks but the disk is full
+   * @throws IOException if the file needs more blocks but the disk is full
    */
   public int write(long pos, byte[] b, int off, int len) throws IOException {
     prepareForWrite(pos, len);
@@ -285,12 +280,12 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Writes all available bytes from buffer {@code buf} to this store starting at position {@code
-   * pos}. {@code pos} may be greater than the current size of this store, in which case this store
+   * Writes all available bytes from buffer {@code buf} to this file starting at position {@code
+   * pos}. {@code pos} may be greater than the current size of this file, in which case this file
    * is resized and all bytes between the current size and {@code pos} are set to 0. Returns the
    * number of bytes written.
    *
-   * @throws IOException if the store needs more blocks but the disk is full
+   * @throws IOException if the file needs more blocks but the disk is full
    */
   public int write(long pos, ByteBuffer buf) throws IOException {
     int len = buf.remaining();
@@ -322,12 +317,12 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Writes all available bytes from each buffer in {@code bufs}, in order, to this store starting
-   * at position {@code pos}. {@code pos} may be greater than the current size of this store, in
-   * which case this store is resized and all bytes between the current size and {@code pos} are set
+   * Writes all available bytes from each buffer in {@code bufs}, in order, to this file starting
+   * at position {@code pos}. {@code pos} may be greater than the current size of this file, in
+   * which case this file is resized and all bytes between the current size and {@code pos} are set
    * to 0. Returns the number of bytes written.
    *
-   * @throws IOException if the store needs more blocks but the disk is full
+   * @throws IOException if the file needs more blocks but the disk is full
    */
   public long write(long pos, Iterable<ByteBuffer> bufs) throws IOException {
     long start = pos;
@@ -338,11 +333,11 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Transfers up to {@code count} bytes from the given channel to this store starting at position
+   * Transfers up to {@code count} bytes from the given channel to this file starting at position
    * {@code pos}. Returns the number of bytes transferred. If {@code pos} is greater than the
-   * current size of this store, the store is truncated up to size {@code pos} before writing.
+   * current size of this file, the file is truncated up to size {@code pos} before writing.
    *
-   * @throws IOException if the store needs more blocks but the disk is full or if reading from src
+   * @throws IOException if the file needs more blocks but the disk is full or if reading from src
    *     throws an exception
    */
   public long transferFrom(
@@ -407,8 +402,8 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Reads the byte at position {@code pos} in this store as an unsigned integer in the range 0-255.
-   * If {@code pos} is greater than or equal to the size of this store, returns -1 instead.
+   * Reads the byte at position {@code pos} in this file as an unsigned integer in the range 0-255.
+   * If {@code pos} is greater than or equal to the size of this file, returns -1 instead.
    */
   public int read(long pos) {
     if (pos >= size) {
@@ -421,9 +416,9 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Reads up to {@code len} bytes starting at position {@code pos} in this store to the given byte
+   * Reads up to {@code len} bytes starting at position {@code pos} in this file to the given byte
    * array starting at offset {@code off}. Returns the number of bytes actually read or -1 if {@code
-   * pos} is greater than or equal to the size of this store.
+   * pos} is greater than or equal to the size of this file.
    */
   public int read(long pos, byte[] b, int off, int len) {
     // since max is len (an int), result is guaranteed to be an int
@@ -454,9 +449,9 @@ final class ByteStore implements FileContent {
   }
 
   /**
-   * Reads up to {@code buf.remaining()} bytes starting at position {@code pos} in this store to the
+   * Reads up to {@code buf.remaining()} bytes starting at position {@code pos} in this file to the
    * given buffer. Returns the number of bytes read or -1 if {@code pos} is greater than or equal to
-   * the size of this store.
+   * the size of this file.
    */
   public int read(long pos, ByteBuffer buf) {
     // since max is buf.remaining() (an int), result is guaranteed to be an int
@@ -483,8 +478,8 @@ final class ByteStore implements FileContent {
 
   /**
    * Reads up to the total {@code remaining()} number of bytes in each of {@code bufs} starting at
-   * position {@code pos} in this store to the given buffers, in order. Returns the number of bytes
-   * read or -1 if {@code pos} is greater than or equal to the size of this store.
+   * position {@code pos} in this file to the given buffers, in order. Returns the number of bytes
+   * read or -1 if {@code pos} is greater than or equal to the size of this file.
    */
   public long read(long pos, Iterable<ByteBuffer> bufs) {
     if (pos >= size()) {
@@ -506,7 +501,7 @@ final class ByteStore implements FileContent {
 
   /**
    * Transfers up to {@code count} bytes to the given channel starting at position {@code pos} in
-   * this store. Returns the number of bytes transferred, possibly 0. Note that unlike all other
+   * this file. Returns the number of bytes transferred, possibly 0. Note that unlike all other
    * read methods in this class, this method does not return -1 if {@code pos} is greater than or
    * equal to the current size. This for consistency with {@link FileChannel#transferTo}, which
    * this method is primarily intended as an implementation of.

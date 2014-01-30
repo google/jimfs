@@ -63,7 +63,7 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
   @Before
   public void setUp() {
     this.provider = createProvider();
-    this.file = new File(0, new DirectoryTable());
+    this.file = Directory.create(0);
 
     Map<String, ?> defaultValues = createDefaultValues();
     setDefaultValues(file, provider, defaultValues);
@@ -98,12 +98,12 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
   }
 
   protected void assertContainsAll(
-      File store, ImmutableMap<String, Object> expectedAttributes) {
+      File file, ImmutableMap<String, Object> expectedAttributes) {
     for (Map.Entry<String, Object> entry : expectedAttributes.entrySet()) {
       String attribute = entry.getKey();
       Object value = entry.getValue();
 
-      ASSERT.that(provider.get(store, attribute)).is(value);
+      ASSERT.that(provider.get(file, attribute)).is(value);
     }
   }
 

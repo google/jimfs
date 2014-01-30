@@ -137,11 +137,11 @@ public final class TestUtils {
         Objects.equal(unexpected, actual));
   }
 
-  static ByteStore byteStore(int size) {
-    ByteStore store = new ByteStore(new HeapDisk(8096, 1000, 1000));
+  static RegularFile regularFile(int size) {
+    RegularFile file = RegularFile.create(0, new HeapDisk(8096, 1000, 1000));
     try {
-      store.write(0, new byte[size], 0, size);
-      return store;
+      file.write(0, new byte[size], 0, size);
+      return file;
     } catch (IOException e) {
       throw new AssertionError(e);
     }

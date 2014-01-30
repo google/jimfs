@@ -16,6 +16,7 @@
 
 package com.google.jimfs;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -24,22 +25,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * {@link OutputStream} for writing to a file's {@link ByteStore}.
+ * {@link OutputStream} for writing to a {@link RegularFile}.
  *
  * @author Colin Decker
  */
 final class JimfsOutputStream extends OutputStream {
 
   // these fields are guarded by synchronization on "this"
-  @VisibleForTesting File file;
-  private ByteStore store;
+  @VisibleForTesting RegularFile file;
   private long pos;
 
   private final boolean append;
 
-  JimfsOutputStream(File file, boolean append) {
-    this.file = file;
-    this.store = file.asBytes();
+  JimfsOutputStream(RegularFile file, boolean append) {
+    this.file = checkNotNull(file);
     this.append = append;
   }
 
@@ -47,16 +46,16 @@ final class JimfsOutputStream extends OutputStream {
   public synchronized void write(int b) throws IOException {
     checkNotClosed();
 
-    store.writeLock().lock();
+    file.writeLock().lock();
     try {
       if (append) {
-        pos = store.sizeWithoutLocking();
+        pos = file.sizeWithoutLocking();
       }
-      store.write(pos++, (byte) b);
+      file.write(pos++, (byte) b);
 
       file.updateModifiedTime();
     } finally {
-      store.writeLock().unlock();
+      file.writeLock().unlock();
     }
   }
 
@@ -74,27 +73,27 @@ final class JimfsOutputStream extends OutputStream {
   private synchronized void writeInternal(byte[] b, int off, int len) throws IOException {
     checkNotClosed();
 
-    store.writeLock().lock();
+    file.writeLock().lock();
     try {
       if (append) {
-        pos = store.sizeWithoutLocking();
+        pos = file.sizeWithoutLocking();
       }
-      pos += store.write(pos, b, off, len);
+      pos += file.write(pos, b, off, len);
 
       file.updateModifiedTime();
     } finally {
-      store.writeLock().unlock();
+      file.writeLock().unlock();
     }
   }
 
   @Override
   public synchronized void flush() throws IOException {
     checkNotClosed();
-    // writes are synchronous to the store, so flush does nothing
+    // writes are synchronous to the file, so flush does nothing
   }
 
   private void checkNotClosed() throws IOException {
-    if (store == null) {
+    if (file == null) {
       throw new IOException("stream is closed");
     }
   }
@@ -102,15 +101,14 @@ final class JimfsOutputStream extends OutputStream {
   @Override
   public synchronized void close() throws IOException {
     if (isOpen()) {
-      store.closed();
+      file.closed();
 
-      // file and store are both set to null here and only here
+      // file is set to null here and only here
       file = null;
-      store = null;
     }
   }
 
   private boolean isOpen() {
-    return store != null;
+    return file != null;
   }
 }

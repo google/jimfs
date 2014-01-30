@@ -51,7 +51,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-final class JimfsPath implements Path, FileContent {
+final class JimfsPath implements Path {
 
   @Nullable
   private final Name root;
@@ -62,30 +62,6 @@ final class JimfsPath implements Path, FileContent {
     this.pathService = checkNotNull(pathService);
     this.root = root;
     this.names = ImmutableList.copyOf(names);
-  }
-
-  @Override
-  public JimfsPath copy() {
-    // immutable
-    return this;
-  }
-
-  @Override
-  public long size() {
-    return 0;
-  }
-
-  @Override
-  public void linked(DirectoryEntry entry) {
-    checkNotNull(entry); // for NullPointerTester
-  }
-
-  @Override
-  public void unlinked() {
-  }
-
-  @Override
-  public void deleted(int linksRemaining) {
   }
 
   /**

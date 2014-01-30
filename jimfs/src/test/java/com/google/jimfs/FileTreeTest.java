@@ -17,6 +17,7 @@
 package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.jimfs.TestUtils.regularFile;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
@@ -113,16 +114,10 @@ public class FileTreeTest {
 
   @Before
   public void setUp() {
-    DirectoryTable rootTable = new DirectoryTable();
-    File root = new File(0, rootTable);
-    rootTable.setSelf(root);
-    rootTable.setAsRoot(root, Name.simple("/"));
+    Directory root = Directory.createRoot(0, Name.simple("/"));
     files.put("/", root);
 
-    DirectoryTable otherRootTable = new DirectoryTable();
-    File otherRoot = new File(2, otherRootTable);
-    otherRootTable.setSelf(otherRoot);
-    otherRootTable.setAsRoot(otherRoot, Name.simple("$"));
+    Directory otherRoot = Directory.createRoot(2, Name.simple("$"));
     files.put("$", otherRoot);
 
     Map<Name, File> roots = new HashMap<>();
@@ -428,13 +423,13 @@ public class FileTreeTest {
   private void assertExists(DirectoryEntry entry, String parent, String file) {
     ASSERT.that(entry.exists()).isTrue();
     ASSERT.that(entry.name()).is(Name.simple(file));
-    ASSERT.that(entry.directory()).is(files.get(parent));
+    ASSERT.that(entry.directory()).isEqualTo(files.get(parent));
     ASSERT.that(entry.file()).is(files.get(file));
   }
 
   private void assertParentExists(DirectoryEntry entry, String parent) {
     ASSERT.that(entry.exists()).isFalse();
-    ASSERT.that(entry.directory()).is(files.get(parent));
+    ASSERT.that(entry.directory()).isEqualTo(files.get(parent));
 
     try {
       entry.file();
@@ -444,40 +439,26 @@ public class FileTreeTest {
   }
 
   private File createDirectory(String parent, String name) {
-    File dir = files.get(parent);
-
-    DirectoryTable table = new DirectoryTable();
-    File newFile = new File(new Random().nextInt(), table);
-    table.setSelf(newFile);
-
-    dir.asDirectory().link(Name.simple(name), newFile);
-
+    Directory dir = (Directory) files.get(parent);
+    Directory newFile = Directory.create(new Random().nextInt());
+    dir.link(Name.simple(name), newFile);
     files.put(name, newFile);
-
     return newFile;
   }
 
   private File createFile(String parent, String name) {
-    File dir = files.get(parent);
-
-    File newFile = new File(new Random().nextInt(), TestUtils.byteStore(0));
-
-    dir.asDirectory().link(Name.simple(name), newFile);
-
+    Directory dir = (Directory) files.get(parent);
+    File newFile = regularFile(0);
+    dir.link(Name.simple(name), newFile);
     files.put(name, newFile);
-
     return newFile;
   }
 
   private File createSymbolicLink(String parent, String name, String target) {
-    File dir = files.get(parent);
-
-    File newFile = new File(new Random().nextInt(), pathService.parsePath(target));
-
-    dir.asDirectory().link(Name.simple(name), newFile);
-
+    Directory dir = (Directory) files.get(parent);
+    File newFile = SymbolicLink.create(new Random().nextInt(), pathService.parsePath(target));
+    dir.link(Name.simple(name), newFile);
     files.put(name, newFile);
-
     return newFile;
   }
 }

@@ -14,37 +14,12 @@
  * limitations under the License.
  */
 
+/**
+ * Package containing the Jimfs file system API and implementation. Most users should only need to
+ * use the {@link com.google.jimfs.Jimfs Jimfs} and
+ * {@link com.google.jimfs.Configuration Configuration} classes.
+ */
+@ParametersAreNonnullByDefault
 package com.google.jimfs;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-/**
- * {@link FileContent} implementation that does nothing.
- *
- * @author Colin Decker
- */
-public final class FakeFileContent implements FileContent {
-
-  @Override
-  public FileContent copy() {
-    return new FakeFileContent();
-  }
-
-  @Override
-  public long size() {
-    return 0;
-  }
-
-  @Override
-  public void linked(DirectoryEntry entry) {
-    checkNotNull(entry); // for NullPointerTester
-  }
-
-  @Override
-  public void unlinked() {
-  }
-
-  @Override
-  public void deleted(int linksRemaining) {
-  }
-}
+import javax.annotation.ParametersAreNonnullByDefault;

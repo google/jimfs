@@ -16,8 +16,8 @@
 
 package com.google.jimfs;
 
-import static com.google.jimfs.TestUtils.byteStore;
 import static com.google.jimfs.TestUtils.bytes;
+import static com.google.jimfs.TestUtils.regularFile;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 
@@ -166,21 +166,21 @@ public class JimfsOutputStreamTest {
   }
 
   private static JimfsOutputStream newOutputStream(boolean append) {
-    File file = new File(1, byteStore(0));
+    RegularFile file = regularFile(0);
     return new JimfsOutputStream(file, append);
   }
 
   private static void addBytesToStore(JimfsOutputStream out, int... bytes) throws IOException {
-    ByteStore store = out.file.asBytes();
-    long pos = store.sizeWithoutLocking();
+    RegularFile file = out.file;
+    long pos = file.sizeWithoutLocking();
     for (int b : bytes) {
-      store.write(pos++, (byte) b);
+      file.write(pos++, (byte) b);
     }
   }
 
   private static void assertStoreContains(JimfsOutputStream out, int... bytes) {
     byte[] actualBytes = new byte[bytes.length];
-    out.file.asBytes().read(0, actualBytes, 0, actualBytes.length);
+    out.file.read(0, actualBytes, 0, actualBytes.length);
     assertArrayEquals(bytes(bytes), actualBytes);
   }
 }

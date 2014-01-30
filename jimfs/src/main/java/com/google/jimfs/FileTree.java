@@ -74,7 +74,7 @@ final class FileTree {
   @Nullable
   public DirectoryEntry getRoot(Name name) {
     File file = roots.get(name);
-    return file == null ? null : file.asDirectory().entry();
+    return file == null ? null : ((Directory) file).entryInParent();
   }
 
   /**
@@ -135,19 +135,19 @@ final class FileTree {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
-      DirectoryTable table = toDirectoryTable(dir);
-      if (table == null) {
+      Directory directory = toDirectory(dir);
+      if (directory == null) {
         return null;
       }
 
-      DirectoryEntry entry = table.get(name);
+      DirectoryEntry entry = directory.get(name);
       if (entry == null) {
         return null;
       }
 
       File file = entry.file();
       if (file.isSymbolicLink()) {
-        DirectoryEntry linkResult = followSymbolicLink(dir, file, linkDepth);
+        DirectoryEntry linkResult = followSymbolicLink(dir, (SymbolicLink) file, linkDepth);
 
         if (linkResult == null) {
           return null;
@@ -170,19 +170,19 @@ final class FileTree {
   @Nullable
   private DirectoryEntry lookUpLast(@Nullable File dir,
       Name name, Set<? super LinkOption> options, int linkDepth) throws IOException {
-    DirectoryTable table = toDirectoryTable(dir);
-    if (table == null) {
+    Directory directory = toDirectory(dir);
+    if (directory == null) {
       return null;
     }
 
-    DirectoryEntry entry = table.get(name);
+    DirectoryEntry entry = directory.get(name);
     if (entry == null) {
-      return new DirectoryEntry(dir, name, null);
+      return new DirectoryEntry(directory, name, null);
     }
 
     File file = entry.file();
     if (!options.contains(LinkOption.NOFOLLOW_LINKS) && file.isSymbolicLink()) {
-      return followSymbolicLink(dir, file, linkDepth);
+      return followSymbolicLink(dir, (SymbolicLink) file, linkDepth);
     }
 
     return getRealEntry(entry);
@@ -193,12 +193,13 @@ final class FileTree {
    * relative to the given directory.
    */
   @Nullable
-  private DirectoryEntry followSymbolicLink(File dir, File link, int linkDepth) throws IOException {
+  private DirectoryEntry followSymbolicLink(
+      File dir, SymbolicLink link, int linkDepth) throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");
     }
 
-    return lookUp(dir, link.asTargetPath(), Options.FOLLOW_LINKS, linkDepth + 1);
+    return lookUp(dir, link.target(), Options.FOLLOW_LINKS, linkDepth + 1);
   }
 
   /**
@@ -215,14 +216,14 @@ final class FileTree {
     Name name = entry.name();
 
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
-      return entry.file().asDirectory().entry();
+      return ((Directory) entry.file()).entryInParent();
     } else {
       return entry;
     }
   }
 
   @Nullable
-  private DirectoryTable toDirectoryTable(@Nullable File file) {
-    return file == null || !file.isDirectory() ? null : file.asDirectory();
+  private Directory toDirectory(@Nullable File file) {
+    return file == null || !file.isDirectory() ? null : (Directory) file;
   }
 }

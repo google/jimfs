@@ -16,6 +16,7 @@
 
 package com.google.jimfs;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -25,21 +26,19 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * {@link InputStream} for reading from a file's {@link ByteStore}.
+ * {@link InputStream} for reading from a file's {@link RegularFile}.
  *
  * @author Colin Decker
  */
 final class JimfsInputStream extends InputStream {
 
   // these fields are guarded by synchronization on "this"
-  @VisibleForTesting File file;
-  private ByteStore store;
+  @VisibleForTesting RegularFile file;
   private long pos;
   private boolean finished;
 
-  public JimfsInputStream(File file) {
-    this.file = file;
-    this.store = file.asBytes();
+  public JimfsInputStream(RegularFile file) {
+    this.file = checkNotNull(file);
   }
 
   @Override
@@ -49,10 +48,10 @@ final class JimfsInputStream extends InputStream {
       return -1;
     }
 
-    store.readLock().lock();
+    file.readLock().lock();
     try {
 
-      int b = store.read(pos++); // it's ok for pos to go beyond size()
+      int b = file.read(pos++); // it's ok for pos to go beyond size()
       if (b == -1) {
         finished = true;
       } else {
@@ -60,7 +59,7 @@ final class JimfsInputStream extends InputStream {
       }
       return b;
     } finally {
-      store.readLock().unlock();
+      file.readLock().unlock();
     }
   }
 
@@ -81,9 +80,9 @@ final class JimfsInputStream extends InputStream {
       return -1;
     }
 
-    store.readLock().lock();
+    file.readLock().lock();
     try {
-      int read = store.read(pos, b, off, len);
+      int read = file.read(pos, b, off, len);
       if (read == -1) {
         finished = true;
       } else {
@@ -93,7 +92,7 @@ final class JimfsInputStream extends InputStream {
       file.updateAccessTime();
       return read;
     } finally {
-      store.readLock().unlock();
+      file.readLock().unlock();
     }
   }
 
@@ -110,7 +109,7 @@ final class JimfsInputStream extends InputStream {
       }
 
       // available() must be an int, so the min must be also
-      int skip = (int) Math.min(Math.max(store.size() - pos, 0), n);
+      int skip = (int) Math.min(Math.max(file.size() - pos, 0), n);
       pos += skip;
       return skip;
     }
@@ -122,12 +121,12 @@ final class JimfsInputStream extends InputStream {
     if (finished) {
       return 0;
     }
-    long available = Math.max(store.size() - pos, 0);
+    long available = Math.max(file.size() - pos, 0);
     return Ints.saturatedCast(available);
   }
 
   private void checkNotClosed() throws IOException {
-    if (store == null) {
+    if (file == null) {
       throw new IOException("stream is closed");
     }
   }
@@ -135,15 +134,14 @@ final class JimfsInputStream extends InputStream {
   @Override
   public synchronized void close() throws IOException {
     if (isOpen()) {
-      store.closed();
+      file.closed();
 
-      // file and store are both set to null here and only here
+      // file is set to null here and only here
       file = null;
-      store = null;
     }
   }
 
   private boolean isOpen() {
-    return store != null;
+    return file != null;
   }
 }

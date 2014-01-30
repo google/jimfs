@@ -17,7 +17,7 @@
 package com.google.jimfs;
 
 import static com.google.jimfs.TestUtils.buffer;
-import static com.google.jimfs.TestUtils.byteStore;
+import static com.google.jimfs.TestUtils.regularFile;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -61,9 +61,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class JimfsAsynchronousFileChannelTest {
 
   private static JimfsAsynchronousFileChannel channel(
-      ByteStore store, ExecutorService executor, OpenOption... options) throws IOException {
+      RegularFile file, ExecutorService executor, OpenOption... options) throws IOException {
     return new JimfsAsynchronousFileChannel(
-        new JimfsFileChannel(new File(-1, store),
+        new JimfsFileChannel(file,
             Options.getOptionsForChannel(ImmutableSet.copyOf(options))), executor);
   }
 
@@ -73,9 +73,9 @@ public class JimfsAsynchronousFileChannelTest {
    */
   @Test
   public void testAsyncChannel() throws Throwable {
-    ByteStore store = byteStore(15);
+    RegularFile file = regularFile(15);
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
+    JimfsAsynchronousFileChannel channel = channel(file, executor, READ, WRITE);
 
     try {
       assertEquals(15, channel.size());
@@ -83,7 +83,7 @@ public class JimfsAsynchronousFileChannelTest {
       assertSame(channel, channel.truncate(5));
       assertEquals(5, channel.size());
 
-      store.write(5, new byte[5], 0, 5);
+      file.write(5, new byte[5], 0, 5);
       checkAsyncRead(channel);
       checkAsyncWrite(channel);
       checkAsyncLock(channel);
@@ -97,11 +97,11 @@ public class JimfsAsynchronousFileChannelTest {
 
   @Test
   public void testClosedChannel() throws IOException, InterruptedException {
-    ByteStore store = byteStore(15);
+    RegularFile file = regularFile(15);
     ExecutorService executor = Executors.newSingleThreadExecutor();
 
     try {
-      JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
+      JimfsAsynchronousFileChannel channel = channel(file, executor, READ, WRITE);
       channel.close();
 
       assertClosed(channel.read(ByteBuffer.allocate(10), 0));
@@ -115,13 +115,13 @@ public class JimfsAsynchronousFileChannelTest {
 
   @Test
   public void testAsyncClose_write() throws IOException, InterruptedException {
-    ByteStore store = byteStore(15);
+    RegularFile file = regularFile(15);
     ExecutorService executor = Executors.newFixedThreadPool(4);
 
     try {
-      JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
+      JimfsAsynchronousFileChannel channel = channel(file, executor, READ, WRITE);
 
-      store.writeLock().lock(); // cause another thread trying to write to block
+      file.writeLock().lock(); // cause another thread trying to write to block
 
       Future<Integer> future = channel.write(ByteBuffer.allocate(10), 0);
 
@@ -162,13 +162,13 @@ public class JimfsAsynchronousFileChannelTest {
 
   @Test
   public void testAsyncClose_read() throws IOException, InterruptedException {
-    ByteStore store = byteStore(15);
+    RegularFile file = regularFile(15);
     ExecutorService executor = Executors.newFixedThreadPool(2);
 
     try {
-      JimfsAsynchronousFileChannel channel = channel(store, executor, READ, WRITE);
+      JimfsAsynchronousFileChannel channel = channel(file, executor, READ, WRITE);
 
-      store.writeLock().lock(); // cause another thread trying to read to block
+      file.writeLock().lock(); // cause another thread trying to read to block
 
       Future<Integer> future = channel.read(ByteBuffer.allocate(10), 0);
 

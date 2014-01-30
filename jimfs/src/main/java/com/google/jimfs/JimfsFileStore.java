@@ -98,9 +98,9 @@ final class JimfsFileStore extends FileStore {
    * Returns the root directory with the given name or {@code null} if no such directory exists.
    */
   @Nullable
-  File getRoot(Name name) {
+  Directory getRoot(Name name) {
     DirectoryEntry entry = tree.getRoot(name);
-    return entry == null ? null : entry.file();
+    return entry == null ? null : (Directory) entry.file();
   }
 
   /**
@@ -120,21 +120,21 @@ final class JimfsFileStore extends FileStore {
   /**
    * Returns a supplier that creates a new regular file.
    */
-  Supplier<File> regularFileCreator() {
+  Supplier<RegularFile> regularFileCreator() {
     return factory.regularFileCreator();
   }
 
   /**
    * Returns a supplier that creates a new directory.
    */
-  Supplier<File> directoryCreator() {
+  Supplier<Directory> directoryCreator() {
     return factory.directoryCreator();
   }
 
   /**
    * Returns a supplier that creates a new symbolic link with the given target.
    */
-  Supplier<File> symbolicLinkCreator(JimfsPath target) {
+  Supplier<SymbolicLink> symbolicLinkCreator(JimfsPath target) {
     return factory.symbolicLinkCreator(target);
   }
 

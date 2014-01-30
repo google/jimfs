@@ -17,6 +17,7 @@
 package com.google.jimfs;
 
 import static com.google.jimfs.FileFactoryTest.fakePath;
+import static com.google.jimfs.TestUtils.regularFile;
 import static org.truth0.Truth.ASSERT;
 
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class FileTest {
     // these methods are basically just thin wrappers around a map, so no need to test too
     // thoroughly
 
-    File file = new File(0, new ByteStore(new HeapDisk(10, 10, 10)));
+    File file = RegularFile.create(0, new HeapDisk(10, 10, 10));
 
     ASSERT.that(file.getAttributeKeys()).isEmpty();
     ASSERT.that(file.getAttribute("foo", "foo")).isNull();
@@ -56,57 +57,48 @@ public class FileTest {
 
   @Test
   public void testFileBasics() {
-    FileContent content = new FakeFileContent();
-    File file = new File(0, content);
+    File file = regularFile(0);
 
     ASSERT.that(file.id()).is(0);
-    ASSERT.that(file.content()).is(content);
     ASSERT.that(file.links()).is(0);
   }
 
   @Test
   public void testDirectory() {
-    File file = new File(0, new DirectoryTable());
+    File file = Directory.create(0);
     ASSERT.that(file.isDirectory()).isTrue();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isFalse();
-    ASSERT.that(file.content()).isA(DirectoryTable.class);
   }
 
   @Test
   public void testRegularFile() {
-    File file = new File(0, TestUtils.byteStore(10));
+    File file = regularFile(10);
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isTrue();
     ASSERT.that(file.isSymbolicLink()).isFalse();
-    ASSERT.that(file.content()).isA(ByteStore.class);
   }
 
   @Test
   public void testSymbolicLink() {
-    File file = new File(0, fakePath());
+    File file = SymbolicLink.create(0, fakePath());
     ASSERT.that(file.isDirectory()).isFalse();
     ASSERT.that(file.isRegularFile()).isFalse();
     ASSERT.that(file.isSymbolicLink()).isTrue();
-    ASSERT.that(file.content()).isA(JimfsPath.class);
   }
 
   @Test
   public void testRootDirectory() {
-    DirectoryTable table = new DirectoryTable();
-    File file = new File(0, table);
-    table.setAsRoot(file, Name.simple("/"));
+    Directory file = Directory.createRoot(0, Name.simple("/"));
     ASSERT.that(file.isRootDirectory()).isTrue();
 
-    DirectoryTable otherTable = new DirectoryTable();
-    File otherFile = new File(1, otherTable);
-    otherTable.setAsRoot(otherFile, Name.simple("$"));
+    Directory otherFile = Directory.createRoot(1, Name.simple("$"));
     ASSERT.that(otherFile.isRootDirectory()).isTrue();
   }
 
   @Test
   public void testLinkAndUnlink() {
-    File file = new File(0, new FakeFileContent());
+    File file = regularFile(0);
     ASSERT.that(file.links()).is(0);
 
     file.incrementLinkCount();

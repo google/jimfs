@@ -16,8 +16,8 @@
 
 package com.google.jimfs;
 
-import static com.google.jimfs.TestUtils.byteStore;
 import static com.google.jimfs.TestUtils.bytes;
+import static com.google.jimfs.TestUtils.regularFile;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
@@ -161,7 +161,7 @@ public class JimfsInputStreamTest {
     ASSERT.that(in.read(new byte[5])).is(5);
     assertEmpty(in);
 
-    in.file.asBytes().write(5, new byte[10], 0, 10); // append more bytes to file
+    in.file.write(5, new byte[10], 0, 10); // append more bytes to file
     assertEmpty(in);
   }
 
@@ -225,9 +225,9 @@ public class JimfsInputStreamTest {
       b[i] = (byte) bytes[i];
     }
 
-    ByteStore store = byteStore(0);
-    store.write(0, b, 0, b.length);
-    return new JimfsInputStream(new File(1, store));
+    RegularFile file = regularFile(0);
+    file.write(0, b, 0, b.length);
+    return new JimfsInputStream(file);
   }
 
   private static void assertEmpty(JimfsInputStream in) throws IOException {
