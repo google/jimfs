@@ -16,8 +16,8 @@
 
 package com.google.jimfs;
 
-import static com.google.jimfs.UserPrincipals.createGroupPrincipal;
-import static com.google.jimfs.UserPrincipals.createUserPrincipal;
+import static com.google.jimfs.UserLookupService.createGroupPrincipal;
+import static com.google.jimfs.UserLookupService.createUserPrincipal;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableSet;

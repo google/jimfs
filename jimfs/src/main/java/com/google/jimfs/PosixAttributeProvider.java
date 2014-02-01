@@ -17,6 +17,7 @@
 package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.UserLookupService.createGroupPrincipal;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -52,7 +53,7 @@ final class PosixAttributeProvider extends AttributeProvider {
 
   private static final ImmutableSet<String> INHERITED_VIEWS = ImmutableSet.of("basic", "owner");
 
-  private static final GroupPrincipal DEFAULT_GROUP = UserPrincipals.createGroupPrincipal("group");
+  private static final GroupPrincipal DEFAULT_GROUP = createGroupPrincipal("group");
   private static final ImmutableSet<PosixFilePermission> DEFAULT_PERMISSIONS =
       Sets.immutableEnumSet(PosixFilePermissions.fromString("rw-r--r--"));
 
@@ -79,9 +80,7 @@ final class PosixAttributeProvider extends AttributeProvider {
     UserPrincipal group = DEFAULT_GROUP;
     if (userProvidedGroup != null) {
       if (userProvidedGroup instanceof String) {
-        group = UserPrincipals.createGroupPrincipal((String) userProvidedGroup);
-      } else if (userProvidedGroup instanceof GroupPrincipal) {
-        group = UserPrincipals.createGroupPrincipal(((GroupPrincipal) userProvidedGroup).getName());
+        group = createGroupPrincipal((String) userProvidedGroup);
       } else {
         throw new IllegalArgumentException("invalid type " + userProvidedGroup.getClass()
             + " for attribute 'posix:group': should be one of " + String.class + " or "
@@ -124,15 +123,14 @@ final class PosixAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public void set(File file, String view, String attribute, Object value,
-      boolean create) {
+  public void set(File file, String view, String attribute, Object value, boolean create) {
     switch (attribute) {
       case "group":
         checkNotCreate(view, attribute, create);
 
         GroupPrincipal group = checkType(view, attribute, value, GroupPrincipal.class);
-        if (!(group instanceof UserPrincipals.JimfsGroupPrincipal)) {
-          group = UserPrincipals.createGroupPrincipal(group.getName());
+        if (!(group instanceof UserLookupService.JimfsGroupPrincipal)) {
+          group = createGroupPrincipal(group.getName());
         }
         file.setAttribute("posix", "group", group);
         break;

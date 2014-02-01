@@ -488,11 +488,11 @@ public final class Configuration {
      *   </tr>
      *   <tr>
      *     <td>{@code "owner:owner"}</td>
-     *     <td>{@code String} (user name), {@code UserPrincipal}</td>
+     *     <td>{@code String} (user name)</td>
      *   </tr>
      *   <tr>
      *     <td>{@code "posix:group"}</td>
-     *     <td>{@code String} (group name), {@code GroupPrincipal}</td>
+     *     <td>{@code String} (group name)</td>
      *   </tr>
      *   <tr>
      *     <td>{@code "posix:permissions"}</td>

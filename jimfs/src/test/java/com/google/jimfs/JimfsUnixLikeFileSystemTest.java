@@ -20,7 +20,6 @@ import static com.google.common.primitives.Bytes.concat;
 import static com.google.jimfs.TestUtils.bytes;
 import static com.google.jimfs.TestUtils.permutations;
 import static com.google.jimfs.TestUtils.preFilledBytes;
-import static com.google.jimfs.UserPrincipals.createUserPrincipal;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -641,8 +640,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     assertThat("/normal").attribute("posix:permissions").isNot(permissions);
     assertThat("/foo").attribute("posix:permissions").is(permissions);
 
-    FileAttribute<UserPrincipal> ownerAttr =
-        new BasicFileAttribute<>("posix:owner", createUserPrincipal("foo"));
+    FileAttribute<UserPrincipal> ownerAttr = new BasicFileAttribute<>(
+        "posix:owner", fs.getUserPrincipalLookupService().lookupPrincipalByName("foo"));
 
     Files.createFile(path("/foo2"), ownerAttr, permissionsAttr);
 
@@ -794,7 +793,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Test
   public void testWriteFile_succeeds() throws IOException {
     Files.createFile(path("/test"));
-    Files.write(path("/test"), new byte[]{0, 1, 2, 3});
+    Files.write(path("/test"), new byte[] {0, 1, 2, 3});
   }
 
   @Test
@@ -1504,7 +1503,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     ASSERT.that(Files.getAttribute(foo, "lastModifiedTime")).is(FileTime.fromMillis(100));
 
-    Files.setAttribute(foo, "owner:owner", createUserPrincipal("zero"));
+    UserPrincipal zero = fs.getUserPrincipalLookupService().lookupPrincipalByName("zero");
+    Files.setAttribute(foo, "owner:owner", zero);
 
     Path bar = path("/bar");
     Files.copy(foo, bar, COPY_ATTRIBUTES);
@@ -1513,7 +1513,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     ASSERT.that(attributes.lastModifiedTime()).is(FileTime.fromMillis(100));
     ASSERT.that(attributes.lastAccessTime()).is(FileTime.fromMillis(1000));
     ASSERT.that(attributes.creationTime()).is(FileTime.fromMillis(10000));
-    ASSERT.that(Files.getAttribute(bar, "owner:owner")).is(createUserPrincipal("zero"));
+    ASSERT.that(Files.getAttribute(bar, "owner:owner")).is(zero);
 
     Path baz = path("/baz");
     Files.copy(foo, baz);
@@ -1523,7 +1523,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     ASSERT.that(attributes.lastModifiedTime()).isNotEqualTo(FileTime.fromMillis(100));
     ASSERT.that(attributes.lastAccessTime()).isNotEqualTo(FileTime.fromMillis(1000));
     ASSERT.that(attributes.creationTime()).isNotEqualTo(FileTime.fromMillis(10000));
-    ASSERT.that(Files.getAttribute(baz, "owner:owner")).isNotEqualTo(createUserPrincipal("zero"));
+    ASSERT.that(Files.getAttribute(baz, "owner:owner")).isNotEqualTo(zero);
   }
 
   @Test

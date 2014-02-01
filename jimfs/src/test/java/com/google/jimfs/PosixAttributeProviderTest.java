@@ -16,8 +16,8 @@
 
 package com.google.jimfs;
 
-import static com.google.jimfs.UserPrincipals.createGroupPrincipal;
-import static com.google.jimfs.UserPrincipals.createUserPrincipal;
+import static com.google.jimfs.UserLookupService.createGroupPrincipal;
+import static com.google.jimfs.UserLookupService.createUserPrincipal;
 import static org.junit.Assert.assertNotNull;
 import static org.truth0.Truth.ASSERT;
 
@@ -30,7 +30,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.IOException;
-import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
@@ -85,7 +84,7 @@ public class PosixAttributeProviderTest extends
     file.setAttribute("owner", "owner", createUserPrincipal("user"));
 
     PosixFileAttributeView view = provider.view(fileLookup(),
-        ImmutableMap.<String, FileAttributeView>of(
+        ImmutableMap.of(
             "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS),
             "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);

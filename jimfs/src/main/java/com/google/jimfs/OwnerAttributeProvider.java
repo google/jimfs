@@ -17,7 +17,7 @@
 package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.jimfs.UserPrincipals.createUserPrincipal;
+import static com.google.jimfs.UserLookupService.createUserPrincipal;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -59,8 +59,6 @@ final class OwnerAttributeProvider extends AttributeProvider {
     if (userProvidedOwner != null) {
       if (userProvidedOwner instanceof String) {
         owner = createUserPrincipal((String) userProvidedOwner);
-      } else if (userProvidedOwner instanceof UserPrincipal) {
-        owner = createUserPrincipal(((UserPrincipal) userProvidedOwner).getName());
       } else {
         throw invalidType("owner", "owner", userProvidedOwner, String.class, UserPrincipal.class);
       }
@@ -79,12 +77,11 @@ final class OwnerAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public void set(File file, String view, String attribute, Object value,
-      boolean create) {
+  public void set(File file, String view, String attribute, Object value, boolean create) {
     if (attribute.equals("owner")) {
       UserPrincipal user = checkType(view, attribute, value, UserPrincipal.class);
       // TODO(cgdecker): Do we really need to do this? Any reason not to allow any UserPrincipal?
-      if (!(user instanceof UserPrincipals.JimfsUserPrincipal)) {
+      if (!(user instanceof UserLookupService.JimfsUserPrincipal)) {
         user = createUserPrincipal(user.getName());
       }
       file.setAttribute("owner", "owner", user);

@@ -16,6 +16,8 @@
 
 package com.google.jimfs;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.io.IOException;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.UserPrincipal;
@@ -37,7 +39,7 @@ final class UserLookupService extends UserPrincipalLookupService {
 
   @Override
   public UserPrincipal lookupPrincipalByName(String name) {
-    return UserPrincipals.createUserPrincipal(name);
+    return createUserPrincipal(name);
   }
 
   @Override
@@ -45,6 +47,79 @@ final class UserLookupService extends UserPrincipalLookupService {
     if (!supportsGroups) {
       throw new UserPrincipalNotFoundException(group); // required by spec
     }
-    return UserPrincipals.createGroupPrincipal(group);
+    return createGroupPrincipal(group);
+  }
+
+  /**
+   * Creates a {@link UserPrincipal} for the given user name.
+   */
+  static UserPrincipal createUserPrincipal(String name) {
+    return new JimfsUserPrincipal(name);
+  }
+
+  /**
+   * Creates a {@link GroupPrincipal} for the given group name.
+   */
+  static GroupPrincipal createGroupPrincipal(String name) {
+    return new JimfsGroupPrincipal(name);
+  }
+
+  /**
+   * Base class for {@link UserPrincipal} and {@link GroupPrincipal} implementations.
+   */
+  private abstract static class NamedPrincipal implements UserPrincipal {
+
+    protected final String name;
+
+    private NamedPrincipal(String name) {
+      this.name = checkNotNull(name);
+    }
+
+    @Override
+    public final String getName() {
+      return name;
+    }
+
+    @Override
+    public final int hashCode() {
+      return name.hashCode();
+    }
+
+    @Override
+    public final String toString() {
+      return name;
+    }
+  }
+
+  /**
+   * {@link UserPrincipal} implementation.
+   */
+  static final class JimfsUserPrincipal extends NamedPrincipal {
+
+    private JimfsUserPrincipal(String name) {
+      super(name);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof JimfsUserPrincipal &&
+          getName().equals(((JimfsUserPrincipal) obj).getName());
+    }
+  }
+
+  /**
+   * {@link GroupPrincipal} implementation.
+   */
+  static final class JimfsGroupPrincipal extends NamedPrincipal implements GroupPrincipal {
+
+    private JimfsGroupPrincipal(String name) {
+      super(name);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof JimfsGroupPrincipal &&
+          ((JimfsGroupPrincipal) obj).name.equals(name);
+    }
   }
 }
