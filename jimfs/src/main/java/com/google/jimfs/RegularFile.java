@@ -18,7 +18,10 @@ package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.Util.clear;
+import static com.google.jimfs.Util.nextPowerOf2;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedBytes;
 
 import java.io.IOException;
@@ -26,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -41,20 +45,26 @@ final class RegularFile extends File {
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final HeapDisk disk;
-  private final BlockList blocks;
+
+  /** Block list for the file. */
+  private byte[][] blocks;
+  /** Block count for the the file, which also acts as the head of the block list. */
+  private int blockCount;
+
   private long size;
 
   /**
    * Creates a new regular file with the given ID and using the given disk.
    */
   public static RegularFile create(int id, HeapDisk disk) {
-    return new RegularFile(id, disk, new BlockList(32), 0);
+    return new RegularFile(id, disk, new byte[32][], 0, 0);
   }
 
-  private RegularFile(int id, HeapDisk disk, BlockList blocks, long size) {
+  RegularFile(int id, HeapDisk disk, byte[][] blocks, int blockCount, long size) {
     super(id);
     this.disk = checkNotNull(disk);
     this.blocks = checkNotNull(blocks);
+    this.blockCount = blockCount;
 
     checkArgument(size >= 0);
     this.size = size;
@@ -76,6 +86,67 @@ final class RegularFile extends File {
   public Lock writeLock() {
     return lock.writeLock();
   }
+
+  // lower-level methods dealing with the blocks array
+
+  private void expandIfNecessary(int minBlockCount) {
+    if (minBlockCount > blocks.length) {
+      this.blocks = Arrays.copyOf(blocks, nextPowerOf2(minBlockCount));
+    }
+  }
+
+  /**
+   * Returns the number of blocks this file contains.
+   */
+  int blockCount() {
+    return blockCount;
+  }
+
+  /**
+   * Copies the last {@code count} blocks from this file to the end of the given target file.
+   */
+  void copyBlocksTo(RegularFile target, int count) {
+    int start = blockCount - count;
+    int targetEnd = target.blockCount + count;
+    target.expandIfNecessary(targetEnd);
+
+    System.arraycopy(this.blocks, start, target.blocks, target.blockCount, count);
+    target.blockCount = targetEnd;
+  }
+
+  /**
+   * Transfers the last {@code count} blocks from this file to the end of the given target file.
+   */
+  void transferBlocksTo(RegularFile target, int count) {
+    copyBlocksTo(target, count);
+    truncateBlocks(blockCount - count);
+  }
+
+  /**
+   * Truncates the blocks of this file to the given block count.
+   */
+  void truncateBlocks(int count) {
+    clear(blocks, count, blockCount - count);
+    blockCount = count;
+  }
+
+  /**
+   * Adds the given block to the end of this file.
+   */
+  void addBlock(byte[] block) {
+    expandIfNecessary(blockCount + 1);
+    blocks[blockCount++] = block;
+  }
+
+  /**
+   * Gets the block at the given index in this file.
+   */
+  @VisibleForTesting
+  byte[] getBlock(int index) {
+    return blocks[index];
+  }
+
+  // end of lower-level methods dealing with the blocks array
 
   /**
    * Gets the current size of this file in bytes. Does not do locking, so should only be called
@@ -101,15 +172,16 @@ final class RegularFile extends File {
   RegularFile copy(int id) throws IOException {
     readLock().lock();
     try {
-      BlockList copyBlocks = new BlockList(Math.max(blocks.size() * 2, 32));
-      disk.allocate(copyBlocks, blocks.size());
+      byte[][] copyBlocks = new byte[Math.max(blockCount * 2, 32)][];
+      RegularFile copy = new RegularFile(id, disk, copyBlocks, 0, size);
+      disk.allocate(copy, blockCount);
 
-      for (int i = 0; i < blocks.size(); i++) {
-        byte[] block = blocks.get(i);
-        byte[] copy = copyBlocks.get(i);
-        System.arraycopy(block, 0, copy, 0, block.length);
+      for (int i = 0; i < blockCount; i++) {
+        byte[] block = blocks[i];
+        byte[] copyBlock = copyBlocks[i];
+        System.arraycopy(block, 0, copyBlock, 0, block.length);
       }
-      return new RegularFile(id, disk, copyBlocks, size);
+      return copy;
     } finally {
       readLock().unlock();
     }
@@ -154,7 +226,7 @@ final class RegularFile extends File {
    * and channels to it have been closed.
    */
   private void deleteContents() {
-    disk.free(blocks);
+    disk.free(this);
     size = 0;
   }
 
@@ -174,9 +246,9 @@ final class RegularFile extends File {
     this.size = size;
 
     int newBlockCount = blockIndex(lastPosition) + 1;
-    int blocksToRemove = blocks.size() - newBlockCount;
+    int blocksToRemove = blockCount - newBlockCount;
     if (blocksToRemove > 0) {
-      disk.free(blocks, blocksToRemove);
+      disk.free(this, blocksToRemove);
     }
 
     return true;
@@ -189,12 +261,12 @@ final class RegularFile extends File {
     long end = pos + len;
 
     // allocate any additional blocks needed
-    int lastBlockIndex = blocks.size() - 1;
+    int lastBlockIndex = blockCount - 1;
     int endBlockIndex = blockIndex(end - 1);
 
     if (endBlockIndex > lastBlockIndex) {
       int additionalBlocksNeeded = endBlockIndex - lastBlockIndex;
-      disk.allocate(blocks, additionalBlocksNeeded);
+      disk.allocate(this, additionalBlocksNeeded);
     }
 
     // zero bytes between current size and pos
@@ -202,13 +274,13 @@ final class RegularFile extends File {
       long remaining = pos - size;
 
       int blockIndex = blockIndex(size);
-      byte[] block = blocks.get(blockIndex);
+      byte[] block = blocks[blockIndex];
       int off = offsetInBlock(size);
 
       remaining -= zero(block, off, length(off, remaining));
 
       while (remaining > 0) {
-        block = blocks.get(++blockIndex);
+        block = blocks[++blockIndex];
 
         remaining -= zero(block, 0, length(remaining));
       }
@@ -227,7 +299,7 @@ final class RegularFile extends File {
   public int write(long pos, byte b) throws IOException {
     prepareForWrite(pos, 1);
 
-    byte[] block = blocks.get(blockIndex(pos));
+    byte[] block = blocks[blockIndex(pos)];
     int off = offsetInBlock(pos);
     block[off] = b;
 
@@ -256,7 +328,7 @@ final class RegularFile extends File {
     int remaining = len;
 
     int blockIndex = blockIndex(pos);
-    byte[] block = blocks.get(blockIndex);
+    byte[] block = blocks[blockIndex];
     int offInBlock = offsetInBlock(pos);
 
     int written = put(block, offInBlock, b, off, length(offInBlock, remaining));
@@ -264,7 +336,7 @@ final class RegularFile extends File {
     off += written;
 
     while (remaining > 0) {
-      block = blocks.get(++blockIndex);
+      block = blocks[++blockIndex];
 
       written = put(block, 0, b, off, length(remaining));
       remaining -= written;
@@ -297,13 +369,13 @@ final class RegularFile extends File {
     }
 
     int blockIndex = blockIndex(pos);
-    byte[] block = blocks.get(blockIndex);
+    byte[] block = blocks[blockIndex];
     int off = offsetInBlock(pos);
 
     put(block, off, buf);
 
     while (buf.hasRemaining()) {
-      block = blocks.get(++blockIndex);
+      block = blocks[++blockIndex];
 
       put(block, 0, buf);
     }
@@ -410,7 +482,7 @@ final class RegularFile extends File {
       return -1;
     }
 
-    byte[] block = blocks.get(blockIndex(pos));
+    byte[] block = blocks[blockIndex(pos)];
     int off = offsetInBlock(pos);
     return UnsignedBytes.toInt(block[off]);
   }
@@ -428,7 +500,7 @@ final class RegularFile extends File {
       int remaining = bytesToRead;
 
       int blockIndex = blockIndex(pos);
-      byte[] block = blocks.get(blockIndex);
+      byte[] block = blocks[blockIndex];
       int offsetInBlock = offsetInBlock(pos);
 
       int read = get(block, offsetInBlock, b, off, length(offsetInBlock, remaining));
@@ -437,7 +509,7 @@ final class RegularFile extends File {
 
       while (remaining > 0) {
         int index = ++blockIndex;
-        block = blocks.get(index);
+        block = blocks[index];
 
         read = get(block, 0, b, off, length(remaining));
         remaining -= read;
@@ -461,14 +533,14 @@ final class RegularFile extends File {
       int remaining = bytesToRead;
 
       int blockIndex = blockIndex(pos);
-      byte[] block = blocks.get(blockIndex);
+      byte[] block = blocks[blockIndex];
       int off = offsetInBlock(pos);
 
       remaining -= get(block, off, buf, length(off, remaining));
 
       while (remaining > 0) {
         int index = ++blockIndex;
-        block = blocks.get(index);
+        block = blocks[index];
         remaining -= get(block, 0, buf, length(remaining));
       }
     }
@@ -514,7 +586,7 @@ final class RegularFile extends File {
       long remaining = bytesToRead;
 
       int blockIndex = blockIndex(pos);
-      byte[] block = blocks.get(blockIndex);
+      byte[] block = blocks[blockIndex];
       int off = offsetInBlock(pos);
 
       ByteBuffer buf = ByteBuffer.wrap(block, off, length(off, remaining));
@@ -525,7 +597,7 @@ final class RegularFile extends File {
 
       while (remaining > 0) {
         int index = ++blockIndex;
-        block = blocks.get(index);
+        block = blocks[index];
 
         buf = ByteBuffer.wrap(block, 0, length(remaining));
         while (buf.hasRemaining()) {
@@ -542,13 +614,12 @@ final class RegularFile extends File {
    * Gets the block at the given index, expanding to create the block if necessary.
    */
   private byte[] blockForWrite(int index) throws IOException {
-    int blockCount = blocks.size();
     if (index >= blockCount) {
       int additionalBlocksNeeded = index - blockCount + 1;
-      disk.allocate(blocks, additionalBlocksNeeded);
+      disk.allocate(this, additionalBlocksNeeded);
     }
 
-    return blocks.get(index);
+    return blocks[index];
   }
 
   private int blockIndex(long position) {

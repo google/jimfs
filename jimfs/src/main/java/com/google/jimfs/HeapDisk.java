@@ -44,8 +44,11 @@ final class HeapDisk {
   /** Maximum total number of unused blocks that may be cached for reuse at any time. */
   private final int maxCachedBlockCount;
 
-  /** Cache of free blocks to be allocated to files. */
-  @VisibleForTesting final BlockList blockCache;
+  /**
+   * Cache of free blocks to be allocated to files. While this is stored as a file, it isn't used
+   * like a normal file: only the methods for accessing its blocks are used.
+   */
+  @VisibleForTesting final RegularFile blockCache;
 
   /** The current total number of blocks that are currently allocated to files. */
   private int allocatedBlockCount;
@@ -59,7 +62,7 @@ final class HeapDisk {
     this.maxCachedBlockCount = config.maxCacheSize == -1
         ? maxBlockCount
         : toBlockCount(config.maxCacheSize, blockSize);
-    this.blockCache = new BlockList(Math.min(maxCachedBlockCount, 8192));
+    this.blockCache = createBlockCache(maxCachedBlockCount);
   }
 
   /**  Returns the nearest multiple of {@code blockSize} that is <= {@code size}. */
@@ -79,7 +82,11 @@ final class HeapDisk {
     this.blockSize = blockSize;
     this.maxBlockCount = maxBlockCount;
     this.maxCachedBlockCount = maxCachedBlockCount;
-    this.blockCache = new BlockList(Math.min(maxCachedBlockCount, 8192));
+    this.blockCache = createBlockCache(maxCachedBlockCount);
+  }
+
+  private RegularFile createBlockCache(int maxCachedBlockCount) {
+    return new RegularFile(-1, this, new byte[Math.min(maxCachedBlockCount, 8192)][], 0, 0);
   }
 
   /**
@@ -107,43 +114,43 @@ final class HeapDisk {
   }
 
   /**
-   * Allocates the given number of blocks and adds their identifiers to the given list.
+   * Allocates the given number of blocks and adds them to the given file.
    */
-  public synchronized void allocate(BlockList blocks, int count) throws IOException {
+  public synchronized void allocate(RegularFile file, int count) throws IOException {
     int newAllocatedBlockCount = allocatedBlockCount + count;
     if (newAllocatedBlockCount > maxBlockCount) {
       throw new IOException("out of disk space");
     }
 
-    int newBlocksNeeded = Math.max(count - blockCache.size(), 0);
+    int newBlocksNeeded = Math.max(count - blockCache.blockCount(), 0);
 
     for (int i = 0; i < newBlocksNeeded; i++) {
-      blocks.add(new byte[blockSize]);
+      file.addBlock(new byte[blockSize]);
     }
 
     if (newBlocksNeeded != count) {
-      blockCache.transferTo(blocks, count - newBlocksNeeded);
+      blockCache.transferBlocksTo(file, count - newBlocksNeeded);
     }
 
     allocatedBlockCount = newAllocatedBlockCount;
   }
 
   /**
-   * Frees all blocks in the given list.
+   * Frees all blocks in the given file.
    */
-  public void free(BlockList blocks) {
-    free(blocks, blocks.size());
+  public void free(RegularFile file) {
+    free(file, file.blockCount());
   }
 
   /**
-   * Frees the last count blocks from the given list.
+   * Frees the last {@code count} blocks from the given file.
    */
-  public synchronized void free(BlockList blocks, int count) {
-    int remainingCacheSpace = maxCachedBlockCount - blockCache.size();
+  public synchronized void free(RegularFile file, int count) {
+    int remainingCacheSpace = maxCachedBlockCount - blockCache.blockCount();
     if (remainingCacheSpace > 0) {
-      blocks.copyTo(blockCache, Math.min(count, remainingCacheSpace));
+      file.copyBlocksTo(blockCache, Math.min(count, remainingCacheSpace));
     }
-    blocks.truncate(blocks.size() - count);
+    file.truncateBlocks(file.blockCount() - count);
 
     allocatedBlockCount -= count;
   }
