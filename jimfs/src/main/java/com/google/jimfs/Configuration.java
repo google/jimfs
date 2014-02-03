@@ -18,6 +18,10 @@ package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.jimfs.Feature.FILE_CHANNEL;
+import static com.google.jimfs.Feature.LINKS;
+import static com.google.jimfs.Feature.SECURE_DIRECTORY_STREAM;
+import static com.google.jimfs.Feature.SYMBOLIC_LINKS;
 import static com.google.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static com.google.jimfs.PathNormalization.NFC;
 import static com.google.jimfs.PathNormalization.NFD;
@@ -27,9 +31,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
+import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributeView;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -59,6 +66,8 @@ public final class Configuration {
    *   <li>performs case-sensitive file lookup</li>
    *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
    *   avoid overhead for unneeded attributes</li>
+   *   <li>supports hard links, symbolic links, {@link SecureDirectoryStream} and
+   *   {@link FileChannel}</li>
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of UNIX
@@ -81,6 +90,7 @@ public final class Configuration {
         .setRoots("/")
         .setWorkingDirectory("/work")
         .setAttributeViews("basic")
+        .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, SECURE_DIRECTORY_STREAM, FILE_CHANNEL)
         .build();
   }
 
@@ -101,6 +111,7 @@ public final class Configuration {
    *   <li>does case-insensitive (for ASCII characters only) lookup</li>
    *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
    *   avoid overhead for unneeded attributes</li>
+   *   <li>supports hard links, symbolic links and {@link FileChannel}</li>
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of UNIX
@@ -124,6 +135,7 @@ public final class Configuration {
     private static final Configuration OS_X = unix().toBuilder()
         .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
         .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
+        .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL)
         .build();
   }
 
@@ -140,6 +152,7 @@ public final class Configuration {
    *   equality</li>
    *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
    *   avoid overhead for unneeded attributes</li>
+   *   <li>supports hard links, symbolic links and {@link FileChannel}</li>
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of
@@ -166,6 +179,7 @@ public final class Configuration {
         .setNameCanonicalNormalization(CASE_FOLD_ASCII)
         .setPathEqualityUsesCanonicalForm(true) // matches real behavior of WindowsPath
         .setAttributeViews("basic")
+        .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL)
         .build();
   }
 
@@ -195,6 +209,7 @@ public final class Configuration {
   // Other
   final ImmutableSet<String> roots;
   final String workingDirectory;
+  final ImmutableSet<Feature> supportedFeatures;
 
   /**
    * Creates an immutable configuration object from the given builder.
@@ -216,6 +231,7 @@ public final class Configuration {
         : ImmutableMap.copyOf(builder.defaultAttributeValues);
     this.roots = builder.roots;
     this.workingDirectory = builder.workingDirectory;
+    this.supportedFeatures = builder.supportedFeatures;
   }
 
   /**
@@ -258,6 +274,7 @@ public final class Configuration {
     // Other
     private ImmutableSet<String> roots = ImmutableSet.of();
     private String workingDirectory;
+    private ImmutableSet<Feature> supportedFeatures = ImmutableSet.of();
 
     private Builder(PathType pathType) {
       this.pathType = checkNotNull(pathType);
@@ -280,6 +297,7 @@ public final class Configuration {
           : new HashMap<>(configuration.defaultAttributeValues);
       this.roots = configuration.roots;
       this.workingDirectory = configuration.workingDirectory;
+      this.supportedFeatures = configuration.supportedFeatures;
     }
 
     /**
@@ -566,6 +584,15 @@ public final class Configuration {
       checkArgument(parseResult.isAbsolute(),
           "working directory must be an absolute path: %s", workingDirectory);
       this.workingDirectory = checkNotNull(workingDirectory);
+      return this;
+    }
+
+    /**
+     * Sets the given features to be supported by the file system. Any features not provided here
+     * will not be supported.
+     */
+    public Builder setSupportedFeatures(Feature... features) {
+      supportedFeatures = Sets.immutableEnumSet(Arrays.asList(features));
       return this;
     }
 

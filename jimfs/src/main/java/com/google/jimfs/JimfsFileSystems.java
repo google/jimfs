@@ -75,7 +75,8 @@ final class JimfsFileSystems {
       roots.put(rootName, rootDir);
     }
 
-    return new JimfsFileStore(new FileTree(roots), fileFactory, disk, attributeService);
+    return new JimfsFileStore(
+        new FileTree(roots), fileFactory, disk, attributeService, config.supportedFeatures);
   }
 
   /**

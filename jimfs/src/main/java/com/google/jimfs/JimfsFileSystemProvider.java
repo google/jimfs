@@ -19,6 +19,7 @@ package com.google.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
+import static com.google.jimfs.Feature.FILE_CHANNEL;
 import static com.google.jimfs.Jimfs.CONFIG_KEY;
 import static com.google.jimfs.Jimfs.URI_SCHEME;
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -193,29 +194,36 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   @Override
   public FileChannel newFileChannel(
       Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-    return newJimfsFileChannel(path, options, attrs);
+    JimfsPath checkedPath = checkPath(path);
+    if (!checkedPath.getJimfsFileSystem().getFileStore().supportsFeature(FILE_CHANNEL)) {
+      throw new UnsupportedOperationException();
+    }
+    return newJimfsFileChannel(checkedPath, options, attrs);
   }
 
   private JimfsFileChannel newJimfsFileChannel(
-      Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-    JimfsPath checkedPath = checkPath(path);
+      JimfsPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
-    RegularFile file = getDefaultView(checkedPath).getOrCreateRegularFile(checkedPath, opts, attrs);
+    RegularFile file = getDefaultView(path).getOrCreateRegularFile(path, opts, attrs);
     return new JimfsFileChannel(file, opts);
   }
 
   @Override
   public SeekableByteChannel newByteChannel(
       Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-    return newFileChannel(path, options, attrs);
+    JimfsPath checkedPath = checkPath(path);
+    JimfsFileChannel channel = newJimfsFileChannel(checkedPath, options, attrs);
+    return checkedPath.getJimfsFileSystem().getFileStore().supportsFeature(FILE_CHANNEL)
+        ? channel
+        : new DowngradedSeekableByteChannel(channel);
   }
 
   @Override
   public AsynchronousFileChannel newAsynchronousFileChannel(
-      Path path, Set<? extends OpenOption> options,
-      @Nullable ExecutorService executor, FileAttribute<?>... attrs)
-      throws IOException {
-    JimfsFileChannel channel = newJimfsFileChannel(path, options, attrs);
+      Path path, Set<? extends OpenOption> options, @Nullable ExecutorService executor,
+      FileAttribute<?>... attrs) throws IOException {
+    // call newFileChannel and cast so that FileChannel support is checked there
+    JimfsFileChannel channel = (JimfsFileChannel) newFileChannel(path, options, attrs);
     if (executor == null) {
       JimfsFileSystem fileSystem = (JimfsFileSystem) path.getFileSystem();
       executor = fileSystem.getDefaultThreadPool();
@@ -248,7 +256,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
       DirectoryStream.Filter<? super Path> filter) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
     return getDefaultView(checkedPath)
-        .newSecureDirectoryStream(checkedPath, filter, Options.FOLLOW_LINKS, checkedPath);
+        .newDirectoryStream(checkedPath, filter, Options.FOLLOW_LINKS, checkedPath);
   }
 
   @Override

@@ -125,8 +125,7 @@ import javax.annotation.Nullable;
  * {@link com.google.jimfs.JimfsOutputStream JimfsOutputStream} implement the standard
  * channel/stream APIs for regular files.
  *
- * <p>{@link com.google.jimfs.JimfsDirectoryStream JimfsDirectoryStream} and
- * {@link com.google.jimfs.JimfsSecureDirectoryStream JimfsSecureDirectoryStream} handle
+ * <p>{@link com.google.jimfs.JimfsSecureDirectoryStream JimfsSecureDirectoryStream} handles
  * reading the entries of a directory. The secure directory stream additionally contains a
  * {@code FileSystemView} with its directory as the working directory, allowing for operations
  * relative to the actual directory file rather than just the path to the file. This allows the

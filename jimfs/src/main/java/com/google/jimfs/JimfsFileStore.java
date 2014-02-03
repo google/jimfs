@@ -55,16 +55,18 @@ final class JimfsFileStore extends FileStore {
   private final HeapDisk disk;
   private final AttributeService attributes;
   private final FileFactory factory;
+  private final ImmutableSet<Feature> supportedFeatures;
 
   private final Lock readLock;
   private final Lock writeLock;
 
   public JimfsFileStore(FileTree tree, FileFactory factory, HeapDisk disk,
-      AttributeService attributes) {
+      AttributeService attributes, ImmutableSet<Feature> supportedFeatures) {
     this.tree = checkNotNull(tree);
     this.factory = checkNotNull(factory);
     this.disk = checkNotNull(disk);
     this.attributes = checkNotNull(attributes);
+    this.supportedFeatures = checkNotNull(supportedFeatures);
 
     ReadWriteLock lock = new ReentrantReadWriteLock();
     this.readLock = lock.readLock();
@@ -101,6 +103,13 @@ final class JimfsFileStore extends FileStore {
   Directory getRoot(Name name) {
     DirectoryEntry entry = tree.getRoot(name);
     return entry == null ? null : (Directory) entry.file();
+  }
+
+  /**
+   * Returns whether or not the given feature is supported by this file store.
+   */
+  boolean supportsFeature(Feature feature) {
+    return supportedFeatures.contains(feature);
   }
 
   /**

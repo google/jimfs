@@ -97,7 +97,7 @@ final class FileSystemView {
   /**
    * Attempt to look up the file at the given path.
    */
-  private DirectoryEntry lookUpWithLock(
+  DirectoryEntry lookUpWithLock(
       JimfsPath path, Set<? super LinkOption> options) throws IOException {
     store.readLock().lock();
     try {
@@ -116,11 +116,11 @@ final class FileSystemView {
   }
 
   /**
-   * Creates a new secure directory stream for the directory located by the given path. The given
-   * {@code basePathForStream} is that base path that the returned stream will use. This will be the
-   * same as {@code dir} except for streams created relative to another secure stream.
+   * Creates a new directory stream for the directory located by the given path. The given
+   * {@code basePathForStream} is that base path that the returned stream will use. This will be
+   * the same as {@code dir} except for streams created relative to another secure stream.
    */
-  public JimfsSecureDirectoryStream newSecureDirectoryStream(
+  public DirectoryStream<Path> newDirectoryStream(
       JimfsPath dir,
       DirectoryStream.Filter<? super Path> filter,
       Set<? super LinkOption> options,
@@ -128,15 +128,17 @@ final class FileSystemView {
     Directory file = (Directory) lookUpWithLock(dir, options)
         .requireDirectory(dir)
         .file();
-
     FileSystemView view = new FileSystemView(store, file, basePathForStream);
-    return new JimfsSecureDirectoryStream(view, filter);
+    JimfsSecureDirectoryStream stream = new JimfsSecureDirectoryStream(view, filter);
+    return store.supportsFeature(Feature.SECURE_DIRECTORY_STREAM)
+        ? stream
+        : new DowngradedDirectoryStream(stream);
   }
 
   /**
-   * Returns a snapshot of the entries in the working directory of this view.
+   * Snapshots the entries of the working directory of this view.
    */
-  public ImmutableSortedSet<Name> snapshotBaseEntries() {
+  public ImmutableSortedSet<Name> snapshotWorkingDirectoryEntries() {
     store.readLock().lock();
     try {
       ImmutableSortedSet<Name> names = workingDirectory.snapshot();
@@ -239,6 +241,9 @@ final class FileSystemView {
    */
   public SymbolicLink createSymbolicLink(
       JimfsPath path, JimfsPath target, FileAttribute<?>... attrs) throws IOException {
+    if (!store.supportsFeature(Feature.SYMBOLIC_LINKS)) {
+      throw new UnsupportedOperationException();
+    }
     return (SymbolicLink) createFile(path, store.symbolicLinkCreator(target), true, attrs);
   }
 
@@ -369,6 +374,10 @@ final class FileSystemView {
    * Returns the target of the symbolic link at the given path.
    */
   public JimfsPath readSymbolicLink(JimfsPath path) throws IOException {
+    if (!store.supportsFeature(Feature.SYMBOLIC_LINKS)) {
+      throw new UnsupportedOperationException();
+    }
+
     SymbolicLink symbolicLink = (SymbolicLink) lookUpWithLock(path, Options.NOFOLLOW_LINKS)
         .requireSymbolicLink(path)
         .file();
@@ -395,6 +404,10 @@ final class FileSystemView {
     checkNotNull(link);
     checkNotNull(existingView);
     checkNotNull(existing);
+
+    if (!store.supportsFeature(Feature.LINKS)) {
+      throw new UnsupportedOperationException();
+    }
 
     if (!isSameFileSystem(existingView)) {
       throw new FileSystemException(link.toString(), existing.toString(),
@@ -634,6 +647,14 @@ final class FileSystemView {
         current = current.parent();
       }
     }
+  }
+
+  /**
+   * Returns a file attribute view using the given lookup callback.
+   */
+  @Nullable
+  public <V extends FileAttributeView> V getFileAttributeView(FileLookup lookup, Class<V> type) {
+    return store.getFileAttributeView(lookup, type);
   }
 
   /**

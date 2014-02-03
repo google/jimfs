@@ -65,10 +65,12 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.FileChannel;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.ClosedDirectoryStreamException;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
@@ -91,6 +93,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
@@ -1954,6 +1957,114 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   }
 
   @Test
+  public void testClosedSecureDirectoryStream() throws IOException {
+    Files.createDirectory(path("/foo"));
+    SecureDirectoryStream<Path> stream =
+        (SecureDirectoryStream<Path>) Files.newDirectoryStream(path("/foo"));
+
+    stream.close();
+
+    try {
+      stream.iterator();
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      stream.deleteDirectory(fs.getPath("a"));
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      stream.deleteFile(fs.getPath("a"));
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      stream.newByteChannel(fs.getPath("a"), ImmutableSet.of(CREATE, WRITE));
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      stream.newDirectoryStream(fs.getPath("a"));
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      stream.move(fs.getPath("a"), stream, fs.getPath("b"));
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      stream.getFileAttributeView(BasicFileAttributeView.class);
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      stream.getFileAttributeView(fs.getPath("a"), BasicFileAttributeView.class);
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+  }
+
+  @Test
+  public void testClosedSecureDirectoryStreamAttributeViewAndIterator() throws IOException {
+    Files.createDirectory(path("/foo"));
+    Files.createDirectory(path("/foo/bar"));
+    SecureDirectoryStream<Path> stream =
+        (SecureDirectoryStream<Path>) Files.newDirectoryStream(path("/foo"));
+
+    Iterator<Path> iter = stream.iterator();
+    BasicFileAttributeView view1 = stream.getFileAttributeView(BasicFileAttributeView.class);
+    BasicFileAttributeView view2 = stream.getFileAttributeView(
+        path("bar"), BasicFileAttributeView.class);
+
+    try {
+      stream.iterator();
+      fail("expected IllegalStateException");
+    } catch (IllegalStateException expected) {
+    }
+
+    stream.close();
+
+    try {
+      iter.next();
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      view1.readAttributes();
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      view2.readAttributes();
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      view1.setTimes(null, null, null);
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+
+    try {
+      view2.setTimes(null, null, null);
+      fail("expected ClosedDirectoryStreamException");
+    } catch (ClosedDirectoryStreamException expected) {
+    }
+  }
+
+  @Test
   public void testDirectoryAccessAndModifiedTimeUpdates() throws IOException {
     Files.createDirectories(path("/foo/bar"));
     FileTimeTester tester = new FileTimeTester(path("/foo/bar"));
@@ -2071,5 +2182,56 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     // closing channel does not change times
     tester.assertAccessTimeDidNotChange();
     tester.assertModifiedTimeDidNotChange();
+  }
+
+  @Test
+  public void testUnsupportedFeatures() throws IOException {
+    FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix().toBuilder()
+        .setSupportedFeatures() // none
+        .build());
+
+    Path foo = fileSystem.getPath("foo");
+    Path bar = foo.resolveSibling("bar");
+
+    try {
+      Files.createLink(foo, bar);
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    try {
+      Files.createSymbolicLink(foo, bar);
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    try {
+      Files.readSymbolicLink(foo);
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    try {
+      FileChannel.open(foo);
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    try {
+      AsynchronousFileChannel.open(foo);
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    Files.createDirectory(foo);
+    Files.createFile(bar);
+
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(foo)) {
+      ASSERT.that(stream).isNotA(SecureDirectoryStream.class);
+    }
+
+    try (SeekableByteChannel channel = Files.newByteChannel(bar)) {
+      ASSERT.that(channel).isNotA(FileChannel.class);
+    }
   }
 }
