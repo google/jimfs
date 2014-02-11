@@ -193,9 +193,18 @@ public class PollingWatchServiceTest {
     Files.delete(path.resolve("foo/bar"));
     Files.delete(path.resolve("foo"));
 
-    // foo should be deleted before polling detects its modification
-    // this could be flaky; may need to increase time between polling if so (or just not test it)
-    assertWatcherHasEvents(watcher, new Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
+    // foo should be deleted before polling detects its modification, but it may not be
+    // so check for either an ENTRY_DELETE event or both an ENTRY_MODIFY and ENTRY_DELETE event
+    ensureTimeToPoll();
+    WatchKey key = watcher.take();
+    List<WatchEvent<?>> keyEvents = key.pollEvents();
+    if (keyEvents.size() == 1) {
+      ASSERT.that(keyEvents).has().exactly(new Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
+    } else {
+      ASSERT.that(keyEvents).has().exactlyAs(Arrays.<WatchEvent<?>>asList(
+          new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
+          new Event<>(ENTRY_DELETE, 1, fs.getPath("foo"))));
+    }
   }
 
   private static void assertWatcherHasEvents(
