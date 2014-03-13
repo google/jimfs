@@ -79,8 +79,8 @@ final class FileFactory {
   /**
    * Creates and returns a copy of the given file.
    */
-  public File copy(File file) throws IOException {
-    return file.copy(nextFileId());
+  public File copyWithoutContent(File file) throws IOException {
+    return file.copyWithoutContent(nextFileId());
   }
 
   // suppliers to act as file creation callbacks

@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Table;
 
 import java.io.IOException;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.annotation.Nullable;
 
@@ -92,16 +93,46 @@ public abstract class File {
   }
 
   /**
-   * Creates a copy of this file with the given ID.
+   * Creates a new file of the same type as this file with the given ID. Does not copy the content
+   * of this file unless the cost of copying the content is minimal. This is because this method is
+   * called with a hold on the file system's lock.
    */
-  abstract File copy(int id) throws IOException;
+  abstract File copyWithoutContent(int id);
+
+  /**
+   * Copies the content of this file to the given file. The given file must be the same type of
+   * file as this file and should have no content.
+   *
+   * <p>This method is used for copying the content of a file after copying the file itself. Does
+   * nothing by default.
+   */
+  void copyContentTo(File file) throws IOException {}
+
+  /**
+   * Returns the read-write lock for this file's content, or {@code null} if there is no content
+   * lock.
+   */
+  @Nullable
+  ReadWriteLock contentLock() {
+    return null;
+  }
+
+  /**
+   * Called when a stream or channel to this file is opened.
+   */
+  void opened() {}
+
+  /**
+   * Called when a stream or channel to this file is closed. If there are no more streams or
+   * channels open to the file and it has been deleted, its contents may be deleted.
+   */
+  void closed() {}
 
   /**
    * Called when (a single link to) this file is deleted. There may be links remaining. Does
    * nothing by default.
    */
-  void deleted() {
-  }
+  void deleted() {}
 
   /**
    * Returns whether or not this file is a root directory of the file system.

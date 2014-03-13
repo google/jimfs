@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.annotation.Nullable;
 
@@ -537,6 +538,8 @@ final class FileSystemView {
 
     boolean sameFileSystem = isSameFileSystem(destView);
 
+    File sourceFile;
+    File copyFile = null; // non-null after block completes iff source file was copied
     lockBoth(store.writeLock(), destView.store.writeLock());
     try {
       DirectoryEntry sourceEntry = lookUp(source, options)
@@ -544,7 +547,7 @@ final class FileSystemView {
       DirectoryEntry destEntry = destView.lookUp(dest, Options.NOFOLLOW_LINKS);
 
       Directory sourceParent = sourceEntry.directory();
-      File sourceFile = sourceEntry.file();
+      sourceFile = sourceEntry.file();
 
       Directory destParent = destEntry.directory();
 
@@ -580,18 +583,45 @@ final class FileSystemView {
       } else {
         // copy
         boolean copyAttributes = options.contains(COPY_ATTRIBUTES) && !move;
-        File copy = destView.store.copy(sourceFile, copyAttributes);
-        destParent.link(dest.name(), copy);
+
+        // copy the file, but don't copy its content while we're holding the file store locks
+        copyFile = destView.store.copyWithoutContent(sourceFile, copyAttributes);
+        destParent.link(dest.name(), copyFile);
         destParent.updateModifiedTime();
 
+        // In order for the copy to be atomic (not strictly necessary, but seems preferable since
+        // we can) lock both source and copy files before leaving the file store locks. This
+        // ensures that users cannot observe the copy's content until the content has been copied.
+        // This also marks the source file as opened, preventing its content from being deleted
+        // until after it's copied if the source file itself is deleted in the next step.
+        lockSourceAndCopy(sourceFile, copyFile);
+
         if (move) {
-          store.copyBasicAttributes(sourceFile, copy);
+          store.copyBasicAttributes(sourceFile, copyFile);
+
+          // it should not be possible for delete to throw an exception here, because we already
+          // checked that the file was deletable above
           delete(sourceEntry, DeleteMode.ANY, source);
         }
       }
     } finally {
       destView.store.writeLock().unlock();
       store.writeLock().unlock();
+    }
+
+    if (copyFile != null) {
+      // Copy the content. This is done outside the above block to minimize the time spent holding
+      // file store locks, since copying the content of a regular file could take a (relatively)
+      // long time. If done inside the above block, copying using Files.copy can be slower than
+      // copying with an InputStream and an OutputStream if many files are being copied on
+      // different threads.
+      try {
+        sourceFile.copyContentTo(copyFile);
+      } finally {
+        // Unlock the files, allowing the content of the copy to be observed by the user. This also
+        // closes the source file, allowing its content to be deleted if it was deleted.
+        unlockSourceAndCopy(sourceFile, copyFile);
+      }
     }
   }
 
@@ -647,6 +677,38 @@ final class FileSystemView {
         current = current.parent();
       }
     }
+  }
+
+  /**
+   * Locks source and copy files before copying content. Also marks the source file as opened so
+   * that its content won't be deleted until after the copy if it is deleted.
+   */
+  private void lockSourceAndCopy(File sourceFile, File copyFile) {
+    sourceFile.opened();
+    ReadWriteLock sourceLock = sourceFile.contentLock();
+    if (sourceLock != null) {
+      sourceLock.readLock().lock();
+    }
+    ReadWriteLock copyLock = copyFile.contentLock();
+    if (copyLock != null) {
+      copyLock.writeLock().lock();
+    }
+  }
+
+  /**
+   * Unlocks source and copy files after copying content. Also closes the source file so its
+   * content can be deleted if it was deleted.
+   */
+  private void unlockSourceAndCopy(File sourceFile, File copyFile) {
+    ReadWriteLock sourceLock = sourceFile.contentLock();
+    if (sourceLock != null) {
+      sourceLock.readLock().unlock();
+    }
+    ReadWriteLock copyLock = copyFile.contentLock();
+    if (copyLock != null) {
+      copyLock.writeLock().unlock();
+    }
+    sourceFile.closed();
   }
 
   /**

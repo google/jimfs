@@ -151,8 +151,8 @@ final class JimfsFileStore extends FileStore {
    * Creates a copy of the given file, copying its attributes as well if copy attributes is true.
    * Returns the copy.
    */
-  File copy(File file, boolean copyAttributes) throws IOException {
-    File copy = factory.copy(file);
+  File copyWithoutContent(File file, boolean copyAttributes) throws IOException {
+    File copy = factory.copyWithoutContent(file);
     setInitialAttributes(copy);
     if (copyAttributes) {
       attributes.copyAttributes(file, copy);

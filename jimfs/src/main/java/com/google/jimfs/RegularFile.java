@@ -34,6 +34,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import javax.annotation.Nullable;
+
 /**
  * A mutable, resizable store for bytes. Bytes are stored in fixed-sized byte arrays (blocks)
  * allocated by a {@link HeapDisk}.
@@ -169,38 +171,37 @@ final class RegularFile extends File {
   }
 
   @Override
-  RegularFile copy(int id) throws IOException {
-    readLock().lock();
-    try {
-      byte[][] copyBlocks = new byte[Math.max(blockCount * 2, 32)][];
-      RegularFile copy = new RegularFile(id, disk, copyBlocks, 0, size);
-      disk.allocate(copy, blockCount);
+  RegularFile copyWithoutContent(int id) {
+    byte[][] copyBlocks = new byte[Math.max(blockCount * 2, 32)][];
+    return new RegularFile(id, disk, copyBlocks, 0, size);
+  }
 
-      for (int i = 0; i < blockCount; i++) {
-        byte[] block = blocks[i];
-        byte[] copyBlock = copyBlocks[i];
-        System.arraycopy(block, 0, copyBlock, 0, block.length);
-      }
-      return copy;
-    } finally {
-      readLock().unlock();
+  @Override
+  void copyContentTo(File file) throws IOException {
+    RegularFile copy = (RegularFile) file;
+    disk.allocate(copy, blockCount);
+
+    for (int i = 0; i < blockCount; i++) {
+      byte[] block = blocks[i];
+      byte[] copyBlock = copy.blocks[i];
+      System.arraycopy(block, 0, copyBlock, 0, block.length);
     }
+  }
+
+  @Override
+  ReadWriteLock contentLock() {
+    return lock;
   }
 
   // opened/closed/delete don't use the read/write lock... they only need to ensure that they are
   // synchronized among themselves
 
-  /**
-   * Called when a stream or channel to this file is opened.
-   */
+  @Override
   public synchronized void opened() {
     openCount++;
   }
 
-  /**
-   * Called when a stream or channel to this file is closed. If there are no more streams or
-   * channels open to the file and it has been deleted, its contents may be deleted.
-   */
+  @Override
   public synchronized void closed() {
     if (--openCount == 0 && deleted) {
       deleteContents();

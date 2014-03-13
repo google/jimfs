@@ -49,7 +49,7 @@ final class SymbolicLink extends File {
   }
 
   @Override
-  File copy(int id) throws IOException {
+  File copyWithoutContent(int id) {
     return SymbolicLink.create(id, target);
   }
 }
