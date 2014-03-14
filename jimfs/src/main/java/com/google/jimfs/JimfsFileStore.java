@@ -148,15 +148,13 @@ final class JimfsFileStore extends FileStore {
   }
 
   /**
-   * Creates a copy of the given file, copying its attributes as well if copy attributes is true.
-   * Returns the copy.
+   * Creates a copy of the given file, copying its attributes as well according to the given
+   * {@code attributeCopyOption}.
    */
-  File copyWithoutContent(File file, boolean copyAttributes) throws IOException {
+  File copyWithoutContent(File file, AttributeCopyOption attributeCopyOption) throws IOException {
     File copy = factory.copyWithoutContent(file);
     setInitialAttributes(copy);
-    if (copyAttributes) {
-      attributes.copyAttributes(file, copy);
-    }
+    attributes.copyAttributes(file, copy, attributeCopyOption);
     return copy;
   }
 
@@ -166,13 +164,6 @@ final class JimfsFileStore extends FileStore {
    */
   void setInitialAttributes(File file, FileAttribute<?>... attrs) {
     attributes.setInitialAttributes(file, attrs);
-  }
-
-  /**
-   * Copies the basic attributes (just file times) of the given file to the given copy file.
-   */
-  void copyBasicAttributes(File file, File copy) {
-    attributes.copyBasicAttributes(file, copy);
   }
 
   /**

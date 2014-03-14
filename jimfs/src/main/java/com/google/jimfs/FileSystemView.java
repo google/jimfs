@@ -572,20 +572,35 @@ final class FileSystemView {
         }
       }
 
-      // can only do an actual move within one file system instance
-      // otherwise we have to copy and delete
       if (move && sameFileSystem) {
+        // Real move on the same file system.
         sourceParent.unlink(source.name());
         sourceParent.updateModifiedTime();
 
         destParent.link(dest.name(), sourceFile);
         destParent.updateModifiedTime();
       } else {
-        // copy
-        boolean copyAttributes = options.contains(COPY_ATTRIBUTES) && !move;
+        // Doing a copy OR a move to a different file system, which must be implemented by copy and
+        // delete.
 
-        // copy the file, but don't copy its content while we're holding the file store locks
-        copyFile = destView.store.copyWithoutContent(sourceFile, copyAttributes);
+        // By default, don't copy attributes.
+        AttributeCopyOption attributeCopyOption = AttributeCopyOption.NONE;
+        if (move) {
+          // Copy only the basic attributes of the file to the other file system, as it may not
+          // support all the attribute views that this file system does. This also matches the
+          // behavior of moving a file to a foreign file system with a different
+          // FileSystemProvider.
+          attributeCopyOption = AttributeCopyOption.BASIC;
+        } else if (options.contains(COPY_ATTRIBUTES)) {
+          // As with move, if we're copying the file to a different file system, only copy its
+          // basic attributes.
+          attributeCopyOption = sameFileSystem
+              ? AttributeCopyOption.ALL
+              : AttributeCopyOption.BASIC;
+        }
+
+        // Copy the file, but don't copy its content while we're holding the file store locks.
+        copyFile = destView.store.copyWithoutContent(sourceFile, attributeCopyOption);
         destParent.link(dest.name(), copyFile);
         destParent.updateModifiedTime();
 
@@ -597,10 +612,8 @@ final class FileSystemView {
         lockSourceAndCopy(sourceFile, copyFile);
 
         if (move) {
-          store.copyBasicAttributes(sourceFile, copyFile);
-
-          // it should not be possible for delete to throw an exception here, because we already
-          // checked that the file was deletable above
+          // It should not be possible for delete to throw an exception here, because we already
+          // checked that the file was deletable above.
           delete(sourceEntry, DeleteMode.ANY, source);
         }
       }

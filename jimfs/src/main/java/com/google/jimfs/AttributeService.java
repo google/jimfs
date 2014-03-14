@@ -181,17 +181,19 @@ final class AttributeService {
   }
 
   /**
-   * Copies the file times of the given file to the given copy file.
-   */
-  public void copyBasicAttributes(File file, File copy) {
-    file.copyBasicAttributes(copy);
-  }
-
-  /**
    * Copies the attributes of the given file to the given copy file.
    */
-  public void copyAttributes(File file, File copy) {
-    file.copyAttributes(copy);
+  public void copyAttributes(File file, File copy, AttributeCopyOption copyOption) {
+    switch (copyOption) {
+      case ALL:
+        file.copyAttributes(copy);
+        break;
+      case BASIC:
+        file.copyBasicAttributes(copy);
+        break;
+      default:
+        // don't copy
+    }
   }
 
   /**

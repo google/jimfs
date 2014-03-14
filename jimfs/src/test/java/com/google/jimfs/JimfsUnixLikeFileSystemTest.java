@@ -110,13 +110,15 @@ import java.util.regex.PatternSyntaxException;
 @RunWith(JUnit4.class)
 public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
+  private static final Configuration UNIX_CONFIGURATION = Configuration.unix().toBuilder()
+      .setAttributeViews("basic", "owner", "posix", "unix")
+      .setMaxSize(1024 * 1024 * 1024) // 1 GB
+      .setMaxCacheSize(256 * 1024 * 1024) // 256 MB
+      .build();
+
   @Override
   protected FileSystem createFileSystem() {
-    return Jimfs.newFileSystem("unix", Configuration.unix().toBuilder()
-        .setAttributeViews("basic", "owner", "posix", "unix")
-        .setMaxSize(1024 * 1024 * 1024) // 1 GB
-        .setMaxCacheSize(256 * 1024 * 1024) // 256 MB
-        .build());
+    return Jimfs.newFileSystem("unix", UNIX_CONFIGURATION);
   }
 
   @Test
@@ -1681,6 +1683,55 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   }
 
   @Test
+  public void testCopy_toDifferentFileSystem() throws IOException {
+    try (FileSystem fs2 = Jimfs.newFileSystem(UNIX_CONFIGURATION)) {
+      Path foo = fs.getPath("/foo");
+      byte[] bytes = {0, 1, 2, 3, 4};
+      Files.write(foo, bytes);
+
+      Path foo2 = fs2.getPath("/foo");
+      Files.copy(foo, foo2);
+
+      assertThat(foo).exists();
+      assertThat(foo2).exists()
+          .and().containsBytes(bytes);
+    }
+  }
+
+  @Test
+  public void testCopy_toDifferentFileSystem_copyAttributes() throws IOException {
+    try (FileSystem fs2 = Jimfs.newFileSystem(UNIX_CONFIGURATION)) {
+      Path foo = fs.getPath("/foo");
+      byte[] bytes = {0, 1, 2, 3, 4};
+      Files.write(foo, bytes);
+      Files.getFileAttributeView(foo, BasicFileAttributeView.class)
+          .setTimes(FileTime.fromMillis(0), FileTime.fromMillis(1), FileTime.fromMillis(2));
+
+      UserPrincipal owner = fs.getUserPrincipalLookupService().lookupPrincipalByName("foobar");
+      Files.setOwner(foo, owner);
+
+      assertThat(foo)
+          .attribute("owner:owner").is(owner);
+
+      Path foo2 = fs2.getPath("/foo");
+      Files.copy(foo, foo2, COPY_ATTRIBUTES);
+
+      assertThat(foo).exists();
+
+      // when copying with COPY_ATTRIBUTES to a different FileSystem, only basic attributes (that
+      // is, file times) can actually be copied
+      assertThat(foo2).exists()
+          .and().attribute("lastModifiedTime").is(FileTime.fromMillis(0))
+          .and().attribute("lastAccessTime").is(FileTime.fromMillis(1))
+          .and().attribute("creationTime").is(FileTime.fromMillis(2))
+          .and().attribute("owner:owner").isNot(owner)
+          .and().attribute("owner:owner")
+              .isNot(fs2.getUserPrincipalLookupService().lookupPrincipalByName("foobar"))
+          .and().containsBytes(bytes); // do this last; it updates the access time
+    }
+  }
+
+  @Test
   public void testMove() throws IOException {
     byte[] bytes = preFilledBytes(100);
     Files.write(path("/foo"), bytes);
@@ -1784,6 +1835,27 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     assertThat("/test")
         .containsBytes(bytes).and()
         .attribute("fileKey").is(testKey);
+  }
+
+  @Test
+  public void testMove_toDifferentFileSystem() throws IOException {
+    try (FileSystem fs2 = Jimfs.newFileSystem(Configuration.unix())) {
+      Path foo = fs.getPath("/foo");
+      byte[] bytes = {0, 1, 2, 3, 4};
+      Files.write(foo, bytes);
+      Files.getFileAttributeView(foo, BasicFileAttributeView.class)
+          .setTimes(FileTime.fromMillis(0), FileTime.fromMillis(1), FileTime.fromMillis(2));
+
+      Path foo2 = fs2.getPath("/foo");
+      Files.move(foo, foo2);
+
+      assertThat(foo).doesNotExist();
+      assertThat(foo2).exists()
+          .and().attribute("lastModifiedTime").is(FileTime.fromMillis(0))
+          .and().attribute("lastAccessTime").is(FileTime.fromMillis(1))
+          .and().attribute("creationTime").is(FileTime.fromMillis(2))
+          .and().containsBytes(bytes); // do this last; it updates the access time
+    }
   }
 
   @Test
