@@ -39,25 +39,40 @@
 abstract file system APIs.</p>
 
 <h2>
+<a name="getting-started" class="anchor" href="#getting-started"><span class="octicon octicon-link"></span></a>Getting started</h2>
+
+<p>The latest release is <a href="https://github.com/google/jimfs/releases/tag/v1.0-rc1">1.0-rc1</a>.</p>
+
+<p>It is available in Maven Central as
+<a href="http://search.maven.org/#artifactdetails%7Ccom.google.jimfs%7Cjimfs%7C1.0-rc1%7Cjar">com.google.jimfs:jimfs:1.0-rc1</a>:</p>
+
+<div class="highlight highlight-xml"><pre><span class="nt">&lt;dependency&gt;</span>
+  <span class="nt">&lt;groupId&gt;</span>com.google.jimfs<span class="nt">&lt;/groupId&gt;</span>
+  <span class="nt">&lt;artifactId&gt;</span>jimfs<span class="nt">&lt;/artifactId&gt;</span>
+  <span class="nt">&lt;version&gt;</span>1.0-rc1<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</pre></div>
+
+<h2>
 <a name="basic-use" class="anchor" href="#basic-use"><span class="octicon octicon-link"></span></a>Basic use</h2>
 
 <p>The simplest way to use Jimfs is to just get a new <code>FileSystem</code> instance from the <code>Jimfs</code> class and
 start using it:</p>
 
-<div class="highlight highlight-java"><pre><span class="kn">import</span> <span class="nn">com.google.jimfs.Jimfs</span><span class="o">;</span>
+<div class="highlight highlight-java"><pre><span class="kn">import</span> <span class="nn">com.google.jimfs.Configuration</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.google.jimfs.Jimfs</span><span class="o">;</span>
 <span class="o">...</span>
 
 <span class="c1">// For a simple file system with Unix-style paths and behavior:</span>
-<span class="n">FileSystem</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">Jimfs</span><span class="o">.</span><span class="na">newFileSystem</span><span class="o">(</span><span class="n">Configuration</span><span class="o">.</span><span class="na">unix</span><span class="o">());</span>
+<span class="k">try</span> <span class="o">(</span><span class="n">FileSystem</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">Jimfs</span><span class="o">.</span><span class="na">newFileSystem</span><span class="o">(</span><span class="n">Configuration</span><span class="o">.</span><span class="na">unix</span><span class="o">()))</span> <span class="o">{</span>
+  <span class="n">Path</span> <span class="n">foo</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="na">getPath</span><span class="o">(</span><span class="s">"/foo"</span><span class="o">);</span>
+  <span class="n">Files</span><span class="o">.</span><span class="na">createDirectory</span><span class="o">(</span><span class="n">foo</span><span class="o">);</span>
 
-<span class="n">Path</span> <span class="n">foo</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="na">getPath</span><span class="o">(</span><span class="s">"/foo"</span><span class="o">);</span>
-<span class="n">Files</span><span class="o">.</span><span class="na">createDirectory</span><span class="o">(</span><span class="n">foo</span><span class="o">);</span>
+  <span class="n">Path</span> <span class="n">hello</span> <span class="o">=</span> <span class="n">foo</span><span class="o">.</span><span class="na">resolve</span><span class="o">(</span><span class="s">"hello.txt"</span><span class="o">);</span> <span class="c1">// /foo/hello.txt</span>
+  <span class="n">Files</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">hello</span><span class="o">,</span> <span class="n">ImmutableList</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">"hello world"</span><span class="o">),</span> <span class="n">StandardCharsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">);</span>
 
-<span class="n">Path</span> <span class="n">hello</span> <span class="o">=</span> <span class="n">foo</span><span class="o">.</span><span class="na">resolve</span><span class="o">(</span><span class="s">"hello.txt"</span><span class="o">);</span>
-<span class="n">Files</span><span class="o">.</span><span class="na">write</span><span class="o">(</span><span class="n">hello</span><span class="o">,</span> <span class="n">ImmutableList</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="s">"hello"</span><span class="o">),</span> <span class="n">StandardCharsets</span><span class="o">.</span><span class="na">UTF_8</span><span class="o">);</span>
-
-<span class="c1">// Or for Windows:</span>
-<span class="n">FileSystem</span> <span class="n">fs</span> <span class="o">=</span> <span class="n">Jimfs</span><span class="o">.</span><span class="na">newFileSystem</span><span class="o">(</span><span class="n">Configuration</span><span class="o">.</span><span class="na">windows</span><span class="o">());</span>
+  <span class="c1">// Close the FileSystem when you're done with it so it can be garbage collected.</span>
+<span class="o">}</span>
 </pre></div>
 
 <h2>
