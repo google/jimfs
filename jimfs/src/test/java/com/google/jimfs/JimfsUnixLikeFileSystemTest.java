@@ -139,10 +139,28 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     ASSERT.that(fileStore.type()).is("jimfs");
     ASSERT.that(fileStore.isReadOnly()).isFalse();
 
-    long expectedSize = 1024 * 1024 * 1024; // 1 GB
-    ASSERT.that(fileStore.getTotalSpace()).is(expectedSize);
-    ASSERT.that(fileStore.getUnallocatedSpace()).is(expectedSize);
-    ASSERT.that(fileStore.getUsableSpace()).is(expectedSize);
+    long totalSpace = 1024 * 1024 * 1024; // 1 GB
+    ASSERT.that(fileStore.getTotalSpace()).is(totalSpace);
+    ASSERT.that(fileStore.getUnallocatedSpace()).is(totalSpace);
+    ASSERT.that(fileStore.getUsableSpace()).is(totalSpace);
+
+    Files.write(fs.getPath("/foo"), new byte[10000]);
+
+    ASSERT.that(fileStore.getTotalSpace()).is(totalSpace);
+
+    // We wrote 10000 bytes, but since the file system allocates fixed size blocks, more than 10k
+    // bytes may have been allocated. As such, the unallocated space after the write can be at most
+    // maxUnallocatedSpace.
+    ASSERT.that(fileStore.getUnallocatedSpace() <= totalSpace - 10000).isTrue();
+
+    // Usable space is at most unallocated space. (In this case, it's currently exactly unallocated
+    // space, but that's not required.)
+    ASSERT.that(fileStore.getUsableSpace() <= fileStore.getUnallocatedSpace()).isTrue();
+
+    Files.delete(fs.getPath("/foo"));
+    ASSERT.that(fileStore.getTotalSpace()).is(totalSpace);
+    ASSERT.that(fileStore.getUnallocatedSpace()).is(totalSpace);
+    ASSERT.that(fileStore.getUsableSpace()).is(totalSpace);
   }
 
   @Test

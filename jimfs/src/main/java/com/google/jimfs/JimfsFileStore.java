@@ -230,7 +230,7 @@ final class JimfsFileStore extends FileStore {
 
   @Override
   public long getUsableSpace() throws IOException {
-    return getTotalSpace();
+    return getUnallocatedSpace();
   }
 
   @Override
