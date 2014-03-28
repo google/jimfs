@@ -129,8 +129,8 @@ public class PollingWatchServiceTest {
     Key key1 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
 
-    ASSERT.that(key1.isValid());
-    ASSERT.that(key2.isValid());
+    ASSERT.that(key1.isValid()).isTrue();
+    ASSERT.that(key2.isValid()).isTrue();
     ASSERT.that(watcher.isPolling()).isTrue();
 
     watcher.close();
