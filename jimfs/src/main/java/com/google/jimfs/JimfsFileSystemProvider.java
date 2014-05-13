@@ -26,6 +26,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.MapMaker;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +47,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.ProviderMismatchException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
@@ -54,7 +56,6 @@ import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
@@ -77,8 +78,25 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   /**
    * Cache of file systems that have been created but not closed.
+   *
+   * <p>This cache is static to ensure that even when this provider isn't loaded by the system
+   * class loader, meaning that a new instance of it must be created each time one of the methods
+   * on {@link FileSystems} or {@link Paths#get(URI)} is called, cached file system instances are
+   * still available.
+   *
+   * <p>The cache uses weak values so that it doesn't prevent file systems that are created but not
+   * closed from being garbage collected if no references to them are held elsewhere. This is a
+   * compromise between ensuring that any file URI continues to work as long as the file system
+   * hasn't been closed (which is technically the correct thing to do but unlikely to be something
+   * that most users care about) and ensuring that users don't get unexpected leaks of large
+   * amounts of memory because they're creating many file systems in tests but forgetting to close
+   * them (which seems likely to happen sometimes). Users that want to ensure that a file system
+   * won't be garbage collected just need to ensure they hold a reference to it somewhere for as
+   * long as they need it to stick around.
    */
-  private final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new MapMaker()
+      .weakValues()
+      .makeMap();
 
   @Override
   public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
@@ -400,3 +418,4 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
         .setAttribute(checkedPath, attribute, value, Options.getLinkOptions(options));
   }
 }
+
