@@ -157,7 +157,7 @@ public class PollingWatchServiceTest {
         new Event<>(ENTRY_CREATE, 1, fs.getPath("baz")));
   }
 
-  @Test(timeout = 100)
+  @Test(timeout = 200)
   public void testWatchForMultipleEventTypes() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY));
