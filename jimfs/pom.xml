@@ -27,6 +27,8 @@
 
   <artifactId>jimfs</artifactId>
 
+  <packaging>bundle</packaging>
+
   <name>Jimfs</name>
 
   <description>
@@ -112,6 +114,20 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Export-Package>com.google.jimfs.*</Export-Package>
+            <Include-Resource>
+              META-INF/services=target/classes/META-INF/services
+            </Include-Resource>
+          </instructions>
+        </configuration>
       </plugin>
     </plugins>
   </build>
