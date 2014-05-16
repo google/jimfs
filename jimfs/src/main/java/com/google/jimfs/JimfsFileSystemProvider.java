@@ -148,10 +148,16 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   /**
-   * Called when the given file system is closed to remove it from this provider.
+   * Returns a runnable that, when run, removes the file system with the given URI from this
+   * provider.
    */
-  void remove(JimfsFileSystem fileSystem) {
-    fileSystems.remove(fileSystem.getUri());
+  static Runnable removeFileSystemRunnable(final URI uri) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        fileSystems.remove(uri);
+      }
+    };
   }
 
   @Override
@@ -222,8 +228,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   private JimfsFileChannel newJimfsFileChannel(
       JimfsPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
-    RegularFile file = getDefaultView(path).getOrCreateRegularFile(path, opts, attrs);
-    return new JimfsFileChannel(file, opts);
+    FileSystemView view = getDefaultView(path);
+    RegularFile file = view.getOrCreateRegularFile(path, opts, attrs);
+    return new JimfsFileChannel(file, opts, view.state());
   }
 
   @Override
@@ -253,9 +260,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForInputStream(options);
-    RegularFile file = getDefaultView(checkedPath)
-        .getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
-    return new JimfsInputStream(file);
+    FileSystemView view = getDefaultView(checkedPath);
+    RegularFile file = view.getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
+    return new JimfsInputStream(file, view.state());
   }
 
   private static final FileAttribute<?>[] NO_ATTRS = {};
@@ -264,9 +271,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForOutputStream(options);
-    RegularFile file = getDefaultView(checkedPath)
-        .getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
-    return new JimfsOutputStream(file, opts.contains(APPEND));
+    FileSystemView view = getDefaultView(checkedPath);
+    RegularFile file = view.getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
+    return new JimfsOutputStream(file, opts.contains(APPEND), view.state());
   }
 
   @Override

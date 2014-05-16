@@ -96,7 +96,7 @@ public class PathTypeTest {
   static void assertParseResult(
       ParseResult result, @Nullable String root, String... names) {
     ASSERT.that(result.root()).is(root);
-    ASSERT.that(result.names()).iteratesAs(names);
+    ASSERT.that(result.names()).iteratesAs((Object[]) names);
   }
 
   static void assertUriRoundTripsCorrectly(PathType type, String path) {

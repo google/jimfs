@@ -21,6 +21,8 @@ import static com.google.jimfs.TestUtils.regularFile;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 
+import com.google.common.util.concurrent.Runnables;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -167,7 +169,7 @@ public class JimfsOutputStreamTest {
 
   private static JimfsOutputStream newOutputStream(boolean append) {
     RegularFile file = regularFile(0);
-    return new JimfsOutputStream(file, append);
+    return new JimfsOutputStream(file, append, new FileSystemState(Runnables.doNothing()));
   }
 
   private static void addBytesToStore(JimfsOutputStream out, int... bytes) throws IOException {

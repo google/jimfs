@@ -37,8 +37,12 @@ final class JimfsInputStream extends InputStream {
   private long pos;
   private boolean finished;
 
-  public JimfsInputStream(RegularFile file) {
+  private final FileSystemState fileSystemState;
+
+  public JimfsInputStream(RegularFile file, FileSystemState fileSystemState) {
     this.file = checkNotNull(file);
+    this.fileSystemState = fileSystemState;
+    fileSystemState.register(this);
   }
 
   @Override
@@ -134,6 +138,7 @@ final class JimfsInputStream extends InputStream {
   @Override
   public synchronized void close() throws IOException {
     if (isOpen()) {
+      fileSystemState.unregister(this);
       file.closed();
 
       // file is set to null here and only here

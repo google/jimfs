@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.AbstractWatchService.Event;
 import com.google.jimfs.AbstractWatchService.Key;
@@ -60,7 +61,7 @@ public class PollingWatchServiceTest {
   public void setUp() {
     fs = (JimfsFileSystem) Jimfs.newFileSystem(Configuration.unix());
     watcher = new PollingWatchService(fs.getDefaultView(),
-        fs.getPathService(), new ResourceManager(), 4, MILLISECONDS);
+        fs.getPathService(), new FileSystemState(Runnables.doNothing()), 4, MILLISECONDS);
   }
 
   @After

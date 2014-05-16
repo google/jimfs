@@ -88,6 +88,13 @@ final class FileSystemView {
   }
 
   /**
+   * Returns the file system state.
+   */
+  public FileSystemState state() {
+    return store.state();
+  }
+
+  /**
    * Returns the path of the working directory at the time this view was created. Does not reflect
    * changes to the path caused by the directory being moved.
    */
@@ -130,7 +137,7 @@ final class FileSystemView {
         .requireDirectory(dir)
         .file();
     FileSystemView view = new FileSystemView(store, file, basePathForStream);
-    JimfsSecureDirectoryStream stream = new JimfsSecureDirectoryStream(view, filter);
+    JimfsSecureDirectoryStream stream = new JimfsSecureDirectoryStream(view, filter, state());
     return store.supportsFeature(Feature.SECURE_DIRECTORY_STREAM)
         ? stream
         : new DowngradedDirectoryStream(stream);

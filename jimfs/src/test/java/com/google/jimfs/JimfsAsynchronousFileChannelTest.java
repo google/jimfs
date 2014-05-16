@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.Test;
@@ -62,9 +63,10 @@ public class JimfsAsynchronousFileChannelTest {
 
   private static JimfsAsynchronousFileChannel channel(
       RegularFile file, ExecutorService executor, OpenOption... options) throws IOException {
-    return new JimfsAsynchronousFileChannel(
-        new JimfsFileChannel(file,
-            Options.getOptionsForChannel(ImmutableSet.copyOf(options))), executor);
+    JimfsFileChannel channel = new JimfsFileChannel(file,
+        Options.getOptionsForChannel(ImmutableSet.copyOf(options)),
+        new FileSystemState(Runnables.doNothing()));
+    return new JimfsAsynchronousFileChannel(channel, executor);
   }
 
   /**

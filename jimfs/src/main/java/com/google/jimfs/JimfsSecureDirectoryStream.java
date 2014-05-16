@@ -49,12 +49,17 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
 
   private final FileSystemView view;
   private final Filter<? super Path> filter;
+  private final FileSystemState fileSystemState;
+
   private boolean open = true;
   private Iterator<Path> iterator = new DirectoryIterator();
 
-  public JimfsSecureDirectoryStream(FileSystemView view, Filter<? super Path> filter) {
+  public JimfsSecureDirectoryStream(
+      FileSystemView view, Filter<? super Path> filter, FileSystemState fileSystemState) {
     this.view = checkNotNull(view);
     this.filter = checkNotNull(filter);
+    this.fileSystemState = fileSystemState;
+    fileSystemState.register(this);
   }
 
   private JimfsPath path() {
@@ -73,6 +78,7 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
   @Override
   public synchronized void close() {
     open = false;
+    fileSystemState.unregister(this);
   }
 
   protected synchronized void checkOpen() {
@@ -140,7 +146,8 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
     checkOpen();
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
-    return new JimfsFileChannel(view.getOrCreateRegularFile(checkedPath, opts), opts);
+    return new JimfsFileChannel(
+        view.getOrCreateRegularFile(checkedPath, opts), opts, fileSystemState);
   }
 
   @Override

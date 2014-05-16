@@ -156,7 +156,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     }
 
     if (!builder.build().equals(ImmutableList.copyOf(names))) {
-      fail("has name components", names);
+      fail("has name components", (Object[]) names);
     }
     return this;
   }
@@ -328,7 +328,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
       }
 
       if (!actualNames.equals(expectedNames)) {
-        fail("has children", children);
+        fail("has children", (Object[]) children);
       }
     }
     return this;
