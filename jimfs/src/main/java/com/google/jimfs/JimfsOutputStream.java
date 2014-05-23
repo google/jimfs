@@ -36,10 +36,13 @@ final class JimfsOutputStream extends OutputStream {
   private long pos;
 
   private final boolean append;
+  private final FileSystemState fileSystemState;
 
-  JimfsOutputStream(RegularFile file, boolean append) {
+  JimfsOutputStream(RegularFile file, boolean append, FileSystemState fileSystemState) {
     this.file = checkNotNull(file);
     this.append = append;
+    this.fileSystemState = fileSystemState;
+    fileSystemState.register(this);
   }
 
   @Override
@@ -101,6 +104,7 @@ final class JimfsOutputStream extends OutputStream {
   @Override
   public synchronized void close() throws IOException {
     if (isOpen()) {
+      fileSystemState.unregister(this);
       file.closed();
 
       // file is set to null here and only here

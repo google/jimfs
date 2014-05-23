@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.jimfs.AbstractWatchService.Event;
 import com.google.jimfs.AbstractWatchService.Key;
@@ -60,7 +61,7 @@ public class PollingWatchServiceTest {
   public void setUp() {
     fs = (JimfsFileSystem) Jimfs.newFileSystem(Configuration.unix());
     watcher = new PollingWatchService(fs.getDefaultView(),
-        fs.getPathService(), new ResourceManager(), 4, MILLISECONDS);
+        fs.getPathService(), new FileSystemState(Runnables.doNothing()), 4, MILLISECONDS);
   }
 
   @After
@@ -129,8 +130,8 @@ public class PollingWatchServiceTest {
     Key key1 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
 
-    ASSERT.that(key1.isValid());
-    ASSERT.that(key2.isValid());
+    ASSERT.that(key1.isValid()).isTrue();
+    ASSERT.that(key2.isValid()).isTrue();
     ASSERT.that(watcher.isPolling()).isTrue();
 
     watcher.close();
@@ -157,7 +158,7 @@ public class PollingWatchServiceTest {
         new Event<>(ENTRY_CREATE, 1, fs.getPath("baz")));
   }
 
-  @Test(timeout = 100)
+  @Test(timeout = 200)
   public void testWatchForMultipleEventTypes() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY));

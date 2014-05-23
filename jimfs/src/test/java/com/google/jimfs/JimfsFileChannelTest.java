@@ -33,6 +33,7 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
+import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.Test;
@@ -73,7 +74,8 @@ public class JimfsFileChannelTest {
   private static FileChannel channel(RegularFile file, OpenOption... options)
       throws IOException {
     return new JimfsFileChannel(file,
-        Options.getOptionsForChannel(ImmutableSet.copyOf(options)));
+        Options.getOptionsForChannel(ImmutableSet.copyOf(options)),
+        new FileSystemState(Runnables.doNothing()));
   }
 
   @Test
@@ -226,7 +228,8 @@ public class JimfsFileChannelTest {
   @Test
   public void testFileTimeUpdates() throws IOException {
     RegularFile file = regularFile(10);
-    FileChannel channel = new JimfsFileChannel(file, ImmutableSet.<OpenOption>of(READ, WRITE));
+    FileChannel channel = new JimfsFileChannel(file, ImmutableSet.<OpenOption>of(READ, WRITE),
+        new FileSystemState(Runnables.doNothing()));
 
     // accessed
     long accessTime = file.getLastAccessTime();

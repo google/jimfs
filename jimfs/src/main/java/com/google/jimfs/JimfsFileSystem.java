@@ -176,7 +176,6 @@ final class JimfsFileSystem extends FileSystem {
   private final JimfsFileStore fileStore;
   private final PathService pathService;
 
-  private final ResourceManager resourceManager = new ResourceManager();
   private final UserPrincipalLookupService userLookupService = new UserLookupService(true);
 
   private final FileSystemView defaultView;
@@ -248,6 +247,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public ImmutableSet<FileStore> getFileStores() {
+    fileStore.state().checkOpen();
     return ImmutableSet.<FileStore>of(fileStore);
   }
 
@@ -258,6 +258,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public JimfsPath getPath(String first, String... more) {
+    fileStore.state().checkOpen();
     return pathService.parsePath(first, more);
   }
 
@@ -265,6 +266,7 @@ final class JimfsFileSystem extends FileSystem {
    * Gets the URI of the given path in this file system.
    */
   public URI toUri(JimfsPath path) {
+    fileStore.state().checkOpen();
     return pathService.toUri(uri, path.toAbsolutePath());
   }
 
@@ -272,24 +274,25 @@ final class JimfsFileSystem extends FileSystem {
    * Converts the given URI into a path in this file system.
    */
   public JimfsPath toPath(URI uri) {
+    fileStore.state().checkOpen();
     return pathService.fromUri(uri);
   }
 
   @Override
   public PathMatcher getPathMatcher(String syntaxAndPattern) {
+    fileStore.state().checkOpen();
     return pathService.createPathMatcher(syntaxAndPattern);
   }
 
   @Override
   public UserPrincipalLookupService getUserPrincipalLookupService() {
+    fileStore.state().checkOpen();
     return userLookupService;
   }
 
   @Override
-  public synchronized WatchService newWatchService() throws IOException {
-    // synchronized for resourceManager to register the watch service so there are no races between
-    // creating a watch service and closing the file system
-    return new PollingWatchService(defaultView, pathService, resourceManager);
+  public WatchService newWatchService() throws IOException {
+    return new PollingWatchService(defaultView, pathService, fileStore.state());
   }
 
   @Nullable
@@ -308,7 +311,7 @@ final class JimfsFileSystem extends FileSystem {
           .build());
 
       // ensure thread pool is closed when file system is closed
-      resourceManager.register(new Closeable() {
+      fileStore.state().register(new Closeable() {
         @Override
         public void close() {
           defaultThreadPool.shutdown();
@@ -328,22 +331,13 @@ final class JimfsFileSystem extends FileSystem {
     return false;
   }
 
-  private boolean open = true;
-
   @Override
-  public synchronized boolean isOpen() {
-    return open;
+  public boolean isOpen() {
+    return fileStore.state().isOpen();
   }
 
   @Override
-  public synchronized void close() throws IOException {
-    if (open) {
-      open = false;
-      try {
-        resourceManager.close();
-      } finally {
-        provider.remove(this);
-      }
-    }
+  public void close() throws IOException {
+    fileStore.state().close();
   }
 }

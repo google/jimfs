@@ -44,8 +44,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nullable;
-
 /**
  * Implementation of {@link WatchService} that polls for changes to directories at registered paths.
  *
@@ -72,7 +70,7 @@ final class PollingWatchService extends AbstractWatchService {
 
   private final FileSystemView view;
   private final PathService pathService;
-  private final ResourceManager resourceManager;
+  private final FileSystemState fileSystemState;
 
   private final long pollingTime;
   private final TimeUnit timeUnit;
@@ -80,24 +78,24 @@ final class PollingWatchService extends AbstractWatchService {
   private ScheduledFuture<?> pollingFuture;
 
   public PollingWatchService(
-      FileSystemView view, PathService pathService, ResourceManager resourceManager) {
-    this(view, pathService, resourceManager, 5, SECONDS);
+      FileSystemView view, PathService pathService, FileSystemState fileSystemState) {
+    this(view, pathService, fileSystemState, 5, SECONDS);
   }
 
   // TODO(cgdecker): make user configurable somehow? meh
   @VisibleForTesting
   PollingWatchService(
-      FileSystemView view, PathService pathService, ResourceManager resourceManager,
+      FileSystemView view, PathService pathService, FileSystemState fileSystemState,
       long pollingTime, TimeUnit timeUnit) {
     this.view = checkNotNull(view);
     this.pathService = checkNotNull(pathService);
-    this.resourceManager = checkNotNull(resourceManager);
+    this.fileSystemState = checkNotNull(fileSystemState);
 
     checkArgument(pollingTime >= 0, "polling time (%s) may not be negative", pollingTime);
     this.pollingTime = pollingTime;
     this.timeUnit = checkNotNull(timeUnit);
 
-    resourceManager.register(this);
+    fileSystemState.register(this);
   }
 
   @Override
@@ -161,7 +159,7 @@ final class PollingWatchService extends AbstractWatchService {
       }
 
       pollingService.shutdown();
-      resourceManager.unregister(this);
+      fileSystemState.unregister(this);
     }
   }
 
@@ -201,7 +199,6 @@ final class PollingWatchService extends AbstractWatchService {
     }
   };
 
-  @Nullable
   private Snapshot takeSnapshot(JimfsPath path) throws IOException {
     return new Snapshot(view.snapshotModifiedTimes(path));
   }

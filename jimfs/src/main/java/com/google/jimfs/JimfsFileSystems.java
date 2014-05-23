@@ -37,8 +37,10 @@ final class JimfsFileSystems {
   public static JimfsFileSystem newFileSystem(
       JimfsFileSystemProvider provider, URI uri, Configuration config) throws IOException {
     PathService pathService = new PathService(config);
+    FileSystemState state = new FileSystemState(
+        JimfsFileSystemProvider.removeFileSystemRunnable(uri));
 
-    JimfsFileStore fileStore = createFileStore(config, pathService);
+    JimfsFileStore fileStore = createFileStore(config, pathService, state);
     FileSystemView defaultView = createDefaultView(config, fileStore, pathService);
 
     JimfsFileSystem fileSystem = new JimfsFileSystem(
@@ -52,7 +54,7 @@ final class JimfsFileSystems {
    * Creates the file store for the file system.
    */
   private static JimfsFileStore createFileStore(
-      Configuration config, PathService pathService) {
+      Configuration config, PathService pathService, FileSystemState state) {
     AttributeService attributeService = new AttributeService(config);
 
     // TODO(cgdecker): Make disk values configurable
@@ -76,7 +78,7 @@ final class JimfsFileSystems {
     }
 
     return new JimfsFileStore(
-        new FileTree(roots), fileFactory, disk, attributeService, config.supportedFeatures);
+        new FileTree(roots), fileFactory, disk, attributeService, config.supportedFeatures, state);
   }
 
   /**

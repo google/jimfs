@@ -18,8 +18,6 @@ package com.google.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.IOException;
-
 /**
  * A symbolic link file, containing a {@linkplain JimfsPath path}.
  *
@@ -49,7 +47,7 @@ final class SymbolicLink extends File {
   }
 
   @Override
-  File copy(int id) throws IOException {
+  File copyWithoutContent(int id) {
     return SymbolicLink.create(id, target);
   }
 }

@@ -400,7 +400,7 @@ public class RegularFileTest {
     }
 
     public void testEmpty_copy() throws IOException {
-      RegularFile copy = file.copy(1);
+      RegularFile copy = file.copyWithoutContent(1);
       assertContentEquals("", copy);
     }
 
@@ -823,13 +823,17 @@ public class RegularFileTest {
 
     public void testNonEmpty_copy() throws IOException {
       fillContent("123456");
-      RegularFile copy = file.copy(1);
+      RegularFile copy = file.copyWithoutContent(1);
+      file.copyContentTo(copy);
       assertContentEquals("123456", copy);
     }
 
     public void testNonEmpty_copy_multipleTimes() throws IOException {
       fillContent("123456");
-      RegularFile copy = file.copy(1).copy(2);
+      RegularFile copy = file.copyWithoutContent(1);
+      file.copyContentTo(copy);
+      RegularFile copy2 = copy.copyWithoutContent(2);
+      copy.copyContentTo(copy2);
       assertContentEquals("123456", copy);
     }
 

@@ -63,7 +63,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
    * this directory.
    */
   @Override
-  Directory copy(int id) {
+  Directory copyWithoutContent(int id) {
     return Directory.create(id);
   }
 

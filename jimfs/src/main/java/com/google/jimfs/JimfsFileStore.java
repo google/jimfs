@@ -56,17 +56,20 @@ final class JimfsFileStore extends FileStore {
   private final AttributeService attributes;
   private final FileFactory factory;
   private final ImmutableSet<Feature> supportedFeatures;
+  private final FileSystemState state;
 
   private final Lock readLock;
   private final Lock writeLock;
 
   public JimfsFileStore(FileTree tree, FileFactory factory, HeapDisk disk,
-      AttributeService attributes, ImmutableSet<Feature> supportedFeatures) {
+      AttributeService attributes, ImmutableSet<Feature> supportedFeatures,
+      FileSystemState state) {
     this.tree = checkNotNull(tree);
     this.factory = checkNotNull(factory);
     this.disk = checkNotNull(disk);
     this.attributes = checkNotNull(attributes);
     this.supportedFeatures = checkNotNull(supportedFeatures);
+    this.state = checkNotNull(state);
 
     ReadWriteLock lock = new ReentrantReadWriteLock();
     this.readLock = lock.readLock();
@@ -74,6 +77,13 @@ final class JimfsFileStore extends FileStore {
   }
 
   // internal use methods
+
+  /**
+   * Returns the file system state object.
+   */
+  FileSystemState state() {
+    return state;
+  }
 
   /**
    * Returns the read lock for this store.
@@ -93,6 +103,7 @@ final class JimfsFileStore extends FileStore {
    * Returns the names of the root directories in this store.
    */
   ImmutableSortedSet<Name> getRootDirectoryNames() {
+    state.checkOpen();
     return tree.getRootDirectoryNames();
   }
 
@@ -123,6 +134,7 @@ final class JimfsFileStore extends FileStore {
    */
   DirectoryEntry lookUp(File workingDirectory,
       JimfsPath path, Set<? super LinkOption> options) throws IOException {
+    state.checkOpen();
     return tree.lookUp(workingDirectory, path, options);
   }
 
@@ -130,6 +142,7 @@ final class JimfsFileStore extends FileStore {
    * Returns a supplier that creates a new regular file.
    */
   Supplier<RegularFile> regularFileCreator() {
+    state.checkOpen();
     return factory.regularFileCreator();
   }
 
@@ -137,6 +150,7 @@ final class JimfsFileStore extends FileStore {
    * Returns a supplier that creates a new directory.
    */
   Supplier<Directory> directoryCreator() {
+    state.checkOpen();
     return factory.directoryCreator();
   }
 
@@ -144,19 +158,18 @@ final class JimfsFileStore extends FileStore {
    * Returns a supplier that creates a new symbolic link with the given target.
    */
   Supplier<SymbolicLink> symbolicLinkCreator(JimfsPath target) {
+    state.checkOpen();
     return factory.symbolicLinkCreator(target);
   }
 
   /**
-   * Creates a copy of the given file, copying its attributes as well if copy attributes is true.
-   * Returns the copy.
+   * Creates a copy of the given file, copying its attributes as well according to the given
+   * {@code attributeCopyOption}.
    */
-  File copy(File file, boolean copyAttributes) throws IOException {
-    File copy = factory.copy(file);
+  File copyWithoutContent(File file, AttributeCopyOption attributeCopyOption) throws IOException {
+    File copy = factory.copyWithoutContent(file);
     setInitialAttributes(copy);
-    if (copyAttributes) {
-      attributes.copyAttributes(file, copy);
-    }
+    attributes.copyAttributes(file, copy, attributeCopyOption);
     return copy;
   }
 
@@ -165,14 +178,8 @@ final class JimfsFileStore extends FileStore {
    * the given user-provided attributes.
    */
   void setInitialAttributes(File file, FileAttribute<?>... attrs) {
+    state.checkOpen();
     attributes.setInitialAttributes(file, attrs);
-  }
-
-  /**
-   * Copies the basic attributes (just file times) of the given file to the given copy file.
-   */
-  void copyBasicAttributes(File file, File copy) {
-    attributes.copyBasicAttributes(file, copy);
   }
 
   /**
@@ -181,6 +188,7 @@ final class JimfsFileStore extends FileStore {
    */
   @Nullable
   <V extends FileAttributeView> V getFileAttributeView(FileLookup lookup, Class<V> type) {
+    state.checkOpen();
     return attributes.getFileAttributeView(lookup, type);
   }
 
@@ -188,6 +196,7 @@ final class JimfsFileStore extends FileStore {
    * Returns a map containing the attributes described by the given string mapped to their values.
    */
   ImmutableMap<String, Object> readAttributes(File file, String attributes) {
+    state.checkOpen();
     return this.attributes.readAttributes(file, attributes);
   }
 
@@ -197,6 +206,7 @@ final class JimfsFileStore extends FileStore {
    * @throws UnsupportedOperationException if the given attributes type is not supported
    */
   <A extends BasicFileAttributes> A readAttributes(File file, Class<A> type) {
+    state.checkOpen();
     return attributes.readAttributes(file, type);
   }
 
@@ -204,6 +214,7 @@ final class JimfsFileStore extends FileStore {
    * Sets the given attribute to the given value for the given file.
    */
   void setAttribute(File file, String attribute, Object value) {
+    state.checkOpen();
     // TODO(cgdecker): Change attribute stuff to avoid the sad boolean parameter
     attributes.setAttribute(file, attribute, value, false);
   }
@@ -212,6 +223,7 @@ final class JimfsFileStore extends FileStore {
    * Returns the file attribute views supported by this store.
    */
   ImmutableSet<String> supportedFileAttributeViews() {
+    state.checkOpen();
     return attributes.supportedFileAttributeViews();
   }
 
@@ -234,31 +246,37 @@ final class JimfsFileStore extends FileStore {
 
   @Override
   public long getTotalSpace() throws IOException {
+    state.checkOpen();
     return disk.getTotalSpace();
   }
 
   @Override
   public long getUsableSpace() throws IOException {
-    return getTotalSpace();
+    state.checkOpen();
+    return getUnallocatedSpace();
   }
 
   @Override
   public long getUnallocatedSpace() throws IOException {
+    state.checkOpen();
     return disk.getUnallocatedSpace();
   }
 
   @Override
   public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
+    state.checkOpen();
     return attributes.supportsFileAttributeView(type);
   }
 
   @Override
   public boolean supportsFileAttributeView(String name) {
+    state.checkOpen();
     return attributes.supportedFileAttributeViews().contains(name);
   }
 
   @Override
   public <V extends FileStoreAttributeView> V getFileStoreAttributeView(Class<V> type) {
+    state.checkOpen();
     return null; // no supported views
   }
 

@@ -64,6 +64,7 @@ final class JimfsFileChannel extends FileChannel {
   private volatile Thread blockingThread;
 
   private final RegularFile file;
+  private final FileSystemState fileSystemState;
 
   private final boolean read;
   private final boolean write;
@@ -71,11 +72,15 @@ final class JimfsFileChannel extends FileChannel {
 
   private long position;
 
-  public JimfsFileChannel(RegularFile file, Set<OpenOption> options) {
+  public JimfsFileChannel(
+      RegularFile file, Set<OpenOption> options, FileSystemState fileSystemState) {
     this.file = file;
+    this.fileSystemState = fileSystemState;
     this.read = options.contains(READ);
     this.write = options.contains(WRITE);
     this.append = options.contains(APPEND);
+
+    fileSystemState.register(this);
   }
 
   /**
@@ -546,6 +551,7 @@ final class JimfsFileChannel extends FileChannel {
         thread.interrupt();
       }
     } finally {
+      fileSystemState.unregister(this);
       file.closed();
     }
   }

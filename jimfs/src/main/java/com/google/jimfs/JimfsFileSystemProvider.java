@@ -26,6 +26,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 
 import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.MapMaker;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +47,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.ProviderMismatchException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
@@ -54,7 +56,6 @@ import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
@@ -77,8 +78,25 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
 
   /**
    * Cache of file systems that have been created but not closed.
+   *
+   * <p>This cache is static to ensure that even when this provider isn't loaded by the system
+   * class loader, meaning that a new instance of it must be created each time one of the methods
+   * on {@link FileSystems} or {@link Paths#get(URI)} is called, cached file system instances are
+   * still available.
+   *
+   * <p>The cache uses weak values so that it doesn't prevent file systems that are created but not
+   * closed from being garbage collected if no references to them are held elsewhere. This is a
+   * compromise between ensuring that any file URI continues to work as long as the file system
+   * hasn't been closed (which is technically the correct thing to do but unlikely to be something
+   * that most users care about) and ensuring that users don't get unexpected leaks of large
+   * amounts of memory because they're creating many file systems in tests but forgetting to close
+   * them (which seems likely to happen sometimes). Users that want to ensure that a file system
+   * won't be garbage collected just need to ensure they hold a reference to it somewhere for as
+   * long as they need it to stick around.
    */
-  private final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new ConcurrentHashMap<>();
+  private static final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new MapMaker()
+      .weakValues()
+      .makeMap();
 
   @Override
   public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
@@ -130,10 +148,16 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   /**
-   * Called when the given file system is closed to remove it from this provider.
+   * Returns a runnable that, when run, removes the file system with the given URI from this
+   * provider.
    */
-  void remove(JimfsFileSystem fileSystem) {
-    fileSystems.remove(fileSystem.getUri());
+  static Runnable removeFileSystemRunnable(final URI uri) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        fileSystems.remove(uri);
+      }
+    };
   }
 
   @Override
@@ -204,8 +228,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   private JimfsFileChannel newJimfsFileChannel(
       JimfsPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
-    RegularFile file = getDefaultView(path).getOrCreateRegularFile(path, opts, attrs);
-    return new JimfsFileChannel(file, opts);
+    FileSystemView view = getDefaultView(path);
+    RegularFile file = view.getOrCreateRegularFile(path, opts, attrs);
+    return new JimfsFileChannel(file, opts, view.state());
   }
 
   @Override
@@ -235,9 +260,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForInputStream(options);
-    RegularFile file = getDefaultView(checkedPath)
-        .getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
-    return new JimfsInputStream(file);
+    FileSystemView view = getDefaultView(checkedPath);
+    RegularFile file = view.getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
+    return new JimfsInputStream(file, view.state());
   }
 
   private static final FileAttribute<?>[] NO_ATTRS = {};
@@ -246,9 +271,9 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
   public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForOutputStream(options);
-    RegularFile file = getDefaultView(checkedPath)
-        .getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
-    return new JimfsOutputStream(file, opts.contains(APPEND));
+    FileSystemView view = getDefaultView(checkedPath);
+    RegularFile file = view.getOrCreateRegularFile(checkedPath, opts, NO_ATTRS);
+    return new JimfsOutputStream(file, opts.contains(APPEND), view.state());
   }
 
   @Override
@@ -400,3 +425,4 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
         .setAttribute(checkedPath, attribute, value, Options.getLinkOptions(options));
   }
 }
+
