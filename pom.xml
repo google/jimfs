@@ -28,7 +28,7 @@
   <groupId>com.google.jimfs</groupId>
   <artifactId>jimfs-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.0-rc1</version>
+  <version>1.0-rc2</version>
 
   <modules>
     <module>jimfs</module>
@@ -76,7 +76,7 @@
     <url>http://github.com/google/jimfs/</url>
     <connection>scm:git:git://github.com/google/jimfs.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/google/jimfs.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v1.0-rc2</tag>
   </scm>
 
   <issueManagement>
