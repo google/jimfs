@@ -139,7 +139,7 @@
       <dependency>
         <groupId>org.truth0</groupId>
         <artifactId>truth</artifactId>
-        <version>0.13</version>
+        <version>0.16</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
