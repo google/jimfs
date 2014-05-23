@@ -33,15 +33,12 @@ import com.google.jimfs.Jimfs;
 ...
 
 // For a simple file system with Unix-style paths and behavior:
-try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-  Path foo = fs.getPath("/foo");
-  Files.createDirectory(foo);
+FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+Path foo = fs.getPath("/foo");
+Files.createDirectory(foo);
 
-  Path hello = foo.resolve("hello.txt"); // /foo/hello.txt
-  Files.write(hello, ImmutableList.of("hello world"), StandardCharsets.UTF_8);
-
-  // Close the FileSystem when you're done with it so it can be garbage collected.
-}
+Path hello = foo.resolve("hello.txt"); // /foo/hello.txt
+Files.write(hello, ImmutableList.of("hello world"), StandardCharsets.UTF_8);
 ```
 
 What's supported?
@@ -52,7 +49,8 @@ Jimfs supports almost all the APIs under `java.nio.file`. It supports:
 - Creating, deleting, moving and copying files and directories.
 - Reading and writing files with `FileChannel` or `SeekableByteChannel`, `InputStream`,
   `OutputStream`, etc.
-- Symbolic links. Hard links to regular files.
+- Symbolic links.
+- Hard links to regular files.
 - `SecureDirectoryStream`, for operations relative to an _open_ directory.
 - Glob and regex path filtering with `PathMatcher`.
 - Watching for changes to a directory with a `WatchService`.
@@ -60,6 +58,10 @@ Jimfs supports almost all the APIs under `java.nio.file`. It supports:
   "posix", "unix", "dos", "acl" and "user". Do note, however, that not all attribute views provide
   _useful_ attributes. For example, while setting and reading POSIX file permissions is possible
   with the "posix" view, those permissions will not actually affect the behavior of the file system.
+
+Jimfs also supports creating file systems that, for example, use Windows-style paths and (to an
+extent) behavior. In general, however, file system behavior is modeled after UNIX and may not
+exactly match any particular real file system or platform.
 
 License
 -------
