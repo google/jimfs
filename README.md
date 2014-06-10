@@ -28,8 +28,8 @@ The simplest way to use Jimfs is to just get a new `FileSystem` instance from th
 start using it:
 
 ```java
-import com.google.jimfs.Configuration;
-import com.google.jimfs.Jimfs;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 ...
 
 // For a simple file system with Unix-style paths and behavior:

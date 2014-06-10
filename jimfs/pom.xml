@@ -122,7 +122,7 @@
         <extensions>true</extensions>
         <configuration>
           <instructions>
-            <Export-Package>com.google.jimfs.*</Export-Package>
+            <Export-Package>com.google.common.jimfs.*</Export-Package>
             <Include-Resource>
               META-INF/services=target/classes/META-INF/services
             </Include-Resource>
