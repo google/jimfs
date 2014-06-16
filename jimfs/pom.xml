@@ -22,7 +22,7 @@
   <parent>
     <groupId>com.google.jimfs</groupId>
     <artifactId>jimfs-parent</artifactId>
-    <version>1.0-rc3</version>
+    <version>1.0</version>
   </parent>
 
   <artifactId>jimfs</artifactId>
