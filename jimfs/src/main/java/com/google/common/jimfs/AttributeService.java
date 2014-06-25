@@ -200,7 +200,7 @@ final class AttributeService {
    * Gets the value of the given attribute for the given file. {@code attribute} must be of the
    * form "view:attribute" or "attribute".
    */
-  public <V> V getAttribute(File file, String attribute) {
+  public Object getAttribute(File file, String attribute) {
     String view = getViewName(attribute);
     String attr = getSingleAttribute(attribute);
     return getAttribute(file, view, attr);
@@ -210,14 +210,13 @@ final class AttributeService {
    * Gets the value of the given attribute for the given view and file. Neither view nor attribute
    * may have a ':' character.
    */
-  @SuppressWarnings("unchecked")
-  public <V> V getAttribute(File file, String view, String attribute) {
+  public Object getAttribute(File file, String view, String attribute) {
     Object value = getAttributeInternal(file, view, attribute);
     if (value == null) {
       throw new IllegalArgumentException(
           "invalid attribute for view '" + view + "': " + attribute);
     }
-    return (V) value;
+    return value;
   }
 
   @Nullable

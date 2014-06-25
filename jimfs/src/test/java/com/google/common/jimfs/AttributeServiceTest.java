@@ -278,7 +278,7 @@ public class AttributeServiceTest {
             "bar", 0L,
             "baz", 1));
 
-    FileTime time = service.getAttribute(file, "basic:creationTime");
+    FileTime time = (FileTime) service.getAttribute(file, "basic:creationTime");
 
     map = service.readAttributes(file, "test:*");
     ASSERT.that(map).isEqualTo(
