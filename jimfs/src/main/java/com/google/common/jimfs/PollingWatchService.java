@@ -123,8 +123,8 @@ final class PollingWatchService extends AbstractWatchService {
 
   private JimfsPath checkWatchable(Watchable watchable) {
     if (!(watchable instanceof JimfsPath) || !isSameFileSystem((Path) watchable)) {
-      throw new IllegalArgumentException("watchable (" + watchable + ") must be a Path " +
-          "associated with the same file system as this watch service");
+      throw new IllegalArgumentException("watchable (" + watchable + ") must be a Path "
+          + "associated with the same file system as this watch service");
     }
 
     return (JimfsPath) watchable;
