@@ -22,10 +22,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-
-import org.truth0.FailureStrategy;
-import org.truth0.subjects.Subject;
-import org.truth0.subjects.SubjectFactory;
+import com.google.common.truth.FailureStrategy;
+import com.google.common.truth.Subject;
+import com.google.common.truth.SubjectFactory;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -78,6 +77,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /**
    * Returns a new subject for asserting against a different path or with different link options.
    */
+  // TODO(cgruber): Talk to cdecker about removing this as an anti-pattern.
   public PathSubject andThat(String path, LinkOption... linkOptions) {
     PathSubject newSubject = new PathSubject(failureStrategy, toPath(path));
     if (linkOptions.length != 0) {
