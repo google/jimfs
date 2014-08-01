@@ -63,7 +63,7 @@ public class UserLookupServiceTest {
       service.lookupPrincipalByGroupName("group");
       fail();
     } catch (UserPrincipalNotFoundException expected) {
-      ASSERT.that(expected.getName()).is("group");
+      ASSERT.that(expected.getName()).isEqualTo("group");
     }
   }
 }

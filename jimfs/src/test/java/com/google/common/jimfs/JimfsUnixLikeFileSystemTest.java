@@ -123,7 +123,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testFileSystem() {
-    ASSERT.that(fs.getSeparator()).is("/");
+    ASSERT.that(fs.getSeparator()).isEqualTo("/");
     ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("/")));
     ASSERT.that(fs.isOpen()).isTrue();
     ASSERT.that(fs.isReadOnly()).isFalse();
@@ -135,18 +135,18 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Test
   public void testFileStore() throws IOException {
     FileStore fileStore = Iterables.getOnlyElement(fs.getFileStores());
-    ASSERT.that(fileStore.name()).is("jimfs");
-    ASSERT.that(fileStore.type()).is("jimfs");
+    ASSERT.that(fileStore.name()).isEqualTo("jimfs");
+    ASSERT.that(fileStore.type()).isEqualTo("jimfs");
     ASSERT.that(fileStore.isReadOnly()).isFalse();
 
     long totalSpace = 1024 * 1024 * 1024; // 1 GB
-    ASSERT.that(fileStore.getTotalSpace()).is(totalSpace);
-    ASSERT.that(fileStore.getUnallocatedSpace()).is(totalSpace);
-    ASSERT.that(fileStore.getUsableSpace()).is(totalSpace);
+    ASSERT.that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
+    ASSERT.that(fileStore.getUnallocatedSpace()).isEqualTo(totalSpace);
+    ASSERT.that(fileStore.getUsableSpace()).isEqualTo(totalSpace);
 
     Files.write(fs.getPath("/foo"), new byte[10000]);
 
-    ASSERT.that(fileStore.getTotalSpace()).is(totalSpace);
+    ASSERT.that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
 
     // We wrote 10000 bytes, but since the file system allocates fixed size blocks, more than 10k
     // bytes may have been allocated. As such, the unallocated space after the write can be at most
@@ -158,9 +158,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     ASSERT.that(fileStore.getUsableSpace() <= fileStore.getUnallocatedSpace()).isTrue();
 
     Files.delete(fs.getPath("/foo"));
-    ASSERT.that(fileStore.getTotalSpace()).is(totalSpace);
-    ASSERT.that(fileStore.getUnallocatedSpace()).is(totalSpace);
-    ASSERT.that(fileStore.getUsableSpace()).is(totalSpace);
+    ASSERT.that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
+    ASSERT.that(fileStore.getUnallocatedSpace()).isEqualTo(totalSpace);
+    ASSERT.that(fileStore.getUsableSpace()).isEqualTo(totalSpace);
   }
 
   @Test
@@ -189,8 +189,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Path p3 = path("c");
     Path p4 = path("D");
 
-    ASSERT.that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2)))
-        .is(ImmutableList.of(p2, p4, p1, p3));
+    ASSERT.that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2))).isEqualTo(
+        ImmutableList.of(p2, p4, p1, p3));
 
     // would be p1, p2, p3, p4 if sorting were case insensitive
   }
@@ -1011,12 +1011,12 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     OutputStream out = Files.newOutputStream(foo, APPEND);
     FileChannel channel = FileChannel.open(foo, READ, WRITE);
 
-    ASSERT.that(channel.size()).is(100L);
+    ASSERT.that(channel.size()).isEqualTo(100L);
 
     Files.delete(foo);
     assertThat("/foo").doesNotExist();
 
-    ASSERT.that(channel.size()).is(100L);
+    ASSERT.that(channel.size()).isEqualTo(100L);
 
     ByteBuffer buf = ByteBuffer.allocate(100);
     while (buf.hasRemaining()) {
@@ -1028,7 +1028,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     byte[] moreBytes = {1, 2, 3, 4, 5};
     out.write(moreBytes);
 
-    ASSERT.that(channel.size()).is(105L);
+    ASSERT.that(channel.size()).isEqualTo(105L);
     buf.clear();
     ASSERT.that(channel.read(buf)).is(5);
 
@@ -1125,28 +1125,28 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.delete(path(""));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).is("");
+      ASSERT.that(expected.getFile()).isEqualTo("");
     }
 
     try {
       Files.delete(path("."));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).is(".");
+      ASSERT.that(expected.getFile()).isEqualTo(".");
     }
 
     try {
       Files.delete(path("../../work"));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).is("../../work");
+      ASSERT.that(expected.getFile()).isEqualTo("../../work");
     }
 
     try {
       Files.delete(path("./../work/.././../work/."));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).is("./../work/.././../work/.");
+      ASSERT.that(expected.getFile()).isEqualTo("./../work/.././../work/.");
     }
   }
 
@@ -1524,7 +1524,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         FileTime.fromMillis(1000),
         FileTime.fromMillis(10000));
 
-    ASSERT.that(Files.getAttribute(foo, "lastModifiedTime")).is(FileTime.fromMillis(100));
+    ASSERT.that(Files.getAttribute(foo, "lastModifiedTime")).isEqualTo(FileTime.fromMillis(100));
 
     UserPrincipal zero = fs.getUserPrincipalLookupService().lookupPrincipalByName("zero");
     Files.setAttribute(foo, "owner:owner", zero);
@@ -1533,10 +1533,10 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.copy(foo, bar, COPY_ATTRIBUTES);
 
     BasicFileAttributes attributes = Files.readAttributes(bar, BasicFileAttributes.class);
-    ASSERT.that(attributes.lastModifiedTime()).is(FileTime.fromMillis(100));
-    ASSERT.that(attributes.lastAccessTime()).is(FileTime.fromMillis(1000));
-    ASSERT.that(attributes.creationTime()).is(FileTime.fromMillis(10000));
-    ASSERT.that(Files.getAttribute(bar, "owner:owner")).is(zero);
+    ASSERT.that(attributes.lastModifiedTime()).isEqualTo(FileTime.fromMillis(100));
+    ASSERT.that(attributes.lastAccessTime()).isEqualTo(FileTime.fromMillis(1000));
+    ASSERT.that(attributes.creationTime()).isEqualTo(FileTime.fromMillis(10000));
+    ASSERT.that(Files.getAttribute(bar, "owner:owner")).isEqualTo(zero);
 
     Path baz = path("/baz");
     Files.copy(foo, baz);

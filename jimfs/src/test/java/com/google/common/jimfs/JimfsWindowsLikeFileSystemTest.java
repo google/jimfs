@@ -56,7 +56,7 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testFileSystem() {
-    ASSERT.that(fs.getSeparator()).is("\\");
+    ASSERT.that(fs.getSeparator()).isEqualTo("\\");
     ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("C:\\"), path("E:\\")));
     ASSERT.that(fs.isOpen()).isTrue();
     ASSERT.that(fs.isReadOnly()).isFalse();
@@ -92,8 +92,8 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     Path p3 = path("c");
     Path p4 = path("D");
 
-    ASSERT.that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2)))
-        .is(ImmutableList.of(p1, p2, p3, p4));
+    ASSERT.that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2))).isEqualTo(
+        ImmutableList.of(p1, p2, p3, p4));
 
     // would be p2, p4, p1, p3 if sorting were case sensitive
   }
@@ -102,15 +102,18 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
   public void testPaths_withSlash() {
     assertThat("foo/bar").isRelative()
         .and().hasNameComponents("foo", "bar")
-        .and().is(path("foo\\bar"));
+        .and()
+        .isEqualTo(path("foo\\bar"));
     assertThat("C:/foo/bar/baz").isAbsolute()
         .and().hasRootComponent("C:\\")
         .and().hasNameComponents("foo", "bar", "baz")
-        .and().is(path("C:\\foo\\bar\\baz"));
+        .and()
+        .isEqualTo(path("C:\\foo\\bar\\baz"));
     assertThat("C:/foo\\bar/baz").isAbsolute()
         .and().hasRootComponent("C:\\")
         .and().hasNameComponents("foo", "bar", "baz")
-        .and().is(path("C:\\foo\\bar\\baz"));
+        .and()
+        .isEqualTo(path("C:\\foo\\bar\\baz"));
   }
 
   @Test
@@ -368,7 +371,7 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
       Files.delete(path("E:\\"));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).is("E:\\");
+      ASSERT.that(expected.getFile()).isEqualTo("E:\\");
       ASSERT.that(expected.getMessage()).contains("root");
     }
   }

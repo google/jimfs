@@ -65,22 +65,22 @@ public class UnixAttributeProviderTest extends
     // file system actually has, so don't really care about the exact value of these
     ASSERT.that(provider.get(file, "uid")).isA(Integer.class);
     ASSERT.that(provider.get(file, "gid")).isA(Integer.class);
-    ASSERT.that(provider.get(file, "rdev")).is(0L);
-    ASSERT.that(provider.get(file, "dev")).is(1L);
+    ASSERT.that(provider.get(file, "rdev")).isEqualTo(0L);
+    ASSERT.that(provider.get(file, "dev")).isEqualTo(1L);
     ASSERT.that(provider.get(file, "ino")).isA(Integer.class);
 
     // these have logical origins in attributes from other views
-    ASSERT.that(provider.get(file, "mode")).is(0644); // rw-r--r--
+    ASSERT.that(provider.get(file, "mode")).isEqualTo(0644); // rw-r--r--
     ASSERT.that(provider.get(file, "ctime"))
         .isEqualTo(FileTime.fromMillis(file.getCreationTime()));
 
     // this is based on a property this file system does actually have
-    ASSERT.that(provider.get(file, "nlink")).is(1);
+    ASSERT.that(provider.get(file, "nlink")).isEqualTo(1);
 
     file.incrementLinkCount();
-    ASSERT.that(provider.get(file, "nlink")).is(2);
+    ASSERT.that(provider.get(file, "nlink")).isEqualTo(2);
     file.decrementLinkCount();
-    ASSERT.that(provider.get(file, "nlink")).is(1);
+    ASSERT.that(provider.get(file, "nlink")).isEqualTo(1);
   }
 
   @Test

@@ -58,7 +58,7 @@ public class DosAttributeProviderTest extends AbstractAttributeProviderTest<DosA
   @Test
   public void testInitialAttributes() {
     for (String attribute : DOS_ATTRIBUTES) {
-      ASSERT.that(provider.get(file, attribute)).is(false);
+      ASSERT.that(provider.get(file, attribute)).isEqualTo(false);
     }
   }
 
@@ -77,7 +77,7 @@ public class DosAttributeProviderTest extends AbstractAttributeProviderTest<DosA
             "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
-    ASSERT.that(view.name()).is("dos");
+    ASSERT.that(view.name()).isEqualTo("dos");
 
     DosFileAttributes attrs = view.readAttributes();
     ASSERT.that(attrs.isHidden()).isFalse();
@@ -101,8 +101,7 @@ public class DosAttributeProviderTest extends AbstractAttributeProviderTest<DosA
     ASSERT.that(attrs.isSystem()).isFalse();
 
     view.setTimes(FileTime.fromMillis(0L), null, null);
-    ASSERT.that(view.readAttributes().lastModifiedTime())
-        .is(FileTime.fromMillis(0L));
+    ASSERT.that(view.readAttributes().lastModifiedTime()).isEqualTo(FileTime.fromMillis(0L));
   }
 
   @Test

@@ -43,21 +43,21 @@ public class WindowsPathTypeTest {
   @Test
   public void testWindows() {
     PathType windows = PathType.windows();
-    ASSERT.that(windows.getSeparator()).is("\\");
-    ASSERT.that(windows.getOtherSeparators()).is("/");
+    ASSERT.that(windows.getSeparator()).isEqualTo("\\");
+    ASSERT.that(windows.getOtherSeparators()).isEqualTo("/");
 
     // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
     PathType.ParseResult path = windows.parsePath("C:\\\\foo\\bar");
     assertParseResult(path, "C:\\", "foo", "bar");
-    ASSERT.that(windows.toString(path.root(), path.names())).is("C:\\foo\\bar");
+    ASSERT.that(windows.toString(path.root(), path.names())).isEqualTo("C:\\foo\\bar");
 
     PathType.ParseResult path2 = windows.parsePath("foo/bar/");
     assertParseResult(path2, null, "foo", "bar");
-    ASSERT.that(windows.toString(path2.root(), path2.names())).is("foo\\bar");
+    ASSERT.that(windows.toString(path2.root(), path2.names())).isEqualTo("foo\\bar");
 
     PathType.ParseResult path3 = windows.parsePath("hello world/foo/bar");
     assertParseResult(path3, null, "hello world", "foo", "bar");
-    ASSERT.that(windows.toString(null, path3.names())).is("hello world\\foo\\bar");
+    ASSERT.that(windows.toString(null, path3.names())).isEqualTo("hello world\\foo\\bar");
   }
 
   @Test
@@ -103,24 +103,24 @@ public class WindowsPathTypeTest {
       windows.parsePath("\\\\");
       fail();
     } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).is("\\\\");
-      ASSERT.that(expected.getReason()).is("UNC path is missing hostname");
+      ASSERT.that(expected.getInput()).isEqualTo("\\\\");
+      ASSERT.that(expected.getReason()).isEqualTo("UNC path is missing hostname");
     }
 
     try {
       windows.parsePath("\\\\host");
       fail();
     } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).is("\\\\host");
-      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
+      ASSERT.that(expected.getInput()).isEqualTo("\\\\host");
+      ASSERT.that(expected.getReason()).isEqualTo("UNC path is missing sharename");
     }
 
     try {
       windows.parsePath("\\\\host\\");
       fail();
     } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).is("\\\\host\\");
-      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
+      ASSERT.that(expected.getInput()).isEqualTo("\\\\host\\");
+      ASSERT.that(expected.getReason()).isEqualTo("UNC path is missing sharename");
     }
 
     try {
@@ -128,7 +128,7 @@ public class WindowsPathTypeTest {
       fail();
     } catch (InvalidPathException expected) {
       ASSERT.that(expected.getInput()).is("//host");
-      ASSERT.that(expected.getReason()).is("UNC path is missing sharename");
+      ASSERT.that(expected.getReason()).isEqualTo("UNC path is missing sharename");
     }
   }
 
@@ -163,11 +163,11 @@ public class WindowsPathTypeTest {
   public void testWindows_toUri_normal() {
     URI fileUri = PathType.windows().toUri(fileSystemUri, "C:\\", ImmutableList.of("foo", "bar"));
     ASSERT.that(fileUri.toString()).is("jimfs://foo/C:/foo/bar");
-    ASSERT.that(fileUri.getPath()).is("/C:/foo/bar");
+    ASSERT.that(fileUri.getPath()).isEqualTo("/C:/foo/bar");
 
     URI rootUri = PathType.windows().toUri(fileSystemUri, "C:\\", ImmutableList.<String>of());
     ASSERT.that(rootUri.toString()).is("jimfs://foo/C:/");
-    ASSERT.that(rootUri.getPath()).is("/C:/");
+    ASSERT.that(rootUri.getPath()).isEqualTo("/C:/");
   }
 
   @Test
@@ -188,8 +188,8 @@ public class WindowsPathTypeTest {
     URI uri = PathType.windows()
         .toUri(fileSystemUri, "C:\\", ImmutableList.of("Users", "foo", "My Documents"));
     ASSERT.that(uri.toString()).is("jimfs://foo/C:/Users/foo/My%20Documents");
-    ASSERT.that(uri.getRawPath()).is("/C:/Users/foo/My%20Documents");
-    ASSERT.that(uri.getPath()).is("/C:/Users/foo/My Documents");
+    ASSERT.that(uri.getRawPath()).isEqualTo("/C:/Users/foo/My%20Documents");
+    ASSERT.that(uri.getPath()).isEqualTo("/C:/Users/foo/My Documents");
   }
 
   @Test

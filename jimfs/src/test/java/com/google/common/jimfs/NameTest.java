@@ -36,6 +36,6 @@ public class NameTest {
     ASSERT.that(Name.create("FOO", "foo")).isEqualTo(Name.create("foo", "foo"));
     ASSERT.that(Name.create("FOO", "foo")).isNotEqualTo(Name.create("FOO", "FOO"));
 
-    ASSERT.that(Name.create("a", "b").toString()).is("a");
+    ASSERT.that(Name.create("a", "b").toString()).isEqualTo("a");
   }
 }

@@ -44,8 +44,8 @@ public class PathServiceTest {
 
   @Test
   public void testBasicProperties() {
-    ASSERT.that(service.getSeparator()).is("/");
-    ASSERT.that(fakeWindowsPathService().getSeparator()).is("\\");
+    ASSERT.that(service.getSeparator()).isEqualTo("/");
+    ASSERT.that(fakeWindowsPathService().getSeparator()).isEqualTo("\\");
   }
 
   @Test
@@ -98,10 +98,10 @@ public class PathServiceTest {
     // not much to test for this since it just delegates to PathType anyway
     JimfsPath path = new JimfsPath(
         service, null, ImmutableList.of(Name.simple("foo"), Name.simple("bar")));
-    ASSERT.that(service.toString(path)).is("foo/bar");
+    ASSERT.that(service.toString(path)).isEqualTo("foo/bar");
 
     path = new JimfsPath(service, Name.simple("/"), ImmutableList.of(Name.simple("foo")));
-    ASSERT.that(service.toString(path)).is("/foo");
+    ASSERT.that(service.toString(path)).isEqualTo("/foo");
   }
 
   @Test

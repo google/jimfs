@@ -76,8 +76,8 @@ public class AbstractWatchServiceTest {
     ASSERT.that(key.pollEvents()).isEmpty();
     ASSERT.that(key.subscribesTo(ENTRY_CREATE)).isTrue();
     ASSERT.that(key.subscribesTo(ENTRY_DELETE)).isFalse();
-    ASSERT.that(key.watchable()).is(watchable);
-    ASSERT.that(key.state()).is(READY);
+    ASSERT.that(key.watchable()).isEqualTo(watchable);
+    ASSERT.that(key.state()).isEqualTo(READY);
   }
 
   @Test
@@ -93,11 +93,11 @@ public class AbstractWatchServiceTest {
     ASSERT.that(watcher.queuedKeys()).has().exactly(key);
 
     WatchKey retrievedKey = watcher.poll();
-    ASSERT.that(retrievedKey).is(key);
+    ASSERT.that(retrievedKey).isEqualTo(key);
 
     List<WatchEvent<?>> events = retrievedKey.pollEvents();
     ASSERT.that(events.size()).is(1);
-    ASSERT.that(events.get(0)).is(event);
+    ASSERT.that(events.get(0)).isEqualTo(event);
 
     // polling should have removed all events
     ASSERT.that(retrievedKey.pollEvents()).isEmpty();
@@ -110,15 +110,15 @@ public class AbstractWatchServiceTest {
 
     AbstractWatchService.Event<Path> event =
         new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
-    ASSERT.that(key.state()).is(READY);
+    ASSERT.that(key.state()).isEqualTo(READY);
     key.post(event);
     key.signal();
-    ASSERT.that(key.state()).is(SIGNALLED);
+    ASSERT.that(key.state()).isEqualTo(SIGNALLED);
 
     AbstractWatchService.Event<Path> event2 =
         new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
     key.post(event2);
-    ASSERT.that(key.state()).is(SIGNALLED);
+    ASSERT.that(key.state()).isEqualTo(SIGNALLED);
 
     // key was not queued twice
     ASSERT.that(watcher.queuedKeys()).has().exactly(key);
@@ -133,13 +133,13 @@ public class AbstractWatchServiceTest {
     ASSERT.that(key.pollEvents()).has().exactly(event);
 
     key.reset();
-    ASSERT.that(key.state()).is(READY);
+    ASSERT.that(key.state()).isEqualTo(READY);
 
     key.post(event2);
     key.signal();
 
     // now that it's reset it can be requeued
-    ASSERT.that(watcher.poll()).is(key);
+    ASSERT.that(watcher.poll()).isEqualTo(key);
   }
 
   @Test
@@ -158,7 +158,7 @@ public class AbstractWatchServiceTest {
     ASSERT.that(watcher.queuedKeys()).isEmpty();
 
     key.reset();
-    ASSERT.that(key.state()).is(SIGNALLED);
+    ASSERT.that(key.state()).isEqualTo(SIGNALLED);
     ASSERT.that(watcher.queuedKeys().size()).is(1);
   }
 
@@ -175,11 +175,11 @@ public class AbstractWatchServiceTest {
 
     ASSERT.that(events.size()).is(AbstractWatchService.Key.MAX_QUEUE_SIZE + 1);
     for (int i = 0; i < AbstractWatchService.Key.MAX_QUEUE_SIZE; i++) {
-      ASSERT.that(events.get(i).kind()).is(ENTRY_CREATE);
+      ASSERT.that(events.get(i).kind()).isEqualTo(ENTRY_CREATE);
     }
 
     WatchEvent<?> lastEvent = events.get(AbstractWatchService.Key.MAX_QUEUE_SIZE);
-    ASSERT.that(lastEvent.kind()).is(OVERFLOW);
+    ASSERT.that(lastEvent.kind()).isEqualTo(OVERFLOW);
     ASSERT.that(lastEvent.count()).is(10);
   }
 

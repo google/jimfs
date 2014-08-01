@@ -109,34 +109,34 @@ public class BasicAttributeProviderTest extends
     BasicFileAttributeView view = provider.view(fileLookup(), NO_INHERITED_VIEWS);
 
     ASSERT.that(view).isNotNull();
-    ASSERT.that(view.name()).is("basic");
+    ASSERT.that(view.name()).isEqualTo("basic");
 
     BasicFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.fileKey()).is(0);
+    ASSERT.that(attrs.fileKey()).isEqualTo(0);
 
     FileTime time = attrs.creationTime();
-    ASSERT.that(attrs.lastAccessTime()).is(time);
-    ASSERT.that(attrs.lastModifiedTime()).is(time);
+    ASSERT.that(attrs.lastAccessTime()).isEqualTo(time);
+    ASSERT.that(attrs.lastModifiedTime()).isEqualTo(time);
 
     view.setTimes(null, null, null);
 
     attrs = view.readAttributes();
-    ASSERT.that(attrs.creationTime()).is(time);
-    ASSERT.that(attrs.lastAccessTime()).is(time);
-    ASSERT.that(attrs.lastModifiedTime()).is(time);
+    ASSERT.that(attrs.creationTime()).isEqualTo(time);
+    ASSERT.that(attrs.lastAccessTime()).isEqualTo(time);
+    ASSERT.that(attrs.lastModifiedTime()).isEqualTo(time);
 
     view.setTimes(FileTime.fromMillis(0L), null, null);
 
     attrs = view.readAttributes();
-    ASSERT.that(attrs.creationTime()).is(time);
-    ASSERT.that(attrs.lastAccessTime()).is(time);
-    ASSERT.that(attrs.lastModifiedTime()).is(FileTime.fromMillis(0L));
+    ASSERT.that(attrs.creationTime()).isEqualTo(time);
+    ASSERT.that(attrs.lastAccessTime()).isEqualTo(time);
+    ASSERT.that(attrs.lastModifiedTime()).isEqualTo(FileTime.fromMillis(0L));
   }
 
   @Test
   public void testAttributes() {
     BasicFileAttributes attrs = provider.readAttributes(file);
-    ASSERT.that(attrs.fileKey()).is(0);
+    ASSERT.that(attrs.fileKey()).isEqualTo(0);
     ASSERT.that(attrs.isDirectory()).isTrue();
     ASSERT.that(attrs.isRegularFile()).isFalse();
     ASSERT.that(attrs.creationTime()).isNotNull();

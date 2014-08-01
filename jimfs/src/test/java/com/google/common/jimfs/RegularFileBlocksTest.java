@@ -99,20 +99,20 @@ public class RegularFileBlocksTest {
     file.copyBlocksTo(other, 2);
 
     ASSERT.that(other.blockCount()).is(2);
-    ASSERT.that(other.getBlock(0)).is(file.getBlock(0));
-    ASSERT.that(other.getBlock(1)).is(file.getBlock(1));
+    ASSERT.that(other.getBlock(0)).isEqualTo(file.getBlock(0));
+    ASSERT.that(other.getBlock(1)).isEqualTo(file.getBlock(1));
 
     file.copyBlocksTo(other, 1); // should copy the last block
 
     ASSERT.that(other.blockCount()).is(3);
-    ASSERT.that(other.getBlock(2)).is(file.getBlock(1));
+    ASSERT.that(other.getBlock(2)).isEqualTo(file.getBlock(1));
 
     other.copyBlocksTo(file, 3);
 
     ASSERT.that(file.blockCount()).is(5);
-    ASSERT.that(file.getBlock(2)).is(other.getBlock(0));
-    ASSERT.that(file.getBlock(3)).is(other.getBlock(1));
-    ASSERT.that(file.getBlock(4)).is(other.getBlock(2));
+    ASSERT.that(file.getBlock(2)).isEqualTo(other.getBlock(0));
+    ASSERT.that(file.getBlock(3)).isEqualTo(other.getBlock(1));
+    ASSERT.that(file.getBlock(4)).isEqualTo(other.getBlock(2));
   }
 
   @Test

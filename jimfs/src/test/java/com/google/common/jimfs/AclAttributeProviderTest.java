@@ -83,7 +83,7 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(file, "acl")).is(defaultAcl);
+    ASSERT.that(provider.get(file, "acl")).isEqualTo(defaultAcl);
   }
 
   @Test
@@ -101,16 +101,16 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
             "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
-    ASSERT.that(view.name()).is("acl");
+    ASSERT.that(view.name()).isEqualTo("acl");
 
-    ASSERT.that(view.getAcl()).is(defaultAcl);
+    ASSERT.that(view.getAcl()).isEqualTo(defaultAcl);
 
     view.setAcl(ImmutableList.<AclEntry>of());
     view.setOwner(FOO);
 
-    ASSERT.that(view.getAcl()).is(ImmutableList.<AclEntry>of());
-    ASSERT.that(view.getOwner()).is(FOO);
+    ASSERT.that(view.getAcl()).isEqualTo(ImmutableList.<AclEntry>of());
+    ASSERT.that(view.getOwner()).isEqualTo(FOO);
 
-    ASSERT.that(file.getAttribute("acl", "acl")).is(ImmutableList.<AclEntry>of());
+    ASSERT.that(file.getAttribute("acl", "acl")).isEqualTo(ImmutableList.<AclEntry>of());
   }
 }

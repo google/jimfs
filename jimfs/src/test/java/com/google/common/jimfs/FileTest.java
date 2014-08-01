@@ -47,7 +47,7 @@ public class FileTest {
     file.setAttribute("foo", "foo", "foo");
 
     ASSERT.that(file.getAttributeKeys()).iteratesAs("foo:foo");
-    ASSERT.that(file.getAttribute("foo", "foo")).is("foo");
+    ASSERT.that(file.getAttribute("foo", "foo")).isEqualTo("foo");
 
     file.deleteAttribute("foo", "foo");
 

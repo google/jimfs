@@ -422,9 +422,9 @@ public class FileTreeTest {
 
   private void assertExists(DirectoryEntry entry, String parent, String file) {
     ASSERT.that(entry.exists()).isTrue();
-    ASSERT.that(entry.name()).is(Name.simple(file));
+    ASSERT.that(entry.name()).isEqualTo(Name.simple(file));
     ASSERT.that(entry.directory()).isEqualTo(files.get(parent));
-    ASSERT.that(entry.file()).is(files.get(file));
+    ASSERT.that(entry.file()).isEqualTo(files.get(file));
   }
 
   private void assertParentExists(DirectoryEntry entry, String parent) {

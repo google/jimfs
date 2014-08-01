@@ -85,7 +85,7 @@ public class UserDefinedAttributeProviderTest
     UserDefinedFileAttributeView view = provider.view(fileLookup(), NO_INHERITED_VIEWS);
     assertNotNull(view);
 
-    ASSERT.that(view.name()).is("user");
+    ASSERT.that(view.name()).isEqualTo("user");
     ASSERT.that(view.list()).isEmpty();
 
     byte[] b1 = {0, 1, 2};

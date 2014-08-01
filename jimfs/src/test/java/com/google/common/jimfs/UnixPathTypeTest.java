@@ -43,36 +43,36 @@ public class UnixPathTypeTest {
   @Test
   public void testUnix() {
     PathType unix = PathType.unix();
-    ASSERT.that(unix.getSeparator()).is("/");
-    ASSERT.that(unix.getOtherSeparators()).is("");
+    ASSERT.that(unix.getSeparator()).isEqualTo("/");
+    ASSERT.that(unix.getOtherSeparators()).isEqualTo("");
 
     // "//foo/bar" is what will be passed to parsePath if "/", "foo", "bar" is passed to getPath
     PathType.ParseResult path = unix.parsePath("//foo/bar");
     assertParseResult(path, "/", "foo", "bar");
-    ASSERT.that(unix.toString(path.root(), path.names())).is("/foo/bar");
+    ASSERT.that(unix.toString(path.root(), path.names())).isEqualTo("/foo/bar");
 
     PathType.ParseResult path2 = unix.parsePath("foo/bar/");
     assertParseResult(path2, null, "foo", "bar");
-    ASSERT.that(unix.toString(path2.root(), path2.names())).is("foo/bar");
+    ASSERT.that(unix.toString(path2.root(), path2.names())).isEqualTo("foo/bar");
   }
 
   @Test
   public void testUnix_toUri() {
     URI fileUri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.of("foo", "bar"));
     ASSERT.that(fileUri.toString()).is("jimfs://foo/foo/bar");
-    ASSERT.that(fileUri.getPath()).is("/foo/bar");
+    ASSERT.that(fileUri.getPath()).isEqualTo("/foo/bar");
 
     URI rootUri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.<String>of());
     ASSERT.that(rootUri.toString()).is("jimfs://foo/");
-    ASSERT.that(rootUri.getPath()).is("/");
+    ASSERT.that(rootUri.getPath()).isEqualTo("/");
   }
 
   @Test
   public void testUnix_toUri_escaping() {
     URI uri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.of("foo bar"));
     ASSERT.that(uri.toString()).is("jimfs://foo/foo%20bar");
-    ASSERT.that(uri.getRawPath()).is("/foo%20bar");
-    ASSERT.that(uri.getPath()).is("/foo bar");
+    ASSERT.that(uri.getRawPath()).isEqualTo("/foo%20bar");
+    ASSERT.that(uri.getPath()).isEqualTo("/foo bar");
   }
 
   @Test

@@ -103,7 +103,7 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
       String attribute = entry.getKey();
       Object value = entry.getValue();
 
-      ASSERT.that(provider.get(file, attribute)).is(value);
+      ASSERT.that(provider.get(file, attribute)).isEqualTo(value);
     }
   }
 
@@ -117,7 +117,7 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
 
   protected void assertSetAndGetSucceeds(String attribute, Object value, boolean create) {
     provider.set(file, provider.name(), attribute, value, create);
-    ASSERT.that(provider.get(file, attribute)).is(value);
+    ASSERT.that(provider.get(file, attribute)).isEqualTo(value);
   }
 
   @SuppressWarnings("EmptyCatchBlock")

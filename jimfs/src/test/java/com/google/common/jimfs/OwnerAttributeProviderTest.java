@@ -67,7 +67,7 @@ public class OwnerAttributeProviderTest extends
     FileOwnerAttributeView view = provider.view(fileLookup(), NO_INHERITED_VIEWS);
     ASSERT.that(view).isNotNull();
 
-    ASSERT.that(view.name()).is("owner");
+    ASSERT.that(view.name()).isEqualTo("owner");
     ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("user"));
 
     view.setOwner(createUserPrincipal("root"));

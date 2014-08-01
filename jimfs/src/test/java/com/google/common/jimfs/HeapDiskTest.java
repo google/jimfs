@@ -168,7 +168,7 @@ public class HeapDiskTest {
 
     // the 6 arrays in blocks are the last 6 arrays that were cached
     for (int i = 0; i < 6; i++) {
-      ASSERT.that(blocks.getBlock(i)).is(cachedBlocks.get(i + 4));
+      ASSERT.that(blocks.getBlock(i)).isEqualTo(cachedBlocks.get(i + 4));
     }
   }
 
@@ -196,7 +196,7 @@ public class HeapDiskTest {
 
     // the last 4 arrays in blocks are the 4 arrays that were cached
     for (int i = 2; i < 6; i++) {
-      ASSERT.that(blocks.getBlock(i)).is(cachedBlocks.get(i - 2));
+      ASSERT.that(blocks.getBlock(i)).isEqualTo(cachedBlocks.get(i - 2));
     }
   }
 

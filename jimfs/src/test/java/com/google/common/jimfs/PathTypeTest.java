@@ -43,8 +43,8 @@ public class PathTypeTest {
 
   @Test
   public void testBasicProperties() {
-    ASSERT.that(type.getSeparator()).is("/");
-    ASSERT.that(type.getOtherSeparators()).is("\\");
+    ASSERT.that(type.getSeparator()).isEqualTo("/");
+    ASSERT.that(type.getOtherSeparators()).isEqualTo("\\");
   }
 
   @Test
@@ -59,29 +59,29 @@ public class PathTypeTest {
   @Test
   public void testToString() {
     ParseResult path = type.parsePath("foo/bar\\baz");
-    ASSERT.that(type.toString(path.root(), path.names())).is("foo/bar/baz");
+    ASSERT.that(type.toString(path.root(), path.names())).isEqualTo("foo/bar/baz");
 
     ParseResult path2 = type.parsePath("$/foo/bar");
-    ASSERT.that(type.toString(path2.root(), path2.names())).is("$foo/bar");
+    ASSERT.that(type.toString(path2.root(), path2.names())).isEqualTo("$foo/bar");
   }
 
   @Test
   public void testToUri() {
     URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"));
     ASSERT.that(fileUri.toString()).is("jimfs://foo/$/foo/bar");
-    ASSERT.that(fileUri.getPath()).is("/$/foo/bar");
+    ASSERT.that(fileUri.getPath()).isEqualTo("/$/foo/bar");
 
     URI rootUri = type.toUri(fileSystemUri, "$", ImmutableList.<String>of());
     ASSERT.that(rootUri.toString()).is("jimfs://foo/$");
-    ASSERT.that(rootUri.getPath()).is("/$");
+    ASSERT.that(rootUri.getPath()).isEqualTo("/$");
   }
 
   @Test
   public void testToUri_escaping() {
     URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar baz"));
     ASSERT.that(fileUri.toString()).is("jimfs://foo/$/foo/bar%20baz");
-    ASSERT.that(fileUri.getRawPath()).is("/$/foo/bar%20baz");
-    ASSERT.that(fileUri.getPath()).is("/$/foo/bar baz");
+    ASSERT.that(fileUri.getRawPath()).isEqualTo("/$/foo/bar%20baz");
+    ASSERT.that(fileUri.getPath()).isEqualTo("/$/foo/bar baz");
   }
 
   @Test
@@ -95,7 +95,7 @@ public class PathTypeTest {
 
   static void assertParseResult(
       ParseResult result, @Nullable String root, String... names) {
-    ASSERT.that(result.root()).is(root);
+    ASSERT.that(result.root()).isEqualTo(root);
     ASSERT.that(result.names()).iteratesAs((Object[]) names);
   }
 
