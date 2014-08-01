@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.PathSubject.paths;
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

@@ -18,9 +18,9 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.jimfs.TestUtils.regularFile;
+import static com.google.common.truth.Truth.ASSERT;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;

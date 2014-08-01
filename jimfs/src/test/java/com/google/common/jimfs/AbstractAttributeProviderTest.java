@@ -16,8 +16,8 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.truth.Truth.ASSERT;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 

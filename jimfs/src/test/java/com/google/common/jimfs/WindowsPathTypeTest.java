@@ -20,8 +20,8 @@ import static com.google.common.jimfs.PathType.windows;
 import static com.google.common.jimfs.PathTypeTest.assertParseResult;
 import static com.google.common.jimfs.PathTypeTest.assertUriRoundTripsCorrectly;
 import static com.google.common.jimfs.PathTypeTest.fileSystemUri;
+import static com.google.common.truth.Truth.ASSERT;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 

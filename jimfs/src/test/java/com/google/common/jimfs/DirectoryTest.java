@@ -19,8 +19,8 @@ package com.google.common.jimfs;
 import static com.google.common.jimfs.Name.PARENT;
 import static com.google.common.jimfs.Name.SELF;
 import static com.google.common.jimfs.TestUtils.regularFile;
+import static com.google.common.truth.Truth.ASSERT;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;

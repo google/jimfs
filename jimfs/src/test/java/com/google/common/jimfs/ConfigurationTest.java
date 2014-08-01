@@ -20,8 +20,8 @@ import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static com.google.common.jimfs.PathNormalization.CASE_FOLD_UNICODE;
 import static com.google.common.jimfs.PathNormalization.NFC;
 import static com.google.common.jimfs.PathNormalization.NFD;
+import static com.google.common.truth.Truth.ASSERT;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;

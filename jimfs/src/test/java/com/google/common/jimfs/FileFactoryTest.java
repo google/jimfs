@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.ASSERT;
 
 import org.junit.Before;
 import org.junit.Test;

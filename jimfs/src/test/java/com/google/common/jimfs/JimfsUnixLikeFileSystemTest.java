@@ -16,10 +16,11 @@
 
 package com.google.common.jimfs;
 
-import static com.google.common.primitives.Bytes.concat;
 import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.jimfs.TestUtils.permutations;
 import static com.google.common.jimfs.TestUtils.preFilledBytes;
+import static com.google.common.primitives.Bytes.concat;
+import static com.google.common.truth.Truth.ASSERT;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -40,7 +41,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

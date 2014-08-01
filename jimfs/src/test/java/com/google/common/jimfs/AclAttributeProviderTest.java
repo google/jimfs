@@ -17,12 +17,12 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
+import static com.google.common.truth.Truth.ASSERT;
 import static java.nio.file.attribute.AclEntryFlag.DIRECTORY_INHERIT;
 import static java.nio.file.attribute.AclEntryPermission.APPEND_DATA;
 import static java.nio.file.attribute.AclEntryPermission.DELETE;
 import static java.nio.file.attribute.AclEntryType.ALLOW;
 import static org.junit.Assert.assertNotNull;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

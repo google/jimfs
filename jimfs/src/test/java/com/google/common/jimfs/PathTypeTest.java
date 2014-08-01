@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.jimfs.PathType.ParseResult;
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 

@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.jimfs.FileFactoryTest.fakePath;
 import static com.google.common.jimfs.TestUtils.regularFile;
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.ASSERT;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
