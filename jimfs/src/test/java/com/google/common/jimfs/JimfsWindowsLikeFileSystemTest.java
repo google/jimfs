@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assert_;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.fail;
 
@@ -56,13 +56,13 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testFileSystem() {
-    ASSERT.that(fs.getSeparator()).isEqualTo("\\");
-    ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("C:\\"), path("E:\\")));
-    ASSERT.that(fs.isOpen()).isTrue();
-    ASSERT.that(fs.isReadOnly()).isFalse();
-    ASSERT.that(fs.supportedFileAttributeViews())
+    assert_().that(fs.getSeparator()).isEqualTo("\\");
+    assert_().that(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("C:\\"), path("E:\\")));
+    assert_().that(fs.isOpen()).isTrue();
+    assert_().that(fs.isReadOnly()).isFalse();
+    assert_().that(fs.supportedFileAttributeViews())
         .has().exactly("basic", "owner", "dos", "acl", "user");
-    ASSERT.that(fs.provider()).isA(JimfsFileSystemProvider.class);
+    assert_().that(fs.provider()).isA(JimfsFileSystemProvider.class);
   }
 
   @Test
@@ -92,7 +92,7 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     Path p3 = path("c");
     Path p4 = path("D");
 
-    ASSERT.that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2))).isEqualTo(
+    assert_().that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2))).isEqualTo(
         ImmutableList.of(p1, p2, p3, p4));
 
     // would be p2, p4, p1, p3 if sorting were case sensitive
@@ -170,14 +170,14 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testPaths_startsWith_endsWith() {
-    ASSERT.that(path("C:\\foo\\bar").startsWith("C:\\")).isTrue();
-    ASSERT.that(path("C:\\foo\\bar").startsWith("C:\\foo")).isTrue();
-    ASSERT.that(path("C:\\foo\\bar").startsWith("C:\\foo\\bar")).isTrue();
-    ASSERT.that(path("C:\\foo\\bar").endsWith("bar")).isTrue();
-    ASSERT.that(path("C:\\foo\\bar").endsWith("foo\\bar")).isTrue();
-    ASSERT.that(path("C:\\foo\\bar").endsWith("C:\\foo\\bar")).isTrue();
-    ASSERT.that(path("C:\\foo\\bar").endsWith("C:\\foo")).isFalse();
-    ASSERT.that(path("C:\\foo\\bar").startsWith("foo\\bar")).isFalse();
+    assert_().that(path("C:\\foo\\bar").startsWith("C:\\")).isTrue();
+    assert_().that(path("C:\\foo\\bar").startsWith("C:\\foo")).isTrue();
+    assert_().that(path("C:\\foo\\bar").startsWith("C:\\foo\\bar")).isTrue();
+    assert_().that(path("C:\\foo\\bar").endsWith("bar")).isTrue();
+    assert_().that(path("C:\\foo\\bar").endsWith("foo\\bar")).isTrue();
+    assert_().that(path("C:\\foo\\bar").endsWith("C:\\foo\\bar")).isTrue();
+    assert_().that(path("C:\\foo\\bar").endsWith("C:\\foo")).isFalse();
+    assert_().that(path("C:\\foo\\bar").startsWith("foo\\bar")).isFalse();
   }
 
   @Test
@@ -198,62 +198,62 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     Files.createDirectories(path("C:\\foo\\bar"));
     Files.createSymbolicLink(path("C:\\link"), path("C:\\"));
 
-    ASSERT.that(path("C:\\link\\foo\\bar").toRealPath()).isEqualTo(path("C:\\foo\\bar"));
+    assert_().that(path("C:\\link\\foo\\bar").toRealPath()).isEqualTo(path("C:\\foo\\bar"));
 
-    ASSERT.that(path("").toRealPath()).isEqualTo(path("C:\\work"));
-    ASSERT.that(path(".").toRealPath()).isEqualTo(path("C:\\work"));
-    ASSERT.that(path("..").toRealPath()).isEqualTo(path("C:\\"));
-    ASSERT.that(path("..\\..").toRealPath()).isEqualTo(path("C:\\"));
-    ASSERT.that(path(".\\..\\.\\..").toRealPath()).isEqualTo(path("C:\\"));
-    ASSERT.that(path(".\\..\\.\\..\\.").toRealPath()).isEqualTo(path("C:\\"));
+    assert_().that(path("").toRealPath()).isEqualTo(path("C:\\work"));
+    assert_().that(path(".").toRealPath()).isEqualTo(path("C:\\work"));
+    assert_().that(path("..").toRealPath()).isEqualTo(path("C:\\"));
+    assert_().that(path("..\\..").toRealPath()).isEqualTo(path("C:\\"));
+    assert_().that(path(".\\..\\.\\..").toRealPath()).isEqualTo(path("C:\\"));
+    assert_().that(path(".\\..\\.\\..\\.").toRealPath()).isEqualTo(path("C:\\"));
   }
 
   @Test
   public void testPaths_toUri() {
-    ASSERT.that(fs.getPath("C:\\").toUri()).is(URI.create("jimfs://win/C:/"));
-    ASSERT.that(fs.getPath("C:\\foo").toUri()).is(URI.create("jimfs://win/C:/foo"));
-    ASSERT.that(fs.getPath("C:\\foo\\bar").toUri()).is(URI.create("jimfs://win/C:/foo/bar"));
-    ASSERT.that(fs.getPath("foo").toUri()).is(URI.create("jimfs://win/C:/work/foo"));
-    ASSERT.that(fs.getPath("foo\\bar").toUri()).is(URI.create("jimfs://win/C:/work/foo/bar"));
-    ASSERT.that(fs.getPath("").toUri()).is(URI.create("jimfs://win/C:/work"));
-    ASSERT.that(fs.getPath(".\\..\\.").toUri()).is(URI.create("jimfs://win/C:/work/./../."));
+    assert_().that(fs.getPath("C:\\").toUri()).is(URI.create("jimfs://win/C:/"));
+    assert_().that(fs.getPath("C:\\foo").toUri()).is(URI.create("jimfs://win/C:/foo"));
+    assert_().that(fs.getPath("C:\\foo\\bar").toUri()).is(URI.create("jimfs://win/C:/foo/bar"));
+    assert_().that(fs.getPath("foo").toUri()).is(URI.create("jimfs://win/C:/work/foo"));
+    assert_().that(fs.getPath("foo\\bar").toUri()).is(URI.create("jimfs://win/C:/work/foo/bar"));
+    assert_().that(fs.getPath("").toUri()).is(URI.create("jimfs://win/C:/work"));
+    assert_().that(fs.getPath(".\\..\\.").toUri()).is(URI.create("jimfs://win/C:/work/./../."));
   }
 
   @Test
   public void testPaths_toUri_unc() {
-    ASSERT.that(fs.getPath("\\\\host\\share\\").toUri())
+    assert_().that(fs.getPath("\\\\host\\share\\").toUri())
         .is(URI.create("jimfs://win//host/share/"));
-    ASSERT.that(fs.getPath("\\\\host\\share\\foo").toUri())
+    assert_().that(fs.getPath("\\\\host\\share\\foo").toUri())
         .is(URI.create("jimfs://win//host/share/foo"));
-    ASSERT.that(fs.getPath("\\\\host\\share\\foo\\bar").toUri())
+    assert_().that(fs.getPath("\\\\host\\share\\foo\\bar").toUri())
         .is(URI.create("jimfs://win//host/share/foo/bar"));
   }
 
   @Test
   public void testPaths_getFromUri() {
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/")))
+    assert_().that(Paths.get(URI.create("jimfs://win/C:/")))
         .isEqualTo(fs.getPath("C:\\"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo")))
+    assert_().that(Paths.get(URI.create("jimfs://win/C:/foo")))
         .isEqualTo(fs.getPath("C:\\foo"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo%20bar")))
+    assert_().that(Paths.get(URI.create("jimfs://win/C:/foo%20bar")))
         .isEqualTo(fs.getPath("C:\\foo bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo/./bar")))
+    assert_().that(Paths.get(URI.create("jimfs://win/C:/foo/./bar")))
         .isEqualTo(fs.getPath("C:\\foo\\.\\bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win/C:/foo/bar/")))
+    assert_().that(Paths.get(URI.create("jimfs://win/C:/foo/bar/")))
         .isEqualTo(fs.getPath("C:\\foo\\bar"));
   }
 
   @Test
   public void testPaths_getFromUri_unc() {
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/")))
+    assert_().that(Paths.get(URI.create("jimfs://win//host/share/")))
         .isEqualTo(fs.getPath("\\\\host\\share\\"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo")))
+    assert_().that(Paths.get(URI.create("jimfs://win//host/share/foo")))
         .isEqualTo(fs.getPath("\\\\host\\share\\foo"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo%20bar")))
+    assert_().that(Paths.get(URI.create("jimfs://win//host/share/foo%20bar")))
         .isEqualTo(fs.getPath("\\\\host\\share\\foo bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo/./bar")))
+    assert_().that(Paths.get(URI.create("jimfs://win//host/share/foo/./bar")))
         .isEqualTo(fs.getPath("\\\\host\\share\\foo\\.\\bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://win//host/share/foo/bar/")))
+    assert_().that(Paths.get(URI.create("jimfs://win//host/share/foo/bar/")))
         .isEqualTo(fs.getPath("\\\\host\\share\\foo\\bar"));
   }
 
@@ -371,8 +371,8 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
       Files.delete(path("E:\\"));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("E:\\");
-      ASSERT.that(expected.getMessage()).contains("root");
+      assert_().that(expected.getFile()).isEqualTo("E:\\");
+      assert_().that(expected.getMessage()).contains("root");
     }
   }
 

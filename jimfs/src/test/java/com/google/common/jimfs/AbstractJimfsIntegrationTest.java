@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.PathSubject.paths;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assert_;
 
 import org.junit.After;
 import org.junit.Before;
@@ -67,7 +67,7 @@ public abstract class AbstractJimfsIntegrationTest {
   }
 
   protected static PathSubject assertThat(Path path, LinkOption... options) {
-    PathSubject subject = ASSERT.about(paths()).that(path);
+    PathSubject subject = assert_().about(paths()).that(path);
     if (options.length != 0) {
       subject = subject.noFollowLinks();
     }
@@ -98,24 +98,24 @@ public abstract class AbstractJimfsIntegrationTest {
 
     public void assertAccessTimeChanged() throws IOException {
       FileTime t = attrs().lastAccessTime();
-      ASSERT.that(t).isNotEqualTo(accessTime);
+      assert_().that(t).isNotEqualTo(accessTime);
       accessTime = t;
     }
 
     public void assertAccessTimeDidNotChange() throws IOException {
       FileTime t = attrs().lastAccessTime();
-      ASSERT.that(t).isEqualTo(accessTime);
+      assert_().that(t).isEqualTo(accessTime);
     }
 
     public void assertModifiedTimeChanged() throws IOException {
       FileTime t = attrs().lastModifiedTime();
-      ASSERT.that(t).isNotEqualTo(modifiedTime);
+      assert_().that(t).isNotEqualTo(modifiedTime);
       modifiedTime = t;
     }
 
     public void assertModifiedTimeDidNotChange() throws IOException {
       FileTime t = attrs().lastModifiedTime();
-      ASSERT.that(t).isEqualTo(modifiedTime);
+      assert_().that(t).isEqualTo(modifiedTime);
     }
   }
 }

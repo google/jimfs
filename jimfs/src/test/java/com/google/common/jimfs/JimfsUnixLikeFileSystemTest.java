@@ -20,7 +20,7 @@ import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.jimfs.TestUtils.permutations;
 import static com.google.common.jimfs.TestUtils.preFilledBytes;
 import static com.google.common.primitives.Bytes.concat;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assert_;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -123,44 +123,44 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testFileSystem() {
-    ASSERT.that(fs.getSeparator()).isEqualTo("/");
-    ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("/")));
-    ASSERT.that(fs.isOpen()).isTrue();
-    ASSERT.that(fs.isReadOnly()).isFalse();
-    ASSERT.that(fs.supportedFileAttributeViews())
+    assert_().that(fs.getSeparator()).isEqualTo("/");
+    assert_().that(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("/")));
+    assert_().that(fs.isOpen()).isTrue();
+    assert_().that(fs.isReadOnly()).isFalse();
+    assert_().that(fs.supportedFileAttributeViews())
         .has().exactly("basic", "owner", "posix", "unix");
-    ASSERT.that(fs.provider()).isA(JimfsFileSystemProvider.class);
+    assert_().that(fs.provider()).isA(JimfsFileSystemProvider.class);
   }
 
   @Test
   public void testFileStore() throws IOException {
     FileStore fileStore = Iterables.getOnlyElement(fs.getFileStores());
-    ASSERT.that(fileStore.name()).isEqualTo("jimfs");
-    ASSERT.that(fileStore.type()).isEqualTo("jimfs");
-    ASSERT.that(fileStore.isReadOnly()).isFalse();
+    assert_().that(fileStore.name()).isEqualTo("jimfs");
+    assert_().that(fileStore.type()).isEqualTo("jimfs");
+    assert_().that(fileStore.isReadOnly()).isFalse();
 
     long totalSpace = 1024 * 1024 * 1024; // 1 GB
-    ASSERT.that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
-    ASSERT.that(fileStore.getUnallocatedSpace()).isEqualTo(totalSpace);
-    ASSERT.that(fileStore.getUsableSpace()).isEqualTo(totalSpace);
+    assert_().that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
+    assert_().that(fileStore.getUnallocatedSpace()).isEqualTo(totalSpace);
+    assert_().that(fileStore.getUsableSpace()).isEqualTo(totalSpace);
 
     Files.write(fs.getPath("/foo"), new byte[10000]);
 
-    ASSERT.that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
+    assert_().that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
 
     // We wrote 10000 bytes, but since the file system allocates fixed size blocks, more than 10k
     // bytes may have been allocated. As such, the unallocated space after the write can be at most
     // maxUnallocatedSpace.
-    ASSERT.that(fileStore.getUnallocatedSpace() <= totalSpace - 10000).isTrue();
+    assert_().that(fileStore.getUnallocatedSpace() <= totalSpace - 10000).isTrue();
 
     // Usable space is at most unallocated space. (In this case, it's currently exactly unallocated
     // space, but that's not required.)
-    ASSERT.that(fileStore.getUsableSpace() <= fileStore.getUnallocatedSpace()).isTrue();
+    assert_().that(fileStore.getUsableSpace() <= fileStore.getUnallocatedSpace()).isTrue();
 
     Files.delete(fs.getPath("/foo"));
-    ASSERT.that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
-    ASSERT.that(fileStore.getUnallocatedSpace()).isEqualTo(totalSpace);
-    ASSERT.that(fileStore.getUsableSpace()).isEqualTo(totalSpace);
+    assert_().that(fileStore.getTotalSpace()).isEqualTo(totalSpace);
+    assert_().that(fileStore.getUnallocatedSpace()).isEqualTo(totalSpace);
+    assert_().that(fileStore.getUsableSpace()).isEqualTo(totalSpace);
   }
 
   @Test
@@ -189,7 +189,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Path p3 = path("c");
     Path p4 = path("D");
 
-    ASSERT.that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2))).isEqualTo(
+    assert_().that(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2))).isEqualTo(
         ImmutableList.of(p2, p4, p1, p3));
 
     // would be p1, p2, p3, p4 if sorting were case insensitive
@@ -249,14 +249,14 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testPaths_startsWith_endsWith() {
-    ASSERT.that(path("/foo/bar").startsWith("/")).isTrue();
-    ASSERT.that(path("/foo/bar").startsWith("/foo")).isTrue();
-    ASSERT.that(path("/foo/bar").startsWith("/foo/bar")).isTrue();
-    ASSERT.that(path("/foo/bar").endsWith("bar")).isTrue();
-    ASSERT.that(path("/foo/bar").endsWith("foo/bar")).isTrue();
-    ASSERT.that(path("/foo/bar").endsWith("/foo/bar")).isTrue();
-    ASSERT.that(path("/foo/bar").endsWith("/foo")).isFalse();
-    ASSERT.that(path("/foo/bar").startsWith("foo/bar")).isFalse();
+    assert_().that(path("/foo/bar").startsWith("/")).isTrue();
+    assert_().that(path("/foo/bar").startsWith("/foo")).isTrue();
+    assert_().that(path("/foo/bar").startsWith("/foo/bar")).isTrue();
+    assert_().that(path("/foo/bar").endsWith("bar")).isTrue();
+    assert_().that(path("/foo/bar").endsWith("foo/bar")).isTrue();
+    assert_().that(path("/foo/bar").endsWith("/foo/bar")).isTrue();
+    assert_().that(path("/foo/bar").endsWith("/foo")).isFalse();
+    assert_().that(path("/foo/bar").startsWith("foo/bar")).isFalse();
   }
 
   @Test
@@ -277,38 +277,38 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectories(path("/foo/bar"));
     Files.createSymbolicLink(path("/link"), path("/"));
 
-    ASSERT.that(path("/link/foo/bar").toRealPath()).isEqualTo(path("/foo/bar"));
+    assert_().that(path("/link/foo/bar").toRealPath()).isEqualTo(path("/foo/bar"));
 
-    ASSERT.that(path("").toRealPath()).isEqualTo(path("/work"));
-    ASSERT.that(path(".").toRealPath()).isEqualTo(path("/work"));
-    ASSERT.that(path("..").toRealPath()).isEqualTo(path("/"));
-    ASSERT.that(path("../..").toRealPath()).isEqualTo(path("/"));
-    ASSERT.that(path("./.././..").toRealPath()).isEqualTo(path("/"));
-    ASSERT.that(path("./.././../.").toRealPath()).isEqualTo(path("/"));
+    assert_().that(path("").toRealPath()).isEqualTo(path("/work"));
+    assert_().that(path(".").toRealPath()).isEqualTo(path("/work"));
+    assert_().that(path("..").toRealPath()).isEqualTo(path("/"));
+    assert_().that(path("../..").toRealPath()).isEqualTo(path("/"));
+    assert_().that(path("./.././..").toRealPath()).isEqualTo(path("/"));
+    assert_().that(path("./.././../.").toRealPath()).isEqualTo(path("/"));
   }
 
   @Test
   public void testPaths_toUri() {
-    ASSERT.that(path("/").toUri()).is(URI.create("jimfs://unix/"));
-    ASSERT.that(path("/foo").toUri()).is(URI.create("jimfs://unix/foo"));
-    ASSERT.that(path("/foo/bar").toUri()).is(URI.create("jimfs://unix/foo/bar"));
-    ASSERT.that(path("foo").toUri()).is(URI.create("jimfs://unix/work/foo"));
-    ASSERT.that(path("foo/bar").toUri()).is(URI.create("jimfs://unix/work/foo/bar"));
-    ASSERT.that(path("").toUri()).is(URI.create("jimfs://unix/work"));
-    ASSERT.that(path("./../.").toUri()).is(URI.create("jimfs://unix/work/./../."));
+    assert_().that(path("/").toUri()).is(URI.create("jimfs://unix/"));
+    assert_().that(path("/foo").toUri()).is(URI.create("jimfs://unix/foo"));
+    assert_().that(path("/foo/bar").toUri()).is(URI.create("jimfs://unix/foo/bar"));
+    assert_().that(path("foo").toUri()).is(URI.create("jimfs://unix/work/foo"));
+    assert_().that(path("foo/bar").toUri()).is(URI.create("jimfs://unix/work/foo/bar"));
+    assert_().that(path("").toUri()).is(URI.create("jimfs://unix/work"));
+    assert_().that(path("./../.").toUri()).is(URI.create("jimfs://unix/work/./../."));
   }
 
   @Test
   public void testPaths_getFromUri() {
-    ASSERT.that(Paths.get(URI.create("jimfs://unix/")))
+    assert_().that(Paths.get(URI.create("jimfs://unix/")))
         .isEqualTo(path("/"));
-    ASSERT.that(Paths.get(URI.create("jimfs://unix/foo")))
+    assert_().that(Paths.get(URI.create("jimfs://unix/foo")))
         .isEqualTo(path("/foo"));
-    ASSERT.that(Paths.get(URI.create("jimfs://unix/foo%20bar")))
+    assert_().that(Paths.get(URI.create("jimfs://unix/foo%20bar")))
         .isEqualTo(path("/foo bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://unix/foo/./bar")))
+    assert_().that(Paths.get(URI.create("jimfs://unix/foo/./bar")))
         .isEqualTo(path("/foo/./bar"));
-    ASSERT.that(Paths.get(URI.create("jimfs://unix/foo/bar/")))
+    assert_().that(Paths.get(URI.create("jimfs://unix/foo/bar/")))
         .isEqualTo(path("/foo/bar"));
   }
 
@@ -358,7 +358,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       fs.getPathMatcher("foo:foo");
       fail();
     } catch (UnsupportedOperationException expected) {
-      ASSERT.that(expected.getMessage()).contains("syntax");
+      assert_().that(expected.getMessage()).contains("syntax");
     }
   }
 
@@ -581,7 +581,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.createFile(path("/foo/bar/baz"));
       fail();
     } catch (NoSuchFileException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo/bar/baz");
+      assert_().that(expected.getFile()).isEqualTo("/foo/bar/baz");
     }
   }
 
@@ -594,7 +594,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.createFile(path("/foo/bar/baz/stuff"));
       fail();
     } catch (NoSuchFileException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
+      assert_().that(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
     }
   }
 
@@ -607,7 +607,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.createFile(path("/foo/bar/baz"));
       fail();
     } catch (NoSuchFileException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo/bar/baz");
+      assert_().that(expected.getFile()).isEqualTo("/foo/bar/baz");
     }
   }
 
@@ -620,7 +620,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.createFile(path("/foo/bar/baz/stuff"));
       fail();
     } catch (NoSuchFileException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
+      assert_().that(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
     }
   }
 
@@ -634,7 +634,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.createFile(path("/foo/bar/baz"));
       fail();
     } catch (NoSuchFileException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo/bar/baz");
+      assert_().that(expected.getFile()).isEqualTo("/foo/bar/baz");
     }
   }
 
@@ -648,7 +648,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.createFile(path("/foo/bar/baz/stuff"));
       fail();
     } catch (NoSuchFileException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
+      assert_().that(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
     }
   }
 
@@ -890,7 +890,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       byte[] readBytes = new byte[4];
       channel.read(ByteBuffer.wrap(readBytes));
 
-      ASSERT.that(Bytes.asList(readBytes)).isEqualTo(Bytes.asList(bytes));
+      assert_().that(Bytes.asList(readBytes)).isEqualTo(Bytes.asList(bytes));
     }
   }
 
@@ -955,16 +955,16 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       // non-CREATE mode
       Files.write(path("/foo"), preFilledBytes(10), WRITE);
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo");
-      ASSERT.that(expected.getMessage()).contains("regular file");
+      assert_().that(expected.getFile()).isEqualTo("/foo");
+      assert_().that(expected.getMessage()).contains("regular file");
     }
 
     try {
       // CREATE mode
       Files.write(path("/foo"), preFilledBytes(10));
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo");
-      ASSERT.that(expected.getMessage()).contains("regular file");
+      assert_().that(expected.getFile()).isEqualTo("/foo");
+      assert_().that(expected.getMessage()).contains("regular file");
     }
   }
 
@@ -1011,12 +1011,12 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     OutputStream out = Files.newOutputStream(foo, APPEND);
     FileChannel channel = FileChannel.open(foo, READ, WRITE);
 
-    ASSERT.that(channel.size()).isEqualTo(100L);
+    assert_().that(channel.size()).isEqualTo(100L);
 
     Files.delete(foo);
     assertThat("/foo").doesNotExist();
 
-    ASSERT.that(channel.size()).isEqualTo(100L);
+    assert_().that(channel.size()).isEqualTo(100L);
 
     ByteBuffer buf = ByteBuffer.allocate(100);
     while (buf.hasRemaining()) {
@@ -1028,9 +1028,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     byte[] moreBytes = {1, 2, 3, 4, 5};
     out.write(moreBytes);
 
-    ASSERT.that(channel.size()).isEqualTo(105L);
+    assert_().that(channel.size()).isEqualTo(105L);
     buf.clear();
-    ASSERT.that(channel.read(buf)).is(5);
+    assert_().that(channel.read(buf)).is(5);
 
     buf.flip();
     byte[] b = new byte[5];
@@ -1095,14 +1095,14 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.delete(path("/foo"));
       fail();
     } catch (DirectoryNotEmptyException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo");
+      assert_().that(expected.getFile()).isEqualTo("/foo");
     }
 
     try {
       Files.deleteIfExists(path("/foo"));
       fail();
     } catch (DirectoryNotEmptyException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("/foo");
+      assert_().that(expected.getFile()).isEqualTo("/foo");
     }
   }
 
@@ -1125,28 +1125,28 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.delete(path(""));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("");
+      assert_().that(expected.getFile()).isEqualTo("");
     }
 
     try {
       Files.delete(path("."));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo(".");
+      assert_().that(expected.getFile()).isEqualTo(".");
     }
 
     try {
       Files.delete(path("../../work"));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("../../work");
+      assert_().that(expected.getFile()).isEqualTo("../../work");
     }
 
     try {
       Files.delete(path("./../work/.././../work/."));
       fail();
     } catch (FileSystemException expected) {
-      ASSERT.that(expected.getFile()).isEqualTo("./../work/.././../work/.");
+      assert_().that(expected.getFile()).isEqualTo("./../work/.././../work/.");
     }
   }
 
@@ -1160,7 +1160,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.delete(path("/"));
       fail();
     } catch (IOException expected) {
-      ASSERT.that(expected.getMessage()).contains("root");
+      assert_().that(expected.getMessage()).contains("root");
     }
 
     Files.createDirectories(path("/foo/bar"));
@@ -1169,14 +1169,14 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.delete(path("/foo/bar/../.."));
       fail();
     } catch (IOException expected) {
-      ASSERT.that(expected.getMessage()).contains("root");
+      assert_().that(expected.getMessage()).contains("root");
     }
 
     try {
       Files.delete(path("/foo/./../foo/bar/./../bar/.././../../.."));
       fail();
     } catch (IOException expected) {
-      ASSERT.that(expected.getMessage()).contains("root");
+      assert_().that(expected.getMessage()).contains("root");
     }
   }
 
@@ -1237,14 +1237,14 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.createFile(path("/foo/bar/file"));
       fail();
     } catch (IOException expected) {
-      ASSERT.that(expected.getMessage()).contains("symbolic link");
+      assert_().that(expected.getMessage()).contains("symbolic link");
     }
 
     try {
       Files.write(path("/foo/bar"), preFilledBytes(10));
       fail();
     } catch (IOException expected) {
-      ASSERT.that(expected.getMessage()).contains("symbolic link");
+      assert_().that(expected.getMessage()).contains("symbolic link");
     }
   }
 
@@ -1524,7 +1524,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         FileTime.fromMillis(1000),
         FileTime.fromMillis(10000));
 
-    ASSERT.that(Files.getAttribute(foo, "lastModifiedTime")).isEqualTo(FileTime.fromMillis(100));
+    assert_().that(Files.getAttribute(foo, "lastModifiedTime")).isEqualTo(FileTime.fromMillis(100));
 
     UserPrincipal zero = fs.getUserPrincipalLookupService().lookupPrincipalByName("zero");
     Files.setAttribute(foo, "owner:owner", zero);
@@ -1533,20 +1533,20 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.copy(foo, bar, COPY_ATTRIBUTES);
 
     BasicFileAttributes attributes = Files.readAttributes(bar, BasicFileAttributes.class);
-    ASSERT.that(attributes.lastModifiedTime()).isEqualTo(FileTime.fromMillis(100));
-    ASSERT.that(attributes.lastAccessTime()).isEqualTo(FileTime.fromMillis(1000));
-    ASSERT.that(attributes.creationTime()).isEqualTo(FileTime.fromMillis(10000));
-    ASSERT.that(Files.getAttribute(bar, "owner:owner")).isEqualTo(zero);
+    assert_().that(attributes.lastModifiedTime()).isEqualTo(FileTime.fromMillis(100));
+    assert_().that(attributes.lastAccessTime()).isEqualTo(FileTime.fromMillis(1000));
+    assert_().that(attributes.creationTime()).isEqualTo(FileTime.fromMillis(10000));
+    assert_().that(Files.getAttribute(bar, "owner:owner")).isEqualTo(zero);
 
     Path baz = path("/baz");
     Files.copy(foo, baz);
 
     // test that attributes are not copied when COPY_ATTRIBUTES is not specified
     attributes = Files.readAttributes(baz, BasicFileAttributes.class);
-    ASSERT.that(attributes.lastModifiedTime()).isNotEqualTo(FileTime.fromMillis(100));
-    ASSERT.that(attributes.lastAccessTime()).isNotEqualTo(FileTime.fromMillis(1000));
-    ASSERT.that(attributes.creationTime()).isNotEqualTo(FileTime.fromMillis(10000));
-    ASSERT.that(Files.getAttribute(baz, "owner:owner")).isNotEqualTo(zero);
+    assert_().that(attributes.lastModifiedTime()).isNotEqualTo(FileTime.fromMillis(100));
+    assert_().that(attributes.lastAccessTime()).isNotEqualTo(FileTime.fromMillis(1000));
+    assert_().that(attributes.creationTime()).isNotEqualTo(FileTime.fromMillis(10000));
+    assert_().that(Files.getAttribute(baz, "owner:owner")).isNotEqualTo(zero);
   }
 
   @Test
@@ -1805,7 +1805,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.move(path("/foo"), path("/foo/bar"));
       fail();
     } catch (IOException expected) {
-      ASSERT.that(expected.getMessage()).contains("sub");
+      assert_().that(expected.getMessage()).contains("sub");
     }
 
     Files.createDirectories(path("/foo/bar/baz/stuff"));
@@ -1816,7 +1816,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.move(path("/foo/bar"), path("/hello/world/link/bar"));
       fail();
     } catch (IOException expected) {
-      ASSERT.that(expected.getMessage()).contains("sub");
+      assert_().that(expected.getMessage()).contains("sub");
     }
   }
 
@@ -1901,7 +1901,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Path defaultFileSystemRoot = FileSystems.getDefault()
         .getRootDirectories().iterator().next();
 
-    ASSERT.that(Files.isSameFile(path("/"), defaultFileSystemRoot)).isFalse();
+    assert_().that(Files.isSameFile(path("/"), defaultFileSystemRoot)).isFalse();
   }
 
   @Test
@@ -1933,7 +1933,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
       SecureDirectoryStream<Path> secureStream = (SecureDirectoryStream<Path>) stream;
 
-      ASSERT.that(ImmutableList.copyOf(secureStream)).isEqualTo(
+      assert_().that(ImmutableList.copyOf(secureStream)).isEqualTo(
           ImmutableList.of(
               path("/foo/a"), path("/foo/b"), path("/foo/bar"), path("/foo/barLink")));
 
@@ -1957,11 +1957,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       assertThat("/baz/stuff/b").doesNotExist();
       assertThat("/baz/stuff").hasChildren("a", "bar", "barLink");
 
-      ASSERT.that(secureStream.getFileAttributeView(BasicFileAttributeView.class)
+      assert_().that(secureStream.getFileAttributeView(BasicFileAttributeView.class)
           .readAttributes()
           .isDirectory()).isTrue();
 
-      ASSERT.that(secureStream.getFileAttributeView(path("a"), BasicFileAttributeView.class)
+      assert_().that(secureStream.getFileAttributeView(path("a"), BasicFileAttributeView.class)
           .readAttributes()
           .isRegularFile()).isTrue();
 
@@ -1969,23 +1969,23 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         secureStream.deleteFile(path("bar"));
         fail();
       } catch (FileSystemException expected) {
-        ASSERT.that(expected.getFile()).isEqualTo("bar");
+        assert_().that(expected.getFile()).isEqualTo("bar");
       }
 
       try {
         secureStream.deleteDirectory(path("a"));
         fail();
       } catch (FileSystemException expected) {
-        ASSERT.that(expected.getFile()).isEqualTo("a");
+        assert_().that(expected.getFile()).isEqualTo("a");
       }
 
       try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
         barStream.newByteChannel(path("stuff"), ImmutableSet.of(WRITE, CREATE_NEW)).close();
-        ASSERT.that(barStream.getFileAttributeView(path("stuff"), BasicFileAttributeView.class)
+        assert_().that(barStream.getFileAttributeView(path("stuff"), BasicFileAttributeView.class)
             .readAttributes()
             .isRegularFile()).isTrue();
 
-        ASSERT.that(secureStream.getFileAttributeView(
+        assert_().that(secureStream.getFileAttributeView(
             path("bar/stuff"), BasicFileAttributeView.class)
                 .readAttributes()
                 .isRegularFile()).isTrue();
@@ -1993,12 +1993,12 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
       try (SecureDirectoryStream<Path> barLinkStream = secureStream
           .newDirectoryStream(path("barLink"))) {
-        ASSERT.that(barLinkStream.getFileAttributeView(
+        assert_().that(barLinkStream.getFileAttributeView(
             path("stuff"), BasicFileAttributeView.class)
                 .readAttributes()
                 .isRegularFile()).isTrue();
 
-        ASSERT.that(barLinkStream.getFileAttributeView(
+        assert_().that(barLinkStream.getFileAttributeView(
             path(".."), BasicFileAttributeView.class)
                 .readAttributes()
                 .isDirectory()).isTrue();
@@ -2008,7 +2008,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         secureStream.newDirectoryStream(path("barLink"), NOFOLLOW_LINKS);
         fail();
       } catch (NotDirectoryException expected) {
-        ASSERT.that(expected.getFile()).isEqualTo("barLink");
+        assert_().that(expected.getFile()).isEqualTo("barLink");
       }
 
       try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
@@ -2017,7 +2017,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         assertThat(path("/baz/stuff/a")).doesNotExist();
         assertThat(path("/baz/stuff/bar/moved")).isRegularFile();
 
-        ASSERT.that(barStream.getFileAttributeView(path("moved"), BasicFileAttributeView.class)
+        assert_().that(barStream.getFileAttributeView(path("moved"), BasicFileAttributeView.class)
             .readAttributes()
             .isRegularFile()).isTrue();
       }
@@ -2036,11 +2036,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(path("foo"))) {
       SecureDirectoryStream<Path> secureStream = (SecureDirectoryStream<Path>) stream;
 
-      ASSERT.that(ImmutableList.copyOf(secureStream)).has()
+      assert_().that(ImmutableList.copyOf(secureStream)).has()
           .exactly(path("foo/a"), path("foo/b"), path("foo/c"));
 
       try (DirectoryStream<Path> stream2 = secureStream.newDirectoryStream(path("c"))) {
-        ASSERT.that(ImmutableList.copyOf(stream2)).has()
+        assert_().that(ImmutableList.copyOf(stream2)).has()
             .exactly(path("foo/c/d"), path("foo/c/e"));
       }
     }
@@ -2317,11 +2317,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createFile(bar);
 
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(foo)) {
-      ASSERT.that(stream).isNotA(SecureDirectoryStream.class);
+      assert_().that(stream).isNotA(SecureDirectoryStream.class);
     }
 
     try (SeekableByteChannel channel = Files.newByteChannel(bar)) {
-      ASSERT.that(channel).isNotA(FileChannel.class);
+      assert_().that(channel).isNotA(FileChannel.class);
     }
   }
 }

@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.jimfs.TestUtils.regularFile;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.fail;
 
@@ -421,15 +421,15 @@ public class FileTreeTest {
   }
 
   private void assertExists(DirectoryEntry entry, String parent, String file) {
-    ASSERT.that(entry.exists()).isTrue();
-    ASSERT.that(entry.name()).isEqualTo(Name.simple(file));
-    ASSERT.that(entry.directory()).isEqualTo(files.get(parent));
-    ASSERT.that(entry.file()).isEqualTo(files.get(file));
+    assertThat(entry.exists()).isTrue();
+    assertThat(entry.name()).isEqualTo(Name.simple(file));
+    assertThat(entry.directory()).isEqualTo(files.get(parent));
+    assertThat(entry.file()).isEqualTo(files.get(file));
   }
 
   private void assertParentExists(DirectoryEntry entry, String parent) {
-    ASSERT.that(entry.exists()).isFalse();
-    ASSERT.that(entry.directory()).isEqualTo(files.get(parent));
+    assertThat(entry.exists()).isFalse();
+    assertThat(entry.directory()).isEqualTo(files.get(parent));
 
     try {
       entry.file();

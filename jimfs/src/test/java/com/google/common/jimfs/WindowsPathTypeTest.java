@@ -20,7 +20,7 @@ import static com.google.common.jimfs.PathType.windows;
 import static com.google.common.jimfs.PathTypeTest.assertParseResult;
 import static com.google.common.jimfs.PathTypeTest.assertUriRoundTripsCorrectly;
 import static com.google.common.jimfs.PathTypeTest.fileSystemUri;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
@@ -43,21 +43,21 @@ public class WindowsPathTypeTest {
   @Test
   public void testWindows() {
     PathType windows = PathType.windows();
-    ASSERT.that(windows.getSeparator()).isEqualTo("\\");
-    ASSERT.that(windows.getOtherSeparators()).isEqualTo("/");
+    assertThat(windows.getSeparator()).isEqualTo("\\");
+    assertThat(windows.getOtherSeparators()).isEqualTo("/");
 
     // "C:\\foo\bar" results from "C:\", "foo", "bar" passed to getPath
     PathType.ParseResult path = windows.parsePath("C:\\\\foo\\bar");
     assertParseResult(path, "C:\\", "foo", "bar");
-    ASSERT.that(windows.toString(path.root(), path.names())).isEqualTo("C:\\foo\\bar");
+    assertThat(windows.toString(path.root(), path.names())).isEqualTo("C:\\foo\\bar");
 
     PathType.ParseResult path2 = windows.parsePath("foo/bar/");
     assertParseResult(path2, null, "foo", "bar");
-    ASSERT.that(windows.toString(path2.root(), path2.names())).isEqualTo("foo\\bar");
+    assertThat(windows.toString(path2.root(), path2.names())).isEqualTo("foo\\bar");
 
     PathType.ParseResult path3 = windows.parsePath("hello world/foo/bar");
     assertParseResult(path3, null, "hello world", "foo", "bar");
-    ASSERT.that(windows.toString(null, path3.names())).isEqualTo("hello world\\foo\\bar");
+    assertThat(windows.toString(null, path3.names())).isEqualTo("hello world\\foo\\bar");
   }
 
   @Test
@@ -103,32 +103,32 @@ public class WindowsPathTypeTest {
       windows.parsePath("\\\\");
       fail();
     } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).isEqualTo("\\\\");
-      ASSERT.that(expected.getReason()).isEqualTo("UNC path is missing hostname");
+      assertThat(expected.getInput()).isEqualTo("\\\\");
+      assertThat(expected.getReason()).isEqualTo("UNC path is missing hostname");
     }
 
     try {
       windows.parsePath("\\\\host");
       fail();
     } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).isEqualTo("\\\\host");
-      ASSERT.that(expected.getReason()).isEqualTo("UNC path is missing sharename");
+      assertThat(expected.getInput()).isEqualTo("\\\\host");
+      assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
     }
 
     try {
       windows.parsePath("\\\\host\\");
       fail();
     } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).isEqualTo("\\\\host\\");
-      ASSERT.that(expected.getReason()).isEqualTo("UNC path is missing sharename");
+      assertThat(expected.getInput()).isEqualTo("\\\\host\\");
+      assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
     }
 
     try {
       windows.parsePath("//host");
       fail();
     } catch (InvalidPathException expected) {
-      ASSERT.that(expected.getInput()).is("//host");
-      ASSERT.that(expected.getReason()).isEqualTo("UNC path is missing sharename");
+      assertThat(expected.getInput()).is("//host");
+      assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
     }
   }
 
@@ -162,34 +162,34 @@ public class WindowsPathTypeTest {
   @Test
   public void testWindows_toUri_normal() {
     URI fileUri = PathType.windows().toUri(fileSystemUri, "C:\\", ImmutableList.of("foo", "bar"));
-    ASSERT.that(fileUri.toString()).is("jimfs://foo/C:/foo/bar");
-    ASSERT.that(fileUri.getPath()).isEqualTo("/C:/foo/bar");
+    assertThat(fileUri.toString()).is("jimfs://foo/C:/foo/bar");
+    assertThat(fileUri.getPath()).isEqualTo("/C:/foo/bar");
 
     URI rootUri = PathType.windows().toUri(fileSystemUri, "C:\\", ImmutableList.<String>of());
-    ASSERT.that(rootUri.toString()).is("jimfs://foo/C:/");
-    ASSERT.that(rootUri.getPath()).isEqualTo("/C:/");
+    assertThat(rootUri.toString()).is("jimfs://foo/C:/");
+    assertThat(rootUri.getPath()).isEqualTo("/C:/");
   }
 
   @Test
   public void testWindows_toUri_unc() {
     URI fileUri = PathType.windows()
         .toUri(fileSystemUri, "\\\\host\\share\\", ImmutableList.of("foo", "bar"));
-    ASSERT.that(fileUri.toString()).is("jimfs://foo//host/share/foo/bar");
-    ASSERT.that(fileUri.getPath()).is("//host/share/foo/bar");
+    assertThat(fileUri.toString()).is("jimfs://foo//host/share/foo/bar");
+    assertThat(fileUri.getPath()).is("//host/share/foo/bar");
 
     URI rootUri = PathType.windows()
         .toUri(fileSystemUri, "\\\\host\\share\\", ImmutableList.<String>of());
-    ASSERT.that(rootUri.toString()).is("jimfs://foo//host/share/");
-    ASSERT.that(rootUri.getPath()).is("//host/share/");
+    assertThat(rootUri.toString()).is("jimfs://foo//host/share/");
+    assertThat(rootUri.getPath()).is("//host/share/");
   }
 
   @Test
   public void testWindows_toUri_escaping() {
     URI uri = PathType.windows()
         .toUri(fileSystemUri, "C:\\", ImmutableList.of("Users", "foo", "My Documents"));
-    ASSERT.that(uri.toString()).is("jimfs://foo/C:/Users/foo/My%20Documents");
-    ASSERT.that(uri.getRawPath()).isEqualTo("/C:/Users/foo/My%20Documents");
-    ASSERT.that(uri.getPath()).isEqualTo("/C:/Users/foo/My Documents");
+    assertThat(uri.toString()).is("jimfs://foo/C:/Users/foo/My%20Documents");
+    assertThat(uri.getRawPath()).isEqualTo("/C:/Users/foo/My%20Documents");
+    assertThat(uri.getPath()).isEqualTo("/C:/Users/foo/My Documents");
   }
 
   @Test

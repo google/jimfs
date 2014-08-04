@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.jimfs.UserLookupService.createGroupPrincipal;
 import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -63,24 +63,24 @@ public class UnixAttributeProviderTest extends
 
     // these are pretty much meaningless here since they aren't properties this
     // file system actually has, so don't really care about the exact value of these
-    ASSERT.that(provider.get(file, "uid")).isA(Integer.class);
-    ASSERT.that(provider.get(file, "gid")).isA(Integer.class);
-    ASSERT.that(provider.get(file, "rdev")).isEqualTo(0L);
-    ASSERT.that(provider.get(file, "dev")).isEqualTo(1L);
-    ASSERT.that(provider.get(file, "ino")).isA(Integer.class);
+    assertThat(provider.get(file, "uid")).isA(Integer.class);
+    assertThat(provider.get(file, "gid")).isA(Integer.class);
+    assertThat(provider.get(file, "rdev")).isEqualTo(0L);
+    assertThat(provider.get(file, "dev")).isEqualTo(1L);
+    assertThat(provider.get(file, "ino")).isA(Integer.class);
 
     // these have logical origins in attributes from other views
-    ASSERT.that(provider.get(file, "mode")).isEqualTo(0644); // rw-r--r--
-    ASSERT.that(provider.get(file, "ctime"))
+    assertThat(provider.get(file, "mode")).isEqualTo(0644); // rw-r--r--
+    assertThat(provider.get(file, "ctime"))
         .isEqualTo(FileTime.fromMillis(file.getCreationTime()));
 
     // this is based on a property this file system does actually have
-    ASSERT.that(provider.get(file, "nlink")).isEqualTo(1);
+    assertThat(provider.get(file, "nlink")).isEqualTo(1);
 
     file.incrementLinkCount();
-    ASSERT.that(provider.get(file, "nlink")).isEqualTo(2);
+    assertThat(provider.get(file, "nlink")).isEqualTo(2);
     file.decrementLinkCount();
-    ASSERT.that(provider.get(file, "nlink")).isEqualTo(1);
+    assertThat(provider.get(file, "nlink")).isEqualTo(1);
   }
 
   @Test

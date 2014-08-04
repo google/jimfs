@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -50,7 +50,7 @@ public class OwnerAttributeProviderTest extends
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(file, "owner")).isEqualTo(createUserPrincipal("user"));
+    assertThat(provider.get(file, "owner")).isEqualTo(createUserPrincipal("user"));
   }
 
   @Test
@@ -65,13 +65,13 @@ public class OwnerAttributeProviderTest extends
   @Test
   public void testView() throws IOException {
     FileOwnerAttributeView view = provider.view(fileLookup(), NO_INHERITED_VIEWS);
-    ASSERT.that(view).isNotNull();
+    assertThat(view).isNotNull();
 
-    ASSERT.that(view.name()).isEqualTo("owner");
-    ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("user"));
+    assertThat(view.name()).isEqualTo("owner");
+    assertThat(view.getOwner()).isEqualTo(createUserPrincipal("user"));
 
     view.setOwner(createUserPrincipal("root"));
-    ASSERT.that(view.getOwner()).isEqualTo(createUserPrincipal("root"));
-    ASSERT.that(file.getAttribute("owner", "owner")).isEqualTo(createUserPrincipal("root"));
+    assertThat(view.getOwner()).isEqualTo(createUserPrincipal("root"));
+    assertThat(file.getAttribute("owner", "owner")).isEqualTo(createUserPrincipal("root"));
   }
 }

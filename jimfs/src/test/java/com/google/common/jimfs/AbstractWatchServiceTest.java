@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.jimfs.AbstractWatchService.Key.State.READY;
 import static com.google.common.jimfs.AbstractWatchService.Key.State.SIGNALLED;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -61,23 +61,23 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testNewWatcher() throws IOException {
-    ASSERT.that(watcher.isOpen()).isTrue();
-    ASSERT.that(watcher.poll()).isNull();
-    ASSERT.that(watcher.queuedKeys()).isEmpty();
+    assertThat(watcher.isOpen()).isTrue();
+    assertThat(watcher.poll()).isNull();
+    assertThat(watcher.queuedKeys()).isEmpty();
     watcher.close();
-    ASSERT.that(watcher.isOpen()).isFalse();
+    assertThat(watcher.isOpen()).isFalse();
   }
 
   @Test
   public void testRegister() throws IOException {
     Watchable watchable = new StubWatchable();
     AbstractWatchService.Key key = watcher.register(watchable, ImmutableSet.of(ENTRY_CREATE));
-    ASSERT.that(key.isValid()).isTrue();
-    ASSERT.that(key.pollEvents()).isEmpty();
-    ASSERT.that(key.subscribesTo(ENTRY_CREATE)).isTrue();
-    ASSERT.that(key.subscribesTo(ENTRY_DELETE)).isFalse();
-    ASSERT.that(key.watchable()).isEqualTo(watchable);
-    ASSERT.that(key.state()).isEqualTo(READY);
+    assertThat(key.isValid()).isTrue();
+    assertThat(key.pollEvents()).isEmpty();
+    assertThat(key.subscribesTo(ENTRY_CREATE)).isTrue();
+    assertThat(key.subscribesTo(ENTRY_DELETE)).isFalse();
+    assertThat(key.watchable()).isEqualTo(watchable);
+    assertThat(key.state()).isEqualTo(READY);
   }
 
   @Test
@@ -90,17 +90,17 @@ public class AbstractWatchServiceTest {
     key.post(event);
     key.signal();
 
-    ASSERT.that(watcher.queuedKeys()).has().exactly(key);
+    assertThat(watcher.queuedKeys()).has().exactly(key);
 
     WatchKey retrievedKey = watcher.poll();
-    ASSERT.that(retrievedKey).isEqualTo(key);
+    assertThat(retrievedKey).isEqualTo(key);
 
     List<WatchEvent<?>> events = retrievedKey.pollEvents();
-    ASSERT.that(events.size()).is(1);
-    ASSERT.that(events.get(0)).isEqualTo(event);
+    assertThat(events.size()).is(1);
+    assertThat(events.get(0)).isEqualTo(event);
 
     // polling should have removed all events
-    ASSERT.that(retrievedKey.pollEvents()).isEmpty();
+    assertThat(retrievedKey.pollEvents()).isEmpty();
   }
 
   @Test
@@ -110,36 +110,36 @@ public class AbstractWatchServiceTest {
 
     AbstractWatchService.Event<Path> event =
         new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
-    ASSERT.that(key.state()).isEqualTo(READY);
+    assertThat(key.state()).isEqualTo(READY);
     key.post(event);
     key.signal();
-    ASSERT.that(key.state()).isEqualTo(SIGNALLED);
+    assertThat(key.state()).isEqualTo(SIGNALLED);
 
     AbstractWatchService.Event<Path> event2 =
         new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
     key.post(event2);
-    ASSERT.that(key.state()).isEqualTo(SIGNALLED);
+    assertThat(key.state()).isEqualTo(SIGNALLED);
 
     // key was not queued twice
-    ASSERT.that(watcher.queuedKeys()).has().exactly(key);
-    ASSERT.that(watcher.poll().pollEvents()).has().exactly(event, event2);
+    assertThat(watcher.queuedKeys()).has().exactly(key);
+    assertThat(watcher.poll().pollEvents()).has().exactly(event, event2);
 
-    ASSERT.that(watcher.poll()).isNull();
+    assertThat(watcher.poll()).isNull();
 
     key.post(event);
 
     // still not added to queue; already signalled
-    ASSERT.that(watcher.poll()).isNull();
-    ASSERT.that(key.pollEvents()).has().exactly(event);
+    assertThat(watcher.poll()).isNull();
+    assertThat(key.pollEvents()).has().exactly(event);
 
     key.reset();
-    ASSERT.that(key.state()).isEqualTo(READY);
+    assertThat(key.state()).isEqualTo(READY);
 
     key.post(event2);
     key.signal();
 
     // now that it's reset it can be requeued
-    ASSERT.that(watcher.poll()).isEqualTo(key);
+    assertThat(watcher.poll()).isEqualTo(key);
   }
 
   @Test
@@ -150,16 +150,16 @@ public class AbstractWatchServiceTest {
     key.signal();
 
     key = (AbstractWatchService.Key) watcher.poll();
-    ASSERT.that(watcher.queuedKeys()).isEmpty();
+    assertThat(watcher.queuedKeys()).isEmpty();
 
-    ASSERT.that(key.pollEvents().size()).is(1);
+    assertThat(key.pollEvents().size()).is(1);
 
     key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
-    ASSERT.that(watcher.queuedKeys()).isEmpty();
+    assertThat(watcher.queuedKeys()).isEmpty();
 
     key.reset();
-    ASSERT.that(key.state()).isEqualTo(SIGNALLED);
-    ASSERT.that(watcher.queuedKeys().size()).is(1);
+    assertThat(key.state()).isEqualTo(SIGNALLED);
+    assertThat(watcher.queuedKeys().size()).is(1);
   }
 
   @Test
@@ -173,14 +173,14 @@ public class AbstractWatchServiceTest {
 
     List<WatchEvent<?>> events = key.pollEvents();
 
-    ASSERT.that(events.size()).is(AbstractWatchService.Key.MAX_QUEUE_SIZE + 1);
+    assertThat(events.size()).is(AbstractWatchService.Key.MAX_QUEUE_SIZE + 1);
     for (int i = 0; i < AbstractWatchService.Key.MAX_QUEUE_SIZE; i++) {
-      ASSERT.that(events.get(i).kind()).isEqualTo(ENTRY_CREATE);
+      assertThat(events.get(i).kind()).isEqualTo(ENTRY_CREATE);
     }
 
     WatchEvent<?> lastEvent = events.get(AbstractWatchService.Key.MAX_QUEUE_SIZE);
-    ASSERT.that(lastEvent.kind()).isEqualTo(OVERFLOW);
-    ASSERT.that(lastEvent.count()).is(10);
+    assertThat(lastEvent.kind()).isEqualTo(OVERFLOW);
+    assertThat(lastEvent.count()).is(10);
   }
 
   @Test
@@ -189,7 +189,7 @@ public class AbstractWatchServiceTest {
         new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     key.signal();
     key.cancel();
-    ASSERT.that(key.reset()).isFalse();
+    assertThat(key.reset()).isFalse();
   }
 
   @Test
@@ -199,15 +199,15 @@ public class AbstractWatchServiceTest {
     AbstractWatchService.Key key2 = watcher.register(
         new StubWatchable(), ImmutableSet.of(ENTRY_MODIFY));
 
-    ASSERT.that(key1.isValid()).isTrue();
-    ASSERT.that(key2.isValid()).isTrue();
+    assertThat(key1.isValid()).isTrue();
+    assertThat(key2.isValid()).isTrue();
 
     watcher.close();
 
-    ASSERT.that(key1.isValid()).isFalse();
-    ASSERT.that(key2.isValid()).isFalse();
-    ASSERT.that(key1.reset()).isFalse();
-    ASSERT.that(key2.reset()).isFalse();
+    assertThat(key1.isValid()).isFalse();
+    assertThat(key2.isValid()).isFalse();
+    assertThat(key1.reset()).isFalse();
+    assertThat(key2.reset()).isFalse();
 
     try {
       watcher.poll();

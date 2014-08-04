@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.attribute.AclEntryFlag.DIRECTORY_INHERIT;
 import static java.nio.file.attribute.AclEntryPermission.APPEND_DATA;
 import static java.nio.file.attribute.AclEntryPermission.DELETE;
@@ -83,7 +83,7 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(file, "acl")).isEqualTo(defaultAcl);
+    assertThat(provider.get(file, "acl")).isEqualTo(defaultAcl);
   }
 
   @Test
@@ -101,16 +101,16 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
             "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
-    ASSERT.that(view.name()).isEqualTo("acl");
+    assertThat(view.name()).isEqualTo("acl");
 
-    ASSERT.that(view.getAcl()).isEqualTo(defaultAcl);
+    assertThat(view.getAcl()).isEqualTo(defaultAcl);
 
     view.setAcl(ImmutableList.<AclEntry>of());
     view.setOwner(FOO);
 
-    ASSERT.that(view.getAcl()).isEqualTo(ImmutableList.<AclEntry>of());
-    ASSERT.that(view.getOwner()).isEqualTo(FOO);
+    assertThat(view.getAcl()).isEqualTo(ImmutableList.<AclEntry>of());
+    assertThat(view.getOwner()).isEqualTo(FOO);
 
-    ASSERT.that(file.getAttribute("acl", "acl")).isEqualTo(ImmutableList.<AclEntry>of());
+    assertThat(file.getAttribute("acl", "acl")).isEqualTo(ImmutableList.<AclEntry>of());
   }
 }

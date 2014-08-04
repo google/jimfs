@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
@@ -58,7 +58,7 @@ public class DosAttributeProviderTest extends AbstractAttributeProviderTest<DosA
   @Test
   public void testInitialAttributes() {
     for (String attribute : DOS_ATTRIBUTES) {
-      ASSERT.that(provider.get(file, attribute)).isEqualTo(false);
+      assertThat(provider.get(file, attribute)).isEqualTo(false);
     }
   }
 
@@ -77,47 +77,47 @@ public class DosAttributeProviderTest extends AbstractAttributeProviderTest<DosA
             "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
-    ASSERT.that(view.name()).isEqualTo("dos");
+    assertThat(view.name()).isEqualTo("dos");
 
     DosFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.isHidden()).isFalse();
-    ASSERT.that(attrs.isArchive()).isFalse();
-    ASSERT.that(attrs.isReadOnly()).isFalse();
-    ASSERT.that(attrs.isSystem()).isFalse();
+    assertThat(attrs.isHidden()).isFalse();
+    assertThat(attrs.isArchive()).isFalse();
+    assertThat(attrs.isReadOnly()).isFalse();
+    assertThat(attrs.isSystem()).isFalse();
 
     view.setArchive(true);
     view.setReadOnly(true);
     view.setHidden(true);
     view.setSystem(false);
 
-    ASSERT.that(attrs.isHidden()).isFalse();
-    ASSERT.that(attrs.isArchive()).isFalse();
-    ASSERT.that(attrs.isReadOnly()).isFalse();
+    assertThat(attrs.isHidden()).isFalse();
+    assertThat(attrs.isArchive()).isFalse();
+    assertThat(attrs.isReadOnly()).isFalse();
 
     attrs = view.readAttributes();
-    ASSERT.that(attrs.isHidden()).isTrue();
-    ASSERT.that(attrs.isArchive()).isTrue();
-    ASSERT.that(attrs.isReadOnly()).isTrue();
-    ASSERT.that(attrs.isSystem()).isFalse();
+    assertThat(attrs.isHidden()).isTrue();
+    assertThat(attrs.isArchive()).isTrue();
+    assertThat(attrs.isReadOnly()).isTrue();
+    assertThat(attrs.isSystem()).isFalse();
 
     view.setTimes(FileTime.fromMillis(0L), null, null);
-    ASSERT.that(view.readAttributes().lastModifiedTime()).isEqualTo(FileTime.fromMillis(0L));
+    assertThat(view.readAttributes().lastModifiedTime()).isEqualTo(FileTime.fromMillis(0L));
   }
 
   @Test
   public void testAttributes() {
     DosFileAttributes attrs = provider.readAttributes(file);
-    ASSERT.that(attrs.isHidden()).isFalse();
-    ASSERT.that(attrs.isArchive()).isFalse();
-    ASSERT.that(attrs.isReadOnly()).isFalse();
-    ASSERT.that(attrs.isSystem()).isFalse();
+    assertThat(attrs.isHidden()).isFalse();
+    assertThat(attrs.isArchive()).isFalse();
+    assertThat(attrs.isReadOnly()).isFalse();
+    assertThat(attrs.isSystem()).isFalse();
 
     file.setAttribute("dos", "hidden", true);
 
     attrs = provider.readAttributes(file);
-    ASSERT.that(attrs.isHidden()).isTrue();
-    ASSERT.that(attrs.isArchive()).isFalse();
-    ASSERT.that(attrs.isReadOnly()).isFalse();
-    ASSERT.that(attrs.isSystem()).isFalse();
+    assertThat(attrs.isHidden()).isTrue();
+    assertThat(attrs.isArchive()).isFalse();
+    assertThat(attrs.isReadOnly()).isFalse();
+    assertThat(attrs.isSystem()).isFalse();
   }
 }

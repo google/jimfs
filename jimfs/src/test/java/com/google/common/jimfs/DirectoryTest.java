@@ -19,7 +19,7 @@ package com.google.common.jimfs;
 import static com.google.common.jimfs.Name.PARENT;
 import static com.google.common.jimfs.Name.SELF;
 import static com.google.common.jimfs.TestUtils.regularFile;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.common.base.Functions;
@@ -58,37 +58,37 @@ public class DirectoryTest {
 
   @Test
   public void testRootDirectory() {
-    ASSERT.that(root.entryCount()).is(3); // two for parent/self, one for dir
-    ASSERT.that(root.isEmpty()).isFalse();
-    ASSERT.that(root.entryInParent()).isEqualTo(entry(root, "/", root));
-    ASSERT.that(root.entryInParent().name()).isEqualTo(Name.simple("/"));
+    assertThat(root.entryCount()).is(3); // two for parent/self, one for dir
+    assertThat(root.isEmpty()).isFalse();
+    assertThat(root.entryInParent()).isEqualTo(entry(root, "/", root));
+    assertThat(root.entryInParent().name()).isEqualTo(Name.simple("/"));
 
     assertParentAndSelf(root, root, root);
   }
 
   @Test
   public void testEmptyDirectory() {
-    ASSERT.that(dir.entryCount()).is(2);
-    ASSERT.that(dir.isEmpty()).isTrue();
+    assertThat(dir.entryCount()).is(2);
+    assertThat(dir.isEmpty()).isTrue();
 
     assertParentAndSelf(dir, root, dir);
   }
 
   @Test
   public void testGet() {
-    ASSERT.that(root.get(Name.simple("foo"))).isEqualTo(entry(root, "foo", dir));
-    ASSERT.that(dir.get(Name.simple("foo"))).isNull();
-    ASSERT.that(root.get(Name.simple("Foo"))).isNull();
+    assertThat(root.get(Name.simple("foo"))).isEqualTo(entry(root, "foo", dir));
+    assertThat(dir.get(Name.simple("foo"))).isNull();
+    assertThat(root.get(Name.simple("Foo"))).isNull();
   }
 
   @Test
   public void testLink() {
-    ASSERT.that(dir.get(Name.simple("bar"))).isNull();
+    assertThat(dir.get(Name.simple("bar"))).isNull();
 
     File bar = Directory.create(2);
     dir.link(Name.simple("bar"), bar);
 
-    ASSERT.that(dir.get(Name.simple("bar"))).isEqualTo(entry(dir, "bar", bar));
+    assertThat(dir.get(Name.simple("bar"))).isEqualTo(entry(dir, "bar", bar));
   }
 
   @Test
@@ -123,19 +123,19 @@ public class DirectoryTest {
     dir.link(barName, bar);
 
     DirectoryEntry expected = new DirectoryEntry(dir, barName, bar);
-    ASSERT.that(dir.get(caseInsensitive("bar"))).isEqualTo(expected);
-    ASSERT.that(dir.get(caseInsensitive("BAR"))).isEqualTo(expected);
-    ASSERT.that(dir.get(caseInsensitive("Bar"))).isEqualTo(expected);
-    ASSERT.that(dir.get(caseInsensitive("baR"))).isEqualTo(expected);
+    assertThat(dir.get(caseInsensitive("bar"))).isEqualTo(expected);
+    assertThat(dir.get(caseInsensitive("BAR"))).isEqualTo(expected);
+    assertThat(dir.get(caseInsensitive("Bar"))).isEqualTo(expected);
+    assertThat(dir.get(caseInsensitive("baR"))).isEqualTo(expected);
   }
 
   @Test
   public void testUnlink() {
-    ASSERT.that(root.get(Name.simple("foo"))).isNotNull();
+    assertThat(root.get(Name.simple("foo"))).isNotNull();
 
     root.unlink(Name.simple("foo"));
 
-    ASSERT.that(root.get(Name.simple("foo"))).isNull();
+    assertThat(root.get(Name.simple("foo"))).isNull();
   }
 
   @Test
@@ -166,30 +166,30 @@ public class DirectoryTest {
   public void testUnlink_normalizingCaseInsensitive() {
     dir.link(caseInsensitive("bar"), Directory.create(2));
 
-    ASSERT.that(dir.get(caseInsensitive("bar"))).isNotNull();
+    assertThat(dir.get(caseInsensitive("bar"))).isNotNull();
 
     dir.unlink(caseInsensitive("BAR"));
 
-    ASSERT.that(dir.get(caseInsensitive("bar"))).isNull();
+    assertThat(dir.get(caseInsensitive("bar"))).isNull();
   }
 
   @Test
   public void testLinkDirectory() {
     Directory newDir = Directory.create(10);
 
-    ASSERT.that(newDir.entryInParent()).isNull();
-    ASSERT.that(newDir.get(Name.SELF).file()).isEqualTo(newDir);
-    ASSERT.that(newDir.get(Name.PARENT)).isNull();
-    ASSERT.that(newDir.links()).is(1);
+    assertThat(newDir.entryInParent()).isNull();
+    assertThat(newDir.get(Name.SELF).file()).isEqualTo(newDir);
+    assertThat(newDir.get(Name.PARENT)).isNull();
+    assertThat(newDir.links()).is(1);
 
     dir.link(Name.simple("foo"), newDir);
 
-    ASSERT.that(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
-    ASSERT.that(newDir.parent()).isEqualTo(dir);
-    ASSERT.that(newDir.entryInParent().name()).isEqualTo(Name.simple("foo"));
-    ASSERT.that(newDir.get(Name.SELF)).isEqualTo(entry(newDir, ".", newDir));
-    ASSERT.that(newDir.get(Name.PARENT)).isEqualTo(entry(newDir, "..", dir));
-    ASSERT.that(newDir.links()).is(2);
+    assertThat(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
+    assertThat(newDir.parent()).isEqualTo(dir);
+    assertThat(newDir.entryInParent().name()).isEqualTo(Name.simple("foo"));
+    assertThat(newDir.get(Name.SELF)).isEqualTo(entry(newDir, ".", newDir));
+    assertThat(newDir.get(Name.PARENT)).isEqualTo(entry(newDir, "..", dir));
+    assertThat(newDir.links()).is(2);
   }
 
   @Test
@@ -198,19 +198,19 @@ public class DirectoryTest {
 
     dir.link(Name.simple("foo"), newDir);
 
-    ASSERT.that(dir.links()).is(3);
+    assertThat(dir.links()).is(3);
 
-    ASSERT.that(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
-    ASSERT.that(newDir.links()).is(2);
+    assertThat(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
+    assertThat(newDir.links()).is(2);
 
     dir.unlink(Name.simple("foo"));
 
-    ASSERT.that(dir.links()).is(2);
+    assertThat(dir.links()).is(2);
 
-    ASSERT.that(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
-    ASSERT.that(newDir.get(Name.SELF).file()).isEqualTo(newDir);
-    ASSERT.that(newDir.get(Name.PARENT)).isEqualTo(entry(newDir, "..", dir));
-    ASSERT.that(newDir.links()).is(1);
+    assertThat(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
+    assertThat(newDir.get(Name.SELF).file()).isEqualTo(newDir);
+    assertThat(newDir.get(Name.PARENT)).isEqualTo(entry(newDir, "..", dir));
+    assertThat(newDir.links()).is(1);
   }
 
   @Test
@@ -219,7 +219,7 @@ public class DirectoryTest {
     root.link(Name.simple("abc"), regularFile(10));
 
     // does not include . or .. and is sorted by the name
-    ASSERT.that(root.snapshot())
+    assertThat(root.snapshot())
         .has().exactly(Name.simple("abc"), Name.simple("bar"), Name.simple("foo"));
   }
 
@@ -234,7 +234,7 @@ public class DirectoryTest {
     // "FOO" comes before "bar"
     // if the order were based on the normalized, canonical form of the names ("foo" and "bar"),
     // "bar" would come first
-    ASSERT.that(strings).iteratesAs("FOO", "bar");
+    assertThat(strings).iteratesAs("FOO", "bar");
   }
 
   // Tests for internal hash table implementation
@@ -243,28 +243,28 @@ public class DirectoryTest {
 
   @Test
   public void testInitialState() {
-    ASSERT.that(dir.entryCount()).is(2);
-    ASSERT.that(ImmutableSet.copyOf(dir)).has().exactly(
+    assertThat(dir.entryCount()).is(2);
+    assertThat(ImmutableSet.copyOf(dir)).has().exactly(
         new DirectoryEntry(dir, Name.SELF, dir),
         new DirectoryEntry(dir, Name.PARENT, root));
-    ASSERT.that(dir.get(Name.simple("foo"))).isNull();
+    assertThat(dir.get(Name.simple("foo"))).isNull();
   }
 
   @Test
   public void testPutAndGet() {
     dir.put(entry("foo"));
 
-    ASSERT.that(dir.entryCount()).is(3);
-    ASSERT.that(ImmutableSet.copyOf(dir)).has().item(entry("foo"));
-    ASSERT.that(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
+    assertThat(dir.entryCount()).is(3);
+    assertThat(ImmutableSet.copyOf(dir)).has().item(entry("foo"));
+    assertThat(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
 
     dir.put(entry("bar"));
 
-    ASSERT.that(dir.entryCount()).is(4);
-    ASSERT.that(ImmutableSet.copyOf(dir))
+    assertThat(dir.entryCount()).is(4);
+    assertThat(ImmutableSet.copyOf(dir))
         .has().allOf(entry("foo"), entry("bar"));
-    ASSERT.that(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
-    ASSERT.that(dir.get(Name.simple("bar"))).isEqualTo(entry("bar"));
+    assertThat(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
+    assertThat(dir.get(Name.simple("bar"))).isEqualTo(entry("bar"));
   }
 
   @Test
@@ -284,17 +284,17 @@ public class DirectoryTest {
 
     dir.remove(Name.simple("foo"));
 
-    ASSERT.that(dir.entryCount()).is(3);
-    ASSERT.that(ImmutableSet.copyOf(dir)).has().exactly(
+    assertThat(dir.entryCount()).is(3);
+    assertThat(ImmutableSet.copyOf(dir)).has().exactly(
         entry("bar"),
         new DirectoryEntry(dir, Name.SELF, dir),
         new DirectoryEntry(dir, Name.PARENT, root));
-    ASSERT.that(dir.get(Name.simple("foo"))).isNull();
-    ASSERT.that(dir.get(Name.simple("bar"))).isEqualTo(entry("bar"));
+    assertThat(dir.get(Name.simple("foo"))).isNull();
+    assertThat(dir.get(Name.simple("bar"))).isEqualTo(entry("bar"));
 
     dir.remove(Name.simple("bar"));
 
-    ASSERT.that(dir.entryCount()).is(2);
+    assertThat(dir.entryCount()).is(2);
 
     dir.put(entry("bar"));
     dir.put(entry("foo")); // these should just succeeded
@@ -314,10 +314,10 @@ public class DirectoryTest {
       dir.put(entry);
       entriesInDir.add(entry);
 
-      ASSERT.that(ImmutableSet.copyOf(dir)).isEqualTo(entriesInDir);
+      assertThat(ImmutableSet.copyOf(dir)).isEqualTo(entriesInDir);
 
       for (DirectoryEntry expected : entriesInDir) {
-        ASSERT.that(dir.get(expected.name())).isEqualTo(expected);
+        assertThat(dir.get(expected.name())).isEqualTo(expected);
       }
     }
 
@@ -326,10 +326,10 @@ public class DirectoryTest {
       dir.remove(Name.simple(String.valueOf(i)));
       entriesInDir.remove(entry(String.valueOf(i)));
 
-      ASSERT.that(ImmutableSet.copyOf(dir)).isEqualTo(entriesInDir);
+      assertThat(ImmutableSet.copyOf(dir)).isEqualTo(entriesInDir);
 
       for (DirectoryEntry expected : entriesInDir) {
-        ASSERT.that(dir.get(expected.name())).isEqualTo(expected);
+        assertThat(dir.get(expected.name())).isEqualTo(expected);
       }
     }
 
@@ -348,10 +348,10 @@ public class DirectoryTest {
 
     // for this one, only test that the end result is correct
     // takes too long to test at each iteration
-    ASSERT.that(ImmutableSet.copyOf(dir)).isEqualTo(entriesInDir);
+    assertThat(ImmutableSet.copyOf(dir)).isEqualTo(entriesInDir);
 
     for (DirectoryEntry expected : entriesInDir) {
-      ASSERT.that(dir.get(expected.name())).isEqualTo(expected);
+      assertThat(dir.get(expected.name())).isEqualTo(expected);
     }
   }
 
@@ -364,11 +364,11 @@ public class DirectoryTest {
   }
 
   private static void assertParentAndSelf(Directory dir, File parent, File self) {
-    ASSERT.that(dir).isEqualTo(self);
-    ASSERT.that(dir.parent()).isEqualTo(parent);
+    assertThat(dir).isEqualTo(self);
+    assertThat(dir.parent()).isEqualTo(parent);
 
-    ASSERT.that(dir.get(PARENT)).isEqualTo(entry((Directory) self, "..", parent));
-    ASSERT.that(dir.get(SELF)).isEqualTo(entry((Directory) self, ".", self));
+    assertThat(dir.get(PARENT)).isEqualTo(entry((Directory) self, "..", parent));
+    assertThat(dir.get(SELF)).isEqualTo(entry((Directory) self, ".", self));
   }
 
   private static Name caseInsensitive(String name) {

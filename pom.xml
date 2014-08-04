@@ -137,9 +137,9 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.truth0</groupId>
+        <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
-        <version>0.16</version>
+        <version>0.23</version>
         <scope>test</scope>
       </dependency>
     </dependencies>

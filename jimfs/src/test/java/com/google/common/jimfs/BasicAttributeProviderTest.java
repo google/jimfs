@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -59,9 +59,9 @@ public class BasicAttributeProviderTest extends
   @Test
   public void testInitialAttributes() {
     long time = file.getCreationTime();
-    ASSERT.that(time).isNotEqualTo(0L);
-    ASSERT.that(time).isEqualTo(file.getLastAccessTime());
-    ASSERT.that(time).isEqualTo(file.getLastModifiedTime());
+    assertThat(time).isNotEqualTo(0L);
+    assertThat(time).isEqualTo(file.getLastAccessTime());
+    assertThat(time).isEqualTo(file.getLastModifiedTime());
 
     assertContainsAll(file,
         ImmutableMap.<String, Object>builder()
@@ -108,37 +108,37 @@ public class BasicAttributeProviderTest extends
   public void testView() throws IOException {
     BasicFileAttributeView view = provider.view(fileLookup(), NO_INHERITED_VIEWS);
 
-    ASSERT.that(view).isNotNull();
-    ASSERT.that(view.name()).isEqualTo("basic");
+    assertThat(view).isNotNull();
+    assertThat(view.name()).isEqualTo("basic");
 
     BasicFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.fileKey()).isEqualTo(0);
+    assertThat(attrs.fileKey()).isEqualTo(0);
 
     FileTime time = attrs.creationTime();
-    ASSERT.that(attrs.lastAccessTime()).isEqualTo(time);
-    ASSERT.that(attrs.lastModifiedTime()).isEqualTo(time);
+    assertThat(attrs.lastAccessTime()).isEqualTo(time);
+    assertThat(attrs.lastModifiedTime()).isEqualTo(time);
 
     view.setTimes(null, null, null);
 
     attrs = view.readAttributes();
-    ASSERT.that(attrs.creationTime()).isEqualTo(time);
-    ASSERT.that(attrs.lastAccessTime()).isEqualTo(time);
-    ASSERT.that(attrs.lastModifiedTime()).isEqualTo(time);
+    assertThat(attrs.creationTime()).isEqualTo(time);
+    assertThat(attrs.lastAccessTime()).isEqualTo(time);
+    assertThat(attrs.lastModifiedTime()).isEqualTo(time);
 
     view.setTimes(FileTime.fromMillis(0L), null, null);
 
     attrs = view.readAttributes();
-    ASSERT.that(attrs.creationTime()).isEqualTo(time);
-    ASSERT.that(attrs.lastAccessTime()).isEqualTo(time);
-    ASSERT.that(attrs.lastModifiedTime()).isEqualTo(FileTime.fromMillis(0L));
+    assertThat(attrs.creationTime()).isEqualTo(time);
+    assertThat(attrs.lastAccessTime()).isEqualTo(time);
+    assertThat(attrs.lastModifiedTime()).isEqualTo(FileTime.fromMillis(0L));
   }
 
   @Test
   public void testAttributes() {
     BasicFileAttributes attrs = provider.readAttributes(file);
-    ASSERT.that(attrs.fileKey()).isEqualTo(0);
-    ASSERT.that(attrs.isDirectory()).isTrue();
-    ASSERT.that(attrs.isRegularFile()).isFalse();
-    ASSERT.that(attrs.creationTime()).isNotNull();
+    assertThat(attrs.fileKey()).isEqualTo(0);
+    assertThat(attrs.isDirectory()).isTrue();
+    assertThat(attrs.isRegularFile()).isFalse();
+    assertThat(attrs.creationTime()).isNotNull();
   }
 }

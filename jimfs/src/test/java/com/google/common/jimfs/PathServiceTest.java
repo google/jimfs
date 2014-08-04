@@ -17,7 +17,8 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.PathSubject.paths;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assert_;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -44,33 +45,33 @@ public class PathServiceTest {
 
   @Test
   public void testBasicProperties() {
-    ASSERT.that(service.getSeparator()).isEqualTo("/");
-    ASSERT.that(fakeWindowsPathService().getSeparator()).isEqualTo("\\");
+    assertThat(service.getSeparator()).isEqualTo("/");
+    assertThat(fakeWindowsPathService().getSeparator()).isEqualTo("\\");
   }
 
   @Test
   public void testPathCreation() {
-    ASSERT.about(paths()).that(service.emptyPath())
+    assert_().about(paths()).that(service.emptyPath())
         .hasRootComponent(null).and()
         .hasNameComponents("");
 
-    ASSERT.about(paths()).that(service.createRoot(service.name("/")))
+    assert_().about(paths()).that(service.createRoot(service.name("/")))
         .isAbsolute().and()
         .hasRootComponent("/").and()
         .hasNoNameComponents();
 
-    ASSERT.about(paths()).that(service.createFileName(service.name("foo")))
+    assert_().about(paths()).that(service.createFileName(service.name("foo")))
         .hasRootComponent(null).and()
         .hasNameComponents("foo");
 
     JimfsPath relative = service.createRelativePath(service.names(ImmutableList.of("foo", "bar")));
-    ASSERT.about(paths()).that(relative)
+    assert_().about(paths()).that(relative)
         .hasRootComponent(null).and()
         .hasNameComponents("foo", "bar");
 
     JimfsPath absolute = service.createPath(
         service.name("/"), service.names(ImmutableList.of("foo", "bar")));
-    ASSERT.about(paths()).that(absolute)
+    assert_().about(paths()).that(absolute)
         .isAbsolute().and()
         .hasRootComponent("/").and()
         .hasNameComponents("foo", "bar");
@@ -79,7 +80,7 @@ public class PathServiceTest {
   @Test
   public void testPathCreation_emptyPath() {
     // normalized to empty path with single empty string name
-    ASSERT.about(paths()).that(service.createPath(null, ImmutableList.<Name>of()))
+    assert_().about(paths()).that(service.createPath(null, ImmutableList.<Name>of()))
         .hasRootComponent(null).and()
         .hasNameComponents("");
   }
@@ -88,7 +89,7 @@ public class PathServiceTest {
   public void testPathCreation_parseIgnoresEmptyString() {
     // if the empty string wasn't ignored, the resulting path would be "/foo" since the empty
     // string would be joined with foo
-    ASSERT.about(paths()).that(service.parsePath("", "foo"))
+    assert_().about(paths()).that(service.parsePath("", "foo"))
         .hasRootComponent(null).and()
         .hasNameComponents("foo");
   }
@@ -98,10 +99,10 @@ public class PathServiceTest {
     // not much to test for this since it just delegates to PathType anyway
     JimfsPath path = new JimfsPath(
         service, null, ImmutableList.of(Name.simple("foo"), Name.simple("bar")));
-    ASSERT.that(service.toString(path)).isEqualTo("foo/bar");
+    assertThat(service.toString(path)).isEqualTo("foo/bar");
 
     path = new JimfsPath(service, Name.simple("/"), ImmutableList.of(Name.simple("foo")));
-    ASSERT.that(service.toString(path)).isEqualTo("/foo");
+    assertThat(service.toString(path)).isEqualTo("/foo");
   }
 
   @Test
@@ -115,8 +116,8 @@ public class PathServiceTest {
     JimfsPath path3 = new JimfsPath(pathService, null,
         ImmutableList.of(Name.create("FOO", "9874238974897189741")));
 
-    ASSERT.that(pathService.hash(path1)).isEqualTo(pathService.hash(path2));
-    ASSERT.that(pathService.hash(path2)).isEqualTo(pathService.hash(path3));
+    assertThat(pathService.hash(path1)).isEqualTo(pathService.hash(path2));
+    assertThat(pathService.hash(path2)).isEqualTo(pathService.hash(path3));
   }
 
   @Test
@@ -130,8 +131,8 @@ public class PathServiceTest {
     JimfsPath path3 = new JimfsPath(pathService, null,
         ImmutableList.of(Name.create("28937497189478912374897", "foo")));
 
-    ASSERT.that(pathService.hash(path1)).isEqualTo(pathService.hash(path2));
-    ASSERT.that(pathService.hash(path2)).isEqualTo(pathService.hash(path3));
+    assertThat(pathService.hash(path1)).isEqualTo(pathService.hash(path2));
+    assertThat(pathService.hash(path2)).isEqualTo(pathService.hash(path3));
   }
 
   @Test
@@ -142,8 +143,8 @@ public class PathServiceTest {
     JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("b", "y")));
     JimfsPath path3 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("c", "x")));
 
-    ASSERT.that(pathService.compare(path1, path2)).is(-1);
-    ASSERT.that(pathService.compare(path2, path3)).is(-1);
+    assertThat(pathService.compare(path1, path2)).is(-1);
+    assertThat(pathService.compare(path2, path3)).is(-1);
   }
 
   @Test
@@ -154,14 +155,14 @@ public class PathServiceTest {
     JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("b", "y")));
     JimfsPath path3 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("c", "x")));
 
-    ASSERT.that(pathService.compare(path1, path2)).is(1);
-    ASSERT.that(pathService.compare(path2, path3)).is(1);
+    assertThat(pathService.compare(path1, path2)).is(1);
+    assertThat(pathService.compare(path2, path3)).is(1);
   }
 
   @Test
   public void testPathMatcher() {
-    ASSERT.that(service.createPathMatcher("regex:foo")).isA(PathMatchers.RegexPathMatcher.class);
-    ASSERT.that(service.createPathMatcher("glob:foo")).isA(PathMatchers.RegexPathMatcher.class);
+    assertThat(service.createPathMatcher("regex:foo")).isA(PathMatchers.RegexPathMatcher.class);
+    assertThat(service.createPathMatcher("glob:foo")).isA(PathMatchers.RegexPathMatcher.class);
   }
 
   public static PathService fakeUnixPathService() {

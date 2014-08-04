@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
@@ -44,15 +44,15 @@ public class UserLookupServiceTest {
     UserPrincipal bob2 = service.lookupPrincipalByName("bob");
     UserPrincipal alice = service.lookupPrincipalByName("alice");
 
-    ASSERT.that(bob1).isEqualTo(bob2);
-    ASSERT.that(bob1).isNotEqualTo(alice);
+    assertThat(bob1).isEqualTo(bob2);
+    assertThat(bob1).isNotEqualTo(alice);
 
     GroupPrincipal group1 = service.lookupPrincipalByGroupName("group");
     GroupPrincipal group2 = service.lookupPrincipalByGroupName("group");
     GroupPrincipal foo = service.lookupPrincipalByGroupName("foo");
 
-    ASSERT.that(group1).isEqualTo(group2);
-    ASSERT.that(group1).isNotEqualTo(foo);
+    assertThat(group1).isEqualTo(group2);
+    assertThat(group1).isNotEqualTo(foo);
   }
 
   @Test
@@ -63,7 +63,7 @@ public class UserLookupServiceTest {
       service.lookupPrincipalByGroupName("group");
       fail();
     } catch (UserPrincipalNotFoundException expected) {
-      ASSERT.that(expected.getName()).isEqualTo("group");
+      assertThat(expected.getName()).isEqualTo("group");
     }
   }
 }

@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.jimfs.FileFactoryTest.fakePath;
 import static com.google.common.jimfs.TestUtils.regularFile;
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,78 +39,78 @@ public class FileTest {
 
     File file = RegularFile.create(0, new HeapDisk(10, 10, 10));
 
-    ASSERT.that(file.getAttributeKeys()).isEmpty();
-    ASSERT.that(file.getAttribute("foo", "foo")).isNull();
+    assertThat(file.getAttributeKeys()).isEmpty();
+    assertThat(file.getAttribute("foo", "foo")).isNull();
 
     file.deleteAttribute("foo", "foo"); // doesn't throw
 
     file.setAttribute("foo", "foo", "foo");
 
-    ASSERT.that(file.getAttributeKeys()).iteratesAs("foo:foo");
-    ASSERT.that(file.getAttribute("foo", "foo")).isEqualTo("foo");
+    assertThat(file.getAttributeKeys()).iteratesAs("foo:foo");
+    assertThat(file.getAttribute("foo", "foo")).isEqualTo("foo");
 
     file.deleteAttribute("foo", "foo");
 
-    ASSERT.that(file.getAttributeKeys()).isEmpty();
-    ASSERT.that(file.getAttribute("foo", "foo")).isNull();
+    assertThat(file.getAttributeKeys()).isEmpty();
+    assertThat(file.getAttribute("foo", "foo")).isNull();
   }
 
   @Test
   public void testFileBasics() {
     File file = regularFile(0);
 
-    ASSERT.that(file.id()).is(0);
-    ASSERT.that(file.links()).is(0);
+    assertThat(file.id()).is(0);
+    assertThat(file.links()).is(0);
   }
 
   @Test
   public void testDirectory() {
     File file = Directory.create(0);
-    ASSERT.that(file.isDirectory()).isTrue();
-    ASSERT.that(file.isRegularFile()).isFalse();
-    ASSERT.that(file.isSymbolicLink()).isFalse();
+    assertThat(file.isDirectory()).isTrue();
+    assertThat(file.isRegularFile()).isFalse();
+    assertThat(file.isSymbolicLink()).isFalse();
   }
 
   @Test
   public void testRegularFile() {
     File file = regularFile(10);
-    ASSERT.that(file.isDirectory()).isFalse();
-    ASSERT.that(file.isRegularFile()).isTrue();
-    ASSERT.that(file.isSymbolicLink()).isFalse();
+    assertThat(file.isDirectory()).isFalse();
+    assertThat(file.isRegularFile()).isTrue();
+    assertThat(file.isSymbolicLink()).isFalse();
   }
 
   @Test
   public void testSymbolicLink() {
     File file = SymbolicLink.create(0, fakePath());
-    ASSERT.that(file.isDirectory()).isFalse();
-    ASSERT.that(file.isRegularFile()).isFalse();
-    ASSERT.that(file.isSymbolicLink()).isTrue();
+    assertThat(file.isDirectory()).isFalse();
+    assertThat(file.isRegularFile()).isFalse();
+    assertThat(file.isSymbolicLink()).isTrue();
   }
 
   @Test
   public void testRootDirectory() {
     Directory file = Directory.createRoot(0, Name.simple("/"));
-    ASSERT.that(file.isRootDirectory()).isTrue();
+    assertThat(file.isRootDirectory()).isTrue();
 
     Directory otherFile = Directory.createRoot(1, Name.simple("$"));
-    ASSERT.that(otherFile.isRootDirectory()).isTrue();
+    assertThat(otherFile.isRootDirectory()).isTrue();
   }
 
   @Test
   public void testLinkAndUnlink() {
     File file = regularFile(0);
-    ASSERT.that(file.links()).is(0);
+    assertThat(file.links()).is(0);
 
     file.incrementLinkCount();
-    ASSERT.that(file.links()).is(1);
+    assertThat(file.links()).is(1);
 
     file.incrementLinkCount();
-    ASSERT.that(file.links()).is(2);
+    assertThat(file.links()).is(2);
 
     file.decrementLinkCount();
-    ASSERT.that(file.links()).is(1);
+    assertThat(file.links()).is(1);
 
     file.decrementLinkCount();
-    ASSERT.that(file.links()).is(0);
+    assertThat(file.links()).is(0);
   }
 }

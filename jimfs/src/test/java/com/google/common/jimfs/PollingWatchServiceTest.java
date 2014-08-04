@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static com.google.common.truth.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -71,16 +71,16 @@ public class PollingWatchServiceTest {
 
   @Test
   public void testNewWatcher() {
-    ASSERT.that(watcher.isOpen()).isTrue();
-    ASSERT.that(watcher.isPolling()).isFalse();
+    assertThat(watcher.isOpen()).isTrue();
+    assertThat(watcher.isPolling()).isFalse();
   }
 
   @Test
   public void testRegister() throws IOException {
     Key key = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
-    ASSERT.that(key.isValid()).isTrue();
+    assertThat(key.isValid()).isTrue();
 
-    ASSERT.that(watcher.isPolling()).isTrue();
+    assertThat(watcher.isPolling()).isTrue();
   }
 
   @Test
@@ -107,22 +107,22 @@ public class PollingWatchServiceTest {
   public void testCancellingLastKeyStopsPolling() throws IOException {
     Key key = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     key.cancel();
-    ASSERT.that(key.isValid()).isFalse();
+    assertThat(key.isValid()).isFalse();
 
-    ASSERT.that(watcher.isPolling()).isFalse();
+    assertThat(watcher.isPolling()).isFalse();
 
     Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     Key key3 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
 
-    ASSERT.that(watcher.isPolling()).isTrue();
+    assertThat(watcher.isPolling()).isTrue();
 
     key2.cancel();
 
-    ASSERT.that(watcher.isPolling()).isTrue();
+    assertThat(watcher.isPolling()).isTrue();
 
     key3.cancel();
 
-    ASSERT.that(watcher.isPolling()).isFalse();
+    assertThat(watcher.isPolling()).isFalse();
   }
 
   @Test
@@ -130,15 +130,15 @@ public class PollingWatchServiceTest {
     Key key1 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
 
-    ASSERT.that(key1.isValid()).isTrue();
-    ASSERT.that(key2.isValid()).isTrue();
-    ASSERT.that(watcher.isPolling()).isTrue();
+    assertThat(key1.isValid()).isTrue();
+    assertThat(key2.isValid()).isTrue();
+    assertThat(watcher.isPolling()).isTrue();
 
     watcher.close();
 
-    ASSERT.that(key1.isValid()).isFalse();
-    ASSERT.that(key2.isValid()).isFalse();
-    ASSERT.that(watcher.isPolling()).isFalse();
+    assertThat(key1.isValid()).isFalse();
+    assertThat(key2.isValid()).isFalse();
+    assertThat(watcher.isPolling()).isFalse();
   }
 
   @Test(timeout = 200)
@@ -200,9 +200,9 @@ public class PollingWatchServiceTest {
     WatchKey key = watcher.take();
     List<WatchEvent<?>> keyEvents = key.pollEvents();
     if (keyEvents.size() == 1) {
-      ASSERT.that(keyEvents).has().exactly(new Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
+      assertThat(keyEvents).has().exactly(new Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
     } else {
-      ASSERT.that(keyEvents).has().exactlyAs(Arrays.<WatchEvent<?>>asList(
+      assertThat(keyEvents).has().exactlyAs(Arrays.<WatchEvent<?>>asList(
           new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
           new Event<>(ENTRY_DELETE, 1, fs.getPath("foo"))));
     }
@@ -213,7 +213,7 @@ public class PollingWatchServiceTest {
     ensureTimeToPoll(); // otherwise we could read 1 event but not all the events we're expecting
     WatchKey key = watcher.take();
     List<WatchEvent<?>> keyEvents = key.pollEvents();
-    ASSERT.that(keyEvents).has().exactlyAs(Arrays.<WatchEvent<?>>asList(events));
+    assertThat(keyEvents).has().exactlyAs(Arrays.<WatchEvent<?>>asList(events));
     key.reset();
   }
 
