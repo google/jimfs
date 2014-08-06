@@ -141,7 +141,7 @@ public class PollingWatchServiceTest {
     assertThat(watcher.isPolling()).isFalse();
   }
 
-  @Test(timeout = 200)
+  @Test(timeout = 2000)
   public void testWatchForOneEventType() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE));
@@ -158,7 +158,7 @@ public class PollingWatchServiceTest {
         new Event<>(ENTRY_CREATE, 1, fs.getPath("baz")));
   }
 
-  @Test(timeout = 200)
+  @Test(timeout = 2000)
   public void testWatchForMultipleEventTypes() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY));
@@ -218,7 +218,7 @@ public class PollingWatchServiceTest {
   }
 
   private static void ensureTimeToPoll() {
-    Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
+    Uninterruptibles.sleepUninterruptibly(20, MILLISECONDS);
   }
 
   private JimfsPath createDirectory() throws IOException {

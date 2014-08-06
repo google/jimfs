@@ -20,6 +20,7 @@ import static com.google.common.jimfs.TestUtils.assertNotEquals;
 import static com.google.common.jimfs.TestUtils.buffer;
 import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.jimfs.TestUtils.regularFile;
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -34,6 +35,7 @@ import static org.junit.Assert.fail;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
 import com.google.common.util.concurrent.Runnables;
+import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import org.junit.Test;
@@ -665,7 +667,7 @@ public class JimfsFileChannelTest {
   }
 
   @Test
-  public void testAsynchronousClose() throws IOException, InterruptedException {
+  public void testAsynchronousClose() throws Exception {
     RegularFile file = regularFile(10);
     final FileChannel channel = channel(file, READ, WRITE);
 
@@ -673,25 +675,32 @@ public class JimfsFileChannelTest {
 
     ExecutorService executor = Executors.newCachedThreadPool();
 
-    List<Future<?>> futures = queueAllBlockingOperations(channel, executor);
+    CountDownLatch latch = new CountDownLatch(BLOCKING_OP_COUNT);
+    List<Future<?>> futures = queueAllBlockingOperations(channel, executor, latch);
 
-    // ensure time for operations to start blocking
-    Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
+    // wait for all the threads to have started running
+    latch.await();
+    // then ensure time for operations to start blocking
+    Uninterruptibles.sleepUninterruptibly(20, MILLISECONDS);
 
+    // close channel on this thread
     channel.close();
 
+    // the blocking operations are running on different threads, so they all get
+    // AsynchronousCloseException
     for (Future<?> future : futures) {
       try {
         future.get();
         fail();
       } catch (ExecutionException expected) {
-        assertTrue(expected.getCause() instanceof AsynchronousCloseException);
+        assertThat(expected.getCause()).named("blocking thread exception")
+            .isA(AsynchronousCloseException.class);
       }
     }
   }
 
   @Test
-  public void testCloseByInterrupt() throws IOException, InterruptedException {
+  public void testCloseByInterrupt() throws Exception {
     RegularFile file = regularFile(10);
     final FileChannel channel = channel(file, READ, WRITE);
 
@@ -699,8 +708,8 @@ public class JimfsFileChannelTest {
 
     ExecutorService executor = Executors.newCachedThreadPool();
 
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Throwable> interruptException = new AtomicReference<>();
+    final CountDownLatch threadStartLatch = new CountDownLatch(1);
+    final SettableFuture<Throwable> interruptException = SettableFuture.create();
 
     // This thread, being the first to run, will be blocking on the interruptible lock (the byte
     // file's write lock) and as such will be interrupted properly... the other threads will be
@@ -710,51 +719,69 @@ public class JimfsFileChannelTest {
     Thread thread = new Thread(new Runnable() {
       @Override
       public void run() {
+        threadStartLatch.countDown();
         try {
           channel.write(ByteBuffer.allocate(20));
-          latch.countDown();
+          interruptException.set(null);
         } catch (Throwable e) {
           interruptException.set(e);
-          latch.countDown();
         }
       }
     });
     thread.start();
 
-    // ensure time for thread to start blocking on the write lock
-    Uninterruptibles.sleepUninterruptibly(5, MILLISECONDS);
-
-    List<Future<?>> futures = queueAllBlockingOperations(channel, executor);
-
-    // ensure time for operations to start blocking
+    // let the thread start running
+    threadStartLatch.await();
+    // then ensure time for thread to start blocking on the write lock
     Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
+
+    CountDownLatch blockingStartLatch = new CountDownLatch(BLOCKING_OP_COUNT);
+    List<Future<?>> futures = queueAllBlockingOperations(channel, executor, blockingStartLatch);
+
+    // wait for all blocking threads to start
+    blockingStartLatch.await();
+    // then ensure time for the operations to start blocking
+    Uninterruptibles.sleepUninterruptibly(20, MILLISECONDS);
 
     // interrupting this blocking thread closes the channel and makes all the other threads
     // throw AsynchronousCloseException... the operation on this thread should throw
     // ClosedByInterruptException
     thread.interrupt();
 
-    latch.await();
-    assertTrue(interruptException.get() instanceof ClosedByInterruptException);
+    // get the exception that caused the interrupted operation to terminate
+    assertThat(interruptException.get(200, MILLISECONDS))
+        .named("interrupted thread exception")
+        .isA(ClosedByInterruptException.class);
 
+    // check that each other thread got AsynchronousCloseException (since the interrupt, on a
+    // different thread, closed the channel)
     for (Future<?> future : futures) {
       try {
         future.get();
         fail();
       } catch (ExecutionException expected) {
-        assertTrue(expected.getCause() instanceof AsynchronousCloseException);
+        assertThat(expected.getCause()).named("blocking thread exception")
+            .isA(AsynchronousCloseException.class);
       }
     }
   }
 
+  private static final int BLOCKING_OP_COUNT = 10;
+
+  /**
+   * Queues blocking operations on the channel in separate threads using the given executor.
+   * The given latch should have a count of BLOCKING_OP_COUNT to allow the caller wants to wait for
+   * all threads to start executing.
+   */
   private List<Future<?>> queueAllBlockingOperations(
-      final FileChannel channel, ExecutorService executor) {
+      final FileChannel channel, ExecutorService executor, final CountDownLatch startLatch) {
     List<Future<?>> futures = new ArrayList<>();
 
     final ByteBuffer buffer = ByteBuffer.allocate(10);
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.write(buffer);
         return null;
       }
@@ -763,6 +790,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.write(buffer, 0);
         return null;
       }
@@ -771,6 +799,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.write(new ByteBuffer[] {buffer, buffer});
         return null;
       }
@@ -779,6 +808,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.write(new ByteBuffer[] {buffer, buffer, buffer}, 0, 2);
         return null;
       }
@@ -787,6 +817,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.read(buffer);
         return null;
       }
@@ -795,6 +826,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.read(buffer, 0);
         return null;
       }
@@ -803,6 +835,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.read(new ByteBuffer[] {buffer, buffer});
         return null;
       }
@@ -811,6 +844,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.read(new ByteBuffer[] {buffer, buffer, buffer}, 0, 2);
         return null;
       }
@@ -819,6 +853,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.transferTo(0, 10, new ByteBufferChannel(buffer));
         return null;
       }
@@ -827,6 +862,7 @@ public class JimfsFileChannelTest {
     futures.add(executor.submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
+        startLatch.countDown();
         channel.transferFrom(new ByteBufferChannel(buffer), 0, 10);
         return null;
       }
