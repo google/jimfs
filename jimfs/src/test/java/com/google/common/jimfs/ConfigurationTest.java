@@ -20,11 +20,14 @@ import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static com.google.common.jimfs.PathNormalization.CASE_FOLD_UNICODE;
 import static com.google.common.jimfs.PathNormalization.NFC;
 import static com.google.common.jimfs.PathNormalization.NFD;
+import static com.google.common.jimfs.PathSubject.paths;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assert_;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.jimfs.PathSubject;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 
 /**
@@ -44,6 +48,10 @@ import java.nio.file.attribute.PosixFilePermissions;
  */
 @RunWith(JUnit4.class)
 public class ConfigurationTest {
+
+  private static PathSubject assertThatPath(Path path) {
+    return assert_().about(paths()).that(path);
+  }
 
   @Test
   public void testDefaultUnixConfiguration() {
@@ -68,7 +76,7 @@ public class ConfigurationTest {
     FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 
     assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
-    assertThat(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
+    assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
     assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
         4L * 1024 * 1024 * 1024);
     assertThat(fs.supportedFileAttributeViews()).has().exactly("basic");
@@ -100,7 +108,7 @@ public class ConfigurationTest {
     FileSystem fs = Jimfs.newFileSystem(Configuration.osX());
 
     assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
-    assertThat(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
+    assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
     assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
         4L * 1024 * 1024 * 1024);
     assertThat(fs.supportedFileAttributeViews()).has().exactly("basic");
@@ -137,7 +145,7 @@ public class ConfigurationTest {
     FileSystem fs = Jimfs.newFileSystem(Configuration.windows());
 
     assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("C:\\")));
-    assertThat(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("C:\\work"));
+    assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("C:\\work"));
     assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
         4L * 1024 * 1024 * 1024);
     assertThat(fs.supportedFileAttributeViews()).has().exactly("basic");
@@ -204,7 +212,7 @@ public class ConfigurationTest {
     FileSystem fs = Jimfs.newFileSystem(config);
 
     assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
-    assertThat(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/hello/world"));
+    assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/hello/world"));
     assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
         .is(100);
     assertThat(fs.supportedFileAttributeViews()).has().exactly("basic", "owner", "posix", "unix");

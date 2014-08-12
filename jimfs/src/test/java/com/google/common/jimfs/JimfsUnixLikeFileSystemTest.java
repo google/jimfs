@@ -277,14 +277,14 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectories(path("/foo/bar"));
     Files.createSymbolicLink(path("/link"), path("/"));
 
-    assertThat(path("/link/foo/bar").toRealPath()).isEqualTo(path("/foo/bar"));
+    assertThatPath(path("/link/foo/bar").toRealPath()).isEqualTo(path("/foo/bar"));
 
-    assertThat(path("").toRealPath()).isEqualTo(path("/work"));
-    assertThat(path(".").toRealPath()).isEqualTo(path("/work"));
-    assertThat(path("..").toRealPath()).isEqualTo(path("/"));
-    assertThat(path("../..").toRealPath()).isEqualTo(path("/"));
-    assertThat(path("./.././..").toRealPath()).isEqualTo(path("/"));
-    assertThat(path("./.././../.").toRealPath()).isEqualTo(path("/"));
+    assertThatPath(path("").toRealPath()).isEqualTo(path("/work"));
+    assertThatPath(path(".").toRealPath()).isEqualTo(path("/work"));
+    assertThatPath(path("..").toRealPath()).isEqualTo(path("/"));
+    assertThatPath(path("../..").toRealPath()).isEqualTo(path("/"));
+    assertThatPath(path("./.././..").toRealPath()).isEqualTo(path("/"));
+    assertThatPath(path("./.././../.").toRealPath()).isEqualTo(path("/"));
   }
 
   @Test
@@ -300,15 +300,15 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testPaths_getFromUri() {
-    assertThat(Paths.get(URI.create("jimfs://unix/")))
+    assertThatPath(Paths.get(URI.create("jimfs://unix/")))
         .isEqualTo(path("/"));
-    assertThat(Paths.get(URI.create("jimfs://unix/foo")))
+    assertThatPath(Paths.get(URI.create("jimfs://unix/foo")))
         .isEqualTo(path("/foo"));
-    assertThat(Paths.get(URI.create("jimfs://unix/foo%20bar")))
+    assertThatPath(Paths.get(URI.create("jimfs://unix/foo%20bar")))
         .isEqualTo(path("/foo bar"));
-    assertThat(Paths.get(URI.create("jimfs://unix/foo/./bar")))
+    assertThatPath(Paths.get(URI.create("jimfs://unix/foo/./bar")))
         .isEqualTo(path("/foo/./bar"));
-    assertThat(Paths.get(URI.create("jimfs://unix/foo/bar/")))
+    assertThatPath(Paths.get(URI.create("jimfs://unix/foo/bar/")))
         .isEqualTo(path("/foo/bar"));
   }
 

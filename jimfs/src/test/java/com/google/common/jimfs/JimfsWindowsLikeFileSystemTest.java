@@ -198,14 +198,14 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     Files.createDirectories(path("C:\\foo\\bar"));
     Files.createSymbolicLink(path("C:\\link"), path("C:\\"));
 
-    assertThat(path("C:\\link\\foo\\bar").toRealPath()).isEqualTo(path("C:\\foo\\bar"));
+    assertThatPath(path("C:\\link\\foo\\bar").toRealPath()).isEqualTo(path("C:\\foo\\bar"));
 
-    assertThat(path("").toRealPath()).isEqualTo(path("C:\\work"));
-    assertThat(path(".").toRealPath()).isEqualTo(path("C:\\work"));
-    assertThat(path("..").toRealPath()).isEqualTo(path("C:\\"));
-    assertThat(path("..\\..").toRealPath()).isEqualTo(path("C:\\"));
-    assertThat(path(".\\..\\.\\..").toRealPath()).isEqualTo(path("C:\\"));
-    assertThat(path(".\\..\\.\\..\\.").toRealPath()).isEqualTo(path("C:\\"));
+    assertThatPath(path("").toRealPath()).isEqualTo(path("C:\\work"));
+    assertThatPath(path(".").toRealPath()).isEqualTo(path("C:\\work"));
+    assertThatPath(path("..").toRealPath()).isEqualTo(path("C:\\"));
+    assertThatPath(path("..\\..").toRealPath()).isEqualTo(path("C:\\"));
+    assertThatPath(path(".\\..\\.\\..").toRealPath()).isEqualTo(path("C:\\"));
+    assertThatPath(path(".\\..\\.\\..\\.").toRealPath()).isEqualTo(path("C:\\"));
   }
 
   @Test
@@ -231,29 +231,29 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testPaths_getFromUri() {
-    assertThat(Paths.get(URI.create("jimfs://win/C:/")))
+    assertThatPath(Paths.get(URI.create("jimfs://win/C:/")))
         .isEqualTo(fs.getPath("C:\\"));
-    assertThat(Paths.get(URI.create("jimfs://win/C:/foo")))
+    assertThatPath(Paths.get(URI.create("jimfs://win/C:/foo")))
         .isEqualTo(fs.getPath("C:\\foo"));
-    assertThat(Paths.get(URI.create("jimfs://win/C:/foo%20bar")))
+    assertThatPath(Paths.get(URI.create("jimfs://win/C:/foo%20bar")))
         .isEqualTo(fs.getPath("C:\\foo bar"));
-    assertThat(Paths.get(URI.create("jimfs://win/C:/foo/./bar")))
+    assertThatPath(Paths.get(URI.create("jimfs://win/C:/foo/./bar")))
         .isEqualTo(fs.getPath("C:\\foo\\.\\bar"));
-    assertThat(Paths.get(URI.create("jimfs://win/C:/foo/bar/")))
+    assertThatPath(Paths.get(URI.create("jimfs://win/C:/foo/bar/")))
         .isEqualTo(fs.getPath("C:\\foo\\bar"));
   }
 
   @Test
   public void testPaths_getFromUri_unc() {
-    assertThat(Paths.get(URI.create("jimfs://win//host/share/")))
+    assertThatPath(Paths.get(URI.create("jimfs://win//host/share/")))
         .isEqualTo(fs.getPath("\\\\host\\share\\"));
-    assertThat(Paths.get(URI.create("jimfs://win//host/share/foo")))
+    assertThatPath(Paths.get(URI.create("jimfs://win//host/share/foo")))
         .isEqualTo(fs.getPath("\\\\host\\share\\foo"));
-    assertThat(Paths.get(URI.create("jimfs://win//host/share/foo%20bar")))
+    assertThatPath(Paths.get(URI.create("jimfs://win//host/share/foo%20bar")))
         .isEqualTo(fs.getPath("\\\\host\\share\\foo bar"));
-    assertThat(Paths.get(URI.create("jimfs://win//host/share/foo/./bar")))
+    assertThatPath(Paths.get(URI.create("jimfs://win//host/share/foo/./bar")))
         .isEqualTo(fs.getPath("\\\\host\\share\\foo\\.\\bar"));
-    assertThat(Paths.get(URI.create("jimfs://win//host/share/foo/bar/")))
+    assertThatPath(Paths.get(URI.create("jimfs://win//host/share/foo/bar/")))
         .isEqualTo(fs.getPath("\\\\host\\share\\foo\\bar"));
   }
 
