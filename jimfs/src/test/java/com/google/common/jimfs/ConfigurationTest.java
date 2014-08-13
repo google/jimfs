@@ -190,7 +190,7 @@ public class ConfigurationTest {
     assertThat(config.attributeViews).has().exactly("basic", "posix");
     assertThat(config.attributeProviders).has().exactly(unixProvider);
     assertThat(config.defaultAttributeValues)
-        .hasKey("posix:permissions").withValue(PosixFilePermissions.fromString("---------"));
+        .containsEntry("posix:permissions", PosixFilePermissions.fromString("---------"));
   }
 
   @Test
@@ -213,8 +213,7 @@ public class ConfigurationTest {
 
     assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/hello/world"));
-    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
-        .is(100);
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).is(100);
     assertThat(fs.supportedFileAttributeViews()).has().exactly("basic", "owner", "posix", "unix");
 
     Files.createFile(fs.getPath("/foo"));
