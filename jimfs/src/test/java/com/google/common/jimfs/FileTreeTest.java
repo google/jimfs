@@ -120,7 +120,7 @@ public class FileTreeTest {
     Directory otherRoot = Directory.createRoot(2, Name.simple("$"));
     files.put("$", otherRoot);
 
-    Map<Name, File> roots = new HashMap<>();
+    Map<Name, Directory> roots = new HashMap<>();
     roots.put(Name.simple("/"), root);
     roots.put(Name.simple("$"), otherRoot);
 

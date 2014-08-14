@@ -61,7 +61,7 @@ final class JimfsFileSystems {
     HeapDisk disk = new HeapDisk(config);
     FileFactory fileFactory = new FileFactory(disk);
 
-    Map<Name, File> roots = new HashMap<>();
+    Map<Name, Directory> roots = new HashMap<>();
 
     // create roots
     for (String root : config.roots) {
@@ -72,7 +72,7 @@ final class JimfsFileSystems {
 
       Name rootName = path.root();
 
-      File rootDir = fileFactory.createRootDirectory(rootName);
+      Directory rootDir = fileFactory.createRootDirectory(rootName);
       attributeService.setInitialAttributes(rootDir);
       roots.put(rootName, rootDir);
     }

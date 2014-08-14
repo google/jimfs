@@ -51,12 +51,12 @@ final class FileTree {
   /**
    * Map of root names to root directories.
    */
-  private final ImmutableSortedMap<Name, File> roots;
+  private final ImmutableSortedMap<Name, Directory> roots;
 
   /**
    * Creates a new file tree with the given root directories.
    */
-  FileTree(Map<Name, File> roots) {
+  FileTree(Map<Name, Directory> roots) {
     this.roots = ImmutableSortedMap.copyOf(roots, Name.canonicalOrdering());
   }
 
@@ -73,8 +73,8 @@ final class FileTree {
    */
   @Nullable
   public DirectoryEntry getRoot(Name name) {
-    File file = roots.get(name);
-    return file == null ? null : ((Directory) file).entryInParent();
+    Directory dir = roots.get(name);
+    return dir == null ? null : dir.entryInParent();
   }
 
   /**
@@ -118,11 +118,6 @@ final class FileTree {
     }
 
     return lookUp(dir, names, options, linkDepth);
-  }
-
-  private static boolean isEmpty(ImmutableList<Name> names) {
-    // the empty path (created by FileSystem.getPath("")), has no root and a single name, ""
-    return names.isEmpty() || names.size() == 1 && names.get(0).toString().isEmpty();
   }
 
   /**
@@ -216,7 +211,9 @@ final class FileTree {
     Name name = entry.name();
 
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
-      return ((Directory) entry.file()).entryInParent();
+      Directory dir = toDirectory(entry.file());
+      assert dir != null;
+      return dir.entryInParent();
     } else {
       return entry;
     }
@@ -225,5 +222,10 @@ final class FileTree {
   @Nullable
   private Directory toDirectory(@Nullable File file) {
     return file == null || !file.isDirectory() ? null : (Directory) file;
+  }
+
+  private static boolean isEmpty(ImmutableList<Name> names) {
+    // the empty path (created by FileSystem.getPath("")), has no root and a single name, ""
+    return names.isEmpty() || names.size() == 1 && names.get(0).toString().isEmpty();
   }
 }
