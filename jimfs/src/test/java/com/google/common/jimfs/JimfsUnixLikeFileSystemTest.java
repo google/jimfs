@@ -2317,11 +2317,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createFile(bar);
 
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(foo)) {
-      assertThat(stream).isNotA(SecureDirectoryStream.class);
+      assertThat(stream).isNotInstanceOf(SecureDirectoryStream.class);
     }
 
     try (SeekableByteChannel channel = Files.newByteChannel(bar)) {
-      assertThat(channel).isNotA(FileChannel.class);
+      assertThat(channel).isNotInstanceOf(FileChannel.class);
     }
   }
 }
