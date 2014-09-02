@@ -75,7 +75,7 @@ public class AttributeServiceTest {
     assertThat(file.getAttributeNames("test")).has().exactly("bar", "baz");
     assertThat(file.getAttributeNames("owner")).has().exactly("owner");
 
-    assertThat(service.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
+    assertThat(service.getAttribute(file, "basic:lastModifiedTime")).isInstanceOf(FileTime.class);
     assertThat(file.getAttribute("test", "bar")).isEqualTo(0L);
     assertThat(file.getAttribute("test", "baz")).isEqualTo(1);
   }

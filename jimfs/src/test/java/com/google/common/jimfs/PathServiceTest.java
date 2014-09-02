@@ -161,8 +161,10 @@ public class PathServiceTest {
 
   @Test
   public void testPathMatcher() {
-    assertThat(service.createPathMatcher("regex:foo")).isA(PathMatchers.RegexPathMatcher.class);
-    assertThat(service.createPathMatcher("glob:foo")).isA(PathMatchers.RegexPathMatcher.class);
+    assertThat(service.createPathMatcher("regex:foo"))
+        .isInstanceOf(PathMatchers.RegexPathMatcher.class);
+    assertThat(service.createPathMatcher("glob:foo"))
+        .isInstanceOf(PathMatchers.RegexPathMatcher.class);
   }
 
   public static PathService fakeUnixPathService() {

@@ -129,7 +129,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     assertThat(fs.isReadOnly()).isFalse();
     assertThat(fs.supportedFileAttributeViews())
         .has().exactly("basic", "owner", "posix", "unix");
-    assertThat(fs.provider()).isA(JimfsFileSystemProvider.class);
+    assertThat(fs.provider()).isInstanceOf(JimfsFileSystemProvider.class);
   }
 
   @Test

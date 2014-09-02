@@ -62,7 +62,7 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     assertThat(fs.isReadOnly()).isFalse();
     assertThat(fs.supportedFileAttributeViews())
         .has().exactly("basic", "owner", "dos", "acl", "user");
-    assertThat(fs.provider()).isA(JimfsFileSystemProvider.class);
+    assertThat(fs.provider()).isInstanceOf(JimfsFileSystemProvider.class);
   }
 
   @Test

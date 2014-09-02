@@ -63,11 +63,11 @@ public class UnixAttributeProviderTest extends
 
     // these are pretty much meaningless here since they aren't properties this
     // file system actually has, so don't really care about the exact value of these
-    assertThat(provider.get(file, "uid")).isA(Integer.class);
-    assertThat(provider.get(file, "gid")).isA(Integer.class);
+    assertThat(provider.get(file, "uid")).isInstanceOf(Integer.class);
+    assertThat(provider.get(file, "gid")).isInstanceOf(Integer.class);
     assertThat(provider.get(file, "rdev")).isEqualTo(0L);
     assertThat(provider.get(file, "dev")).isEqualTo(1L);
-    assertThat(provider.get(file, "ino")).isA(Integer.class);
+    assertThat(provider.get(file, "ino")).isInstanceOf(Integer.class);
 
     // these have logical origins in attributes from other views
     assertThat(provider.get(file, "mode")).isEqualTo(0644); // rw-r--r--
