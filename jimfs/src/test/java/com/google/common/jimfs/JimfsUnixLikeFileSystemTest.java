@@ -124,11 +124,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Test
   public void testFileSystem() {
     assertThat(fs.getSeparator()).isEqualTo("/");
-    assertThat(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("/")));
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableSet.of(path("/")))
+        .inOrder();
     assertThat(fs.isOpen()).isTrue();
     assertThat(fs.isReadOnly()).isFalse();
     assertThat(fs.supportedFileAttributeViews())
-        .has().exactly("basic", "owner", "posix", "unix");
+        .containsExactly("basic", "owner", "posix", "unix");
     assertThat(fs.provider()).isInstanceOf(JimfsFileSystemProvider.class);
   }
 
@@ -2036,12 +2038,12 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(path("foo"))) {
       SecureDirectoryStream<Path> secureStream = (SecureDirectoryStream<Path>) stream;
 
-      assertThat(ImmutableList.copyOf(secureStream)).has()
-          .exactly(path("foo/a"), path("foo/b"), path("foo/c"));
+      assertThat(ImmutableList.copyOf(secureStream))
+          .containsExactly(path("foo/a"), path("foo/b"), path("foo/c"));
 
       try (DirectoryStream<Path> stream2 = secureStream.newDirectoryStream(path("c"))) {
-        assertThat(ImmutableList.copyOf(stream2)).has()
-            .exactly(path("foo/c/d"), path("foo/c/e"));
+        assertThat(ImmutableList.copyOf(stream2))
+            .containsExactly(path("foo/c/d"), path("foo/c/e"));
       }
     }
   }

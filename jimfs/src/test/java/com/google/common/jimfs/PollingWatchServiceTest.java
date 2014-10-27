@@ -222,9 +222,9 @@ public class PollingWatchServiceTest {
     List<WatchEvent<?>> keyEvents = key.pollEvents();
 
     if (keyEvents.size() == expected.size() || alternate.isEmpty()) {
-      assertThat(keyEvents).has().exactlyAs(expected);
+      assertThat(keyEvents).containsExactlyElementsIn(expected);
     } else {
-      assertThat(keyEvents).has().exactlyAs(alternate);
+      assertThat(keyEvents).containsExactlyElementsIn(alternate);
     }
     key.reset();
   }

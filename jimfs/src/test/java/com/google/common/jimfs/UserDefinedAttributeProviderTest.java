@@ -72,7 +72,7 @@ public class UserDefinedAttributeProviderTest
 
     assertSetFails("foo", "hello");
 
-    assertThat(provider.attributes(file)).has().exactly("one", "two");
+    assertThat(provider.attributes(file)).containsExactly("one", "two");
   }
 
   @Test
@@ -95,7 +95,7 @@ public class UserDefinedAttributeProviderTest
     view.write("b2", ByteBuffer.wrap(b2));
 
     assertThat(view.list()).has().allOf("b1", "b2");
-    assertThat(file.getAttributeKeys()).has().exactly("user:b1", "user:b2");
+    assertThat(file.getAttributeKeys()).containsExactly("user:b1", "user:b2");
 
     assertThat(view.size("b1")).is(3);
     assertThat(view.size("b2")).is(5);
@@ -111,8 +111,8 @@ public class UserDefinedAttributeProviderTest
 
     view.delete("b2");
 
-    assertThat(view.list()).has().exactly("b1");
-    assertThat(file.getAttributeKeys()).has().exactly("user:b1");
+    assertThat(view.list()).containsExactly("b1");
+    assertThat(file.getAttributeKeys()).containsExactly("user:b1");
 
     try {
       view.size("b2");

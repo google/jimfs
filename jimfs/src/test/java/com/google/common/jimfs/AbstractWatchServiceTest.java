@@ -90,7 +90,7 @@ public class AbstractWatchServiceTest {
     key.post(event);
     key.signal();
 
-    assertThat(watcher.queuedKeys()).has().exactly(key);
+    assertThat(watcher.queuedKeys()).containsExactly(key);
 
     WatchKey retrievedKey = watcher.poll();
     assertThat(retrievedKey).isEqualTo(key);
@@ -121,8 +121,8 @@ public class AbstractWatchServiceTest {
     assertThat(key.state()).isEqualTo(SIGNALLED);
 
     // key was not queued twice
-    assertThat(watcher.queuedKeys()).has().exactly(key);
-    assertThat(watcher.poll().pollEvents()).has().exactly(event, event2);
+    assertThat(watcher.queuedKeys()).containsExactly(key);
+    assertThat(watcher.poll().pollEvents()).containsExactly(event, event2);
 
     assertThat(watcher.poll()).isNull();
 
@@ -130,7 +130,7 @@ public class AbstractWatchServiceTest {
 
     // still not added to queue; already signalled
     assertThat(watcher.poll()).isNull();
-    assertThat(key.pollEvents()).has().exactly(event);
+    assertThat(key.pollEvents()).containsExactly(event);
 
     key.reset();
     assertThat(key.state()).isEqualTo(READY);

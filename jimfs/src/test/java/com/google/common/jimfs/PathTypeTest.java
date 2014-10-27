@@ -96,7 +96,7 @@ public class PathTypeTest {
   static void assertParseResult(
       ParseResult result, @Nullable String root, String... names) {
     assertThat(result.root()).isEqualTo(root);
-    assertThat(result.names()).iteratesAs((Object[]) names);
+    assertThat(result.names()).containsExactly((Object[]) names).inOrder();
   }
 
   static void assertUriRoundTripsCorrectly(PathType type, String path) {
@@ -104,7 +104,7 @@ public class PathTypeTest {
     URI uri = type.toUri(fileSystemUri, result.root(), result.names());
     ParseResult parsedUri = type.fromUri(uri);
     assertThat(parsedUri.root()).isEqualTo(result.root());
-    assertThat(parsedUri.names()).iteratesAs(result.names());
+    assertThat(parsedUri.names()).containsExactlyElementsIn(result.names()).inOrder();
   }
 
   /**

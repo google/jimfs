@@ -220,7 +220,7 @@ public class DirectoryTest {
 
     // does not include . or .. and is sorted by the name
     assertThat(root.snapshot())
-        .has().exactly(Name.simple("abc"), Name.simple("bar"), Name.simple("foo"));
+        .containsExactly(Name.simple("abc"), Name.simple("bar"), Name.simple("foo"));
   }
 
   @Test
@@ -244,7 +244,7 @@ public class DirectoryTest {
   @Test
   public void testInitialState() {
     assertThat(dir.entryCount()).is(2);
-    assertThat(ImmutableSet.copyOf(dir)).has().exactly(
+    assertThat(ImmutableSet.copyOf(dir)).containsExactly(
         new DirectoryEntry(dir, Name.SELF, dir),
         new DirectoryEntry(dir, Name.PARENT, root));
     assertThat(dir.get(Name.simple("foo"))).isNull();
@@ -255,14 +255,14 @@ public class DirectoryTest {
     dir.put(entry("foo"));
 
     assertThat(dir.entryCount()).is(3);
-    assertThat(ImmutableSet.copyOf(dir)).has().item(entry("foo"));
+    assertThat(ImmutableSet.copyOf(dir)).contains(entry("foo"));
     assertThat(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
 
     dir.put(entry("bar"));
 
     assertThat(dir.entryCount()).is(4);
     assertThat(ImmutableSet.copyOf(dir))
-        .has().allOf(entry("foo"), entry("bar"));
+        .containsAllOf(entry("foo"), entry("bar"));
     assertThat(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
     assertThat(dir.get(Name.simple("bar"))).isEqualTo(entry("bar"));
   }
@@ -285,7 +285,7 @@ public class DirectoryTest {
     dir.remove(Name.simple("foo"));
 
     assertThat(dir.entryCount()).is(3);
-    assertThat(ImmutableSet.copyOf(dir)).has().exactly(
+    assertThat(ImmutableSet.copyOf(dir)).containsExactly(
         entry("bar"),
         new DirectoryEntry(dir, Name.SELF, dir),
         new DirectoryEntry(dir, Name.PARENT, root));

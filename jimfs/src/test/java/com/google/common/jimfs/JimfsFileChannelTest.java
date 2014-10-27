@@ -60,7 +60,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -693,8 +692,9 @@ public class JimfsFileChannelTest {
         future.get();
         fail();
       } catch (ExecutionException expected) {
-        assertThat(expected.getCause()).named("blocking thread exception")
-            .isA(AsynchronousCloseException.class);
+        assertThat(expected.getCause())
+            .named("blocking thread exception")
+            .isInstanceOf(AsynchronousCloseException.class);
       }
     }
   }
@@ -751,7 +751,7 @@ public class JimfsFileChannelTest {
     // get the exception that caused the interrupted operation to terminate
     assertThat(interruptException.get(200, MILLISECONDS))
         .named("interrupted thread exception")
-        .isA(ClosedByInterruptException.class);
+        .isInstanceOf(ClosedByInterruptException.class);
 
     // check that each other thread got AsynchronousCloseException (since the interrupt, on a
     // different thread, closed the channel)
@@ -760,8 +760,9 @@ public class JimfsFileChannelTest {
         future.get();
         fail();
       } catch (ExecutionException expected) {
-        assertThat(expected.getCause()).named("blocking thread exception")
-            .isA(AsynchronousCloseException.class);
+        assertThat(expected.getCause())
+            .named("blocking thread exception")
+            .isInstanceOf(AsynchronousCloseException.class);
       }
     }
   }

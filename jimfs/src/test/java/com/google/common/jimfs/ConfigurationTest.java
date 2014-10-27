@@ -58,7 +58,7 @@ public class ConfigurationTest {
     Configuration config = Configuration.unix();
 
     assertThat(config.pathType).isEqualTo(PathType.unix());
-    assertThat(config.roots).has().exactly("/");
+    assertThat(config.roots).containsExactly("/");
     assertThat(config.workingDirectory).isEqualTo("/work");
     assertThat(config.nameCanonicalNormalization).isEmpty();
     assertThat(config.nameDisplayNormalization).isEmpty();
@@ -66,7 +66,7 @@ public class ConfigurationTest {
     assertThat(config.blockSize).is(8192);
     assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
     assertThat(config.maxCacheSize).is(-1);
-    assertThat(config.attributeViews).has().exactly("basic");
+    assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
   }
@@ -75,11 +75,13 @@ public class ConfigurationTest {
   public void testFileSystemForDefaultUnixConfiguration() throws IOException {
     FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 
-    assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
+        .inOrder();
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
     assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
         4L * 1024 * 1024 * 1024);
-    assertThat(fs.supportedFileAttributeViews()).has().exactly("basic");
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("/foo"));
     Files.createFile(fs.getPath("/FOO"));
@@ -90,15 +92,15 @@ public class ConfigurationTest {
     Configuration config = Configuration.osX();
 
     assertThat(config.pathType).isEqualTo(PathType.unix());
-    assertThat(config.roots).has().exactly("/");
+    assertThat(config.roots).containsExactly("/");
     assertThat(config.workingDirectory).isEqualTo("/work");
-    assertThat(config.nameCanonicalNormalization).has().exactly(NFD, CASE_FOLD_ASCII);
-    assertThat(config.nameDisplayNormalization).has().exactly(NFC);
+    assertThat(config.nameCanonicalNormalization).containsExactly(NFD, CASE_FOLD_ASCII);
+    assertThat(config.nameDisplayNormalization).containsExactly(NFC);
     assertThat(config.pathEqualityUsesCanonicalForm).isFalse();
     assertThat(config.blockSize).is(8192);
     assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
     assertThat(config.maxCacheSize).is(-1);
-    assertThat(config.attributeViews).has().exactly("basic");
+    assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
   }
@@ -107,11 +109,13 @@ public class ConfigurationTest {
   public void testFileSystemForDefaultOsXConfiguration() throws IOException {
     FileSystem fs = Jimfs.newFileSystem(Configuration.osX());
 
-    assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
+        .inOrder();
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
     assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
         4L * 1024 * 1024 * 1024);
-    assertThat(fs.supportedFileAttributeViews()).has().exactly("basic");
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("/foo"));
 
@@ -127,15 +131,15 @@ public class ConfigurationTest {
     Configuration config = Configuration.windows();
 
     assertThat(config.pathType).isEqualTo(PathType.windows());
-    assertThat(config.roots).has().exactly("C:\\");
+    assertThat(config.roots).containsExactly("C:\\");
     assertThat(config.workingDirectory).isEqualTo("C:\\work");
-    assertThat(config.nameCanonicalNormalization).has().exactly(CASE_FOLD_ASCII);
+    assertThat(config.nameCanonicalNormalization).containsExactly(CASE_FOLD_ASCII);
     assertThat(config.nameDisplayNormalization).isEmpty();
     assertThat(config.pathEqualityUsesCanonicalForm).isTrue();
     assertThat(config.blockSize).is(8192);
     assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
     assertThat(config.maxCacheSize).is(-1);
-    assertThat(config.attributeViews).has().exactly("basic");
+    assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
   }
@@ -144,11 +148,13 @@ public class ConfigurationTest {
   public void testFileSystemForDefaultWindowsConfiguration() throws IOException {
     FileSystem fs = Jimfs.newFileSystem(Configuration.windows());
 
-    assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("C:\\")));
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableList.of(fs.getPath("C:\\")))
+        .inOrder();
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("C:\\work"));
     assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
         4L * 1024 * 1024 * 1024);
-    assertThat(fs.supportedFileAttributeViews()).has().exactly("basic");
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("C:\\foo"));
 
@@ -179,16 +185,16 @@ public class ConfigurationTest {
         .build();
 
     assertThat(config.pathType).isEqualTo(PathType.unix());
-    assertThat(config.roots).has().exactly("/");
+    assertThat(config.roots).containsExactly("/");
     assertThat(config.workingDirectory).isEqualTo("/hello/world");
-    assertThat(config.nameCanonicalNormalization).has().exactly(NFD, CASE_FOLD_UNICODE);
-    assertThat(config.nameDisplayNormalization).has().exactly(NFC);
+    assertThat(config.nameCanonicalNormalization).containsExactly(NFD, CASE_FOLD_UNICODE);
+    assertThat(config.nameDisplayNormalization).containsExactly(NFC);
     assertThat(config.pathEqualityUsesCanonicalForm).isTrue();
     assertThat(config.blockSize).is(10);
     assertThat(config.maxSize).is(100);
     assertThat(config.maxCacheSize).is(50);
-    assertThat(config.attributeViews).has().exactly("basic", "posix");
-    assertThat(config.attributeProviders).has().exactly(unixProvider);
+    assertThat(config.attributeViews).containsExactly("basic", "posix");
+    assertThat(config.attributeProviders).containsExactly(unixProvider);
     assertThat(config.defaultAttributeValues)
         .containsEntry("posix:permissions", PosixFilePermissions.fromString("---------"));
   }
@@ -211,10 +217,12 @@ public class ConfigurationTest {
 
     FileSystem fs = Jimfs.newFileSystem(config);
 
-    assertThat(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
+        .inOrder();
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/hello/world"));
     assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).is(100);
-    assertThat(fs.supportedFileAttributeViews()).has().exactly("basic", "owner", "posix", "unix");
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic", "owner", "posix", "unix");
 
     Files.createFile(fs.getPath("/foo"));
     assertThat(Files.getAttribute(fs.getPath("/foo"), "posix:permissions")).isEqualTo(
@@ -235,7 +243,7 @@ public class ConfigurationTest {
         .build();
 
     assertThat(config.pathType).isEqualTo(PathType.unix());
-    assertThat(config.roots).has().exactly("/");
+    assertThat(config.roots).containsExactly("/");
     assertThat(config.workingDirectory).isEqualTo("/hello/world");
     assertThat(config.nameCanonicalNormalization).isEmpty();
     assertThat(config.nameDisplayNormalization).isEmpty();
@@ -243,7 +251,7 @@ public class ConfigurationTest {
     assertThat(config.blockSize).is(8192);
     assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
     assertThat(config.maxCacheSize).is(-1);
-    assertThat(config.attributeViews).has().exactly("basic", "posix");
+    assertThat(config.attributeViews).containsExactly("basic", "posix");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
   }

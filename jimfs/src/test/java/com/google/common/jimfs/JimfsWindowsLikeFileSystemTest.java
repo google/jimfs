@@ -57,11 +57,13 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
   @Test
   public void testFileSystem() {
     assertThat(fs.getSeparator()).isEqualTo("\\");
-    assertThat(fs.getRootDirectories()).iteratesAs(ImmutableSet.of(path("C:\\"), path("E:\\")));
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableSet.of(path("C:\\"), path("E:\\")))
+        .inOrder();
     assertThat(fs.isOpen()).isTrue();
     assertThat(fs.isReadOnly()).isFalse();
     assertThat(fs.supportedFileAttributeViews())
-        .has().exactly("basic", "owner", "dos", "acl", "user");
+        .containsExactly("basic", "owner", "dos", "acl", "user");
     assertThat(fs.provider()).isInstanceOf(JimfsFileSystemProvider.class);
   }
 
