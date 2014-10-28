@@ -94,7 +94,7 @@ public class UserDefinedAttributeProviderTest
     view.write("b1", ByteBuffer.wrap(b1));
     view.write("b2", ByteBuffer.wrap(b2));
 
-    assertThat(view.list()).has().allOf("b1", "b2");
+    assertThat(view.list()).containsAllOf("b1", "b2");
     assertThat(file.getAttributeKeys()).containsExactly("user:b1", "user:b2");
 
     assertThat(view.size("b1")).is(3);
