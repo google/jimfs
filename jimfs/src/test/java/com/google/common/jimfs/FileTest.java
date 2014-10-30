@@ -46,7 +46,7 @@ public class FileTest {
 
     file.setAttribute("foo", "foo", "foo");
 
-    assertThat(file.getAttributeKeys()).iteratesAs("foo:foo");
+    assertThat(file.getAttributeKeys()).containsExactly("foo:foo");
     assertThat(file.getAttribute("foo", "foo")).isEqualTo("foo");
 
     file.deleteAttribute("foo", "foo");

@@ -234,7 +234,7 @@ public class DirectoryTest {
     // "FOO" comes before "bar"
     // if the order were based on the normalized, canonical form of the names ("foo" and "bar"),
     // "bar" would come first
-    assertThat(strings).iteratesAs("FOO", "bar");
+    assertThat(strings).containsExactly("FOO", "bar").inOrder();
   }
 
   // Tests for internal hash table implementation
