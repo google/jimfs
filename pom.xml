@@ -220,9 +220,9 @@
       <activation>
         <jdk>[1.8,)</jdk>
       </activation>
-      <build>
+      <!-- Disable doclint under JDK 8 -->
+      <reporting>
         <plugins>
-          <!-- Disable doclint under JDK 8 -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
@@ -230,20 +230,15 @@
               <additionalparam>-Xdoclint:none</additionalparam>
             </configuration>
           </plugin>
+        </plugins>
+      </reporting>
+      <build>
+        <plugins>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-site-plugin</artifactId>
-            <version>3.3</version>
+            <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
-              <reportPlugins>
-                <plugin>
-                  <groupId>org.apache.maven.plugins</groupId>
-                  <artifactId>maven-javadoc-plugin</artifactId>
-                  <configuration>
-                    <additionalparam>-Xdoclint:none</additionalparam>
-                  </configuration>
-                </plugin>
-              </reportPlugins>
+              <additionalparam>-Xdoclint:none</additionalparam>
             </configuration>
           </plugin>
         </plugins>
