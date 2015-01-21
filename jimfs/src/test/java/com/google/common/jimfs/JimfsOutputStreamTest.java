@@ -18,6 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.jimfs.TestUtils.regularFile;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 
@@ -27,7 +28,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 /**
  * Tests for {@link JimfsOutputStream}.
@@ -158,13 +161,27 @@ public class JimfsOutputStreamTest {
     } catch (IOException expected) {
     }
 
-    try {
-      out.flush();
-      fail();
-    } catch (IOException expected) {
-    }
-
     out.close(); // does nothing
+  }
+
+  @Test
+  public void testClosedOutputStream_doesNotThrowOnFlush() throws IOException {
+    JimfsOutputStream out = newOutputStream(false);
+    out.close();
+    out.flush(); // does nothing
+
+    try (JimfsOutputStream out2 = newOutputStream(false);
+         BufferedOutputStream bout = new BufferedOutputStream(out2);
+         OutputStreamWriter writer = new OutputStreamWriter(bout, UTF_8)) {
+      /*
+       * This specific scenario is why flush() shouldn't throw when the stream is already closed.
+       * Nesting try-with-resources like this will cause close() to be called on the
+       * BufferedOutputStream multiple times. Each time, BufferedOutputStream will first call
+       * out2.flush(), then call out2.close(). If out2.flush() throws when the stream is already
+       * closed, the second flush() will throw an exception. Prior to JDK8, this exception would be
+       * swallowed and ignored completely; in JDK8, the exception is thrown from close().
+       */
+    }
   }
 
   private static JimfsOutputStream newOutputStream(boolean append) {

@@ -89,12 +89,6 @@ final class JimfsOutputStream extends OutputStream {
     }
   }
 
-  @Override
-  public synchronized void flush() throws IOException {
-    checkNotClosed();
-    // writes are synchronous to the file, so flush does nothing
-  }
-
   private void checkNotClosed() throws IOException {
     if (file == null) {
       throw new IOException("stream is closed");
