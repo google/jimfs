@@ -212,23 +212,23 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testPaths_toUri() {
-    assertThat(fs.getPath("C:\\").toUri()).is(URI.create("jimfs://win/C:/"));
-    assertThat(fs.getPath("C:\\foo").toUri()).is(URI.create("jimfs://win/C:/foo"));
-    assertThat(fs.getPath("C:\\foo\\bar").toUri()).is(URI.create("jimfs://win/C:/foo/bar"));
-    assertThat(fs.getPath("foo").toUri()).is(URI.create("jimfs://win/C:/work/foo"));
-    assertThat(fs.getPath("foo\\bar").toUri()).is(URI.create("jimfs://win/C:/work/foo/bar"));
-    assertThat(fs.getPath("").toUri()).is(URI.create("jimfs://win/C:/work"));
-    assertThat(fs.getPath(".\\..\\.").toUri()).is(URI.create("jimfs://win/C:/work/./../."));
+    assertThat(fs.getPath("C:\\").toUri()).isEqualTo(URI.create("jimfs://win/C:/"));
+    assertThat(fs.getPath("C:\\foo").toUri()).isEqualTo(URI.create("jimfs://win/C:/foo"));
+    assertThat(fs.getPath("C:\\foo\\bar").toUri()).isEqualTo(URI.create("jimfs://win/C:/foo/bar"));
+    assertThat(fs.getPath("foo").toUri()).isEqualTo(URI.create("jimfs://win/C:/work/foo"));
+    assertThat(fs.getPath("foo\\bar").toUri()).isEqualTo(URI.create("jimfs://win/C:/work/foo/bar"));
+    assertThat(fs.getPath("").toUri()).isEqualTo(URI.create("jimfs://win/C:/work"));
+    assertThat(fs.getPath(".\\..\\.").toUri()).isEqualTo(URI.create("jimfs://win/C:/work/./../."));
   }
 
   @Test
   public void testPaths_toUri_unc() {
     assertThat(fs.getPath("\\\\host\\share\\").toUri())
-        .is(URI.create("jimfs://win//host/share/"));
+        .isEqualTo(URI.create("jimfs://win//host/share/"));
     assertThat(fs.getPath("\\\\host\\share\\foo").toUri())
-        .is(URI.create("jimfs://win//host/share/foo"));
+        .isEqualTo(URI.create("jimfs://win//host/share/foo"));
     assertThat(fs.getPath("\\\\host\\share\\foo\\bar").toUri())
-        .is(URI.create("jimfs://win//host/share/foo/bar"));
+        .isEqualTo(URI.create("jimfs://win//host/share/foo/bar"));
   }
 
   @Test

@@ -291,13 +291,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testPaths_toUri() {
-    assertThat(path("/").toUri()).is(URI.create("jimfs://unix/"));
-    assertThat(path("/foo").toUri()).is(URI.create("jimfs://unix/foo"));
-    assertThat(path("/foo/bar").toUri()).is(URI.create("jimfs://unix/foo/bar"));
-    assertThat(path("foo").toUri()).is(URI.create("jimfs://unix/work/foo"));
-    assertThat(path("foo/bar").toUri()).is(URI.create("jimfs://unix/work/foo/bar"));
-    assertThat(path("").toUri()).is(URI.create("jimfs://unix/work"));
-    assertThat(path("./../.").toUri()).is(URI.create("jimfs://unix/work/./../."));
+    assertThat(path("/").toUri()).isEqualTo(URI.create("jimfs://unix/"));
+    assertThat(path("/foo").toUri()).isEqualTo(URI.create("jimfs://unix/foo"));
+    assertThat(path("/foo/bar").toUri()).isEqualTo(URI.create("jimfs://unix/foo/bar"));
+    assertThat(path("foo").toUri()).isEqualTo(URI.create("jimfs://unix/work/foo"));
+    assertThat(path("foo/bar").toUri()).isEqualTo(URI.create("jimfs://unix/work/foo/bar"));
+    assertThat(path("").toUri()).isEqualTo(URI.create("jimfs://unix/work"));
+    assertThat(path("./../.").toUri()).isEqualTo(URI.create("jimfs://unix/work/./../."));
   }
 
   @Test

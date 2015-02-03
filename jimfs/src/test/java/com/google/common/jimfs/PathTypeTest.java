@@ -68,18 +68,18 @@ public class PathTypeTest {
   @Test
   public void testToUri() {
     URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"));
-    assertThat(fileUri.toString()).is("jimfs://foo/$/foo/bar");
+    assertThat(fileUri.toString()).isEqualTo("jimfs://foo/$/foo/bar");
     assertThat(fileUri.getPath()).isEqualTo("/$/foo/bar");
 
     URI rootUri = type.toUri(fileSystemUri, "$", ImmutableList.<String>of());
-    assertThat(rootUri.toString()).is("jimfs://foo/$");
+    assertThat(rootUri.toString()).isEqualTo("jimfs://foo/$");
     assertThat(rootUri.getPath()).isEqualTo("/$");
   }
 
   @Test
   public void testToUri_escaping() {
     URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar baz"));
-    assertThat(fileUri.toString()).is("jimfs://foo/$/foo/bar%20baz");
+    assertThat(fileUri.toString()).isEqualTo("jimfs://foo/$/foo/bar%20baz");
     assertThat(fileUri.getRawPath()).isEqualTo("/$/foo/bar%20baz");
     assertThat(fileUri.getPath()).isEqualTo("/$/foo/bar baz");
   }
