@@ -96,7 +96,7 @@ public class AbstractWatchServiceTest {
     assertThat(retrievedKey).isEqualTo(key);
 
     List<WatchEvent<?>> events = retrievedKey.pollEvents();
-    assertThat(events.size()).is(1);
+    assertThat(events).hasSize(1);
     assertThat(events.get(0)).isEqualTo(event);
 
     // polling should have removed all events
@@ -152,14 +152,14 @@ public class AbstractWatchServiceTest {
     key = (AbstractWatchService.Key) watcher.poll();
     assertThat(watcher.queuedKeys()).isEmpty();
 
-    assertThat(key.pollEvents().size()).is(1);
+    assertThat(key.pollEvents()).hasSize(1);
 
     key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
     assertThat(watcher.queuedKeys()).isEmpty();
 
     key.reset();
     assertThat(key.state()).isEqualTo(SIGNALLED);
-    assertThat(watcher.queuedKeys().size()).is(1);
+    assertThat(watcher.queuedKeys()).hasSize(1);
   }
 
   @Test
@@ -173,14 +173,14 @@ public class AbstractWatchServiceTest {
 
     List<WatchEvent<?>> events = key.pollEvents();
 
-    assertThat(events.size()).is(AbstractWatchService.Key.MAX_QUEUE_SIZE + 1);
+    assertThat(events).hasSize(AbstractWatchService.Key.MAX_QUEUE_SIZE + 1);
     for (int i = 0; i < AbstractWatchService.Key.MAX_QUEUE_SIZE; i++) {
       assertThat(events.get(i).kind()).isEqualTo(ENTRY_CREATE);
     }
 
     WatchEvent<?> lastEvent = events.get(AbstractWatchService.Key.MAX_QUEUE_SIZE);
     assertThat(lastEvent.kind()).isEqualTo(OVERFLOW);
-    assertThat(lastEvent.count()).is(10);
+    assertThat(lastEvent.count()).isEqualTo(10);
   }
 
   @Test

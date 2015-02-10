@@ -97,8 +97,8 @@ public class UserDefinedAttributeProviderTest
     assertThat(view.list()).containsAllOf("b1", "b2");
     assertThat(file.getAttributeKeys()).containsExactly("user:b1", "user:b2");
 
-    assertThat(view.size("b1")).is(3);
-    assertThat(view.size("b2")).is(5);
+    assertThat(view.size("b1")).isEqualTo(3);
+    assertThat(view.size("b2")).isEqualTo(5);
 
     ByteBuffer buf1 = ByteBuffer.allocate(view.size("b1"));
     ByteBuffer buf2 = ByteBuffer.allocate(view.size("b2"));
@@ -129,7 +129,7 @@ public class UserDefinedAttributeProviderTest
     }
 
     view.write("b1", ByteBuffer.wrap(b2));
-    assertThat(view.size("b1")).is(5);
+    assertThat(view.size("b1")).isEqualTo(5);
 
     view.delete("b2"); // succeeds
   }

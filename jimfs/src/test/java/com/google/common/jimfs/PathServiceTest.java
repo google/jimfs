@@ -143,8 +143,8 @@ public class PathServiceTest {
     JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("b", "y")));
     JimfsPath path3 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("c", "x")));
 
-    assertThat(pathService.compare(path1, path2)).is(-1);
-    assertThat(pathService.compare(path2, path3)).is(-1);
+    assertThat(pathService.compare(path1, path2)).isEqualTo(-1);
+    assertThat(pathService.compare(path2, path3)).isEqualTo(-1);
   }
 
   @Test
@@ -155,8 +155,8 @@ public class PathServiceTest {
     JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("b", "y")));
     JimfsPath path3 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("c", "x")));
 
-    assertThat(pathService.compare(path1, path2)).is(1);
-    assertThat(pathService.compare(path2, path3)).is(1);
+    assertThat(pathService.compare(path1, path2)).isEqualTo(1);
+    assertThat(pathService.compare(path2, path3)).isEqualTo(1);
   }
 
   @Test

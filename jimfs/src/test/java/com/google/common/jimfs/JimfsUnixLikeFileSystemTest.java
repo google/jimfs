@@ -1032,7 +1032,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     assertThat(channel.size()).isEqualTo(105L);
     buf.clear();
-    assertThat(channel.read(buf)).is(5);
+    assertThat(channel.read(buf)).isEqualTo(5);
 
     buf.flip();
     byte[] b = new byte[5];

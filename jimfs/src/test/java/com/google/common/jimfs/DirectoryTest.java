@@ -58,7 +58,7 @@ public class DirectoryTest {
 
   @Test
   public void testRootDirectory() {
-    assertThat(root.entryCount()).is(3); // two for parent/self, one for dir
+    assertThat(root.entryCount()).isEqualTo(3); // two for parent/self, one for dir
     assertThat(root.isEmpty()).isFalse();
     assertThat(root.entryInParent()).isEqualTo(entry(root, "/", root));
     assertThat(root.entryInParent().name()).isEqualTo(Name.simple("/"));
@@ -68,7 +68,7 @@ public class DirectoryTest {
 
   @Test
   public void testEmptyDirectory() {
-    assertThat(dir.entryCount()).is(2);
+    assertThat(dir.entryCount()).isEqualTo(2);
     assertThat(dir.isEmpty()).isTrue();
 
     assertParentAndSelf(dir, root, dir);
@@ -180,7 +180,7 @@ public class DirectoryTest {
     assertThat(newDir.entryInParent()).isNull();
     assertThat(newDir.get(Name.SELF).file()).isEqualTo(newDir);
     assertThat(newDir.get(Name.PARENT)).isNull();
-    assertThat(newDir.links()).is(1);
+    assertThat(newDir.links()).isEqualTo(1);
 
     dir.link(Name.simple("foo"), newDir);
 
@@ -189,7 +189,7 @@ public class DirectoryTest {
     assertThat(newDir.entryInParent().name()).isEqualTo(Name.simple("foo"));
     assertThat(newDir.get(Name.SELF)).isEqualTo(entry(newDir, ".", newDir));
     assertThat(newDir.get(Name.PARENT)).isEqualTo(entry(newDir, "..", dir));
-    assertThat(newDir.links()).is(2);
+    assertThat(newDir.links()).isEqualTo(2);
   }
 
   @Test
@@ -198,19 +198,19 @@ public class DirectoryTest {
 
     dir.link(Name.simple("foo"), newDir);
 
-    assertThat(dir.links()).is(3);
+    assertThat(dir.links()).isEqualTo(3);
 
     assertThat(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
-    assertThat(newDir.links()).is(2);
+    assertThat(newDir.links()).isEqualTo(2);
 
     dir.unlink(Name.simple("foo"));
 
-    assertThat(dir.links()).is(2);
+    assertThat(dir.links()).isEqualTo(2);
 
     assertThat(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
     assertThat(newDir.get(Name.SELF).file()).isEqualTo(newDir);
     assertThat(newDir.get(Name.PARENT)).isEqualTo(entry(newDir, "..", dir));
-    assertThat(newDir.links()).is(1);
+    assertThat(newDir.links()).isEqualTo(1);
   }
 
   @Test
@@ -243,7 +243,7 @@ public class DirectoryTest {
 
   @Test
   public void testInitialState() {
-    assertThat(dir.entryCount()).is(2);
+    assertThat(dir.entryCount()).isEqualTo(2);
     assertThat(ImmutableSet.copyOf(dir)).containsExactly(
         new DirectoryEntry(dir, Name.SELF, dir),
         new DirectoryEntry(dir, Name.PARENT, root));
@@ -254,13 +254,13 @@ public class DirectoryTest {
   public void testPutAndGet() {
     dir.put(entry("foo"));
 
-    assertThat(dir.entryCount()).is(3);
+    assertThat(dir.entryCount()).isEqualTo(3);
     assertThat(ImmutableSet.copyOf(dir)).contains(entry("foo"));
     assertThat(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
 
     dir.put(entry("bar"));
 
-    assertThat(dir.entryCount()).is(4);
+    assertThat(dir.entryCount()).isEqualTo(4);
     assertThat(ImmutableSet.copyOf(dir))
         .containsAllOf(entry("foo"), entry("bar"));
     assertThat(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
@@ -284,7 +284,7 @@ public class DirectoryTest {
 
     dir.remove(Name.simple("foo"));
 
-    assertThat(dir.entryCount()).is(3);
+    assertThat(dir.entryCount()).isEqualTo(3);
     assertThat(ImmutableSet.copyOf(dir)).containsExactly(
         entry("bar"),
         new DirectoryEntry(dir, Name.SELF, dir),
@@ -294,7 +294,7 @@ public class DirectoryTest {
 
     dir.remove(Name.simple("bar"));
 
-    assertThat(dir.entryCount()).is(2);
+    assertThat(dir.entryCount()).isEqualTo(2);
 
     dir.put(entry("bar"));
     dir.put(entry("foo")); // these should just succeeded

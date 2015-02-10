@@ -42,7 +42,7 @@ public class JimfsInputStreamTest {
   @Test
   public void testRead_singleByte() throws IOException {
     JimfsInputStream in = newInputStream(2);
-    assertThat(in.read()).is(2);
+    assertThat(in.read()).isEqualTo(2);
     assertEmpty(in);
   }
 
@@ -50,7 +50,7 @@ public class JimfsInputStreamTest {
    public void testRead_wholeArray() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     byte[] bytes = new byte[8];
-    assertThat(in.read(bytes)).is(8);
+    assertThat(in.read(bytes)).isEqualTo(8);
     assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 7, 8), bytes);
     assertEmpty(in);
   }
@@ -59,7 +59,7 @@ public class JimfsInputStreamTest {
   public void testRead_wholeArray_arrayLarger() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     byte[] bytes = new byte[12];
-    assertThat(in.read(bytes)).is(8);
+    assertThat(in.read(bytes)).isEqualTo(8);
     assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0), bytes);
     assertEmpty(in);
   }
@@ -68,10 +68,10 @@ public class JimfsInputStreamTest {
   public void testRead_wholeArray_arraySmaller() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     byte[] bytes = new byte[6];
-    assertThat(in.read(bytes)).is(6);
+    assertThat(in.read(bytes)).isEqualTo(6);
     assertArrayEquals(bytes(1, 2, 3, 4, 5, 6), bytes);
     bytes = new byte[6];
-    assertThat(in.read(bytes)).is(2);
+    assertThat(in.read(bytes)).isEqualTo(2);
     assertArrayEquals(bytes(7, 8, 0, 0, 0, 0), bytes);
     assertEmpty(in);
   }
@@ -80,7 +80,7 @@ public class JimfsInputStreamTest {
   public void testRead_partialArray() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     byte[] bytes = new byte[12];
-    assertThat(in.read(bytes, 0, 8)).is(8);
+    assertThat(in.read(bytes, 0, 8)).isEqualTo(8);
     assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0), bytes);
     assertEmpty(in);
   }
@@ -89,7 +89,7 @@ public class JimfsInputStreamTest {
   public void testRead_partialArray_sliceLarger() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     byte[] bytes = new byte[12];
-    assertThat(in.read(bytes, 0, 10)).is(8);
+    assertThat(in.read(bytes, 0, 10)).isEqualTo(8);
     assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0), bytes);
     assertEmpty(in);
   }
@@ -98,9 +98,9 @@ public class JimfsInputStreamTest {
   public void testRead_partialArray_sliceSmaller() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     byte[] bytes = new byte[12];
-    assertThat(in.read(bytes, 0, 6)).is(6);
+    assertThat(in.read(bytes, 0, 6)).isEqualTo(6);
     assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0), bytes);
-    assertThat(in.read(bytes, 6, 6)).is(2);
+    assertThat(in.read(bytes, 6, 6)).isEqualTo(2);
     assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0), bytes);
     assertEmpty(in);
   }
@@ -131,36 +131,36 @@ public class JimfsInputStreamTest {
   @Test
   public void testAvailable() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
-    assertThat(in.available()).is(8);
-    assertThat(in.read()).is(1);
-    assertThat(in.available()).is(7);
-    assertThat(in.read(new byte[3])).is(3);
-    assertThat(in.available()).is(4);
-    assertThat(in.read(new byte[10], 1, 2)).is(2);
-    assertThat(in.available()).is(2);
-    assertThat(in.read(new byte[10])).is(2);
-    assertThat(in.available()).is(0);
+    assertThat(in.available()).isEqualTo(8);
+    assertThat(in.read()).isEqualTo(1);
+    assertThat(in.available()).isEqualTo(7);
+    assertThat(in.read(new byte[3])).isEqualTo(3);
+    assertThat(in.available()).isEqualTo(4);
+    assertThat(in.read(new byte[10], 1, 2)).isEqualTo(2);
+    assertThat(in.available()).isEqualTo(2);
+    assertThat(in.read(new byte[10])).isEqualTo(2);
+    assertThat(in.available()).isEqualTo(0);
   }
 
   @Test
   public void testSkip() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
-    assertThat(in.skip(0)).is(0);
-    assertThat(in.skip(-10)).is(0);
-    assertThat(in.skip(2)).is(2);
-    assertThat(in.read()).is(3);
-    assertThat(in.skip(3)).is(3);
-    assertThat(in.read()).is(7);
-    assertThat(in.skip(10)).is(1);
+    assertThat(in.skip(0)).isEqualTo(0);
+    assertThat(in.skip(-10)).isEqualTo(0);
+    assertThat(in.skip(2)).isEqualTo(2);
+    assertThat(in.read()).isEqualTo(3);
+    assertThat(in.skip(3)).isEqualTo(3);
+    assertThat(in.read()).isEqualTo(7);
+    assertThat(in.skip(10)).isEqualTo(1);
     assertEmpty(in);
-    assertThat(in.skip(10)).is(0);
+    assertThat(in.skip(10)).isEqualTo(0);
     assertEmpty(in);
   }
 
   @Test
   public void testFullyReadInputStream_doesNotChangeStateWhenStoreChanges() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5);
-    assertThat(in.read(new byte[5])).is(5);
+    assertThat(in.read(new byte[5])).isEqualTo(5);
     assertEmpty(in);
 
     in.file.write(5, new byte[10], 0, 10); // append more bytes to file
@@ -233,9 +233,9 @@ public class JimfsInputStreamTest {
   }
 
   private static void assertEmpty(JimfsInputStream in) throws IOException {
-    assertThat(in.read()).is(-1);
-    assertThat(in.read(new byte[3])).is(-1);
-    assertThat(in.read(new byte[10], 1, 5)).is(-1);
-    assertThat(in.available()).is(0);
+    assertThat(in.read()).isEqualTo(-1);
+    assertThat(in.read(new byte[3])).isEqualTo(-1);
+    assertThat(in.read(new byte[10], 1, 5)).isEqualTo(-1);
+    assertThat(in.available()).isEqualTo(0);
   }
 }

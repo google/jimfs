@@ -63,9 +63,9 @@ public class ConfigurationTest {
     assertThat(config.nameCanonicalNormalization).isEmpty();
     assertThat(config.nameDisplayNormalization).isEmpty();
     assertThat(config.pathEqualityUsesCanonicalForm).isFalse();
-    assertThat(config.blockSize).is(8192);
+    assertThat(config.blockSize).isEqualTo(8192);
     assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
-    assertThat(config.maxCacheSize).is(-1);
+    assertThat(config.maxCacheSize).isEqualTo(-1);
     assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
@@ -97,9 +97,9 @@ public class ConfigurationTest {
     assertThat(config.nameCanonicalNormalization).containsExactly(NFD, CASE_FOLD_ASCII);
     assertThat(config.nameDisplayNormalization).containsExactly(NFC);
     assertThat(config.pathEqualityUsesCanonicalForm).isFalse();
-    assertThat(config.blockSize).is(8192);
+    assertThat(config.blockSize).isEqualTo(8192);
     assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
-    assertThat(config.maxCacheSize).is(-1);
+    assertThat(config.maxCacheSize).isEqualTo(-1);
     assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
@@ -136,9 +136,9 @@ public class ConfigurationTest {
     assertThat(config.nameCanonicalNormalization).containsExactly(CASE_FOLD_ASCII);
     assertThat(config.nameDisplayNormalization).isEmpty();
     assertThat(config.pathEqualityUsesCanonicalForm).isTrue();
-    assertThat(config.blockSize).is(8192);
+    assertThat(config.blockSize).isEqualTo(8192);
     assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
-    assertThat(config.maxCacheSize).is(-1);
+    assertThat(config.maxCacheSize).isEqualTo(-1);
     assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
@@ -190,9 +190,9 @@ public class ConfigurationTest {
     assertThat(config.nameCanonicalNormalization).containsExactly(NFD, CASE_FOLD_UNICODE);
     assertThat(config.nameDisplayNormalization).containsExactly(NFC);
     assertThat(config.pathEqualityUsesCanonicalForm).isTrue();
-    assertThat(config.blockSize).is(10);
-    assertThat(config.maxSize).is(100);
-    assertThat(config.maxCacheSize).is(50);
+    assertThat(config.blockSize).isEqualTo(10);
+    assertThat(config.maxSize).isEqualTo(100);
+    assertThat(config.maxCacheSize).isEqualTo(50);
     assertThat(config.attributeViews).containsExactly("basic", "posix");
     assertThat(config.attributeProviders).containsExactly(unixProvider);
     assertThat(config.defaultAttributeValues)
@@ -221,7 +221,7 @@ public class ConfigurationTest {
         .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
         .inOrder();
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/hello/world"));
-    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).is(100);
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(100);
     assertThat(fs.supportedFileAttributeViews()).containsExactly("basic", "owner", "posix", "unix");
 
     Files.createFile(fs.getPath("/foo"));
@@ -248,9 +248,9 @@ public class ConfigurationTest {
     assertThat(config.nameCanonicalNormalization).isEmpty();
     assertThat(config.nameDisplayNormalization).isEmpty();
     assertThat(config.pathEqualityUsesCanonicalForm).isFalse();
-    assertThat(config.blockSize).is(8192);
+    assertThat(config.blockSize).isEqualTo(8192);
     assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
-    assertThat(config.maxCacheSize).is(-1);
+    assertThat(config.maxCacheSize).isEqualTo(-1);
     assertThat(config.attributeViews).containsExactly("basic", "posix");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();

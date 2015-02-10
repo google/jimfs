@@ -250,8 +250,8 @@ public class AttributeServiceTest {
     TestAttributes attrs
         = service.getFileAttributeView(fileLookup, TestAttributeView.class).readAttributes();
     assertThat(attrs.foo()).isEqualTo("hello");
-    assertThat(attrs.bar()).is(0);
-    assertThat(attrs.baz()).is(1);
+    assertThat(attrs.bar()).isEqualTo(0);
+    assertThat(attrs.baz()).isEqualTo(1);
   }
 
   @Test
@@ -343,11 +343,11 @@ public class AttributeServiceTest {
 
     TestAttributes testAttrs = service.readAttributes(file, TestAttributes.class);
     assertThat(testAttrs.foo()).isEqualTo("hello");
-    assertThat(testAttrs.bar()).is(0);
-    assertThat(testAttrs.baz()).is(1);
+    assertThat(testAttrs.bar()).isEqualTo(0);
+    assertThat(testAttrs.baz()).isEqualTo(1);
 
     file.setAttribute("test", "baz", 100);
-    assertThat(service.readAttributes(file, TestAttributes.class).baz()).is(100);
+    assertThat(service.readAttributes(file, TestAttributes.class).baz()).isEqualTo(100);
   }
 
   @Test

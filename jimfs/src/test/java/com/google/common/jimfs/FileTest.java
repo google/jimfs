@@ -59,8 +59,8 @@ public class FileTest {
   public void testFileBasics() {
     File file = regularFile(0);
 
-    assertThat(file.id()).is(0);
-    assertThat(file.links()).is(0);
+    assertThat(file.id()).isEqualTo(0);
+    assertThat(file.links()).isEqualTo(0);
   }
 
   @Test
@@ -99,18 +99,18 @@ public class FileTest {
   @Test
   public void testLinkAndUnlink() {
     File file = regularFile(0);
-    assertThat(file.links()).is(0);
+    assertThat(file.links()).isEqualTo(0);
 
     file.incrementLinkCount();
-    assertThat(file.links()).is(1);
+    assertThat(file.links()).isEqualTo(1);
 
     file.incrementLinkCount();
-    assertThat(file.links()).is(2);
+    assertThat(file.links()).isEqualTo(2);
 
     file.decrementLinkCount();
-    assertThat(file.links()).is(1);
+    assertThat(file.links()).isEqualTo(1);
 
     file.decrementLinkCount();
-    assertThat(file.links()).is(0);
+    assertThat(file.links()).isEqualTo(0);
   }
 }

@@ -46,7 +46,7 @@ public class RegularFileBlocksTest {
 
   @Test
   public void testInitialState() {
-    assertThat(file.blockCount()).is(0);
+    assertThat(file.blockCount()).isEqualTo(0);
 
     // no bounds checking, but there should never be a block at an index >= size
     assertThat(file.getBlock(0)).isNull();
@@ -56,13 +56,13 @@ public class RegularFileBlocksTest {
   public void testAddAndGet() {
     file.addBlock(new byte[] {1});
 
-    assertThat(file.blockCount()).is(1);
+    assertThat(file.blockCount()).isEqualTo(1);
     assertThat(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1}));
     assertThat(file.getBlock(1)).isNull();
 
     file.addBlock(new byte[] {1, 2});
 
-    assertThat(file.blockCount()).is(2);
+    assertThat(file.blockCount()).isEqualTo(2);
     assertThat(Bytes.asList(file.getBlock(1))).isEqualTo(Bytes.asList(new byte[] {1, 2}));
     assertThat(file.getBlock(2)).isNull();
   }
@@ -74,17 +74,17 @@ public class RegularFileBlocksTest {
     file.addBlock(new byte[0]);
     file.addBlock(new byte[0]);
 
-    assertThat(file.blockCount()).is(4);
+    assertThat(file.blockCount()).isEqualTo(4);
 
     file.truncateBlocks(2);
 
-    assertThat(file.blockCount()).is(2);
+    assertThat(file.blockCount()).isEqualTo(2);
     assertThat(file.getBlock(2)).isNull();
     assertThat(file.getBlock(3)).isNull();
     assertThat(file.getBlock(0)).isNotNull();
 
     file.truncateBlocks(0);
-    assertThat(file.blockCount()).is(0);
+    assertThat(file.blockCount()).isEqualTo(0);
     assertThat(file.getBlock(0)).isNull();
   }
 
@@ -94,22 +94,22 @@ public class RegularFileBlocksTest {
     file.addBlock(new byte[] {1, 2});
     RegularFile other = createFile();
 
-    assertThat(other.blockCount()).is(0);
+    assertThat(other.blockCount()).isEqualTo(0);
 
     file.copyBlocksTo(other, 2);
 
-    assertThat(other.blockCount()).is(2);
+    assertThat(other.blockCount()).isEqualTo(2);
     assertThat(other.getBlock(0)).isEqualTo(file.getBlock(0));
     assertThat(other.getBlock(1)).isEqualTo(file.getBlock(1));
 
     file.copyBlocksTo(other, 1); // should copy the last block
 
-    assertThat(other.blockCount()).is(3);
+    assertThat(other.blockCount()).isEqualTo(3);
     assertThat(other.getBlock(2)).isEqualTo(file.getBlock(1));
 
     other.copyBlocksTo(file, 3);
 
-    assertThat(file.blockCount()).is(5);
+    assertThat(file.blockCount()).isEqualTo(5);
     assertThat(file.getBlock(2)).isEqualTo(other.getBlock(0));
     assertThat(file.getBlock(3)).isEqualTo(other.getBlock(1));
     assertThat(file.getBlock(4)).isEqualTo(other.getBlock(2));
@@ -122,13 +122,13 @@ public class RegularFileBlocksTest {
     file.addBlock(new byte[] {1, 2, 3});
     RegularFile other = createFile();
 
-    assertThat(file.blockCount()).is(3);
-    assertThat(other.blockCount()).is(0);
+    assertThat(file.blockCount()).isEqualTo(3);
+    assertThat(other.blockCount()).isEqualTo(0);
 
     file.transferBlocksTo(other, 3);
 
-    assertThat(file.blockCount()).is(0);
-    assertThat(other.blockCount()).is(3);
+    assertThat(file.blockCount()).isEqualTo(0);
+    assertThat(other.blockCount()).isEqualTo(3);
 
     assertThat(file.getBlock(0)).isNull();
     assertThat(Bytes.asList(other.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1}));
@@ -137,8 +137,8 @@ public class RegularFileBlocksTest {
 
     other.transferBlocksTo(file, 1);
 
-    assertThat(file.blockCount()).is(1);
-    assertThat(other.blockCount()).is(2);
+    assertThat(file.blockCount()).isEqualTo(1);
+    assertThat(other.blockCount()).isEqualTo(2);
     assertThat(other.getBlock(2)).isNull();
     assertThat(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[]{1, 2, 3}));
     assertThat(file.getBlock(1)).isNull();
