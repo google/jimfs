@@ -71,6 +71,15 @@ import javax.annotation.Nullable;
 @AutoService(FileSystemProvider.class)
 public final class JimfsFileSystemProvider extends FileSystemProvider {
 
+  static {
+    // Register the URL stream handler implementation.
+    try {
+      Handler.register();
+    } catch (SecurityException e) {
+      // Couldn't set the system property needed to register the handler. Nothing we can do really.
+    }
+  }
+
   @Override
   public String getScheme() {
     return URI_SCHEME;
