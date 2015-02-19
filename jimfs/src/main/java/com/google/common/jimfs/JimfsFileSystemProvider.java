@@ -75,7 +75,7 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     // Register the URL stream handler implementation.
     try {
       Handler.register();
-    } catch (SecurityException e) {
+    } catch (Throwable e) {
       // Couldn't set the system property needed to register the handler. Nothing we can do really.
     }
   }
