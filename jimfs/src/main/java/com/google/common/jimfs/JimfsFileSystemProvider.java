@@ -18,21 +18,16 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static com.google.common.jimfs.Feature.FILE_CHANNEL;
-import static com.google.common.jimfs.Jimfs.CONFIG_KEY;
 import static com.google.common.jimfs.Jimfs.URI_SCHEME;
 import static java.nio.file.StandardOpenOption.APPEND;
 
-import com.google.auto.service.AutoService;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.MapMaker;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -41,13 +36,10 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.ProviderMismatchException;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
@@ -56,20 +48,21 @@ import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
 import javax.annotation.Nullable;
 
 /**
- * {@link FileSystemProvider} implementation for Jimfs. While this class is public, it should not
- * be used directly. To create a new file system instance, see {@link Jimfs}. For other operations,
- * use the public APIs in {@code java.nio.file}.
+ * {@link FileSystemProvider} implementation for Jimfs. This provider implements the actual file
+ * system operations but does not handle creation, caching or lookup of file systems. See
+ * {@link SystemJimfsFileSystemProvider}, which is the {@code META-INF/services/} entry for Jimfs,
+ * for those operations.
  *
  * @author Colin Decker
  */
-@AutoService(FileSystemProvider.class)
-public final class JimfsFileSystemProvider extends FileSystemProvider {
+final class JimfsFileSystemProvider extends FileSystemProvider {
+
+  private static final JimfsFileSystemProvider INSTANCE = new JimfsFileSystemProvider();
 
   static {
     // Register the URL stream handler implementation.
@@ -80,62 +73,28 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     }
   }
 
+  /**
+   * Returns the singleton instance of this provider.
+   */
+  static JimfsFileSystemProvider instance() {
+    return INSTANCE;
+  }
+
   @Override
   public String getScheme() {
     return URI_SCHEME;
   }
 
-  /**
-   * Cache of file systems that have been created but not closed.
-   *
-   * <p>This cache is static to ensure that even when this provider isn't loaded by the system
-   * class loader, meaning that a new instance of it must be created each time one of the methods
-   * on {@link FileSystems} or {@link Paths#get(URI)} is called, cached file system instances are
-   * still available.
-   *
-   * <p>The cache uses weak values so that it doesn't prevent file systems that are created but not
-   * closed from being garbage collected if no references to them are held elsewhere. This is a
-   * compromise between ensuring that any file URI continues to work as long as the file system
-   * hasn't been closed (which is technically the correct thing to do but unlikely to be something
-   * that most users care about) and ensuring that users don't get unexpected leaks of large
-   * amounts of memory because they're creating many file systems in tests but forgetting to close
-   * them (which seems likely to happen sometimes). Users that want to ensure that a file system
-   * won't be garbage collected just need to ensure they hold a reference to it somewhere for as
-   * long as they need it to stick around.
-   */
-  private static final ConcurrentMap<URI, JimfsFileSystem> fileSystems = new MapMaker()
-      .weakValues()
-      .makeMap();
-
   @Override
   public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-    checkArgument(uri.getScheme().equalsIgnoreCase(URI_SCHEME),
-        "uri (%s) scheme must be '%s'", uri, URI_SCHEME);
-    checkArgument(isValidFileSystemUri(uri),
-        "uri (%s) may not have a path, query or fragment", uri);
-    checkArgument(env.get(CONFIG_KEY) instanceof Configuration,
-        "env map (%s) must contain key '%s' mapped to an instance of Jimfs.Configuration",
-        env, CONFIG_KEY);
-
-    Configuration config = (Configuration) env.get(CONFIG_KEY);
-    JimfsFileSystem fileSystem = JimfsFileSystems.newFileSystem(this, uri, config);
-    if (fileSystems.putIfAbsent(uri, fileSystem) != null) {
-      throw new FileSystemAlreadyExistsException(uri.toString());
-    }
-    return fileSystem;
+    throw new UnsupportedOperationException("This method should not be called directly;"
+        + "use an overload of Jimfs.newFileSystem() to create a FileSystem.");
   }
 
   @Override
   public FileSystem getFileSystem(URI uri) {
-    return getJimfsFileSystem(uri);
-  }
-
-  private JimfsFileSystem getJimfsFileSystem(URI uri) {
-    JimfsFileSystem fileSystem = fileSystems.get(uri);
-    if (fileSystem == null) {
-      throw new FileSystemNotFoundException(uri.toString());
-    }
-    return fileSystem;
+    throw new UnsupportedOperationException("This method should not be called directly; "
+        + "use FileSystems.getFileSystem(URI) instead.");
   }
 
   @Override
@@ -156,50 +115,10 @@ public final class JimfsFileSystemProvider extends FileSystemProvider {
     }
   }
 
-  /**
-   * Returns a runnable that, when run, removes the file system with the given URI from this
-   * provider.
-   */
-  static Runnable removeFileSystemRunnable(final URI uri) {
-    return new Runnable() {
-      @Override
-      public void run() {
-        fileSystems.remove(uri);
-      }
-    };
-  }
-
   @Override
   public Path getPath(URI uri) {
-    checkArgument(URI_SCHEME.equalsIgnoreCase(uri.getScheme()),
-        "uri scheme does not match this provider: %s", uri);
-    checkArgument(!isNullOrEmpty(uri.getPath()), "uri must have a path: %s", uri);
-
-    return getJimfsFileSystem(toFileSystemUri(uri)).toPath(uri);
-  }
-
-  /**
-   * Returns whether or not the given URI is valid as a base file system URI. It must not have a
-   * path, query or fragment.
-   */
-  private static boolean isValidFileSystemUri(URI uri) {
-    // would like to just check null, but fragment appears to be the empty string when not present
-    return isNullOrEmpty(uri.getPath())
-        && isNullOrEmpty(uri.getQuery())
-        && isNullOrEmpty(uri.getFragment());
-  }
-
-  /**
-   * Returns the given URI with any path, query or fragment stripped off.
-   */
-  private static URI toFileSystemUri(URI uri) {
-    try {
-      return new URI(
-          uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(),
-          null, null, null);
-    } catch (URISyntaxException e) {
-      throw new AssertionError(e);
-    }
+    throw new UnsupportedOperationException("This method should not be called directly; "
+        + "use Paths.get(URI) instead.");
   }
 
   private static JimfsPath checkPath(Path path) {

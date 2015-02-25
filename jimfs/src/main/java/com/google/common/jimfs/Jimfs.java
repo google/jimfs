@@ -17,6 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.jimfs.SystemJimfsFileSystemProvider.FILE_SYSTEM_KEY;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -149,14 +150,23 @@ public final class Jimfs {
     checkArgument(URI_SCHEME.equals(uri.getScheme()),
         "uri (%s) must have scheme %s", uri, URI_SCHEME);
 
-    ImmutableMap<String, ?> env = ImmutableMap.of(CONFIG_KEY, config);
     try {
-      // Using FileSystems.newFileSystem so that we use the same FileSystemProvider that users will
-      // get if they use FileSystems (or other methods like Paths.get(URI)) directly, if possible.
-      // We pass in the ClassLoader that loaded this class to ensure that JimfsFileSystemProvider
-      // will be found, though if that ClassLoader isn't the system ClassLoader, a new
-      // JimfsFileSystemProvider will be created each time.
-      return FileSystems.newFileSystem(uri, env, Jimfs.class.getClassLoader());
+      // Create the FileSystem. It uses JimfsFileSystemProvider as its provider, as that is
+      // the provider that actually implements the operations needed for Files methods to work.
+      JimfsFileSystem fileSystem = JimfsFileSystems.newFileSystem(
+          JimfsFileSystemProvider.instance(), uri, config);
+
+      // Now, call FileSystems.newFileSystem, passing it the FileSystem we just created. This
+      // allows the system-loaded SystemJimfsFileSystemProvider instance to cache the FileSystem
+      // so that methods like Paths.get(URI) work.
+      // We do it in this awkward way to avoid issues when the classes in the API (this class
+      // and Configuration, for example) are loaded by a different classloader than the one that
+      // loads SystemJimfsFileSystemProvider using ServiceLoader. See
+      // https://github.com/google/jimfs/issues/18 for gory details.
+      ImmutableMap<String, ?> env = ImmutableMap.of(FILE_SYSTEM_KEY, fileSystem);
+      FileSystems.newFileSystem(uri, env, SystemJimfsFileSystemProvider.class.getClassLoader());
+
+      return fileSystem;
     } catch (IOException e) {
       throw new AssertionError(e);
     }

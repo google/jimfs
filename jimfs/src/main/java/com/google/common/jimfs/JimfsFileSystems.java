@@ -16,8 +16,13 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.jimfs.Jimfs.URI_SCHEME;
+
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
+import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,14 +36,56 @@ final class JimfsFileSystems {
   private JimfsFileSystems() {}
 
   /**
+   * The system-loaded {@code JimfsFileSystemProvider} that caches {@code JimfsFileSystem}
+   * instances.
+   */
+  private static final FileSystemProvider systemJimfsProvider = getSystemJimfsProvider();
+
+  private static FileSystemProvider getSystemJimfsProvider() {
+    for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
+      if (provider.getScheme().equals(URI_SCHEME)) {
+        return provider;
+      }
+    }
+    return null;
+  }
+  
+  private static final Runnable DO_NOTHING = new Runnable() {
+    @Override
+    public void run() {}
+  };
+
+  /**
+   * Returns a {@code Runnable} that will remove the file system with the given {@code URI} from
+   * the system provider's cache when called.
+   */
+  private static Runnable removeFileSystemRunnable(URI uri) {
+    if (systemJimfsProvider == null) {
+      // TODO(cgdecker): Use Runnables.doNothing() when it's out of @Beta
+      return DO_NOTHING;
+    }
+
+    // We have to invoke the SystemJimfsFileSystemProvider.removeFileSystemRunnable(URI)
+    // method reflectively since the system-loaded instance of it may be a different class
+    // than the one we'd get if we tried to cast it and call it like normal here.
+    try {
+      Method method = systemJimfsProvider.getClass()
+          .getDeclaredMethod("removeFileSystemRunnable", URI.class);
+      return (Runnable) method.invoke(systemJimfsProvider, uri);
+    } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+      throw new RuntimeException(
+          "Unable to get Runnable for removing the FileSystem from the cache when it is closed", e);
+    }
+  }
+
+  /**
    * Initialize and configure a new file system with the given provider and URI, using the given
    * configuration.
    */
   public static JimfsFileSystem newFileSystem(
       JimfsFileSystemProvider provider, URI uri, Configuration config) throws IOException {
     PathService pathService = new PathService(config);
-    FileSystemState state = new FileSystemState(
-        JimfsFileSystemProvider.removeFileSystemRunnable(uri));
+    FileSystemState state = new FileSystemState(removeFileSystemRunnable(uri));
 
     JimfsFileStore fileStore = createFileStore(config, pathService, state);
     FileSystemView defaultView = createDefaultView(config, fileStore, pathService);
