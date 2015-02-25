@@ -19,13 +19,14 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -157,19 +158,19 @@ final class DirectoryEntry {
       DirectoryEntry other = (DirectoryEntry) obj;
       return directory.equals(other.directory)
           && name.equals(other.name)
-          && Objects.equal(file, other.file);
+          && Objects.equals(file, other.file);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(directory, name, file);
+    return Objects.hash(directory, name, file);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("directory", directory)
         .add("name", name)
         .add("file", file)

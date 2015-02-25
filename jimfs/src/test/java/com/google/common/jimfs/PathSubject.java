@@ -19,7 +19,6 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.common.truth.FailureStrategy;
@@ -36,6 +35,7 @@ import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -423,7 +423,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
       @Override
       public Attribute is(Object value) throws IOException {
         Object actualValue = Files.getAttribute(getSubject(), attribute, linkOptions);
-        if (!Objects.equal(value, actualValue)) {
+        if (!Objects.equals(value, actualValue)) {
           fail("attribute '" + attribute + "' is", value);
         }
         return this;
@@ -432,7 +432,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
       @Override
       public Attribute isNot(Object value) throws IOException {
         Object actualValue = Files.getAttribute(getSubject(), attribute, linkOptions);
-        if (Objects.equal(value, actualValue)) {
+        if (Objects.equals(value, actualValue)) {
           fail("attribute '" + attribute + "' is not", value);
         }
         return this;

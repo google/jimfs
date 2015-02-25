@@ -24,7 +24,6 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
-import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
@@ -46,6 +45,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -199,7 +199,7 @@ final class FileSystemView {
     try {
       File file = lookUp(path, Options.FOLLOW_LINKS).fileOrNull();
       File file2 = view2.lookUp(path2, Options.FOLLOW_LINKS).fileOrNull();
-      return file != null && Objects.equal(file, file2);
+      return file != null && Objects.equals(file, file2);
     } finally {
       store.readLock().unlock();
     }

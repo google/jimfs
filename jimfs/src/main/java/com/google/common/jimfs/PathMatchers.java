@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Ascii;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 
 import java.nio.file.FileSystem;
@@ -91,7 +91,7 @@ final class PathMatchers {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this).addValue(pattern).toString();
+      return MoreObjects.toStringHelper(this).addValue(pattern).toString();
     }
   }
 }

@@ -19,7 +19,6 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -42,6 +41,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -172,7 +172,7 @@ final class JimfsPath implements Path {
     JimfsPath otherPath = checkPath(other);
     return otherPath != null
         && getFileSystem().equals(otherPath.getFileSystem())
-        && Objects.equal(root, otherPath.root)
+        && Objects.equals(root, otherPath.root)
         && startsWith(names, otherPath.names);
   }
 
@@ -318,7 +318,7 @@ final class JimfsPath implements Path {
       throw new ProviderMismatchException(other.toString());
     }
 
-    checkArgument(Objects.equal(root, otherPath.root),
+    checkArgument(Objects.equals(root, otherPath.root),
         "Paths have different roots: %s, %s", this, other);
 
     if (equals(other)) {

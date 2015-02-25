@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -34,6 +34,7 @@ import java.nio.file.Watchable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -188,19 +189,19 @@ abstract class AbstractWatchService implements WatchService {
         Event<?> other = (Event<?>) obj;
         return kind().equals(other.kind())
             && count() == other.count()
-            && Objects.equal(context(), other.context());
+            && Objects.equals(context(), other.context());
       }
       return false;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(kind(), count(), context());
+      return Objects.hash(kind(), count(), context());
     }
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
           .add("kind", kind())
           .add("count", count())
           .add("context", context())
