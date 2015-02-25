@@ -65,10 +65,10 @@ public class ClassLoaderTest {
       Thread.currentThread().setContextClassLoader(separateLoader);
       try {
         Class<?> thisClass = separateLoader.loadClass(getClass().getName());
-        Method testMethod = thisClass.getDeclaredMethod("testMethod");
+        Method createFileSystem = thisClass.getDeclaredMethod("createFileSystem");
 
-        // First, the call to Jimfs.newFileSystem in testMethod needs to succeed
-        Object fs = testMethod.invoke(null);
+        // First, the call to Jimfs.newFileSystem in createFileSystem needs to succeed
+        Object fs = createFileSystem.invoke(null);
 
         // Next, some sanity checks:
 
@@ -86,7 +86,8 @@ public class ClassLoaderTest {
         // ClassLoader
         writeAndRead((FileSystem) fs, "bar.txt", "blah blah");
 
-        // And for the heck of it, test the contents of the file that was created in testMethod too
+        // And for the heck of it, test the contents of the file that was created in
+        // createFileSystem too
         assertEquals("blah",
             Files.readAllLines(((FileSystem) fs).getPath("foo.txt"), UTF_8).get(0));
       } finally {
@@ -103,7 +104,7 @@ public class ClassLoaderTest {
    * as being an instance of the {@code Configuration} it's expecting (they're completely separate
    * classes) and creation of the file system will fail.
    */
-  public static FileSystem testMethod() throws IOException {
+  public static FileSystem createFileSystem() throws IOException {
     FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 
     // Just some random operations to verify that basic things work on the created file system.
