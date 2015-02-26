@@ -217,8 +217,8 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     assertThat(fs.getPath("C:\\foo\\bar").toUri()).isEqualTo(URI.create("jimfs://win/C:/foo/bar"));
     assertThat(fs.getPath("foo").toUri()).isEqualTo(URI.create("jimfs://win/C:/work/foo"));
     assertThat(fs.getPath("foo\\bar").toUri()).isEqualTo(URI.create("jimfs://win/C:/work/foo/bar"));
-    assertThat(fs.getPath("").toUri()).isEqualTo(URI.create("jimfs://win/C:/work"));
-    assertThat(fs.getPath(".\\..\\.").toUri()).isEqualTo(URI.create("jimfs://win/C:/work/./../."));
+    assertThat(fs.getPath("").toUri()).isEqualTo(URI.create("jimfs://win/C:/work/"));
+    assertThat(fs.getPath(".\\..\\.").toUri()).isEqualTo(URI.create("jimfs://win/C:/work/./.././"));
   }
 
   @Test

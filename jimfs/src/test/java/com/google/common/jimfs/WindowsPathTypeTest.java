@@ -161,11 +161,18 @@ public class WindowsPathTypeTest {
 
   @Test
   public void testWindows_toUri_normal() {
-    URI fileUri = PathType.windows().toUri(fileSystemUri, "C:\\", ImmutableList.of("foo", "bar"));
+    URI fileUri = PathType.windows()
+        .toUri(fileSystemUri, "C:\\", ImmutableList.of("foo", "bar"), false);
     assertThat(fileUri.toString()).isEqualTo("jimfs://foo/C:/foo/bar");
     assertThat(fileUri.getPath()).isEqualTo("/C:/foo/bar");
 
-    URI rootUri = PathType.windows().toUri(fileSystemUri, "C:\\", ImmutableList.<String>of());
+    URI directoryUri = PathType.windows()
+        .toUri(fileSystemUri, "C:\\", ImmutableList.of("foo", "bar"), true);
+    assertThat(directoryUri.toString()).isEqualTo("jimfs://foo/C:/foo/bar/");
+    assertThat(directoryUri.getPath()).isEqualTo("/C:/foo/bar/");
+
+    URI rootUri = PathType.windows()
+        .toUri(fileSystemUri, "C:\\", ImmutableList.<String>of(), true);
     assertThat(rootUri.toString()).isEqualTo("jimfs://foo/C:/");
     assertThat(rootUri.getPath()).isEqualTo("/C:/");
   }
@@ -173,12 +180,12 @@ public class WindowsPathTypeTest {
   @Test
   public void testWindows_toUri_unc() {
     URI fileUri = PathType.windows()
-        .toUri(fileSystemUri, "\\\\host\\share\\", ImmutableList.of("foo", "bar"));
+        .toUri(fileSystemUri, "\\\\host\\share\\", ImmutableList.of("foo", "bar"), false);
     assertThat(fileUri.toString()).isEqualTo("jimfs://foo//host/share/foo/bar");
     assertThat(fileUri.getPath()).isEqualTo("//host/share/foo/bar");
 
     URI rootUri = PathType.windows()
-        .toUri(fileSystemUri, "\\\\host\\share\\", ImmutableList.<String>of());
+        .toUri(fileSystemUri, "\\\\host\\share\\", ImmutableList.<String>of(), true);
     assertThat(rootUri.toString()).isEqualTo("jimfs://foo//host/share/");
     assertThat(rootUri.getPath()).isEqualTo("//host/share/");
   }
@@ -186,10 +193,10 @@ public class WindowsPathTypeTest {
   @Test
   public void testWindows_toUri_escaping() {
     URI uri = PathType.windows()
-        .toUri(fileSystemUri, "C:\\", ImmutableList.of("Users", "foo", "My Documents"));
-    assertThat(uri.toString()).isEqualTo("jimfs://foo/C:/Users/foo/My%20Documents");
-    assertThat(uri.getRawPath()).isEqualTo("/C:/Users/foo/My%20Documents");
-    assertThat(uri.getPath()).isEqualTo("/C:/Users/foo/My Documents");
+        .toUri(fileSystemUri, "C:\\", ImmutableList.of("Users", "foo", "My Documents"), true);
+    assertThat(uri.toString()).isEqualTo("jimfs://foo/C:/Users/foo/My%20Documents/");
+    assertThat(uri.getRawPath()).isEqualTo("/C:/Users/foo/My%20Documents/");
+    assertThat(uri.getPath()).isEqualTo("/C:/Users/foo/My Documents/");
   }
 
   @Test

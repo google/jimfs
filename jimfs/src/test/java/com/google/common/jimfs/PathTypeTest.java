@@ -67,18 +67,22 @@ public class PathTypeTest {
 
   @Test
   public void testToUri() {
-    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"));
+    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"), false);
     assertThat(fileUri.toString()).isEqualTo("jimfs://foo/$/foo/bar");
     assertThat(fileUri.getPath()).isEqualTo("/$/foo/bar");
 
-    URI rootUri = type.toUri(fileSystemUri, "$", ImmutableList.<String>of());
-    assertThat(rootUri.toString()).isEqualTo("jimfs://foo/$");
-    assertThat(rootUri.getPath()).isEqualTo("/$");
+    URI directoryUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"), true);
+    assertThat(directoryUri.toString()).isEqualTo("jimfs://foo/$/foo/bar/");
+    assertThat(directoryUri.getPath()).isEqualTo("/$/foo/bar/");
+
+    URI rootUri = type.toUri(fileSystemUri, "$", ImmutableList.<String>of(), true);
+    assertThat(rootUri.toString()).isEqualTo("jimfs://foo/$/");
+    assertThat(rootUri.getPath()).isEqualTo("/$/");
   }
 
   @Test
   public void testToUri_escaping() {
-    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar baz"));
+    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar baz"), false);
     assertThat(fileUri.toString()).isEqualTo("jimfs://foo/$/foo/bar%20baz");
     assertThat(fileUri.getRawPath()).isEqualTo("/$/foo/bar%20baz");
     assertThat(fileUri.getPath()).isEqualTo("/$/foo/bar baz");
@@ -101,7 +105,7 @@ public class PathTypeTest {
 
   static void assertUriRoundTripsCorrectly(PathType type, String path) {
     ParseResult result = type.parsePath(path);
-    URI uri = type.toUri(fileSystemUri, result.root(), result.names());
+    URI uri = type.toUri(fileSystemUri, result.root(), result.names(), false);
     ParseResult parsedUri = type.fromUri(uri);
     assertThat(parsedUri.root()).isEqualTo(result.root());
     assertThat(parsedUri.names()).containsExactlyElementsIn(result.names()).inOrder();
@@ -138,11 +142,14 @@ public class PathTypeTest {
     }
 
     @Override
-    public String toUriPath(String root, Iterable<String> names) {
+    public String toUriPath(String root, Iterable<String> names, boolean directory) {
       StringBuilder builder = new StringBuilder();
       builder.append('/').append(root);
       for (String name : names) {
         builder.append('/').append(name);
+      }
+      if (directory) {
+        builder.append('/');
       }
       return builder.toString();
     }

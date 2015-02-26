@@ -68,13 +68,13 @@ final class UnixPathType extends PathType {
   }
 
   @Override
-  public String toUriPath(String root, Iterable<String> names) {
+  public String toUriPath(String root, Iterable<String> names, boolean directory) {
     StringBuilder builder = new StringBuilder();
     for (String name : names) {
       builder.append('/').append(name);
     }
 
-    if (builder.length() == 0) {
+    if (directory || builder.length() == 0) {
       builder.append('/');
     }
     return builder.toString();

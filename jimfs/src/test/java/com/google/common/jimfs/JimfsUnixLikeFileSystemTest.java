@@ -296,8 +296,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     assertThat(path("/foo/bar").toUri()).isEqualTo(URI.create("jimfs://unix/foo/bar"));
     assertThat(path("foo").toUri()).isEqualTo(URI.create("jimfs://unix/work/foo"));
     assertThat(path("foo/bar").toUri()).isEqualTo(URI.create("jimfs://unix/work/foo/bar"));
-    assertThat(path("").toUri()).isEqualTo(URI.create("jimfs://unix/work"));
-    assertThat(path("./../.").toUri()).isEqualTo(URI.create("jimfs://unix/work/./../."));
+    assertThat(path("").toUri()).isEqualTo(URI.create("jimfs://unix/work/"));
+    assertThat(path("./../.").toUri()).isEqualTo(URI.create("jimfs://unix/work/./.././"));
   }
 
   @Test

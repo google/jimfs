@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.jimfs.PathType.ParseResult;
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
@@ -33,6 +34,7 @@ import com.google.common.collect.Ordering;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -268,7 +270,7 @@ final class PathService implements Comparator<JimfsPath> {
     checkArgument(path.isAbsolute(), "path (%s) must be absolute", path);
     String root = String.valueOf(path.root());
     Iterable<String> names = Iterables.transform(path.names(), Functions.toStringFunction());
-    return type.toUri(fileSystemUri, root, names);
+    return type.toUri(fileSystemUri, root, names, Files.isDirectory(path, NOFOLLOW_LINKS));
   }
 
   /**

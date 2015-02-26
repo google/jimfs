@@ -175,9 +175,10 @@ public abstract class PathType {
   /**
    * Returns the string form of the given path for use in the path part of a URI. The root element
    * is not nullable as the path must be absolute. The elements of the returned path <i>do not</i>
-   * need to be escaped.
+   * need to be escaped. The {@code directory} boolean indicates whether the file the URI is for is
+   * known to be a directory.
    */
-  protected abstract String toUriPath(String root, Iterable<String> names);
+  protected abstract String toUriPath(String root, Iterable<String> names, boolean directory);
 
   /**
    * Parses a path from the given URI path.
@@ -189,8 +190,9 @@ public abstract class PathType {
   /**
    * Creates a URI for the path with the given root and names in the file system with the given URI.
    */
-  public final URI toUri(URI fileSystemUri, String root, Iterable<String> names) {
-    String path = toUriPath(root, names);
+  public final URI toUri(
+      URI fileSystemUri, String root, Iterable<String> names, boolean directory) {
+    String path = toUriPath(root, names, directory);
     try {
       // it should not suck this much to create a new URI that's the same except with a path set =(
       // need to do it this way for automatic path escaping

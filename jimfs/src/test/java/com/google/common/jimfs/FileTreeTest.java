@@ -95,7 +95,7 @@ public class FileTreeTest {
         }
 
         @Override
-        public String toUriPath(String root, Iterable<String> names) {
+        public String toUriPath(String root, Iterable<String> names, boolean directory) {
           // need to add extra / to differentiate between paths "/$foo/bar" and "$foo/bar".
           return "/" + toString(root, names);
         }

@@ -58,18 +58,23 @@ public class UnixPathTypeTest {
 
   @Test
   public void testUnix_toUri() {
-    URI fileUri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.of("foo", "bar"));
+    URI fileUri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.of("foo", "bar"), false);
     assertThat(fileUri.toString()).isEqualTo("jimfs://foo/foo/bar");
     assertThat(fileUri.getPath()).isEqualTo("/foo/bar");
 
-    URI rootUri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.<String>of());
+    URI directoryUri = PathType.unix()
+        .toUri(fileSystemUri, "/", ImmutableList.of("foo", "bar"), true);
+    assertThat(directoryUri.toString()).isEqualTo("jimfs://foo/foo/bar/");
+    assertThat(directoryUri.getPath()).isEqualTo("/foo/bar/");
+
+    URI rootUri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.<String>of(), true);
     assertThat(rootUri.toString()).isEqualTo("jimfs://foo/");
     assertThat(rootUri.getPath()).isEqualTo("/");
   }
 
   @Test
   public void testUnix_toUri_escaping() {
-    URI uri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.of("foo bar"));
+    URI uri = PathType.unix().toUri(fileSystemUri, "/", ImmutableList.of("foo bar"), false);
     assertThat(uri.toString()).isEqualTo("jimfs://foo/foo%20bar");
     assertThat(uri.getRawPath()).isEqualTo("/foo%20bar");
     assertThat(uri.getPath()).isEqualTo("/foo bar");

@@ -181,7 +181,7 @@ final class WindowsPathType extends PathType {
   }
 
   @Override
-  public String toUriPath(String root, Iterable<String> names) {
+  public String toUriPath(String root, Iterable<String> names, boolean directory) {
     if (root.startsWith("\\\\")) {
       root = root.replace('\\', '/');
     } else {
@@ -198,6 +198,11 @@ final class WindowsPathType extends PathType {
         builder.append('/').append(iter.next());
       }
     }
+
+    if (directory && builder.charAt(builder.length() - 1) != '/') {
+      builder.append('/');
+    }
+
     return builder.toString();
   }
 
