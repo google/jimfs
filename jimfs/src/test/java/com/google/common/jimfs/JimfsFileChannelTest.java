@@ -871,4 +871,131 @@ public class JimfsFileChannelTest {
 
     return futures;
   }
+
+  /**
+   * Tests that the methods on the default FileChannel that support InterruptibleChannel behavior
+   * also support it on JimfsFileChannel, by just interrupting the thread before calling the
+   * method.
+   */
+  @Test
+  public void testInterruptedThreads() throws IOException {
+    final ByteBuffer buf = ByteBuffer.allocate(10);
+    final ByteBuffer[] bufArray = { buf };
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.size();
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.position();
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.position(0);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.write(buf);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.write(bufArray, 0, 1);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.read(buf);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.read(bufArray, 0, 1);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.write(buf, 0);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.read(buf, 0);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.transferTo(0, 1, channel(regularFile(10), READ, WRITE));
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.transferFrom(channel(regularFile(10), READ, WRITE), 0, 1);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.force(true);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.truncate(0);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.lock(0, 1, true);
+      }
+    });
+
+    assertClosedByInterrupt(new FileChannelMethod() {
+      @Override public void call(FileChannel channel) throws IOException {
+        channel.tryLock(0, 1, true);
+      }
+    });
+
+    // the map() method always throws UnsupportedOperationException; it doesn't make sense for it
+    // to try to handle thread interruption
+  }
+
+  private interface FileChannelMethod {
+    void call(FileChannel channel) throws IOException;
+  }
+
+  /**
+   * Asserts that when the given operation is run on an interrupted thread,
+   * {@code ClosedByInterruptException} is thrown, the channel is closed and the thread is no
+   * longer interrupted.
+   */
+  private static void assertClosedByInterrupt(FileChannelMethod method) throws IOException {
+    FileChannel channel = channel(regularFile(10), READ, WRITE);
+    Thread.currentThread().interrupt();
+    try {
+      method.call(channel);
+      fail("expected the method to throw ClosedByInterruptException");
+    } catch (ClosedByInterruptException expected) {
+      assertFalse("expected the channel to be closed", channel.isOpen());
+      assertTrue("expected the thread to still be interrupted", Thread.interrupted());
+    } finally {
+      Thread.interrupted(); // ensure the thread isn't interrupted when this method returns
+    }
+  }
 }
