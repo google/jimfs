@@ -27,9 +27,11 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.FileLockInterruptionException;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.ReadableByteChannel;
@@ -598,6 +600,32 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   public FileLock lock(long position, long size, boolean shared) throws IOException {
+    checkLockArguments(position, size, shared);
+
+    // lock is interruptible
+    boolean completed = false;
+    try {
+      begin();
+      completed = true;
+      return new FakeFileLock(this, position, size, shared);
+    } finally {
+      try {
+        end(completed);
+      } catch (ClosedByInterruptException e) {
+        throw new FileLockInterruptionException();
+      }
+    }
+  }
+
+  @Override
+  public FileLock tryLock(long position, long size, boolean shared) throws IOException {
+    checkLockArguments(position, size, shared);
+
+    // tryLock is not interruptible
+    return new FakeFileLock(this, position, size, shared);
+  }
+
+  private void checkLockArguments(long position, long size, boolean shared) throws IOException {
     Util.checkNotNegative(position, "position");
     Util.checkNotNegative(size, "size");
     checkOpen();
@@ -606,21 +634,6 @@ final class JimfsFileChannel extends FileChannel {
     } else {
       checkWritable();
     }
-
-    boolean completed = false;
-    try {
-      begin();
-      completed = true;
-      return new FakeFileLock(this, position, size, shared);
-    } finally {
-      end(completed);
-    }
-  }
-
-  @Override
-  public FileLock tryLock(long position, long size, boolean shared) throws IOException {
-    // lock() doesn't block anyway
-    return lock(position, size, shared);
   }
 
   @Override

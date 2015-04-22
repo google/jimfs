@@ -49,6 +49,7 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.FileLockInterruptionException;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.file.OpenOption;
@@ -966,14 +967,8 @@ public class JimfsFileChannelTest {
       }
     });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.tryLock(0, 1, true);
-      }
-    });
-
-    // the map() method always throws UnsupportedOperationException; it doesn't make sense for it
-    // to try to handle thread interruption
+    // tryLock() does not handle interruption
+    // map() always throws UOE; it doesn't make sense for it to try to handle interruption
   }
 
   private interface FileChannelMethod {
@@ -990,8 +985,9 @@ public class JimfsFileChannelTest {
     Thread.currentThread().interrupt();
     try {
       method.call(channel);
-      fail("expected the method to throw ClosedByInterruptException");
-    } catch (ClosedByInterruptException expected) {
+      fail("expected the method to throw ClosedByInterruptException or "
+          + "FileLockInterruptionException");
+    } catch (ClosedByInterruptException | FileLockInterruptionException expected) {
       assertFalse("expected the channel to be closed", channel.isOpen());
       assertTrue("expected the thread to still be interrupted", Thread.interrupted());
     } finally {
