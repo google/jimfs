@@ -75,9 +75,10 @@ public enum PathNormalization implements Function<String, String> {
       try {
         return UCharacter.foldCase(string, true);
       } catch (NoClassDefFoundError e) {
-        NoClassDefFoundError error = new NoClassDefFoundError(
-            "PathNormalization.CASE_FOLD_UNICODE requires ICU4J. " +
-            "Did you forget to include it on your classpath?");
+        NoClassDefFoundError error =
+            new NoClassDefFoundError(
+                "PathNormalization.CASE_FOLD_UNICODE requires ICU4J. "
+                    + "Did you forget to include it on your classpath?");
         error.initCause(e);
         throw error;
       }

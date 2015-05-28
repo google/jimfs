@@ -97,8 +97,7 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
     }
   }
 
-  protected void assertContainsAll(
-      File file, ImmutableMap<String, Object> expectedAttributes) {
+  protected void assertContainsAll(File file, ImmutableMap<String, Object> expectedAttributes) {
     for (Map.Entry<String, Object> entry : expectedAttributes.entrySet()) {
       String attribute = entry.getKey();
       Object value = entry.getValue();

@@ -85,6 +85,7 @@ public abstract class PathType {
   }
 
   private static final char[] regexReservedChars = "^$.?+*\\[]{}()".toCharArray();
+
   static {
     Arrays.sort(regexReservedChars);
   }
@@ -221,8 +222,7 @@ public abstract class PathType {
    */
   public static final class ParseResult {
 
-    @Nullable
-    private final String root;
+    @Nullable private final String root;
     private final Iterable<String> names;
 
     public ParseResult(@Nullable String root, Iterable<String> names) {

@@ -58,9 +58,9 @@ public class ClassLoaderTest {
       // Anything we can do if it isn't a URLClassLoader?
       URLClassLoader urlLoader = (URLClassLoader) loader;
 
-      ClassLoader separateLoader = new URLClassLoader(
-          urlLoader.getURLs(),
-          systemLoader.getParent()); // either null or the boostrap loader
+      ClassLoader separateLoader =
+          new URLClassLoader(
+              urlLoader.getURLs(), systemLoader.getParent()); // either null or the boostrap loader
 
       Thread.currentThread().setContextClassLoader(separateLoader);
       try {
@@ -88,8 +88,8 @@ public class ClassLoaderTest {
 
         // And for the heck of it, test the contents of the file that was created in
         // createFileSystem too
-        assertEquals("blah",
-            Files.readAllLines(((FileSystem) fs).getPath("foo.txt"), UTF_8).get(0));
+        assertEquals(
+            "blah", Files.readAllLines(((FileSystem) fs).getPath("foo.txt"), UTF_8).get(0));
       } finally {
         Thread.currentThread().setContextClassLoader(contextLoader);
       }

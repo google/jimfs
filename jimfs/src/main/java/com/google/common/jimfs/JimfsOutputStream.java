@@ -24,6 +24,8 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import javax.annotation.concurrent.GuardedBy;
+
 /**
  * {@link OutputStream} for writing to a {@link RegularFile}.
  *
@@ -31,8 +33,11 @@ import java.io.OutputStream;
  */
 final class JimfsOutputStream extends OutputStream {
 
-  // these fields are guarded by synchronization on "this"
-  @VisibleForTesting RegularFile file;
+  @GuardedBy("this")
+  @VisibleForTesting
+  RegularFile file;
+
+  @GuardedBy("this")
   private long pos;
 
   private final boolean append;
@@ -89,6 +94,7 @@ final class JimfsOutputStream extends OutputStream {
     }
   }
 
+  @GuardedBy("this")
   private void checkNotClosed() throws IOException {
     if (file == null) {
       throw new IOException("stream is closed");
@@ -106,6 +112,7 @@ final class JimfsOutputStream extends OutputStream {
     }
   }
 
+  @GuardedBy("this")
   private boolean isOpen() {
     return file != null;
   }

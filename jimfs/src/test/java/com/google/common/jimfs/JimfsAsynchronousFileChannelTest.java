@@ -63,9 +63,11 @@ public class JimfsAsynchronousFileChannelTest {
 
   private static JimfsAsynchronousFileChannel channel(
       RegularFile file, ExecutorService executor, OpenOption... options) throws IOException {
-    JimfsFileChannel channel = new JimfsFileChannel(file,
-        Options.getOptionsForChannel(ImmutableSet.copyOf(options)),
-        new FileSystemState(Runnables.doNothing()));
+    JimfsFileChannel channel =
+        new JimfsFileChannel(
+            file,
+            Options.getOptionsForChannel(ImmutableSet.copyOf(options)),
+            new FileSystemState(Runnables.doNothing()));
     return new JimfsAsynchronousFileChannel(channel, executor);
   }
 
@@ -129,18 +131,20 @@ public class JimfsAsynchronousFileChannelTest {
 
       final CountDownLatch handlerLatch = new CountDownLatch(1);
       final AtomicBoolean gotAsyncCloseException = new AtomicBoolean(false);
-      channel.write(ByteBuffer.allocate(10), 0, null, new CompletionHandler<Integer, Object>() {
-        @Override
-        public void completed(Integer result, Object attachment) {
-          handlerLatch.countDown();
-        }
+      channel.write(
+          ByteBuffer.allocate(10), 0, null,
+          new CompletionHandler<Integer, Object>() {
+            @Override
+            public void completed(Integer result, Object attachment) {
+              handlerLatch.countDown();
+            }
 
-        @Override
-        public void failed(Throwable exc, Object attachment) {
-          gotAsyncCloseException.set(exc instanceof AsynchronousCloseException);
-          handlerLatch.countDown();
-        }
-      });
+            @Override
+            public void failed(Throwable exc, Object attachment) {
+              gotAsyncCloseException.set(exc instanceof AsynchronousCloseException);
+              handlerLatch.countDown();
+            }
+          });
 
       // give enough time to ensure both writes start blocking
       Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
@@ -176,18 +180,20 @@ public class JimfsAsynchronousFileChannelTest {
 
       final CountDownLatch handlerLatch = new CountDownLatch(1);
       final AtomicBoolean gotAsyncCloseException = new AtomicBoolean(false);
-      channel.read(ByteBuffer.allocate(10), 0, null, new CompletionHandler<Integer, Object>() {
-        @Override
-        public void completed(Integer result, Object attachment) {
-          handlerLatch.countDown();
-        }
+      channel.read(
+          ByteBuffer.allocate(10), 0, null,
+          new CompletionHandler<Integer, Object>() {
+            @Override
+            public void completed(Integer result, Object attachment) {
+              handlerLatch.countDown();
+            }
 
-        @Override
-        public void failed(Throwable exc, Object attachment) {
-          gotAsyncCloseException.set(exc instanceof AsynchronousCloseException);
-          handlerLatch.countDown();
-        }
-      });
+            @Override
+            public void failed(Throwable exc, Object attachment) {
+              gotAsyncCloseException.set(exc instanceof AsynchronousCloseException);
+              handlerLatch.countDown();
+            }
+          });
 
       // give enough time to ensure both reads start blocking
       Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
@@ -217,19 +223,21 @@ public class JimfsAsynchronousFileChannelTest {
     final AtomicInteger resultHolder = new AtomicInteger(-1);
     final AtomicReference<Throwable> exceptionHolder = new AtomicReference<>();
     final CountDownLatch completionLatch = new CountDownLatch(1);
-    channel.read(buf, 0, null, new CompletionHandler<Integer, Object>() {
-      @Override
-      public void completed(Integer result, Object attachment) {
-        resultHolder.set(result);
-        completionLatch.countDown();
-      }
+    channel.read(
+        buf, 0, null,
+        new CompletionHandler<Integer, Object>() {
+          @Override
+          public void completed(Integer result, Object attachment) {
+            resultHolder.set(result);
+            completionLatch.countDown();
+          }
 
-      @Override
-      public void failed(Throwable exc, Object attachment) {
-        exceptionHolder.set(exc);
-        completionLatch.countDown();
-      }
-    });
+          @Override
+          public void failed(Throwable exc, Object attachment) {
+            exceptionHolder.set(exc);
+            completionLatch.countDown();
+          }
+        });
 
     completionLatch.await();
     Throwable exception = exceptionHolder.get();
@@ -248,19 +256,21 @@ public class JimfsAsynchronousFileChannelTest {
     final AtomicInteger resultHolder = new AtomicInteger(-1);
     final AtomicReference<Throwable> exceptionHolder = new AtomicReference<>();
     final CountDownLatch completionLatch = new CountDownLatch(1);
-    asyncChannel.write(buf, 0, null, new CompletionHandler<Integer, Object>() {
-      @Override
-      public void completed(Integer result, Object attachment) {
-        resultHolder.set(result);
-        completionLatch.countDown();
-      }
+    asyncChannel.write(
+        buf, 0, null,
+        new CompletionHandler<Integer, Object>() {
+          @Override
+          public void completed(Integer result, Object attachment) {
+            resultHolder.set(result);
+            completionLatch.countDown();
+          }
 
-      @Override
-      public void failed(Throwable exc, Object attachment) {
-        exceptionHolder.set(exc);
-        completionLatch.countDown();
-      }
-    });
+          @Override
+          public void failed(Throwable exc, Object attachment) {
+            exceptionHolder.set(exc);
+            completionLatch.countDown();
+          }
+        });
 
     completionLatch.await();
     Throwable exception = exceptionHolder.get();
@@ -278,19 +288,21 @@ public class JimfsAsynchronousFileChannelTest {
     final AtomicReference<FileLock> lockHolder = new AtomicReference<>();
     final AtomicReference<Throwable> exceptionHolder = new AtomicReference<>();
     final CountDownLatch completionLatch = new CountDownLatch(1);
-    channel.lock(0, 10, true, null, new CompletionHandler<FileLock, Object>() {
-      @Override
-      public void completed(FileLock result, Object attachment) {
-        lockHolder.set(result);
-        completionLatch.countDown();
-      }
+    channel.lock(
+        0, 10, true, null,
+        new CompletionHandler<FileLock, Object>() {
+          @Override
+          public void completed(FileLock result, Object attachment) {
+            lockHolder.set(result);
+            completionLatch.countDown();
+          }
 
-      @Override
-      public void failed(Throwable exc, Object attachment) {
-        exceptionHolder.set(exc);
-        completionLatch.countDown();
-      }
-    });
+          @Override
+          public void failed(Throwable exc, Object attachment) {
+            exceptionHolder.set(exc);
+            completionLatch.countDown();
+          }
+        });
 
     completionLatch.await();
     Throwable exception = exceptionHolder.get();

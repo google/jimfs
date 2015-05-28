@@ -112,19 +112,23 @@ final class Name {
     return CANONICAL_ORDERING;
   }
 
-  private static final Ordering<Name> DISPLAY_ORDERING = Ordering.natural()
-      .onResultOf(new Function<Name, String>() {
-        @Override
-        public String apply(Name name) {
-          return name.display;
-        }
-      });
+  private static final Ordering<Name> DISPLAY_ORDERING =
+      Ordering.natural()
+          .onResultOf(
+              new Function<Name, String>() {
+                @Override
+                public String apply(Name name) {
+                  return name.display;
+                }
+              });
 
-  private static final Ordering<Name> CANONICAL_ORDERING = Ordering.natural()
-      .onResultOf(new Function<Name, String>() {
-        @Override
-        public String apply(Name name) {
-          return name.canonical;
-        }
-      });
+  private static final Ordering<Name> CANONICAL_ORDERING =
+      Ordering.natural()
+          .onResultOf(
+              new Function<Name, String>() {
+                @Override
+                public String apply(Name name) {
+                  return name.canonical;
+                }
+              });
 }

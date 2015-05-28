@@ -89,8 +89,7 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
 
   private final class DirectoryIterator extends AbstractIterator<Path> {
 
-    @Nullable
-    private Iterator<Name> fileNames;
+    @Nullable private Iterator<Name> fileNames;
 
     @Override
     protected synchronized Path computeNext() {
@@ -120,12 +119,13 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
   /**
    * A stream filter that always returns true.
    */
-  public static final Filter<Object> ALWAYS_TRUE_FILTER = new Filter<Object>() {
-    @Override
-    public boolean accept(Object entry) throws IOException {
-      return true;
-    }
-  };
+  public static final Filter<Object> ALWAYS_TRUE_FILTER =
+      new Filter<Object>() {
+        @Override
+        public boolean accept(Object entry) throws IOException {
+          return true;
+        }
+      };
 
   @Override
   public SecureDirectoryStream<Path> newDirectoryStream(Path path, LinkOption... options)
@@ -135,14 +135,17 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
 
     // safe cast because a file system that supports SecureDirectoryStream always creates
     // SecureDirectoryStreams
-    return (SecureDirectoryStream<Path>) view.newDirectoryStream(
-        checkedPath, ALWAYS_TRUE_FILTER, Options.getLinkOptions(options),
-        path().resolve(checkedPath));
+    return (SecureDirectoryStream<Path>)
+        view.newDirectoryStream(
+            checkedPath,
+            ALWAYS_TRUE_FILTER,
+            Options.getLinkOptions(options),
+            path().resolve(checkedPath));
   }
 
   @Override
-  public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options,
-      FileAttribute<?>... attrs) throws IOException {
+  public SeekableByteChannel newByteChannel(
+      Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     checkOpen();
     JimfsPath checkedPath = checkPath(path);
     ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
@@ -178,8 +181,12 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
 
     JimfsSecureDirectoryStream checkedTargetDir = (JimfsSecureDirectoryStream) targetDir;
 
-    view.copy(checkedSrcPath, checkedTargetDir.view, checkedTargetPath,
-        ImmutableSet.<CopyOption>of(), true);
+    view.copy(
+        checkedSrcPath,
+        checkedTargetDir.view,
+        checkedTargetPath,
+        ImmutableSet.<CopyOption>of(),
+        true);
   }
 
   @Override
@@ -188,20 +195,23 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
   }
 
   @Override
-  public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
-      LinkOption... options) {
+  public <V extends FileAttributeView> V getFileAttributeView(
+      Path path, Class<V> type, LinkOption... options) {
     checkOpen();
     final JimfsPath checkedPath = checkPath(path);
     final ImmutableSet<LinkOption> optionsSet = Options.getLinkOptions(options);
-    return view.getFileAttributeView(new FileLookup() {
-      @Override
-      public File lookup() throws IOException {
-        checkOpen(); // per the spec, must check that the stream is open for each view operation
-        return view.lookUpWithLock(checkedPath, optionsSet)
-            .requireExists(checkedPath)
-            .file();
-      }
-    }, type);
+    return view.getFileAttributeView(
+        new FileLookup() {
+          @Override
+          public File lookup() throws IOException {
+            checkOpen(); // per the spec, must check that the stream is open for each view operation
+            return view
+                .lookUpWithLock(checkedPath, optionsSet)
+                .requireExists(checkedPath)
+                .file();
+          }
+        },
+        type);
   }
 
   private static JimfsPath checkPath(Path path) {

@@ -39,7 +39,8 @@ public class RegexGlobMatcherTest extends AbstractGlobMatcherTest {
 
   @Override
   protected PathMatcher matcher(String pattern) {
-    return PathMatchers.getPathMatcher("glob:" + pattern, "/", ImmutableSet.<PathNormalization>of());
+    return PathMatchers.getPathMatcher(
+        "glob:" + pattern, "/", ImmutableSet.<PathNormalization>of());
   }
 
   @Override

@@ -56,11 +56,13 @@ public class HeapDiskTest {
 
   @Test
   public void testInitialSettings_fromConfiguration() {
-    Configuration config = Configuration.unix().toBuilder()
-        .setBlockSize(4)
-        .setMaxSize(99) // not a multiple of 4
-        .setMaxCacheSize(25)
-        .build();
+    Configuration config =
+        Configuration.unix()
+            .toBuilder()
+            .setBlockSize(4)
+            .setMaxSize(99) // not a multiple of 4
+            .setMaxCacheSize(25)
+            .build();
 
     HeapDisk disk = new HeapDisk(config);
 
@@ -207,7 +209,8 @@ public class HeapDiskTest {
     try {
       disk.allocate(blocks, 1);
       fail();
-    } catch (IOException expected) {}
+    } catch (IOException expected) {
+    }
   }
 
   @Test
@@ -220,7 +223,8 @@ public class HeapDiskTest {
     try {
       disk.allocate(blocks2, 5);
       fail();
-    } catch (IOException expected) {}
+    } catch (IOException expected) {
+    }
 
     assertThat(blocks2.blockCount()).isEqualTo(0);
   }

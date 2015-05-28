@@ -76,37 +76,39 @@ public class FileTreeTest {
    * a path like "$foo/bar" and one like "/$foo/bar". They would become "/$foo/bar" and
    * "//$foo/bar" respectively.
    */
-  private final PathService pathService = PathServiceTest.fakePathService(
-      new PathType(true, '/') {
-        @Override
-        public ParseResult parsePath(String path) {
-          String root = null;
-          if (path.matches("^[/$!].*")) {
-            root = path.substring(0, 1);
-            path = path.substring(1);
-          }
-          return new ParseResult(root, Splitter.on('/').omitEmptyStrings().split(path));
-        }
+  private final PathService pathService =
+      PathServiceTest.fakePathService(
+          new PathType(true, '/') {
+            @Override
+            public ParseResult parsePath(String path) {
+              String root = null;
+              if (path.matches("^[/$!].*")) {
+                root = path.substring(0, 1);
+                path = path.substring(1);
+              }
+              return new ParseResult(root, Splitter.on('/').omitEmptyStrings().split(path));
+            }
 
-        @Override
-        public String toString(@Nullable String root, Iterable<String> names) {
-          root = Strings.nullToEmpty(root);
-          return root + Joiner.on('/').join(names);
-        }
+            @Override
+            public String toString(@Nullable String root, Iterable<String> names) {
+              root = Strings.nullToEmpty(root);
+              return root + Joiner.on('/').join(names);
+            }
 
-        @Override
-        public String toUriPath(String root, Iterable<String> names, boolean directory) {
-          // need to add extra / to differentiate between paths "/$foo/bar" and "$foo/bar".
-          return "/" + toString(root, names);
-        }
+            @Override
+            public String toUriPath(String root, Iterable<String> names, boolean directory) {
+              // need to add extra / to differentiate between paths "/$foo/bar" and "$foo/bar".
+              return "/" + toString(root, names);
+            }
 
-        @Override
-        public ParseResult parseUriPath(String uriPath) {
-          checkArgument(uriPath.matches("^/[/$!].*"),
-              "uriPath (%s) must start with // or /$ or /!");
-          return parsePath(uriPath.substring(1)); // skip leading /
-        }
-      }, false);
+            @Override
+            public ParseResult parseUriPath(String uriPath) {
+              checkArgument(
+                  uriPath.matches("^/[/$!].*"), "uriPath (%s) must start with // or /$ or /!");
+              return parsePath(uriPath.substring(1)); // skip leading /
+            }
+          },
+          false);
 
   private FileTree fileTree;
   private File workingDirectory;

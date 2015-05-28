@@ -120,8 +120,7 @@ public final class PathTester {
     }
 
     if (parent != null) {
-      String parentName = names.size() == 1 ? root :
-          string.substring(0, string.lastIndexOf('/'));
+      String parentName = names.size() == 1 ? root : string.substring(0, string.lastIndexOf('/'));
       new PathTester(pathService, parentName)
           .root(root)
           .names(names.subList(0, names.size() - 1))
@@ -140,20 +139,19 @@ public final class PathTester {
       // test start + 1 to end and start to end - 1 subpaths... this recursively tests all subpaths
       // actually tests most possible subpaths multiple times but... eh
       Path startSubpath = path.subpath(1, path.getNameCount());
-      List<String> startNames = ImmutableList.copyOf(Splitter.on('/').split(stringWithoutRoot))
-          .subList(1, path.getNameCount());
+      List<String> startNames =
+          ImmutableList.copyOf(Splitter.on('/').split(stringWithoutRoot))
+              .subList(1, path.getNameCount());
 
       new PathTester(pathService, Joiner.on('/').join(startNames))
-          .names(startNames)
-          .test(startSubpath);
+          .names(startNames).test(startSubpath);
 
       Path endSubpath = path.subpath(0, path.getNameCount() - 1);
-      List<String> endNames = ImmutableList.copyOf(Splitter.on('/').split(stringWithoutRoot))
-          .subList(0, path.getNameCount() - 1);
+      List<String> endNames =
+          ImmutableList.copyOf(Splitter.on('/').split(stringWithoutRoot))
+              .subList(0, path.getNameCount() - 1);
 
-      new PathTester(pathService, Joiner.on('/').join(endNames))
-          .names(endNames)
-          .test(endSubpath);
+      new PathTester(pathService, Joiner.on('/').join(endNames)).names(endNames).test(endSubpath);
     }
   }
 
@@ -162,10 +160,9 @@ public final class PathTester {
     if (root != null || !names.isEmpty()) {
       Path other = path;
       while (other != null) {
-        assertTrue(path + ".startsWith(" + other + ") should be true",
-            path.startsWith(other));
-        assertTrue(path + ".startsWith(" + other + ") should be true",
-            path.startsWith(other.toString()));
+        assertTrue(path + ".startsWith(" + other + ") should be true", path.startsWith(other));
+        assertTrue(
+            path + ".startsWith(" + other + ") should be true", path.startsWith(other.toString()));
         other = other.getParent();
       }
     }
@@ -176,10 +173,9 @@ public final class PathTester {
     if (root != null || !names.isEmpty()) {
       Path other = path;
       while (other != null) {
-        assertTrue(path + ".endsWith(" + other + ") should be true",
-            path.endsWith(other));
-        assertTrue(path + ".endsWith(" + other + ") should be true",
-            path.endsWith(other.toString()));
+        assertTrue(path + ".endsWith(" + other + ") should be true", path.endsWith(other));
+        assertTrue(
+            path + ".endsWith(" + other + ") should be true", path.endsWith(other.toString()));
         if (other.getRoot() != null && other.getNameCount() > 0) {
           other = other.subpath(0, other.getNameCount());
         } else if (other.getNameCount() > 1) {
@@ -192,8 +188,6 @@ public final class PathTester {
   }
 
   private static List<String> names(Path path) {
-    return FluentIterable.from(path)
-        .transform(toStringFunction())
-        .toList();
+    return FluentIterable.from(path).transform(toStringFunction()).toList();
   }
 }

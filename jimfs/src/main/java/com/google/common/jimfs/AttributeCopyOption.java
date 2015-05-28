@@ -29,4 +29,3 @@ enum AttributeCopyOption {
   /** Do not copy any of the file's attributes. */
   NONE
 }
-

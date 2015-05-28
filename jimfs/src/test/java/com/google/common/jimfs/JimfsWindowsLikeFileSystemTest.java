@@ -48,10 +48,13 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Override
   protected FileSystem createFileSystem() {
-    return Jimfs.newFileSystem("win", Configuration.windows().toBuilder()
-        .setRoots("C:\\", "E:\\")
-        .setAttributeViews("basic", "owner", "dos", "acl", "user")
-        .build());
+    return Jimfs.newFileSystem(
+        "win",
+        Configuration.windows()
+            .toBuilder()
+            .setRoots("C:\\", "E:\\")
+            .setAttributeViews("basic", "owner", "dos", "acl", "user")
+            .build());
   }
 
   @Test
@@ -94,8 +97,8 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     Path p3 = path("c");
     Path p4 = path("D");
 
-    assertThat(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2))).isEqualTo(
-        ImmutableList.of(p1, p2, p3, p4));
+    assertThat(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2)))
+        .isEqualTo(ImmutableList.of(p1, p2, p3, p4));
 
     // would be p2, p4, p1, p3 if sorting were case sensitive
   }
@@ -104,18 +107,15 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
   public void testPaths_withSlash() {
     assertThatPath("foo/bar").isRelative()
         .and().hasNameComponents("foo", "bar")
-        .and()
-        .isEqualTo(path("foo\\bar"));
+        .and().isEqualTo(path("foo\\bar"));
     assertThatPath("C:/foo/bar/baz").isAbsolute()
         .and().hasRootComponent("C:\\")
         .and().hasNameComponents("foo", "bar", "baz")
-        .and()
-        .isEqualTo(path("C:\\foo\\bar\\baz"));
+        .and().isEqualTo(path("C:\\foo\\bar\\baz"));
     assertThatPath("C:/foo\\bar/baz").isAbsolute()
         .and().hasRootComponent("C:\\")
         .and().hasNameComponents("foo", "bar", "baz")
-        .and()
-        .isEqualTo(path("C:\\foo\\bar\\baz"));
+        .and().isEqualTo(path("C:\\foo\\bar\\baz"));
   }
 
   @Test
@@ -233,10 +233,8 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testPaths_getFromUri() {
-    assertThatPath(Paths.get(URI.create("jimfs://win/C:/")))
-        .isEqualTo(fs.getPath("C:\\"));
-    assertThatPath(Paths.get(URI.create("jimfs://win/C:/foo")))
-        .isEqualTo(fs.getPath("C:\\foo"));
+    assertThatPath(Paths.get(URI.create("jimfs://win/C:/"))).isEqualTo(fs.getPath("C:\\"));
+    assertThatPath(Paths.get(URI.create("jimfs://win/C:/foo"))).isEqualTo(fs.getPath("C:\\foo"));
     assertThatPath(Paths.get(URI.create("jimfs://win/C:/foo%20bar")))
         .isEqualTo(fs.getPath("C:\\foo bar"));
     assertThatPath(Paths.get(URI.create("jimfs://win/C:/foo/./bar")))

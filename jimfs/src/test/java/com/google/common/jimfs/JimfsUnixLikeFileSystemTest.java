@@ -110,11 +110,13 @@ import java.util.regex.PatternSyntaxException;
 @RunWith(JUnit4.class)
 public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
-  private static final Configuration UNIX_CONFIGURATION = Configuration.unix().toBuilder()
-      .setAttributeViews("basic", "owner", "posix", "unix")
-      .setMaxSize(1024 * 1024 * 1024) // 1 GB
-      .setMaxCacheSize(256 * 1024 * 1024) // 256 MB
-      .build();
+  private static final Configuration UNIX_CONFIGURATION =
+      Configuration.unix()
+          .toBuilder()
+          .setAttributeViews("basic", "owner", "posix", "unix")
+          .setMaxSize(1024 * 1024 * 1024) // 1 GB
+          .setMaxCacheSize(256 * 1024 * 1024) // 256 MB
+          .build();
 
   @Override
   protected FileSystem createFileSystem() {
@@ -129,8 +131,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         .inOrder();
     assertThat(fs.isOpen()).isTrue();
     assertThat(fs.isReadOnly()).isFalse();
-    assertThat(fs.supportedFileAttributeViews())
-        .containsExactly("basic", "owner", "posix", "unix");
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic", "owner", "posix", "unix");
     assertThat(fs.provider()).isInstanceOf(JimfsFileSystemProvider.class);
   }
 
@@ -191,8 +192,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Path p3 = path("c");
     Path p4 = path("D");
 
-    assertThat(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2))).isEqualTo(
-        ImmutableList.of(p2, p4, p1, p3));
+    assertThat(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2)))
+        .isEqualTo(ImmutableList.of(p2, p4, p1, p3));
 
     // would be p1, p2, p3, p4 if sorting were case insensitive
   }
@@ -302,16 +303,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testPaths_getFromUri() {
-    assertThatPath(Paths.get(URI.create("jimfs://unix/")))
-        .isEqualTo(path("/"));
-    assertThatPath(Paths.get(URI.create("jimfs://unix/foo")))
-        .isEqualTo(path("/foo"));
-    assertThatPath(Paths.get(URI.create("jimfs://unix/foo%20bar")))
-        .isEqualTo(path("/foo bar"));
-    assertThatPath(Paths.get(URI.create("jimfs://unix/foo/./bar")))
-        .isEqualTo(path("/foo/./bar"));
-    assertThatPath(Paths.get(URI.create("jimfs://unix/foo/bar/")))
-        .isEqualTo(path("/foo/bar"));
+    assertThatPath(Paths.get(URI.create("jimfs://unix/"))).isEqualTo(path("/"));
+    assertThatPath(Paths.get(URI.create("jimfs://unix/foo"))).isEqualTo(path("/foo"));
+    assertThatPath(Paths.get(URI.create("jimfs://unix/foo%20bar"))).isEqualTo(path("/foo bar"));
+    assertThatPath(Paths.get(URI.create("jimfs://unix/foo/./bar"))).isEqualTo(path("/foo/./bar"));
+    assertThatPath(Paths.get(URI.create("jimfs://unix/foo/bar/"))).isEqualTo(path("/foo/bar"));
   }
 
   @Test
@@ -402,15 +398,16 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   public void testCreateSymbolicLink_absolute() throws IOException {
     Files.createSymbolicLink(path("/link.txt"), path("test.txt"));
 
-    assertThatPath("/link.txt", NOFOLLOW_LINKS)
-        .isSymbolicLink().withTarget("test.txt");
+    assertThatPath("/link.txt", NOFOLLOW_LINKS).isSymbolicLink().withTarget("test.txt");
     assertThatPath("/").hasChildren("link.txt", "work");
 
     Files.createDirectory(path("/foo"));
     Files.createSymbolicLink(path("/foo/link.txt"), path("test.txt"));
 
-    assertThatPath("/foo/link.txt").noFollowLinks()
-        .isSymbolicLink().withTarget("test.txt");
+    assertThatPath("/foo/link.txt")
+        .noFollowLinks()
+        .isSymbolicLink()
+        .withTarget("test.txt");
     assertThatPath("/foo").hasChildren("link.txt");
   }
 
@@ -473,19 +470,15 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   public void testCreateSymbolicLink_relative() throws IOException {
     Files.createSymbolicLink(path("link.txt"), path("test.txt"));
 
-    assertThatPath("/work/link.txt", NOFOLLOW_LINKS)
-        .isSymbolicLink().withTarget("test.txt");
-    assertThatPath("link.txt", NOFOLLOW_LINKS)
-        .isSymbolicLink().withTarget("test.txt");
+    assertThatPath("/work/link.txt", NOFOLLOW_LINKS).isSymbolicLink().withTarget("test.txt");
+    assertThatPath("link.txt", NOFOLLOW_LINKS).isSymbolicLink().withTarget("test.txt");
     assertThatPath("/work").hasChildren("link.txt");
 
     Files.createDirectory(path("foo"));
     Files.createSymbolicLink(path("foo/link.txt"), path("test.txt"));
 
-    assertThatPath("/work/foo/link.txt", NOFOLLOW_LINKS)
-        .isSymbolicLink().withTarget("test.txt");
-    assertThatPath("foo/link.txt", NOFOLLOW_LINKS)
-        .isSymbolicLink().withTarget("test.txt");
+    assertThatPath("/work/foo/link.txt", NOFOLLOW_LINKS).isSymbolicLink().withTarget("test.txt");
+    assertThatPath("foo/link.txt", NOFOLLOW_LINKS).isSymbolicLink().withTarget("test.txt");
     assertThatPath("/work/foo").hasChildren("link.txt");
     assertThatPath("foo").hasChildren("link.txt");
   }
@@ -665,8 +658,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     assertThatPath("/normal").attribute("posix:permissions").isNot(permissions);
     assertThatPath("/foo").attribute("posix:permissions").is(permissions);
 
-    FileAttribute<UserPrincipal> ownerAttr = new BasicFileAttribute<>(
-        "posix:owner", fs.getUserPrincipalLookupService().lookupPrincipalByName("foo"));
+    FileAttribute<UserPrincipal> ownerAttr =
+        new BasicFileAttribute<>(
+            "posix:owner", fs.getUserPrincipalLookupService().lookupPrincipalByName("foo"));
 
     Files.createFile(path("/foo2"), ownerAttr, permissionsAttr);
 
@@ -678,16 +672,18 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Test
   public void testCreateFile_withInitialAttributes_illegalInitialAttribute() throws IOException {
     try {
-      Files.createFile(path("/foo"),
+      Files.createFile(
+          path("/foo"),
           new BasicFileAttribute<>("basic:lastModifiedTime", FileTime.fromMillis(0L)));
+      fail();
     } catch (UnsupportedOperationException expected) {
     }
 
     assertThatPath("/foo").doesNotExist();
 
     try {
-      Files.createFile(path("/foo"),
-          new BasicFileAttribute<>("basic:noSuchAttribute", "foo"));
+      Files.createFile(path("/foo"), new BasicFileAttribute<>("basic:noSuchAttribute", "foo"));
+      fail();
     } catch (IllegalArgumentException expected) {
     }
 
@@ -696,8 +692,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testOpenChannel_withInitialAttributes_createNewFile() throws IOException {
-    FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
-        PosixFilePermissions.fromString("rwxrwxrwx"));
+    FileAttribute<Set<PosixFilePermission>> permissions =
+        PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx"));
     Files.newByteChannel(path("/foo"), ImmutableSet.of(WRITE, CREATE), permissions).close();
 
     assertThatPath("/foo").isRegularFile()
@@ -708,8 +704,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   public void testOpenChannel_withInitialAttributes_fileExists() throws IOException {
     Files.createFile(path("/foo"));
 
-    FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
-        PosixFilePermissions.fromString("rwxrwxrwx"));
+    FileAttribute<Set<PosixFilePermission>> permissions =
+        PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx"));
     Files.newByteChannel(path("/foo"), ImmutableSet.of(WRITE, CREATE), permissions).close();
 
     assertThatPath("/foo").isRegularFile()
@@ -718,8 +714,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testCreateDirectory_withInitialAttributes() throws IOException {
-    FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
-        PosixFilePermissions.fromString("rwxrwxrwx"));
+    FileAttribute<Set<PosixFilePermission>> permissions =
+        PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx"));
 
     Files.createDirectory(path("/foo"), permissions);
 
@@ -734,8 +730,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testCreateSymbolicLink_withInitialAttributes() throws IOException {
-    FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(
-        PosixFilePermissions.fromString("rwxrwxrwx"));
+    FileAttribute<Set<PosixFilePermission>> permissions =
+        PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx"));
 
     Files.createSymbolicLink(path("/foo"), path("bar"), permissions);
 
@@ -859,7 +855,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       assertEquals(test.toString(), expected.getMessage());
     }
 
-    Files.write(test, new byte[]{4, 5}, CREATE); // succeeds, ok for file to already exist
+    Files.write(test, new byte[] {4, 5}, CREATE); // succeeds, ok for file to already exist
     assertThatPath("/test").containsBytes(4, 5, 2, 3); // did not truncate or append, so overwrote
 
     Files.write(test, bytes, WRITE, CREATE, TRUNCATE_EXISTING); // default options
@@ -874,7 +870,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try {
       Files.write(test, bytes, READ, WRITE); // READ not allowed
       fail();
-    } catch (UnsupportedOperationException expected) {}
+    } catch (UnsupportedOperationException expected) {
+    }
   }
 
   @Test
@@ -922,7 +919,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try {
       Files.write(test, lines, UTF_8, CREATE_NEW); // CREATE_NEW requires file not exist
       fail();
-    } catch (FileAlreadyExistsException expected) {}
+    } catch (FileAlreadyExistsException expected) {
+    }
 
     // succeeds, ok for file to already exist
     Files.write(test, ImmutableList.of("foo"), UTF_8, CREATE);
@@ -946,7 +944,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try {
       Files.write(test, lines, UTF_8, READ, WRITE); // READ not allowed
       fail();
-    } catch (UnsupportedOperationException expected) {}
+    } catch (UnsupportedOperationException expected) {
+    }
   }
 
   @Test
@@ -956,6 +955,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try {
       // non-CREATE mode
       Files.write(path("/foo"), preFilledBytes(10), WRITE);
+      fail();
     } catch (FileSystemException expected) {
       assertThat(expected.getFile()).isEqualTo("/foo");
       assertThat(expected.getMessage()).contains("regular file");
@@ -964,6 +964,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try {
       // CREATE mode
       Files.write(path("/foo"), preFilledBytes(10));
+      fail();
     } catch (FileSystemException expected) {
       assertThat(expected.getFile()).isEqualTo("/foo");
       assertThat(expected.getMessage()).contains("regular file");
@@ -1185,27 +1186,27 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Test
   public void testSymbolicLinks() throws IOException {
     Files.createSymbolicLink(path("/link.txt"), path("/file.txt"));
-    assertThatPath("/link.txt", NOFOLLOW_LINKS)
-        .isSymbolicLink().withTarget("/file.txt");
+    assertThatPath("/link.txt", NOFOLLOW_LINKS).isSymbolicLink().withTarget("/file.txt");
     assertThatPath("/link.txt").doesNotExist(); // following the link; target doesn't exist
 
     try {
       Files.createFile(path("/link.txt"));
       fail();
-    } catch (FileAlreadyExistsException expected) {}
+    } catch (FileAlreadyExistsException expected) {
+    }
 
     try {
       Files.readAllBytes(path("/link.txt"));
       fail();
-    } catch (NoSuchFileException expected) {}
+    } catch (NoSuchFileException expected) {
+    }
 
     Files.createFile(path("/file.txt"));
     assertThatPath("/link.txt").isRegularFile(); // following the link; target does exist
     assertThatPath("/link.txt").containsNoBytes();
 
     Files.createSymbolicLink(path("/foo"), path("/bar/baz"));
-    assertThatPath("/foo", NOFOLLOW_LINKS)
-        .isSymbolicLink().withTarget("/bar/baz");
+    assertThatPath("/foo", NOFOLLOW_LINKS).isSymbolicLink().withTarget("/bar/baz");
     assertThatPath("/foo").doesNotExist(); // following the link; target doesn't exist
 
     Files.createDirectories(path("/bar/baz"));
@@ -1260,8 +1261,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectories(path("one/two/three"));
     Files.createSymbolicLink(path("/work/one/two/three/link"), path("/foo/bar"));
 
-    assertThatPath("one/two/three/link/baz/file")
-        .isSameFileAs("/foo/bar/baz/file");
+    assertThatPath("one/two/three/link/baz/file").isSameFileAs("/foo/bar/baz/file");
   }
 
   @Test
@@ -1400,7 +1400,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       ByteBuffer buf1 = UTF_8.encode("hello");
       ByteBuffer buf2 = UTF_8.encode(" world");
       while (buf1.hasRemaining() || buf2.hasRemaining()) {
-        channel.write(new ByteBuffer[]{buf1, buf2});
+        channel.write(new ByteBuffer[] {buf1, buf2});
       }
 
       assertEquals(11, channel.position());
@@ -1417,8 +1417,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       assertEquals(12, channel.size());
 
       ByteBuffer buffer = ByteBuffer.allocate(100);
-      while (channel.read(buffer) != -1) {
-      }
+      while (channel.read(buffer) != -1) {}
       buffer.flip();
       assertEquals("hello world!", UTF_8.decode(buffer).toString());
     }
@@ -1521,10 +1520,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Path foo = path("/foo");
     Files.createFile(foo);
 
-    Files.getFileAttributeView(foo, BasicFileAttributeView.class).setTimes(
-        FileTime.fromMillis(100),
-        FileTime.fromMillis(1000),
-        FileTime.fromMillis(10000));
+    Files.getFileAttributeView(foo, BasicFileAttributeView.class)
+        .setTimes(FileTime.fromMillis(100), FileTime.fromMillis(1000), FileTime.fromMillis(10000));
 
     assertThat(Files.getAttribute(foo, "lastModifiedTime")).isEqualTo(FileTime.fromMillis(100));
 
@@ -1692,8 +1689,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.delete(path("/bar"));
 
     Files.copy(path("/link"), path("/bar"), NOFOLLOW_LINKS);
-    assertThatPath("/bar", NOFOLLOW_LINKS)
-        .isSymbolicLink().withTarget("/test");
+    assertThatPath("/bar", NOFOLLOW_LINKS).isSymbolicLink().withTarget("/test");
     assertThatPath("/bar").isRegularFile();
     assertThatPath("/bar").containsBytes(bytes);
 
@@ -1730,8 +1726,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       UserPrincipal owner = fs.getUserPrincipalLookupService().lookupPrincipalByName("foobar");
       Files.setOwner(foo, owner);
 
-      assertThatPath(foo)
-          .attribute("owner:owner").is(owner);
+      assertThatPath(foo).attribute("owner:owner").is(owner);
 
       Path foo2 = fs2.getPath("/foo");
       Files.copy(foo, foo2, COPY_ATTRIBUTES);
@@ -1760,9 +1755,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Files.move(path("/foo"), path("/bar"));
     assertThatPath("/foo").doesNotExist()
-        .andThat("/bar")
-        .containsBytes(bytes).and()
-        .attribute("fileKey").is(fooKey);
+        .andThat("/bar").containsBytes(bytes)
+        .and().attribute("fileKey").is(fooKey);
 
     Files.createDirectory(path("/foo"));
     Files.move(path("/bar"), path("/foo/bar"));
@@ -1785,17 +1779,14 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Files.move(path("/link"), path("/link.txt"));
 
-    assertThatPath("/foo.txt").noFollowLinks()
-        .isRegularFile()
+    assertThatPath("/foo.txt").noFollowLinks().isRegularFile()
         .and().containsBytes(bytes);
 
     assertThatPath(path("/link")).doesNotExist();
 
-    assertThatPath(path("/link.txt")).noFollowLinks()
-        .isSymbolicLink();
+    assertThatPath(path("/link.txt")).noFollowLinks().isSymbolicLink();
 
-    assertThatPath(path("/link.txt"))
-        .isRegularFile()
+    assertThatPath(path("/link.txt")).isRegularFile()
         .and().containsBytes(bytes);
   }
 
@@ -1838,9 +1829,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       assertEquals("/bar", expected.getMessage());
     }
 
-    assertThatPath("/test")
-        .containsBytes(bytes).and()
-        .attribute("fileKey").is(testKey);
+    assertThatPath("/test").containsBytes(bytes)
+        .and().attribute("fileKey").is(testKey);
 
     Files.delete(path("/bar"));
     Files.createDirectory(path("/bar"));
@@ -1852,9 +1842,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       assertEquals("/bar", expected.getMessage());
     }
 
-    assertThatPath("/test")
-        .containsBytes(bytes).and()
-        .attribute("fileKey").is(testKey);
+    assertThatPath("/test").containsBytes(bytes)
+        .and().attribute("fileKey").is(testKey);
   }
 
   @Test
@@ -1900,8 +1889,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testIsSameFile_forPathFromDifferentFileSystemProvider() throws IOException {
-    Path defaultFileSystemRoot = FileSystems.getDefault()
-        .getRootDirectories().iterator().next();
+    Path defaultFileSystemRoot =
+        FileSystems.getDefault()
+            .getRootDirectories()
+            .iterator()
+            .next();
 
     assertThat(Files.isSameFile(path("/"), defaultFileSystemRoot)).isFalse();
   }
@@ -1935,9 +1927,10 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
       SecureDirectoryStream<Path> secureStream = (SecureDirectoryStream<Path>) stream;
 
-      assertThat(ImmutableList.copyOf(secureStream)).isEqualTo(
-          ImmutableList.of(
-              path("/foo/a"), path("/foo/b"), path("/foo/bar"), path("/foo/barLink")));
+      assertThat(ImmutableList.copyOf(secureStream))
+          .isEqualTo(
+              ImmutableList.of(
+                  path("/foo/a"), path("/foo/b"), path("/foo/bar"), path("/foo/barLink")));
 
       secureStream.deleteFile(path("b"));
       assertThatPath("/foo/b").doesNotExist();
@@ -1959,13 +1952,19 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       assertThatPath("/baz/stuff/b").doesNotExist();
       assertThatPath("/baz/stuff").hasChildren("a", "bar", "barLink");
 
-      assertThat(secureStream.getFileAttributeView(BasicFileAttributeView.class)
-          .readAttributes()
-          .isDirectory()).isTrue();
+      assertThat(
+              secureStream
+                  .getFileAttributeView(BasicFileAttributeView.class)
+                  .readAttributes()
+                  .isDirectory())
+          .isTrue();
 
-      assertThat(secureStream.getFileAttributeView(path("a"), BasicFileAttributeView.class)
-          .readAttributes()
-          .isRegularFile()).isTrue();
+      assertThat(
+              secureStream
+                  .getFileAttributeView(path("a"), BasicFileAttributeView.class)
+                  .readAttributes()
+                  .isRegularFile())
+          .isTrue();
 
       try {
         secureStream.deleteFile(path("bar"));
@@ -1983,27 +1982,36 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
       try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
         barStream.newByteChannel(path("stuff"), ImmutableSet.of(WRITE, CREATE_NEW)).close();
-        assertThat(barStream.getFileAttributeView(path("stuff"), BasicFileAttributeView.class)
-            .readAttributes()
-            .isRegularFile()).isTrue();
+        assertThat(
+                barStream
+                    .getFileAttributeView(path("stuff"), BasicFileAttributeView.class)
+                    .readAttributes()
+                    .isRegularFile())
+            .isTrue();
 
-        assertThat(secureStream.getFileAttributeView(
-            path("bar/stuff"), BasicFileAttributeView.class)
-                .readAttributes()
-                .isRegularFile()).isTrue();
+        assertThat(
+                secureStream
+                    .getFileAttributeView(path("bar/stuff"), BasicFileAttributeView.class)
+                    .readAttributes()
+                    .isRegularFile())
+            .isTrue();
       }
 
-      try (SecureDirectoryStream<Path> barLinkStream = secureStream
-          .newDirectoryStream(path("barLink"))) {
-        assertThat(barLinkStream.getFileAttributeView(
-            path("stuff"), BasicFileAttributeView.class)
-                .readAttributes()
-                .isRegularFile()).isTrue();
+      try (SecureDirectoryStream<Path> barLinkStream =
+          secureStream.newDirectoryStream(path("barLink"))) {
+        assertThat(
+                barLinkStream
+                    .getFileAttributeView(path("stuff"), BasicFileAttributeView.class)
+                    .readAttributes()
+                    .isRegularFile())
+            .isTrue();
 
-        assertThat(barLinkStream.getFileAttributeView(
-            path(".."), BasicFileAttributeView.class)
-                .readAttributes()
-                .isDirectory()).isTrue();
+        assertThat(
+                barLinkStream
+                    .getFileAttributeView(path(".."), BasicFileAttributeView.class)
+                    .readAttributes()
+                    .isDirectory())
+            .isTrue();
       }
 
       try {
@@ -2019,9 +2027,12 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         assertThatPath(path("/baz/stuff/a")).doesNotExist();
         assertThatPath(path("/baz/stuff/bar/moved")).isRegularFile();
 
-        assertThat(barStream.getFileAttributeView(path("moved"), BasicFileAttributeView.class)
-            .readAttributes()
-            .isRegularFile()).isTrue();
+        assertThat(
+                barStream
+                    .getFileAttributeView(path("moved"), BasicFileAttributeView.class)
+                    .readAttributes()
+                    .isRegularFile())
+            .isTrue();
       }
     }
   }
@@ -2042,8 +2053,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
           .containsExactly(path("foo/a"), path("foo/b"), path("foo/c"));
 
       try (DirectoryStream<Path> stream2 = secureStream.newDirectoryStream(path("c"))) {
-        assertThat(ImmutableList.copyOf(stream2))
-            .containsExactly(path("foo/c/d"), path("foo/c/e"));
+        assertThat(ImmutableList.copyOf(stream2)).containsExactly(path("foo/c/d"), path("foo/c/e"));
       }
     }
   }
@@ -2114,8 +2124,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Iterator<Path> iter = stream.iterator();
     BasicFileAttributeView view1 = stream.getFileAttributeView(BasicFileAttributeView.class);
-    BasicFileAttributeView view2 = stream.getFileAttributeView(
-        path("bar"), BasicFileAttributeView.class);
+    BasicFileAttributeView view2 =
+        stream.getFileAttributeView(path("bar"), BasicFileAttributeView.class);
 
     try {
       stream.iterator();
@@ -2224,7 +2234,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
       Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
       try {
-        channel.write(ByteBuffer.wrap(new byte[]{0, 1, 2, 3}));
+        channel.write(ByteBuffer.wrap(new byte[] {0, 1, 2, 3}));
       } catch (NonWritableChannelException ignore) {
       }
 
@@ -2246,14 +2256,14 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       tester.assertModifiedTimeDidNotChange();
 
       Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
-      channel.write(ByteBuffer.wrap(new byte[]{0, 1, 2, 3}));
+      channel.write(ByteBuffer.wrap(new byte[] {0, 1, 2, 3}));
 
       // write call on channel does
       tester.assertAccessTimeDidNotChange();
       tester.assertModifiedTimeChanged();
 
       Uninterruptibles.sleepUninterruptibly(1, MILLISECONDS);
-      channel.write(ByteBuffer.wrap(new byte[]{4, 5, 6, 7}));
+      channel.write(ByteBuffer.wrap(new byte[] {4, 5, 6, 7}));
 
       tester.assertAccessTimeDidNotChange();
       tester.assertModifiedTimeChanged();
@@ -2278,9 +2288,12 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testUnsupportedFeatures() throws IOException {
-    FileSystem fileSystem = Jimfs.newFileSystem(Configuration.unix().toBuilder()
-        .setSupportedFeatures() // none
-        .build());
+    FileSystem fileSystem =
+        Jimfs.newFileSystem(
+            Configuration.unix()
+                .toBuilder()
+                .setSupportedFeatures() // none
+                .build());
 
     Path foo = fileSystem.getPath("foo");
     Path bar = foo.resolveSibling("bar");

@@ -49,8 +49,7 @@ import javax.annotation.Nullable;
  */
 final class PathService implements Comparator<JimfsPath> {
 
-  private static final Ordering<Name> DISPLAY_ROOT_ORDERING =
-      Name.displayOrdering().nullsLast();
+  private static final Ordering<Name> DISPLAY_ROOT_ORDERING = Name.displayOrdering().nullsLast();
   private static final Ordering<Iterable<Name>> DISPLAY_NAMES_ORDERING =
       Name.displayOrdering().lexicographical();
 
@@ -72,13 +71,15 @@ final class PathService implements Comparator<JimfsPath> {
   private volatile JimfsPath emptyPath;
 
   PathService(Configuration config) {
-    this(config.pathType,
+    this(
+        config.pathType,
         config.nameDisplayNormalization,
         config.nameCanonicalNormalization,
         config.pathEqualityUsesCanonicalForm);
   }
 
-  PathService(PathType type,
+  PathService(
+      PathType type,
       Iterable<PathNormalization> displayNormalizations,
       Iterable<PathNormalization> canonicalNormalizations,
       boolean equalityUsesCanonicalForm) {
@@ -87,12 +88,9 @@ final class PathService implements Comparator<JimfsPath> {
     this.canonicalNormalizations = ImmutableSet.copyOf(canonicalNormalizations);
     this.equalityUsesCanonicalForm = equalityUsesCanonicalForm;
 
-    this.rootOrdering = equalityUsesCanonicalForm
-        ? CANONICAL_ROOT_ORDERING
-        : DISPLAY_ROOT_ORDERING;
-    this.namesOrdering = equalityUsesCanonicalForm
-        ? CANONICAL_NAMES_ORDERING
-        : DISPLAY_NAMES_ORDERING;
+    this.rootOrdering = equalityUsesCanonicalForm ? CANONICAL_ROOT_ORDERING : DISPLAY_ROOT_ORDERING;
+    this.namesOrdering =
+        equalityUsesCanonicalForm ? CANONICAL_NAMES_ORDERING : DISPLAY_NAMES_ORDERING;
   }
 
   /**
@@ -207,8 +205,7 @@ final class PathService implements Comparator<JimfsPath> {
    * Parses the given strings as a path.
    */
   public JimfsPath parsePath(String first, String... more) {
-    String joined = type.joiner()
-        .join(Iterables.filter(Lists.asList(first, more), NOT_EMPTY));
+    String joined = type.joiner().join(Iterables.filter(Lists.asList(first, more), NOT_EMPTY));
     return toPath(type.parsePath(joined));
   }
 
@@ -289,10 +286,11 @@ final class PathService implements Comparator<JimfsPath> {
         syntaxAndPattern, type.getSeparator() + type.getOtherSeparators(), displayNormalizations);
   }
 
-  private static final Predicate<Object> NOT_EMPTY = new Predicate<Object>() {
-    @Override
-    public boolean apply(Object input) {
-      return !input.toString().isEmpty();
-    }
-  };
+  private static final Predicate<Object> NOT_EMPTY =
+      new Predicate<Object>() {
+        @Override
+        public boolean apply(Object input) {
+          return !input.toString().isEmpty();
+        }
+      };
 }

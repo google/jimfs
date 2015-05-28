@@ -78,8 +78,8 @@ public class ConfigurationTest {
         .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
         .inOrder();
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
-    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
-        4L * 1024 * 1024 * 1024);
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
+        .isEqualTo(4L * 1024 * 1024 * 1024);
     assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("/foo"));
@@ -112,8 +112,8 @@ public class ConfigurationTest {
         .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
         .inOrder();
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
-    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
-        4L * 1024 * 1024 * 1024);
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
+        .isEqualTo(4L * 1024 * 1024 * 1024);
     assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("/foo"));
@@ -151,8 +151,8 @@ public class ConfigurationTest {
         .containsExactlyElementsIn(ImmutableList.of(fs.getPath("C:\\")))
         .inOrder();
     assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("C:\\work"));
-    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(
-        4L * 1024 * 1024 * 1024);
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
+        .isEqualTo(4L * 1024 * 1024 * 1024);
     assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("C:\\foo"));
@@ -168,20 +168,21 @@ public class ConfigurationTest {
   public void testBuilder() {
     AttributeProvider unixProvider = StandardAttributeProviders.get("unix");
 
-    Configuration config = Configuration.builder(PathType.unix())
-        .setRoots("/")
-        .setWorkingDirectory("/hello/world")
-        .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
-        .setNameDisplayNormalization(NFC)
-        .setPathEqualityUsesCanonicalForm(true)
-        .setBlockSize(10)
-        .setMaxSize(100)
-        .setMaxCacheSize(50)
-        .setAttributeViews("basic", "posix")
-        .addAttributeProvider(unixProvider)
-        .setDefaultAttributeValue(
-            "posix:permissions", PosixFilePermissions.fromString("---------"))
-        .build();
+    Configuration config =
+        Configuration.builder(PathType.unix())
+            .setRoots("/")
+            .setWorkingDirectory("/hello/world")
+            .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
+            .setNameDisplayNormalization(NFC)
+            .setPathEqualityUsesCanonicalForm(true)
+            .setBlockSize(10)
+            .setMaxSize(100)
+            .setMaxCacheSize(50)
+            .setAttributeViews("basic", "posix")
+            .addAttributeProvider(unixProvider)
+            .setDefaultAttributeValue(
+                "posix:permissions", PosixFilePermissions.fromString("---------"))
+            .build();
 
     assertThat(config.pathType).isEqualTo(PathType.unix());
     assertThat(config.roots).containsExactly("/");
@@ -200,19 +201,20 @@ public class ConfigurationTest {
 
   @Test
   public void testFileSystemForCustomConfiguration() throws IOException {
-    Configuration config = Configuration.builder(PathType.unix())
-        .setRoots("/")
-        .setWorkingDirectory("/hello/world")
-        .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
-        .setNameDisplayNormalization(NFC)
-        .setPathEqualityUsesCanonicalForm(true)
-        .setBlockSize(10)
-        .setMaxSize(100)
-        .setMaxCacheSize(50)
-        .setAttributeViews("unix")
-        .setDefaultAttributeValue(
-            "posix:permissions", PosixFilePermissions.fromString("---------"))
-        .build();
+    Configuration config =
+        Configuration.builder(PathType.unix())
+            .setRoots("/")
+            .setWorkingDirectory("/hello/world")
+            .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
+            .setNameDisplayNormalization(NFC)
+            .setPathEqualityUsesCanonicalForm(true)
+            .setBlockSize(10)
+            .setMaxSize(100)
+            .setMaxCacheSize(50)
+            .setAttributeViews("unix")
+            .setDefaultAttributeValue(
+                "posix:permissions", PosixFilePermissions.fromString("---------"))
+            .build();
 
     FileSystem fs = Jimfs.newFileSystem(config);
 
@@ -224,8 +226,8 @@ public class ConfigurationTest {
     assertThat(fs.supportedFileAttributeViews()).containsExactly("basic", "owner", "posix", "unix");
 
     Files.createFile(fs.getPath("/foo"));
-    assertThat(Files.getAttribute(fs.getPath("/foo"), "posix:permissions")).isEqualTo(
-        PosixFilePermissions.fromString("---------"));
+    assertThat(Files.getAttribute(fs.getPath("/foo"), "posix:permissions"))
+        .isEqualTo(PosixFilePermissions.fromString("---------"));
 
     try {
       Files.createFile(fs.getPath("/FOO"));
@@ -236,10 +238,12 @@ public class ConfigurationTest {
 
   @Test
   public void testToBuilder() {
-    Configuration config = Configuration.unix().toBuilder()
-        .setWorkingDirectory("/hello/world")
-        .setAttributeViews("basic", "posix")
-        .build();
+    Configuration config =
+        Configuration.unix()
+            .toBuilder()
+            .setWorkingDirectory("/hello/world")
+            .setAttributeViews("basic", "posix")
+            .build();
 
     assertThat(config.pathType).isEqualTo(PathType.unix());
     assertThat(config.roots).containsExactly("/");
@@ -294,7 +298,8 @@ public class ConfigurationTest {
     assertIllegalNormalizations(CASE_FOLD_ASCII, CASE_FOLD_UNICODE);
   }
 
-  private static void assertIllegalNormalizations(PathNormalization first, PathNormalization... more) {
+  private static void assertIllegalNormalizations(
+      PathNormalization first, PathNormalization... more) {
     try {
       Configuration.builder(PathType.unix()).setNameCanonicalNormalization(first, more);
       fail();
@@ -320,10 +325,12 @@ public class ConfigurationTest {
   @Test // how's that for a name?
   public void testCreateFileSystemFromConfigurationWithWorkingDirectoryNotUnderConfiguredRoot() {
     try {
-      Jimfs.newFileSystem(Configuration.windows().toBuilder()
-          .setRoots("C:\\", "D:\\")
-          .setWorkingDirectory("E:\\foo")
-          .build());
+      Jimfs.newFileSystem(
+          Configuration.windows()
+              .toBuilder()
+              .setRoots("C:\\", "D:\\")
+              .setWorkingDirectory("E:\\foo")
+              .build());
       fail();
     } catch (IllegalArgumentException expected) {
     }

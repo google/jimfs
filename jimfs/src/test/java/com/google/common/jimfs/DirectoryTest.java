@@ -244,9 +244,9 @@ public class DirectoryTest {
   @Test
   public void testInitialState() {
     assertThat(dir.entryCount()).isEqualTo(2);
-    assertThat(ImmutableSet.copyOf(dir)).containsExactly(
-        new DirectoryEntry(dir, Name.SELF, dir),
-        new DirectoryEntry(dir, Name.PARENT, root));
+    assertThat(ImmutableSet.copyOf(dir))
+        .containsExactly(
+            new DirectoryEntry(dir, Name.SELF, dir), new DirectoryEntry(dir, Name.PARENT, root));
     assertThat(dir.get(Name.simple("foo"))).isNull();
   }
 
@@ -261,8 +261,7 @@ public class DirectoryTest {
     dir.put(entry("bar"));
 
     assertThat(dir.entryCount()).isEqualTo(4);
-    assertThat(ImmutableSet.copyOf(dir))
-        .containsAllOf(entry("foo"), entry("bar"));
+    assertThat(ImmutableSet.copyOf(dir)).containsAllOf(entry("foo"), entry("bar"));
     assertThat(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
     assertThat(dir.get(Name.simple("bar"))).isEqualTo(entry("bar"));
   }
@@ -274,7 +273,8 @@ public class DirectoryTest {
     try {
       dir.put(entry("foo"));
       fail();
-    } catch (IllegalArgumentException expected) {}
+    } catch (IllegalArgumentException expected) {
+    }
   }
 
   @Test
@@ -285,10 +285,11 @@ public class DirectoryTest {
     dir.remove(Name.simple("foo"));
 
     assertThat(dir.entryCount()).isEqualTo(3);
-    assertThat(ImmutableSet.copyOf(dir)).containsExactly(
-        entry("bar"),
-        new DirectoryEntry(dir, Name.SELF, dir),
-        new DirectoryEntry(dir, Name.PARENT, root));
+    assertThat(ImmutableSet.copyOf(dir))
+        .containsExactly(
+            entry("bar"),
+            new DirectoryEntry(dir, Name.SELF, dir),
+            new DirectoryEntry(dir, Name.PARENT, root));
     assertThat(dir.get(Name.simple("foo"))).isNull();
     assertThat(dir.get(Name.simple("bar"))).isEqualTo(entry("bar"));
 

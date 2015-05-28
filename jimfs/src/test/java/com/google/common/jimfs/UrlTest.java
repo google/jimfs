@@ -72,10 +72,7 @@ public class UrlTest {
 
     URL url = path.toUri().toURL();
     assertThat(Resources.asCharSource(url, UTF_8).read())
-        .isEqualTo(""
-            + "a.txt\n"
-            + "b.txt\n"
-            + "c\n");
+        .isEqualTo("a.txt\nb.txt\nc\n");
   }
 
   @Test
@@ -88,10 +85,9 @@ public class UrlTest {
     URLConnection conn = url.openConnection();
 
     // read header fields directly
-    assertThat(conn.getHeaderFields()).containsEntry("content-length",
-        ImmutableList.of("3"));
-    assertThat(conn.getHeaderFields()).containsEntry("content-type",
-        ImmutableList.of("application/octet-stream"));
+    assertThat(conn.getHeaderFields()).containsEntry("content-length", ImmutableList.of("3"));
+    assertThat(conn.getHeaderFields())
+        .containsEntry("content-type", ImmutableList.of("application/octet-stream"));
 
     if (lastModified != null) {
       assertThat(conn.getHeaderFields()).containsKey("last-modified");

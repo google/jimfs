@@ -47,7 +47,7 @@ public class JimfsInputStreamTest {
   }
 
   @Test
-   public void testRead_wholeArray() throws IOException {
+  public void testRead_wholeArray() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     byte[] bytes = new byte[8];
     assertThat(in.read(bytes)).isEqualTo(8);
@@ -157,6 +157,7 @@ public class JimfsInputStreamTest {
     assertEmpty(in);
   }
 
+  @SuppressWarnings("GuardedByChecker")
   @Test
   public void testFullyReadInputStream_doesNotChangeStateWhenStoreChanges() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5);

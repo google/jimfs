@@ -86,12 +86,13 @@ public final class Configuration {
   }
 
   private static final class UnixHolder {
-    private static final Configuration UNIX = Configuration.builder(PathType.unix())
-        .setRoots("/")
-        .setWorkingDirectory("/work")
-        .setAttributeViews("basic")
-        .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, SECURE_DIRECTORY_STREAM, FILE_CHANNEL)
-        .build();
+    private static final Configuration UNIX =
+        Configuration.builder(PathType.unix())
+            .setRoots("/")
+            .setWorkingDirectory("/work")
+            .setAttributeViews("basic")
+            .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, SECURE_DIRECTORY_STREAM, FILE_CHANNEL)
+            .build();
   }
 
   /**
@@ -132,11 +133,12 @@ public final class Configuration {
   }
 
   private static final class OsxHolder {
-    private static final Configuration OS_X = unix().toBuilder()
-        .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
-        .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
-        .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL)
-        .build();
+    private static final Configuration OS_X =
+        unix().toBuilder()
+            .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
+            .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
+            .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL)
+            .build();
   }
 
   /**
@@ -173,14 +175,15 @@ public final class Configuration {
   }
 
   private static final class WindowsHolder {
-    private static final Configuration WINDOWS = Configuration.builder(PathType.windows())
-        .setRoots("C:\\")
-        .setWorkingDirectory("C:\\work")
-        .setNameCanonicalNormalization(CASE_FOLD_ASCII)
-        .setPathEqualityUsesCanonicalForm(true) // matches real behavior of WindowsPath
-        .setAttributeViews("basic")
-        .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL)
-        .build();
+    private static final Configuration WINDOWS =
+        Configuration.builder(PathType.windows())
+            .setRoots("C:\\")
+            .setWorkingDirectory("C:\\work")
+            .setNameCanonicalNormalization(CASE_FOLD_ASCII)
+            .setPathEqualityUsesCanonicalForm(true) // matches real behavior of WindowsPath
+            .setAttributeViews("basic")
+            .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL)
+            .build();
   }
 
   /**
@@ -223,12 +226,14 @@ public final class Configuration {
     this.maxSize = builder.maxSize;
     this.maxCacheSize = builder.maxCacheSize;
     this.attributeViews = builder.attributeViews;
-    this.attributeProviders = builder.attributeProviders == null
-        ? ImmutableSet.<AttributeProvider>of()
-        : ImmutableSet.copyOf(builder.attributeProviders);
-    this.defaultAttributeValues = builder.defaultAttributeValues == null
-        ? ImmutableMap.<String, Object>of()
-        : ImmutableMap.copyOf(builder.defaultAttributeValues);
+    this.attributeProviders =
+        builder.attributeProviders == null
+            ? ImmutableSet.<AttributeProvider>of()
+            : ImmutableSet.copyOf(builder.attributeProviders);
+    this.defaultAttributeValues =
+        builder.defaultAttributeValues == null
+            ? ImmutableMap.<String, Object>of()
+            : ImmutableMap.copyOf(builder.defaultAttributeValues);
     this.roots = builder.roots;
     this.workingDirectory = builder.workingDirectory;
     this.supportedFeatures = builder.supportedFeatures;
@@ -289,12 +294,14 @@ public final class Configuration {
       this.maxSize = configuration.maxSize;
       this.maxCacheSize = configuration.maxCacheSize;
       this.attributeViews = configuration.attributeViews;
-      this.attributeProviders = configuration.attributeProviders.isEmpty()
-          ? null
-          : new HashSet<>(configuration.attributeProviders);
-      this.defaultAttributeValues = configuration.defaultAttributeValues.isEmpty()
-          ? null
-          : new HashMap<>(configuration.defaultAttributeValues);
+      this.attributeProviders =
+          configuration.attributeProviders.isEmpty()
+              ? null
+              : new HashSet<>(configuration.attributeProviders);
+      this.defaultAttributeValues =
+          configuration.defaultAttributeValues.isEmpty()
+              ? null
+              : new HashMap<>(configuration.defaultAttributeValues);
       this.roots = configuration.roots;
       this.workingDirectory = configuration.workingDirectory;
       this.supportedFeatures = configuration.supportedFeatures;
@@ -304,8 +311,7 @@ public final class Configuration {
      * Sets the normalizations that will be applied to the display form of filenames. The display
      * form is used in the {@code toString()} of {@code Path} objects.
      */
-    public Builder setNameDisplayNormalization(
-        PathNormalization first, PathNormalization... more) {
+    public Builder setNameDisplayNormalization(PathNormalization first, PathNormalization... more) {
       this.nameDisplayNormalization = checkNormalizations(Lists.asList(first, more));
       return this;
     }
@@ -358,8 +364,8 @@ public final class Configuration {
     private static void checkNormalizationNotSet(
         PathNormalization n, @Nullable PathNormalization set) {
       if (set != null) {
-        throw new IllegalArgumentException("can't set normalization " + n
-            + ": normalization " + set + " already set");
+        throw new IllegalArgumentException(
+            "can't set normalization " + n + ": normalization " + set + " already set");
       }
     }
 
@@ -539,8 +545,10 @@ public final class Configuration {
      * </table>
      */
     public Builder setDefaultAttributeValue(String attribute, Object value) {
-      checkArgument(ATTRIBUTE_PATTERN.matcher(attribute).matches(),
-          "attribute (%s) must be of the form \"view:attribute\"", attribute);
+      checkArgument(
+          ATTRIBUTE_PATTERN.matcher(attribute).matches(),
+          "attribute (%s) must be of the form \"view:attribute\"",
+          attribute);
       checkNotNull(value);
 
       if (defaultAttributeValues == null) {
@@ -581,8 +589,10 @@ public final class Configuration {
      */
     public Builder setWorkingDirectory(String workingDirectory) {
       PathType.ParseResult parseResult = pathType.parsePath(workingDirectory);
-      checkArgument(parseResult.isAbsolute(),
-          "working directory must be an absolute path: %s", workingDirectory);
+      checkArgument(
+          parseResult.isAbsolute(),
+          "working directory must be an absolute path: %s",
+          workingDirectory);
       this.workingDirectory = checkNotNull(workingDirectory);
       return this;
     }

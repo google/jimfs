@@ -58,8 +58,8 @@ public class RegularFileTest {
 
     for (ReuseStrategy reuseStrategy : EnumSet.allOf(ReuseStrategy.class)) {
       TestSuite suiteForReuseStrategy = new TestSuite(reuseStrategy.toString());
-      Set<List<Integer>> sizeOptions = Sets.cartesianProduct(
-          ImmutableList.of(BLOCK_SIZES, CACHE_SIZES));
+      Set<List<Integer>> sizeOptions =
+          Sets.cartesianProduct(ImmutableList.of(BLOCK_SIZES, CACHE_SIZES));
       for (List<Integer> options : sizeOptions) {
         int blockSize = options.get(0);
         int cacheSize = options.get(1);
@@ -86,17 +86,18 @@ public class RegularFileTest {
   public static final ImmutableSet<Integer> BLOCK_SIZES = ImmutableSet.of(2, 8, 128, 8192);
   public static final ImmutableSet<Integer> CACHE_SIZES = ImmutableSet.of(0, 4, 16, 128, -1);
 
-  private static final ImmutableList<Method> TEST_METHODS = FluentIterable
-      .from(Arrays.asList(RegularFileTestRunner.class.getDeclaredMethods()))
-      .filter(new Predicate<Method>() {
-        @Override
-        public boolean apply(Method method) {
-          return method.getName().startsWith("test")
-              && Modifier.isPublic(method.getModifiers())
-              && method.getParameterTypes().length == 0;
-        }
-      })
-      .toList();
+  private static final ImmutableList<Method> TEST_METHODS =
+      FluentIterable.from(Arrays.asList(RegularFileTestRunner.class.getDeclaredMethods()))
+          .filter(
+              new Predicate<Method>() {
+                @Override
+                public boolean apply(Method method) {
+                  return method.getName().startsWith("test")
+                      && Modifier.isPublic(method.getModifiers())
+                      && method.getParameterTypes().length == 0;
+                }
+              })
+          .toList();
 
   /**
    * Different strategies for handling reuse of disks and/or files between tests, intended to

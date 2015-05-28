@@ -72,9 +72,11 @@ public class DosAttributeProviderTest extends AbstractAttributeProviderTest<DosA
 
   @Test
   public void testView() throws IOException {
-    DosFileAttributeView view = provider.view(fileLookup(),
-        ImmutableMap.<String, FileAttributeView>of(
-            "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
+    DosFileAttributeView view =
+        provider.view(
+            fileLookup(),
+            ImmutableMap.<String, FileAttributeView>of(
+                "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
     assertThat(view.name()).isEqualTo("dos");

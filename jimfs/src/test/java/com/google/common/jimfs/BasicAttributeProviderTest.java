@@ -37,8 +37,8 @@ import java.util.Set;
  * @author Colin Decker
  */
 @RunWith(JUnit4.class)
-public class BasicAttributeProviderTest extends
-    AbstractAttributeProviderTest<BasicAttributeProvider> {
+public class BasicAttributeProviderTest
+    extends AbstractAttributeProviderTest<BasicAttributeProvider> {
 
   @Override
   protected BasicAttributeProvider createProvider() {
@@ -52,8 +52,16 @@ public class BasicAttributeProviderTest extends
 
   @Test
   public void testSupportedAttributes() {
-    assertSupportsAll("fileKey", "size", "isDirectory", "isRegularFile", "isSymbolicLink",
-        "isOther", "creationTime", "lastModifiedTime", "lastAccessTime");
+    assertSupportsAll(
+        "fileKey",
+        "size",
+        "isDirectory",
+        "isRegularFile",
+        "isSymbolicLink",
+        "isOther",
+        "creationTime",
+        "lastModifiedTime",
+        "lastAccessTime");
   }
 
   @Test
@@ -63,7 +71,8 @@ public class BasicAttributeProviderTest extends
     assertThat(time).isEqualTo(file.getLastAccessTime());
     assertThat(time).isEqualTo(file.getLastModifiedTime());
 
-    assertContainsAll(file,
+    assertContainsAll(
+        file,
         ImmutableMap.<String, Object>builder()
             .put("fileKey", 0)
             .put("size", 0L)

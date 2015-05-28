@@ -51,20 +51,23 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
   private static final UserPrincipal USER = createUserPrincipal("user");
   private static final UserPrincipal FOO = createUserPrincipal("foo");
 
-  private static final ImmutableList<AclEntry> defaultAcl = new ImmutableList.Builder<AclEntry>()
-      .add(AclEntry.newBuilder()
-          .setType(ALLOW)
-          .setFlags(DIRECTORY_INHERIT)
-          .setPermissions(DELETE, APPEND_DATA)
-          .setPrincipal(USER)
-          .build())
-      .add(AclEntry.newBuilder()
-          .setType(ALLOW)
-          .setFlags(DIRECTORY_INHERIT)
-          .setPermissions(DELETE, APPEND_DATA)
-          .setPrincipal(FOO)
-          .build())
-      .build();
+  private static final ImmutableList<AclEntry> defaultAcl =
+      new ImmutableList.Builder<AclEntry>()
+          .add(
+              AclEntry.newBuilder()
+                  .setType(ALLOW)
+                  .setFlags(DIRECTORY_INHERIT)
+                  .setPermissions(DELETE, APPEND_DATA)
+                  .setPrincipal(USER)
+                  .build())
+          .add(
+              AclEntry.newBuilder()
+                  .setType(ALLOW)
+                  .setFlags(DIRECTORY_INHERIT)
+                  .setPermissions(DELETE, APPEND_DATA)
+                  .setPrincipal(FOO)
+                  .build())
+          .build();
 
   @Override
   protected AclAttributeProvider createProvider() {
@@ -96,9 +99,11 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
 
   @Test
   public void testView() throws IOException {
-    AclFileAttributeView view = provider.view(fileLookup(),
-        ImmutableMap.<String, FileAttributeView>of(
-            "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
+    AclFileAttributeView view =
+        provider.view(
+            fileLookup(),
+            ImmutableMap.<String, FileAttributeView>of(
+                "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
     assertThat(view.name()).isEqualTo("acl");

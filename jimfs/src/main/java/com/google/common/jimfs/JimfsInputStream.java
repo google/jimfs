@@ -25,6 +25,8 @@ import com.google.common.primitives.Ints;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.annotation.concurrent.GuardedBy;
+
 /**
  * {@link InputStream} for reading from a file's {@link RegularFile}.
  *
@@ -32,9 +34,14 @@ import java.io.InputStream;
  */
 final class JimfsInputStream extends InputStream {
 
-  // these fields are guarded by synchronization on "this"
-  @VisibleForTesting RegularFile file;
+  @GuardedBy("this")
+  @VisibleForTesting
+  RegularFile file;
+
+  @GuardedBy("this")
   private long pos;
+
+  @GuardedBy("this")
   private boolean finished;
 
   private final FileSystemState fileSystemState;
@@ -129,6 +136,7 @@ final class JimfsInputStream extends InputStream {
     return Ints.saturatedCast(available);
   }
 
+  @GuardedBy("this")
   private void checkNotClosed() throws IOException {
     if (file == null) {
       throw new IOException("stream is closed");
@@ -146,6 +154,7 @@ final class JimfsInputStream extends InputStream {
     }
   }
 
+  @GuardedBy("this")
   private boolean isOpen() {
     return file != null;
   }

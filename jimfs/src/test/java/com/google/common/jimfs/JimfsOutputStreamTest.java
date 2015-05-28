@@ -52,14 +52,14 @@ public class JimfsOutputStreamTest {
   @Test
   public void testWrite_wholeArray() throws IOException {
     JimfsOutputStream out = newOutputStream(false);
-    out.write(new byte[]{1, 2, 3, 4});
+    out.write(new byte[] {1, 2, 3, 4});
     assertStoreContains(out, 1, 2, 3, 4);
   }
 
   @Test
   public void testWrite_partialArray() throws IOException {
     JimfsOutputStream out = newOutputStream(false);
-    out.write(new byte[]{1, 2, 3, 4, 5, 6}, 1, 3);
+    out.write(new byte[] {1, 2, 3, 4, 5, 6}, 1, 3);
     assertStoreContains(out, 2, 3, 4);
   }
 
@@ -100,7 +100,7 @@ public class JimfsOutputStreamTest {
   public void testWrite_wholeArray_appendMode() throws IOException {
     JimfsOutputStream out = newOutputStream(true);
     addBytesToStore(out, 9, 8, 7);
-    out.write(new byte[]{1, 2, 3, 4});
+    out.write(new byte[] {1, 2, 3, 4});
     assertStoreContains(out, 9, 8, 7, 1, 2, 3, 4);
   }
 
@@ -108,7 +108,7 @@ public class JimfsOutputStreamTest {
   public void testWrite_partialArray_appendMode() throws IOException {
     JimfsOutputStream out = newOutputStream(true);
     addBytesToStore(out, 9, 8, 7);
-    out.write(new byte[]{1, 2, 3, 4, 5, 6}, 1, 3);
+    out.write(new byte[] {1, 2, 3, 4, 5, 6}, 1, 3);
     assertStoreContains(out, 9, 8, 7, 2, 3, 4);
   }
 
@@ -126,7 +126,7 @@ public class JimfsOutputStreamTest {
   public void testWrite_wholeArray_overwriting() throws IOException {
     JimfsOutputStream out = newOutputStream(false);
     addBytesToStore(out, 9, 8, 7, 6, 5, 4, 3);
-    out.write(new byte[]{1, 2, 3, 4});
+    out.write(new byte[] {1, 2, 3, 4});
     assertStoreContains(out, 1, 2, 3, 4, 5, 4, 3);
   }
 
@@ -134,7 +134,7 @@ public class JimfsOutputStreamTest {
   public void testWrite_partialArray_overwriting() throws IOException {
     JimfsOutputStream out = newOutputStream(false);
     addBytesToStore(out, 9, 8, 7, 6, 5, 4, 3);
-    out.write(new byte[]{1, 2, 3, 4, 5, 6}, 1, 3);
+    out.write(new byte[] {1, 2, 3, 4, 5, 6}, 1, 3);
     assertStoreContains(out, 2, 3, 4, 6, 5, 4, 3);
   }
 
@@ -189,6 +189,7 @@ public class JimfsOutputStreamTest {
     return new JimfsOutputStream(file, append, new FileSystemState(Runnables.doNothing()));
   }
 
+  @SuppressWarnings("GuardedByChecker")
   private static void addBytesToStore(JimfsOutputStream out, int... bytes) throws IOException {
     RegularFile file = out.file;
     long pos = file.sizeWithoutLocking();
@@ -197,6 +198,7 @@ public class JimfsOutputStreamTest {
     }
   }
 
+  @SuppressWarnings("GuardedByChecker")
   private static void assertStoreContains(JimfsOutputStream out, int... bytes) {
     byte[] actualBytes = new byte[bytes.length];
     out.file.read(0, actualBytes, 0, actualBytes.length);

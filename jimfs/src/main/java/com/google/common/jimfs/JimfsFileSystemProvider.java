@@ -87,14 +87,16 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-    throw new UnsupportedOperationException("This method should not be called directly;"
-        + "use an overload of Jimfs.newFileSystem() to create a FileSystem.");
+    throw new UnsupportedOperationException(
+        "This method should not be called directly;"
+            + "use an overload of Jimfs.newFileSystem() to create a FileSystem.");
   }
 
   @Override
   public FileSystem getFileSystem(URI uri) {
-    throw new UnsupportedOperationException("This method should not be called directly; "
-        + "use FileSystems.getFileSystem(URI) instead.");
+    throw new UnsupportedOperationException(
+        "This method should not be called directly; "
+            + "use FileSystems.getFileSystem(URI) instead.");
   }
 
   @Override
@@ -117,8 +119,8 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public Path getPath(URI uri) {
-    throw new UnsupportedOperationException("This method should not be called directly; "
-        + "use Paths.get(URI) instead.");
+    throw new UnsupportedOperationException(
+        "This method should not be called directly; " + "use Paths.get(URI) instead.");
   }
 
   private static JimfsPath checkPath(Path path) {
@@ -154,7 +156,8 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   private JimfsFileChannel newJimfsFileChannel(
-      JimfsPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+      JimfsPath path, Set<? extends OpenOption> options, FileAttribute<?>... attrs)
+      throws IOException {
     ImmutableSet<OpenOption> opts = Options.getOptionsForChannel(options);
     FileSystemView view = getDefaultView(path);
     RegularFile file = view.getOrCreateRegularFile(path, opts, attrs);
@@ -173,8 +176,11 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public AsynchronousFileChannel newAsynchronousFileChannel(
-      Path path, Set<? extends OpenOption> options, @Nullable ExecutorService executor,
-      FileAttribute<?>... attrs) throws IOException {
+      Path path,
+      Set<? extends OpenOption> options,
+      @Nullable ExecutorService executor,
+      FileAttribute<?>... attrs)
+      throws IOException {
     // call newFileChannel and cast so that FileChannel support is checked there
     JimfsFileChannel channel = (JimfsFileChannel) newFileChannel(path, options, attrs);
     if (executor == null) {
@@ -205,8 +211,8 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public DirectoryStream<Path> newDirectoryStream(Path dir,
-      DirectoryStream.Filter<? super Path> filter) throws IOException {
+  public DirectoryStream<Path> newDirectoryStream(
+      Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
     JimfsPath checkedPath = checkPath(dir);
     return getDefaultView(checkedPath)
         .newDirectoryStream(checkedPath, filter, Options.FOLLOW_LINKS, checkedPath);
@@ -223,7 +229,8 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   public void createLink(Path link, Path existing) throws IOException {
     JimfsPath linkPath = checkPath(link);
     JimfsPath existingPath = checkPath(existing);
-    checkArgument(linkPath.getFileSystem().equals(existingPath.getFileSystem()),
+    checkArgument(
+        linkPath.getFileSystem().equals(existingPath.getFileSystem()),
         "link and existing paths must belong to the same file system instance");
     FileSystemView view = getDefaultView(linkPath);
     view.link(linkPath, getDefaultView(existingPath), existingPath);
@@ -234,7 +241,8 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
       throws IOException {
     JimfsPath linkPath = checkPath(link);
     JimfsPath targetPath = checkPath(target);
-    checkArgument(linkPath.getFileSystem().equals(targetPath.getFileSystem()),
+    checkArgument(
+        linkPath.getFileSystem().equals(targetPath.getFileSystem()),
         "link and target paths must belong to the same file system instance");
     FileSystemView view = getDefaultView(linkPath);
     view.createSymbolicLink(linkPath, targetPath, attrs);
@@ -263,8 +271,8 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     copy(source, target, Options.getMoveOptions(options), true);
   }
 
-  private void copy(Path source, Path target,
-      ImmutableSet<CopyOption> options, boolean move) throws IOException {
+  private void copy(Path source, Path target, ImmutableSet<CopyOption> options, boolean move)
+      throws IOException {
     JimfsPath sourcePath = checkPath(source);
     JimfsPath targetPath = checkPath(target);
 
@@ -303,10 +311,12 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     JimfsPath checkedPath = checkPath(path);
     FileSystemView view = getDefaultView(checkedPath);
     if (getFileStore(path).supportsFileAttributeView("dos")) {
-      return view.readAttributes(checkedPath, DosFileAttributes.class, Options.NOFOLLOW_LINKS)
+      return view
+          .readAttributes(checkedPath, DosFileAttributes.class, Options.NOFOLLOW_LINKS)
           .isHidden();
     }
-    return path.getNameCount() > 0 && path.getFileName().toString().startsWith(".");
+    return path.getNameCount() > 0
+        && path.getFileName().toString().startsWith(".");
   }
 
   @Override
@@ -322,16 +332,16 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
 
   @Nullable
   @Override
-  public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type,
-      LinkOption... options) {
+  public <V extends FileAttributeView> V getFileAttributeView(
+      Path path, Class<V> type, LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
     return getDefaultView(checkedPath)
         .getFileAttributeView(checkedPath, type, Options.getLinkOptions(options));
   }
 
   @Override
-  public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type,
-      LinkOption... options) throws IOException {
+  public <A extends BasicFileAttributes> A readAttributes(
+      Path path, Class<A> type, LinkOption... options) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     return getDefaultView(checkedPath)
         .readAttributes(checkedPath, type, Options.getLinkOptions(options));
@@ -353,4 +363,3 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
         .setAttribute(checkedPath, attribute, value, Options.getLinkOptions(options));
   }
 }
-

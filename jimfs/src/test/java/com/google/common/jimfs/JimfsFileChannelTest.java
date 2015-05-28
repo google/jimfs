@@ -62,7 +62,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-
 /**
  * Most of the behavior of {@link JimfsFileChannel} is handled by the {@link RegularFile}
  * implementations, so the thorough tests of that are in {@link RegularFileTest}. This mostly
@@ -73,9 +72,9 @@ import java.util.concurrent.Future;
 @RunWith(JUnit4.class)
 public class JimfsFileChannelTest {
 
-  private static FileChannel channel(RegularFile file, OpenOption... options)
-      throws IOException {
-    return new JimfsFileChannel(file,
+  private static FileChannel channel(RegularFile file, OpenOption... options) throws IOException {
+    return new JimfsFileChannel(
+        file,
         Options.getOptionsForChannel(ImmutableSet.copyOf(options)),
         new FileSystemState(Runnables.doNothing()));
   }
@@ -111,13 +110,13 @@ public class JimfsFileChannelTest {
     assertEquals(10, channel.position());
 
     buf.flip();
-    assertEquals(10, channel.read(new ByteBuffer[]{buf, buf2}));
+    assertEquals(10, channel.read(new ByteBuffer[] {buf, buf2}));
     assertEquals(20, channel.position());
 
     buf.flip();
     buf2.flip();
     file.write(20, new byte[10], 0, 10);
-    assertEquals(10, channel.read(new ByteBuffer[]{buf, buf2}, 0, 2));
+    assertEquals(10, channel.read(new ByteBuffer[] {buf, buf2}, 0, 2));
     assertEquals(30, channel.position());
 
     buf.flip();
@@ -141,12 +140,12 @@ public class JimfsFileChannelTest {
     assertEquals(10, channel.position());
 
     buf.flip();
-    assertEquals(20, channel.write(new ByteBuffer[]{buf, buf2}));
+    assertEquals(20, channel.write(new ByteBuffer[] {buf, buf2}));
     assertEquals(30, channel.position());
 
     buf.flip();
     buf2.flip();
-    assertEquals(20, channel.write(new ByteBuffer[]{buf, buf2}, 0, 2));
+    assertEquals(20, channel.write(new ByteBuffer[] {buf, buf2}, 0, 2));
     assertEquals(50, channel.position());
 
     buf.flip();
@@ -168,13 +167,13 @@ public class JimfsFileChannelTest {
 
     buf.flip();
     channel.position(0);
-    assertEquals(20, channel.write(new ByteBuffer[]{buf, buf2}));
+    assertEquals(20, channel.write(new ByteBuffer[] {buf, buf2}));
     assertEquals(30, channel.position());
 
     buf.flip();
     buf2.flip();
     channel.position(0);
-    assertEquals(20, channel.write(new ByteBuffer[]{buf, buf2}, 0, 2));
+    assertEquals(20, channel.write(new ByteBuffer[] {buf, buf2}, 0, 2));
     assertEquals(50, channel.position());
 
     buf.flip();
@@ -230,8 +229,11 @@ public class JimfsFileChannelTest {
   @Test
   public void testFileTimeUpdates() throws IOException {
     RegularFile file = regularFile(10);
-    FileChannel channel = new JimfsFileChannel(file, ImmutableSet.<OpenOption>of(READ, WRITE),
-        new FileSystemState(Runnables.doNothing()));
+    FileChannel channel =
+        new JimfsFileChannel(
+            file,
+            ImmutableSet.<OpenOption>of(READ, WRITE),
+            new FileSystemState(Runnables.doNothing()));
 
     // accessed
     long accessTime = file.getLastAccessTime();
@@ -249,13 +251,13 @@ public class JimfsFileChannelTest {
     accessTime = file.getLastAccessTime();
     Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
 
-    channel.read(new ByteBuffer[]{ByteBuffer.allocate(10)});
+    channel.read(new ByteBuffer[] {ByteBuffer.allocate(10)});
     assertNotEquals(accessTime, file.getLastAccessTime());
 
     accessTime = file.getLastAccessTime();
     Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
 
-    channel.read(new ByteBuffer[]{ByteBuffer.allocate(10)}, 0, 1);
+    channel.read(new ByteBuffer[] {ByteBuffer.allocate(10)}, 0, 1);
     assertNotEquals(accessTime, file.getLastAccessTime());
 
     accessTime = file.getLastAccessTime();
@@ -280,13 +282,13 @@ public class JimfsFileChannelTest {
     modifiedTime = file.getLastModifiedTime();
     Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
 
-    channel.write(new ByteBuffer[]{ByteBuffer.allocate(10)});
+    channel.write(new ByteBuffer[] {ByteBuffer.allocate(10)});
     assertNotEquals(modifiedTime, file.getLastModifiedTime());
 
     modifiedTime = file.getLastModifiedTime();
     Uninterruptibles.sleepUninterruptibly(2, MILLISECONDS);
 
-    channel.write(new ByteBuffer[]{ByteBuffer.allocate(10)}, 0, 1);
+    channel.write(new ByteBuffer[] {ByteBuffer.allocate(10)}, 0, 1);
     assertNotEquals(modifiedTime, file.getLastModifiedTime());
 
     modifiedTime = file.getLastModifiedTime();
@@ -365,13 +367,13 @@ public class JimfsFileChannelTest {
     }
 
     try {
-      channel.write(new ByteBuffer[]{buffer("111"), buffer("111")});
+      channel.write(new ByteBuffer[] {buffer("111"), buffer("111")});
       fail();
     } catch (ClosedChannelException expected) {
     }
 
     try {
-      channel.write(new ByteBuffer[]{buffer("111"), buffer("111")}, 0, 2);
+      channel.write(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2);
       fail();
     } catch (ClosedChannelException expected) {
     }
@@ -401,13 +403,13 @@ public class JimfsFileChannelTest {
     }
 
     try {
-      channel.read(new ByteBuffer[]{buffer("111"), buffer("111")});
+      channel.read(new ByteBuffer[] {buffer("111"), buffer("111")});
       fail();
     } catch (ClosedChannelException expected) {
     }
 
     try {
-      channel.read(new ByteBuffer[]{buffer("111"), buffer("111")}, 0, 2);
+      channel.read(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2);
       fail();
     } catch (ClosedChannelException expected) {
     }
@@ -438,13 +440,13 @@ public class JimfsFileChannelTest {
     }
 
     try {
-      channel.write(new ByteBuffer[]{buffer("111"), buffer("111")});
+      channel.write(new ByteBuffer[] {buffer("111"), buffer("111")});
       fail();
     } catch (NonWritableChannelException expected) {
     }
 
     try {
-      channel.write(new ByteBuffer[]{buffer("111"), buffer("111")}, 0, 2);
+      channel.write(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2);
       fail();
     } catch (NonWritableChannelException expected) {
     }
@@ -463,6 +465,7 @@ public class JimfsFileChannelTest {
 
     try {
       channel.lock(0, 10, false);
+      fail();
     } catch (NonWritableChannelException expected) {
     }
   }
@@ -484,13 +487,13 @@ public class JimfsFileChannelTest {
     }
 
     try {
-      channel.read(new ByteBuffer[]{buffer("111"), buffer("111")});
+      channel.read(new ByteBuffer[] {buffer("111"), buffer("111")});
       fail();
     } catch (NonReadableChannelException expected) {
     }
 
     try {
-      channel.read(new ByteBuffer[]{buffer("111"), buffer("111")}, 0, 2);
+      channel.read(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2);
       fail();
     } catch (NonReadableChannelException expected) {
     }
@@ -503,6 +506,7 @@ public class JimfsFileChannelTest {
 
     try {
       channel.lock(0, 10, true);
+      fail();
     } catch (NonReadableChannelException expected) {
     }
   }
@@ -717,18 +721,20 @@ public class JimfsFileChannelTest {
     // blocked on the lock that guards the position field and the specification that only one method
     // on the channel will be in progress at a time. That lock is not interruptible, so we must
     // interrupt this thread.
-    Thread thread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        threadStartLatch.countDown();
-        try {
-          channel.write(ByteBuffer.allocate(20));
-          interruptException.set(null);
-        } catch (Throwable e) {
-          interruptException.set(e);
-        }
-      }
-    });
+    Thread thread =
+        new Thread(
+            new Runnable() {
+              @Override
+              public void run() {
+                threadStartLatch.countDown();
+                try {
+                  channel.write(ByteBuffer.allocate(20));
+                  interruptException.set(null);
+                } catch (Throwable e) {
+                  interruptException.set(e);
+                }
+              }
+            });
     thread.start();
 
     // let the thread start running
@@ -780,95 +786,115 @@ public class JimfsFileChannelTest {
     List<Future<?>> futures = new ArrayList<>();
 
     final ByteBuffer buffer = ByteBuffer.allocate(10);
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.write(buffer);
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.write(buffer);
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.write(buffer, 0);
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.write(buffer, 0);
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.write(new ByteBuffer[] {buffer, buffer});
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.write(new ByteBuffer[] {buffer, buffer});
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.write(new ByteBuffer[] {buffer, buffer, buffer}, 0, 2);
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.write(new ByteBuffer[] {buffer, buffer, buffer}, 0, 2);
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.read(buffer);
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.read(buffer);
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.read(buffer, 0);
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.read(buffer, 0);
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.read(new ByteBuffer[] {buffer, buffer});
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.read(new ByteBuffer[] {buffer, buffer});
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.read(new ByteBuffer[] {buffer, buffer, buffer}, 0, 2);
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.read(new ByteBuffer[] {buffer, buffer, buffer}, 0, 2);
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.transferTo(0, 10, new ByteBufferChannel(buffer));
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.transferTo(0, 10, new ByteBufferChannel(buffer));
+                return null;
+              }
+            }));
 
-    futures.add(executor.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        startLatch.countDown();
-        channel.transferFrom(new ByteBufferChannel(buffer), 0, 10);
-        return null;
-      }
-    }));
+    futures.add(
+        executor.submit(
+            new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                startLatch.countDown();
+                channel.transferFrom(new ByteBufferChannel(buffer), 0, 10);
+                return null;
+              }
+            }));
 
     return futures;
   }
@@ -881,91 +907,119 @@ public class JimfsFileChannelTest {
   @Test
   public void testInterruptedThreads() throws IOException {
     final ByteBuffer buf = ByteBuffer.allocate(10);
-    final ByteBuffer[] bufArray = { buf };
+    final ByteBuffer[] bufArray = {buf};
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.size();
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.size();
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.position();
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.position();
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.position(0);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.position(0);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.write(buf);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.write(buf);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.write(bufArray, 0, 1);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.write(bufArray, 0, 1);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.read(buf);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.read(buf);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.read(bufArray, 0, 1);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.read(bufArray, 0, 1);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.write(buf, 0);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.write(buf, 0);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.read(buf, 0);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.read(buf, 0);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.transferTo(0, 1, channel(regularFile(10), READ, WRITE));
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.transferTo(0, 1, channel(regularFile(10), READ, WRITE));
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.transferFrom(channel(regularFile(10), READ, WRITE), 0, 1);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.transferFrom(channel(regularFile(10), READ, WRITE), 0, 1);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.force(true);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.force(true);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.truncate(0);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.truncate(0);
+          }
+        });
 
-    assertClosedByInterrupt(new FileChannelMethod() {
-      @Override public void call(FileChannel channel) throws IOException {
-        channel.lock(0, 1, true);
-      }
-    });
+    assertClosedByInterrupt(
+        new FileChannelMethod() {
+          @Override
+          public void call(FileChannel channel) throws IOException {
+            channel.lock(0, 1, true);
+          }
+        });
 
     // tryLock() does not handle interruption
     // map() always throws UOE; it doesn't make sense for it to try to handle interruption
@@ -985,8 +1039,9 @@ public class JimfsFileChannelTest {
     Thread.currentThread().interrupt();
     try {
       method.call(channel);
-      fail("expected the method to throw ClosedByInterruptException or "
-          + "FileLockInterruptionException");
+      fail(
+          "expected the method to throw ClosedByInterruptException or "
+              + "FileLockInterruptionException");
     } catch (ClosedByInterruptException | FileLockInterruptionException expected) {
       assertFalse("expected the channel to be closed", channel.isOpen());
       assertTrue("expected the thread to still be interrupted", Thread.interrupted());

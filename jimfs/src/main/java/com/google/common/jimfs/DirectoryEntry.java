@@ -42,11 +42,9 @@ final class DirectoryEntry {
   private final Directory directory;
   private final Name name;
 
-  @Nullable
-  private final File file;
+  @Nullable private final File file;
 
-  @Nullable
-  DirectoryEntry next; // for use in Directory
+  @Nullable DirectoryEntry next; // for use in Directory
 
   DirectoryEntry(Directory directory, Name name, @Nullable File file) {
     this.directory = checkNotNull(directory);
@@ -80,8 +78,8 @@ final class DirectoryEntry {
    * @return this
    * @throws FileAlreadyExistsException if this entry does not exist
    */
-  public DirectoryEntry requireDoesNotExist(
-      Path pathForException) throws FileAlreadyExistsException {
+  public DirectoryEntry requireDoesNotExist(Path pathForException)
+      throws FileAlreadyExistsException {
     if (exists()) {
       throw new FileAlreadyExistsException(pathForException.toString());
     }
@@ -95,8 +93,8 @@ final class DirectoryEntry {
    * @throws NoSuchFileException if this entry does not exist
    * @throws NotDirectoryException if this entry does not link to a directory
    */
-  public DirectoryEntry requireDirectory(
-      Path pathForException) throws NoSuchFileException, NotDirectoryException {
+  public DirectoryEntry requireDirectory(Path pathForException)
+      throws NoSuchFileException, NotDirectoryException {
     requireExists(pathForException);
     if (!file().isDirectory()) {
       throw new NotDirectoryException(pathForException.toString());
@@ -111,8 +109,8 @@ final class DirectoryEntry {
    * @throws NoSuchFileException if this entry does not exist
    * @throws NotLinkException if this entry does not link to a symbolic link
    */
-  public DirectoryEntry requireSymbolicLink(
-      Path pathForException) throws NoSuchFileException, NotLinkException {
+  public DirectoryEntry requireSymbolicLink(Path pathForException)
+      throws NoSuchFileException, NotLinkException {
     requireExists(pathForException);
     if (!file().isSymbolicLink()) {
       throw new NotLinkException(pathForException.toString());

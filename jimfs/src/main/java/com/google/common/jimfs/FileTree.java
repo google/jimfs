@@ -80,8 +80,8 @@ final class FileTree {
   /**
    * Returns the result of the file lookup for the given path.
    */
-  public DirectoryEntry lookUp(File workingDirectory,
-      JimfsPath path, Set<? super LinkOption> options) throws IOException {
+  public DirectoryEntry lookUp(
+      File workingDirectory, JimfsPath path, Set<? super LinkOption> options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
 
@@ -94,8 +94,8 @@ final class FileTree {
   }
 
   @Nullable
-  private DirectoryEntry lookUp(File dir,
-      JimfsPath path, Set<? super LinkOption> options, int linkDepth) throws IOException {
+  private DirectoryEntry lookUp(
+      File dir, JimfsPath path, Set<? super LinkOption> options, int linkDepth) throws IOException {
     ImmutableList<Name> names = path.names();
 
     if (path.isAbsolute()) {
@@ -125,8 +125,9 @@ final class FileTree {
    * lookup fails.
    */
   @Nullable
-  private DirectoryEntry lookUp(File dir, Iterable<Name> names,
-      Set<? super LinkOption> options, int linkDepth) throws IOException {
+  private DirectoryEntry lookUp(
+      File dir, Iterable<Name> names, Set<? super LinkOption> options, int linkDepth)
+      throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
@@ -163,8 +164,9 @@ final class FileTree {
    * Looks up the last element of a path.
    */
   @Nullable
-  private DirectoryEntry lookUpLast(@Nullable File dir,
-      Name name, Set<? super LinkOption> options, int linkDepth) throws IOException {
+  private DirectoryEntry lookUpLast(
+      @Nullable File dir, Name name, Set<? super LinkOption> options, int linkDepth)
+      throws IOException {
     Directory directory = toDirectory(dir);
     if (directory == null) {
       return null;
@@ -188,8 +190,8 @@ final class FileTree {
    * relative to the given directory.
    */
   @Nullable
-  private DirectoryEntry followSymbolicLink(
-      File dir, SymbolicLink link, int linkDepth) throws IOException {
+  private DirectoryEntry followSymbolicLink(File dir, SymbolicLink link, int linkDepth)
+      throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");
     }
@@ -226,6 +228,7 @@ final class FileTree {
 
   private static boolean isEmpty(ImmutableList<Name> names) {
     // the empty path (created by FileSystem.getPath("")), has no root and a single name, ""
-    return names.isEmpty() || names.size() == 1 && names.get(0).toString().isEmpty();
+    return names.isEmpty()
+        || names.size() == 1 && names.get(0).toString().isEmpty();
   }
 }

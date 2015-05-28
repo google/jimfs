@@ -55,13 +55,14 @@ final class PollingWatchService extends AbstractWatchService {
    * Thread factory for polling threads, which should be daemon threads so as not to keep the VM
    * running if the user doesn't close the watch service or the file system.
    */
-  private static final ThreadFactory THREAD_FACTORY = new ThreadFactoryBuilder()
-      .setNameFormat("com.google.common.jimfs.PollingWatchService-thread-%d")
-      .setDaemon(true)
-      .build();
+  private static final ThreadFactory THREAD_FACTORY =
+      new ThreadFactoryBuilder()
+          .setNameFormat("com.google.common.jimfs.PollingWatchService-thread-%d")
+          .setDaemon(true)
+          .build();
 
-  private final ScheduledExecutorService pollingService
-      = Executors.newSingleThreadScheduledExecutor(THREAD_FACTORY);
+  private final ScheduledExecutorService pollingService =
+      Executors.newSingleThreadScheduledExecutor(THREAD_FACTORY);
 
   /**
    * Map of keys to the most recent directory snapshot for each key.
@@ -85,8 +86,11 @@ final class PollingWatchService extends AbstractWatchService {
   // TODO(cgdecker): make user configurable somehow? meh
   @VisibleForTesting
   PollingWatchService(
-      FileSystemView view, PathService pathService, FileSystemState fileSystemState,
-      long pollingTime, TimeUnit timeUnit) {
+      FileSystemView view,
+      PathService pathService,
+      FileSystemState fileSystemState,
+      long pollingTime,
+      TimeUnit timeUnit) {
     this.view = checkNotNull(view);
     this.pathService = checkNotNull(pathService);
     this.fileSystemState = checkNotNull(fileSystemState);
@@ -99,8 +103,8 @@ final class PollingWatchService extends AbstractWatchService {
   }
 
   @Override
-  public Key register(Watchable watchable,
-      Iterable<? extends WatchEvent.Kind<?>> eventTypes) throws IOException {
+  public Key register(Watchable watchable, Iterable<? extends WatchEvent.Kind<?>> eventTypes)
+      throws IOException {
     JimfsPath path = checkWatchable(watchable);
 
     Key key = super.register(path, eventTypes);
@@ -123,8 +127,11 @@ final class PollingWatchService extends AbstractWatchService {
 
   private JimfsPath checkWatchable(Watchable watchable) {
     if (!(watchable instanceof JimfsPath) || !isSameFileSystem((Path) watchable)) {
-      throw new IllegalArgumentException("watchable (" + watchable + ") must be a Path "
-          + "associated with the same file system as this watch service");
+      throw new IllegalArgumentException(
+          "watchable ("
+              + watchable
+              + ") must be a Path "
+              + "associated with the same file system as this watch service");
     }
 
     return (JimfsPath) watchable;
@@ -164,8 +171,8 @@ final class PollingWatchService extends AbstractWatchService {
   }
 
   private void startPolling() {
-    pollingFuture = pollingService
-        .scheduleAtFixedRate(pollingTask, pollingTime, pollingTime, timeUnit);
+    pollingFuture =
+        pollingService.scheduleAtFixedRate(pollingTask, pollingTime, pollingTime, timeUnit);
   }
 
   private void stopPolling() {
@@ -173,31 +180,32 @@ final class PollingWatchService extends AbstractWatchService {
     pollingFuture = null;
   }
 
-  private final Runnable pollingTask = new Runnable() {
-    @Override
-    public void run() {
-      synchronized (PollingWatchService.this) {
-        for (Map.Entry<Key, Snapshot> entry : snapshots.entrySet()) {
-          Key key = entry.getKey();
-          Snapshot previousSnapshot = entry.getValue();
+  private final Runnable pollingTask =
+      new Runnable() {
+        @Override
+        public void run() {
+          synchronized (PollingWatchService.this) {
+            for (Map.Entry<Key, Snapshot> entry : snapshots.entrySet()) {
+              Key key = entry.getKey();
+              Snapshot previousSnapshot = entry.getValue();
 
-          JimfsPath path = (JimfsPath) key.watchable();
-          try {
-            Snapshot newSnapshot = takeSnapshot(path);
-            boolean posted = previousSnapshot.postChanges(newSnapshot, key);
-            entry.setValue(newSnapshot);
-            if (posted) {
-              key.signal();
+              JimfsPath path = (JimfsPath) key.watchable();
+              try {
+                Snapshot newSnapshot = takeSnapshot(path);
+                boolean posted = previousSnapshot.postChanges(newSnapshot, key);
+                entry.setValue(newSnapshot);
+                if (posted) {
+                  key.signal();
+                }
+              } catch (IOException e) {
+                // snapshot failed; assume file does not exist or isn't a directory
+                // and cancel the key
+                key.cancel();
+              }
             }
-          } catch (IOException e) {
-            // snapshot failed; assume file does not exist or isn't a directory and cancel the key
-            key.cancel();
           }
-
         }
-      }
-    }
-  };
+      };
 
   private Snapshot takeSnapshot(JimfsPath path) throws IOException {
     return new Snapshot(view.snapshotModifiedTimes(path));
@@ -225,9 +233,8 @@ final class PollingWatchService extends AbstractWatchService {
       boolean changesPosted = false;
 
       if (key.subscribesTo(ENTRY_CREATE)) {
-        Set<Name> created = Sets.difference(
-            newState.modifiedTimes.keySet(),
-            modifiedTimes.keySet());
+        Set<Name> created =
+            Sets.difference(newState.modifiedTimes.keySet(), modifiedTimes.keySet());
 
         for (Name name : created) {
           key.post(new Event<>(ENTRY_CREATE, 1, pathService.createFileName(name)));
@@ -236,9 +243,8 @@ final class PollingWatchService extends AbstractWatchService {
       }
 
       if (key.subscribesTo(ENTRY_DELETE)) {
-        Set<Name> deleted = Sets.difference(
-            modifiedTimes.keySet(),
-            newState.modifiedTimes.keySet());
+        Set<Name> deleted =
+            Sets.difference(modifiedTimes.keySet(), newState.modifiedTimes.keySet());
 
         for (Name name : deleted) {
           key.post(new Event<>(ENTRY_DELETE, 1, pathService.createFileName(name)));

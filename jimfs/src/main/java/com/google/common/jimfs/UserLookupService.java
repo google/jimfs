@@ -102,8 +102,8 @@ final class UserLookupService extends UserPrincipalLookupService {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof JimfsUserPrincipal &&
-          getName().equals(((JimfsUserPrincipal) obj).getName());
+      return obj instanceof JimfsUserPrincipal
+          && getName().equals(((JimfsUserPrincipal) obj).getName());
     }
   }
 
@@ -118,8 +118,7 @@ final class UserLookupService extends UserPrincipalLookupService {
 
     @Override
     public boolean equals(Object obj) {
-      return obj instanceof JimfsGroupPrincipal &&
-          ((JimfsGroupPrincipal) obj).name.equals(name);
+      return obj instanceof JimfsGroupPrincipal && ((JimfsGroupPrincipal) obj).name.equals(name);
     }
   }
 }

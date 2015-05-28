@@ -80,8 +80,7 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public void set(File file, String view, String attribute, Object value,
-      boolean create) {
+  public void set(File file, String view, String attribute, Object value, boolean create) {
     checkNotNull(value);
     checkNotCreate(view, attribute, create);
 
@@ -106,8 +105,8 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public UserDefinedFileAttributeView view(FileLookup lookup,
-      ImmutableMap<String, FileAttributeView> inheritedViews) {
+  public UserDefinedFileAttributeView view(
+      FileLookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup);
   }
 

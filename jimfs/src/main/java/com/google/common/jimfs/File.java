@@ -160,8 +160,7 @@ public abstract class File {
   /**
    * Called when this file has been unlinked from a directory, either for a move or delete.
    */
-  void unlinked() {
-  }
+  void unlinked() {}
 
   /**
    * Increments the link count for this file.

@@ -37,8 +37,8 @@ import java.util.Set;
  */
 @RunWith(JUnit4.class)
 @SuppressWarnings("OctalInteger")
-public class UnixAttributeProviderTest extends
-    AbstractAttributeProviderTest<UnixAttributeProvider> {
+public class UnixAttributeProviderTest
+    extends AbstractAttributeProviderTest<UnixAttributeProvider> {
 
   @Override
   protected UnixAttributeProvider createProvider() {
@@ -48,9 +48,7 @@ public class UnixAttributeProviderTest extends
   @Override
   protected Set<? extends AttributeProvider> createInheritedProviders() {
     return ImmutableSet.of(
-        new BasicAttributeProvider(),
-        new OwnerAttributeProvider(),
-        new PosixAttributeProvider());
+        new BasicAttributeProvider(), new OwnerAttributeProvider(), new PosixAttributeProvider());
   }
 
   @Test
@@ -58,8 +56,8 @@ public class UnixAttributeProviderTest extends
     // unix provider relies on other providers to set their initial attributes
     file.setAttribute("owner", "owner", createUserPrincipal("foo"));
     file.setAttribute("posix", "group", createGroupPrincipal("bar"));
-    file.setAttribute("posix", "permissions",
-        ImmutableSet.copyOf(PosixFilePermissions.fromString("rw-r--r--")));
+    file.setAttribute(
+        "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("rw-r--r--")));
 
     // these are pretty much meaningless here since they aren't properties this
     // file system actually has, so don't really care about the exact value of these
@@ -71,8 +69,7 @@ public class UnixAttributeProviderTest extends
 
     // these have logical origins in attributes from other views
     assertThat(provider.get(file, "mode")).isEqualTo(0644); // rw-r--r--
-    assertThat(provider.get(file, "ctime"))
-        .isEqualTo(FileTime.fromMillis(file.getCreationTime()));
+    assertThat(provider.get(file, "ctime")).isEqualTo(FileTime.fromMillis(file.getCreationTime()));
 
     // this is based on a property this file system does actually have
     assertThat(provider.get(file, "nlink")).isEqualTo(1);

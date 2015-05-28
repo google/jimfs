@@ -42,8 +42,8 @@ import java.util.Set;
  * @author Colin Decker
  */
 @RunWith(JUnit4.class)
-public class PosixAttributeProviderTest extends
-    AbstractAttributeProviderTest<PosixAttributeProvider> {
+public class PosixAttributeProviderTest
+    extends AbstractAttributeProviderTest<PosixAttributeProvider> {
 
   @Override
   protected PosixAttributeProvider createProvider() {
@@ -57,7 +57,8 @@ public class PosixAttributeProviderTest extends
 
   @Test
   public void testInitialAttributes() {
-    assertContainsAll(file,
+    assertContainsAll(
+        file,
         ImmutableMap.of(
             "group", createGroupPrincipal("group"),
             "permissions", PosixFilePermissions.fromString("rw-r--r--")));
@@ -83,10 +84,12 @@ public class PosixAttributeProviderTest extends
   public void testView() throws IOException {
     file.setAttribute("owner", "owner", createUserPrincipal("user"));
 
-    PosixFileAttributeView view = provider.view(fileLookup(),
-        ImmutableMap.of(
-            "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS),
-            "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
+    PosixFileAttributeView view =
+        provider.view(
+            fileLookup(),
+            ImmutableMap.of(
+                "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS),
+                "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
     assertThat(view.name()).isEqualTo("posix");
@@ -107,10 +110,10 @@ public class PosixAttributeProviderTest extends
     assertThat(file.getAttribute("posix", "group")).isEqualTo(createGroupPrincipal("root"));
 
     view.setPermissions(PosixFilePermissions.fromString("rwx------"));
-    assertThat(view.readAttributes().permissions()).isEqualTo(
-        PosixFilePermissions.fromString("rwx------"));
-    assertThat(file.getAttribute("posix", "permissions")).isEqualTo(
-        PosixFilePermissions.fromString("rwx------"));
+    assertThat(view.readAttributes().permissions())
+        .isEqualTo(PosixFilePermissions.fromString("rwx------"));
+    assertThat(file.getAttribute("posix", "permissions"))
+        .isEqualTo(PosixFilePermissions.fromString("rwx------"));
   }
 
   @Test

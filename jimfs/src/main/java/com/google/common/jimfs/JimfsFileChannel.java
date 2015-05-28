@@ -296,7 +296,7 @@ final class JimfsFileChannel extends FileChannel {
     synchronized (this) {
       boolean completed = false;
       try {
-        begin();  // don't call beginBlocking() because this method doesn't block
+        begin(); // don't call beginBlocking() because this method doesn't block
         if (!isOpen()) {
           return 0; // AsynchronousCloseException will be thrown
         }

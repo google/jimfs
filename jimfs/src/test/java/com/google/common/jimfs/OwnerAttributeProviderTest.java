@@ -35,8 +35,8 @@ import java.util.Set;
  * @author Colin Decker
  */
 @RunWith(JUnit4.class)
-public class OwnerAttributeProviderTest extends
-    AbstractAttributeProviderTest<OwnerAttributeProvider> {
+public class OwnerAttributeProviderTest
+    extends AbstractAttributeProviderTest<OwnerAttributeProvider> {
 
   @Override
   protected OwnerAttributeProvider createProvider() {

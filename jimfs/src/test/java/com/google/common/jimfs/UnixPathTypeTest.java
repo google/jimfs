@@ -62,8 +62,8 @@ public class UnixPathTypeTest {
     assertThat(fileUri.toString()).isEqualTo("jimfs://foo/foo/bar");
     assertThat(fileUri.getPath()).isEqualTo("/foo/bar");
 
-    URI directoryUri = PathType.unix()
-        .toUri(fileSystemUri, "/", ImmutableList.of("foo", "bar"), true);
+    URI directoryUri =
+        PathType.unix().toUri(fileSystemUri, "/", ImmutableList.of("foo", "bar"), true);
     assertThat(directoryUri.toString()).isEqualTo("jimfs://foo/foo/bar/");
     assertThat(directoryUri.getPath()).isEqualTo("/foo/bar/");
 

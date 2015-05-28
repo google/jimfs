@@ -49,8 +49,7 @@ final class WindowsPathType extends PathType {
   //   root directory and then determine the working directory from there. The file system would
   //   still have one working directory; for the root that working directory is under, it is the
   //   working directory. For every other root, the root itself is the working directory.
-  private static final Pattern WORKING_DIR_WITH_DRIVE = Pattern.compile(
-      "^[a-zA-Z]:([^\\\\].*)?$");
+  private static final Pattern WORKING_DIR_WITH_DRIVE = Pattern.compile("^[a-zA-Z]:([^\\\\].*)?$");
 
   /**
    * Pattern for matching trailing spaces in file names.
@@ -67,16 +66,20 @@ final class WindowsPathType extends PathType {
     path = path.replace('/', '\\');
 
     if (WORKING_DIR_WITH_DRIVE.matcher(path).matches()) {
-      throw new InvalidPathException(original, "Jimfs does not currently support the Windows "
-          + "syntax for a relative path on a specific drive (e.g. \"C:foo\\bar\"");
+      throw new InvalidPathException(
+          original,
+          "Jimfs does not currently support the Windows syntax for a relative path "
+              + "on a specific drive (e.g. \"C:foo\\bar\"");
     }
 
     String root;
     if (path.startsWith("\\\\")) {
       root = parseUncRoot(path, original);
     } else if (path.startsWith("\\")) {
-      throw new InvalidPathException(original, "Jimfs does not currently support the Windows "
-          + "syntax for an absolute path on the current drive (e.g. \"\\foo\\bar\"");
+      throw new InvalidPathException(
+          original,
+          "Jimfs does not currently support the Windows syntax for an absolute path "
+              + "on the current drive (e.g. \"\\foo\\bar\"");
     } else {
       root = parseDriveRoot(path);
     }
@@ -109,8 +112,7 @@ final class WindowsPathType extends PathType {
   /**
    * Pattern for matching UNC \\host\share root syntax.
    */
-  private static final Pattern UNC_ROOT = Pattern.compile(
-      "^(\\\\\\\\)([^\\\\]+)?(\\\\[^\\\\]+)?");
+  private static final Pattern UNC_ROOT = Pattern.compile("^(\\\\\\\\)([^\\\\]+)?(\\\\[^\\\\]+)?");
 
   /**
    * Parse the root of a UNC-style path, throwing an exception if the path does not start with

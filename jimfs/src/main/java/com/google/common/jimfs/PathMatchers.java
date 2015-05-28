@@ -50,8 +50,8 @@ final class PathMatchers {
   public static PathMatcher getPathMatcher(
       String syntaxAndPattern, String separators, ImmutableSet<PathNormalization> normalizations) {
     int syntaxSeparator = syntaxAndPattern.indexOf(':');
-    checkArgument(syntaxSeparator > 0, "Must be of the form 'syntax:pattern': %s",
-        syntaxAndPattern);
+    checkArgument(
+        syntaxSeparator > 0, "Must be of the form 'syntax:pattern': %s", syntaxAndPattern);
 
     String syntax = Ascii.toLowerCase(syntaxAndPattern.substring(0, syntaxSeparator));
     String pattern = syntaxAndPattern.substring(syntaxSeparator + 1);

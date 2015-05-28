@@ -17,8 +17,8 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.PathSubject.paths;
+import static com.google.common.truth.Truth.assertAbout;
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assert_;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -38,7 +38,7 @@ import java.nio.file.FileSystem;
  */
 @RunWith(JUnit4.class)
 public class PathServiceTest {
-  
+
   private static final ImmutableSet<PathNormalization> NO_NORMALIZATIONS = ImmutableSet.of();
 
   private final PathService service = fakeUnixPathService();
@@ -51,54 +51,54 @@ public class PathServiceTest {
 
   @Test
   public void testPathCreation() {
-    assert_().about(paths()).that(service.emptyPath())
-        .hasRootComponent(null).and()
-        .hasNameComponents("");
+    assertAbout(paths()).that(service.emptyPath())
+        .hasRootComponent(null)
+        .and().hasNameComponents("");
 
-    assert_().about(paths()).that(service.createRoot(service.name("/")))
-        .isAbsolute().and()
-        .hasRootComponent("/").and()
-        .hasNoNameComponents();
+    assertAbout(paths()).that(service.createRoot(service.name("/")))
+        .isAbsolute()
+        .and().hasRootComponent("/")
+        .and().hasNoNameComponents();
 
-    assert_().about(paths()).that(service.createFileName(service.name("foo")))
-        .hasRootComponent(null).and()
-        .hasNameComponents("foo");
+    assertAbout(paths()).that(service.createFileName(service.name("foo")))
+        .hasRootComponent(null)
+        .and().hasNameComponents("foo");
 
     JimfsPath relative = service.createRelativePath(service.names(ImmutableList.of("foo", "bar")));
-    assert_().about(paths()).that(relative)
-        .hasRootComponent(null).and()
-        .hasNameComponents("foo", "bar");
+    assertAbout(paths()).that(relative)
+        .hasRootComponent(null)
+        .and().hasNameComponents("foo", "bar");
 
-    JimfsPath absolute = service.createPath(
-        service.name("/"), service.names(ImmutableList.of("foo", "bar")));
-    assert_().about(paths()).that(absolute)
-        .isAbsolute().and()
-        .hasRootComponent("/").and()
-        .hasNameComponents("foo", "bar");
+    JimfsPath absolute =
+        service.createPath(service.name("/"), service.names(ImmutableList.of("foo", "bar")));
+    assertAbout(paths()).that(absolute)
+        .isAbsolute()
+        .and().hasRootComponent("/")
+        .and().hasNameComponents("foo", "bar");
   }
 
   @Test
   public void testPathCreation_emptyPath() {
     // normalized to empty path with single empty string name
-    assert_().about(paths()).that(service.createPath(null, ImmutableList.<Name>of()))
-        .hasRootComponent(null).and()
-        .hasNameComponents("");
+    assertAbout(paths()).that(service.createPath(null, ImmutableList.<Name>of()))
+        .hasRootComponent(null)
+        .and().hasNameComponents("");
   }
 
   @Test
   public void testPathCreation_parseIgnoresEmptyString() {
     // if the empty string wasn't ignored, the resulting path would be "/foo" since the empty
     // string would be joined with foo
-    assert_().about(paths()).that(service.parsePath("", "foo"))
-        .hasRootComponent(null).and()
-        .hasNameComponents("foo");
+    assertAbout(paths()).that(service.parsePath("", "foo"))
+        .hasRootComponent(null)
+        .and().hasNameComponents("foo");
   }
 
   @Test
   public void testToString() {
     // not much to test for this since it just delegates to PathType anyway
-    JimfsPath path = new JimfsPath(
-        service, null, ImmutableList.of(Name.simple("foo"), Name.simple("bar")));
+    JimfsPath path =
+        new JimfsPath(service, null, ImmutableList.of(Name.simple("foo"), Name.simple("bar")));
     assertThat(service.toString(path)).isEqualTo("foo/bar");
 
     path = new JimfsPath(service, Name.simple("/"), ImmutableList.of(Name.simple("foo")));
@@ -109,12 +109,11 @@ public class PathServiceTest {
   public void testHash_usingDisplayForm() {
     PathService pathService = fakePathService(PathType.unix(), false);
 
-    JimfsPath path1 = new JimfsPath(pathService, null,
-        ImmutableList.of(Name.create("FOO", "foo")));
-    JimfsPath path2 = new JimfsPath(pathService, null,
-        ImmutableList.of(Name.create("FOO", "FOO")));
-    JimfsPath path3 = new JimfsPath(pathService, null,
-        ImmutableList.of(Name.create("FOO", "9874238974897189741")));
+    JimfsPath path1 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("FOO", "foo")));
+    JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("FOO", "FOO")));
+    JimfsPath path3 =
+        new JimfsPath(
+            pathService, null, ImmutableList.of(Name.create("FOO", "9874238974897189741")));
 
     assertThat(pathService.hash(path1)).isEqualTo(pathService.hash(path2));
     assertThat(pathService.hash(path2)).isEqualTo(pathService.hash(path3));
@@ -124,12 +123,11 @@ public class PathServiceTest {
   public void testHash_usingCanonicalForm() {
     PathService pathService = fakePathService(PathType.unix(), true);
 
-    JimfsPath path1 = new JimfsPath(pathService, null,
-        ImmutableList.of(Name.create("foo", "foo")));
-    JimfsPath path2 = new JimfsPath(pathService, null,
-        ImmutableList.of(Name.create("FOO", "foo")));
-    JimfsPath path3 = new JimfsPath(pathService, null,
-        ImmutableList.of(Name.create("28937497189478912374897", "foo")));
+    JimfsPath path1 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("foo", "foo")));
+    JimfsPath path2 = new JimfsPath(pathService, null, ImmutableList.of(Name.create("FOO", "foo")));
+    JimfsPath path3 =
+        new JimfsPath(
+            pathService, null, ImmutableList.of(Name.create("28937497189478912374897", "foo")));
 
     assertThat(pathService.hash(path1)).isEqualTo(pathService.hash(path2));
     assertThat(pathService.hash(path2)).isEqualTo(pathService.hash(path3));
@@ -176,8 +174,8 @@ public class PathServiceTest {
   }
 
   public static PathService fakePathService(PathType type, boolean equalityUsesCanonicalForm) {
-    PathService service = new PathService(
-        type, NO_NORMALIZATIONS, NO_NORMALIZATIONS, equalityUsesCanonicalForm);
+    PathService service =
+        new PathService(type, NO_NORMALIZATIONS, NO_NORMALIZATIONS, equalityUsesCanonicalForm);
     service.setFileSystem(FILE_SYSTEM);
     return service;
   }
@@ -186,8 +184,9 @@ public class PathServiceTest {
 
   static {
     try {
-      FILE_SYSTEM = JimfsFileSystems.newFileSystem(
-          new JimfsFileSystemProvider(), URI.create("jimfs://foo"), Configuration.unix());
+      FILE_SYSTEM =
+          JimfsFileSystems.newFileSystem(
+              new JimfsFileSystemProvider(), URI.create("jimfs://foo"), Configuration.unix());
     } catch (IOException e) {
       throw new AssertionError(e);
     }

@@ -91,8 +91,7 @@ abstract class AbstractWatchService implements WatchService {
   /**
    * Called when the given key is cancelled. Does nothing by default.
    */
-  public void cancelled(Key key) {
-  }
+  public void cancelled(Key key) {}
 
   @VisibleForTesting
   ImmutableList<WatchKey> queuedKeys() {
@@ -157,8 +156,7 @@ abstract class AbstractWatchService implements WatchService {
     private final Kind<T> kind;
     private final int count;
 
-    @Nullable
-    private final T context;
+    @Nullable private final T context;
 
     public Event(Kind<T> kind, int count, @Nullable T context) {
       this.kind = checkNotNull(kind);
@@ -214,8 +212,7 @@ abstract class AbstractWatchService implements WatchService {
    */
   static final class Key implements WatchKey {
 
-    @VisibleForTesting
-    static final int MAX_QUEUE_SIZE = 256;
+    @VisibleForTesting static final int MAX_QUEUE_SIZE = 256;
 
     private static WatchEvent<Object> overflowEvent(int count) {
       return new Event<>(OVERFLOW, count, null);
@@ -231,7 +228,9 @@ abstract class AbstractWatchService implements WatchService {
 
     private final BlockingQueue<WatchEvent<?>> events = new ArrayBlockingQueue<>(MAX_QUEUE_SIZE);
 
-    public Key(AbstractWatchService watcher, @Nullable Watchable watchable,
+    public Key(
+        AbstractWatchService watcher,
+        @Nullable Watchable watchable,
         Iterable<? extends WatchEvent.Kind<?>> subscribedTypes) {
       this.watcher = checkNotNull(watcher);
       this.watchable = watchable; // nullable for Watcher poison

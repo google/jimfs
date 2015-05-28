@@ -49,11 +49,12 @@ final class JimfsFileSystems {
     }
     return null;
   }
-  
-  private static final Runnable DO_NOTHING = new Runnable() {
-    @Override
-    public void run() {}
-  };
+
+  private static final Runnable DO_NOTHING =
+      new Runnable() {
+        @Override
+        public void run() {}
+      };
 
   /**
    * Returns a {@code Runnable} that will remove the file system with the given {@code URI} from
@@ -69,8 +70,8 @@ final class JimfsFileSystems {
     // method reflectively since the system-loaded instance of it may be a different class
     // than the one we'd get if we tried to cast it and call it like normal here.
     try {
-      Method method = systemJimfsProvider.getClass()
-          .getDeclaredMethod("removeFileSystemRunnable", URI.class);
+      Method method =
+          systemJimfsProvider.getClass().getDeclaredMethod("removeFileSystemRunnable", URI.class);
       return (Runnable) method.invoke(systemJimfsProvider, uri);
     } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(
@@ -90,8 +91,8 @@ final class JimfsFileSystems {
     JimfsFileStore fileStore = createFileStore(config, pathService, state);
     FileSystemView defaultView = createDefaultView(config, fileStore, pathService);
 
-    JimfsFileSystem fileSystem = new JimfsFileSystem(
-        provider, uri, fileStore, pathService, defaultView);
+    JimfsFileSystem fileSystem =
+        new JimfsFileSystem(provider, uri, fileStore, pathService, defaultView);
 
     pathService.setFileSystem(fileSystem);
     return fileSystem;
@@ -131,8 +132,8 @@ final class JimfsFileSystems {
   /**
    * Creates the default view of the file system using the given working directory.
    */
-  private static FileSystemView createDefaultView(Configuration config,
-      JimfsFileStore fileStore, PathService pathService) throws IOException {
+  private static FileSystemView createDefaultView(
+      Configuration config, JimfsFileStore fileStore, PathService pathService) throws IOException {
     JimfsPath workingDirPath = pathService.parsePath(config.workingDirectory);
 
     Directory dir = fileStore.getRoot(workingDirPath.root());

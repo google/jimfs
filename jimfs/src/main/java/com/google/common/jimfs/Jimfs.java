@@ -147,14 +147,14 @@ public final class Jimfs {
 
   @VisibleForTesting
   static FileSystem newFileSystem(URI uri, Configuration config) {
-    checkArgument(URI_SCHEME.equals(uri.getScheme()),
-        "uri (%s) must have scheme %s", uri, URI_SCHEME);
+    checkArgument(
+        URI_SCHEME.equals(uri.getScheme()), "uri (%s) must have scheme %s", uri, URI_SCHEME);
 
     try {
       // Create the FileSystem. It uses JimfsFileSystemProvider as its provider, as that is
       // the provider that actually implements the operations needed for Files methods to work.
-      JimfsFileSystem fileSystem = JimfsFileSystems.newFileSystem(
-          JimfsFileSystemProvider.instance(), uri, config);
+      JimfsFileSystem fileSystem =
+          JimfsFileSystems.newFileSystem(JimfsFileSystemProvider.instance(), uri, config);
 
       // Now, call FileSystems.newFileSystem, passing it the FileSystem we just created. This
       // allows the system-loaded SystemJimfsFileSystemProvider instance to cache the FileSystem

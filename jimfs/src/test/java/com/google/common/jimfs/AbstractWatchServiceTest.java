@@ -82,8 +82,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testPostEvent() throws IOException {
-    AbstractWatchService.Key key = watcher.register(
-        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key =
+        watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
 
     AbstractWatchService.Event<Path> event =
         new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
@@ -105,8 +105,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testKeyStates() throws IOException {
-    AbstractWatchService.Key key = watcher.register(
-        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key =
+        watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
 
     AbstractWatchService.Event<Path> event =
         new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null);
@@ -144,8 +144,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testKeyRequeuedOnResetIfEventsArePending() throws IOException {
-    AbstractWatchService.Key key = watcher.register(
-        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key =
+        watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
     key.signal();
 
@@ -164,8 +164,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testOverflow() throws IOException {
-    AbstractWatchService.Key key = watcher.register(
-        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key =
+        watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     for (int i = 0; i < AbstractWatchService.Key.MAX_QUEUE_SIZE + 10; i++) {
       key.post(new AbstractWatchService.Event<>(ENTRY_CREATE, 1, null));
     }
@@ -185,8 +185,8 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testResetAfterCancelReturnsFalse() throws IOException {
-    AbstractWatchService.Key key = watcher.register(
-        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key =
+        watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
     key.signal();
     key.cancel();
     assertThat(key.reset()).isFalse();
@@ -194,10 +194,10 @@ public class AbstractWatchServiceTest {
 
   @Test
   public void testClosedWatcher() throws IOException, InterruptedException {
-    AbstractWatchService.Key key1 = watcher.register(
-        new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
-    AbstractWatchService.Key key2 = watcher.register(
-        new StubWatchable(), ImmutableSet.of(ENTRY_MODIFY));
+    AbstractWatchService.Key key1 =
+        watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_CREATE));
+    AbstractWatchService.Key key2 =
+        watcher.register(new StubWatchable(), ImmutableSet.of(ENTRY_MODIFY));
 
     assertThat(key1.isValid()).isTrue();
     assertThat(key2.isValid()).isTrue();
@@ -212,22 +212,26 @@ public class AbstractWatchServiceTest {
     try {
       watcher.poll();
       fail();
-    } catch (ClosedWatchServiceException expected) {}
+    } catch (ClosedWatchServiceException expected) {
+    }
 
     try {
       watcher.poll(10, SECONDS);
       fail();
-    } catch (ClosedWatchServiceException expected) {}
+    } catch (ClosedWatchServiceException expected) {
+    }
 
     try {
       watcher.take();
       fail();
-    } catch (ClosedWatchServiceException expected) {}
+    } catch (ClosedWatchServiceException expected) {
+    }
 
     try {
       watcher.register(new StubWatchable(), ImmutableList.<WatchEvent.Kind<?>>of());
       fail();
-    } catch (ClosedWatchServiceException expected) {}
+    } catch (ClosedWatchServiceException expected) {
+    }
   }
 
   // TODO(cgdecker): Test concurrent use of Watcher
@@ -238,8 +242,9 @@ public class AbstractWatchServiceTest {
   private static final class StubWatchable implements Watchable {
 
     @Override
-    public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events,
-        WatchEvent.Modifier... modifiers) throws IOException {
+    public WatchKey register(
+        WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
+        throws IOException {
       return register(watcher, events);
     }
 

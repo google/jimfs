@@ -60,8 +60,12 @@ public class PollingWatchServiceTest {
   @Before
   public void setUp() {
     fs = (JimfsFileSystem) Jimfs.newFileSystem(Configuration.unix());
-    watcher = new PollingWatchService(fs.getDefaultView(),
-        fs.getPathService(), new FileSystemState(Runnables.doNothing()), 4, MILLISECONDS);
+    watcher =
+        new PollingWatchService(
+            fs.getDefaultView(),
+            fs.getPathService(),
+            new FileSystemState(Runnables.doNothing()),
+            4, MILLISECONDS);
   }
 
   @After
@@ -215,8 +219,8 @@ public class PollingWatchServiceTest {
     assertWatcherHasEvents(Arrays.asList(events), ImmutableList.<WatchEvent<?>>of());
   }
 
-  private void assertWatcherHasEvents(
-      List<WatchEvent<?>> expected, List<WatchEvent<?>> alternate) throws InterruptedException {
+  private void assertWatcherHasEvents(List<WatchEvent<?>> expected, List<WatchEvent<?>> alternate)
+      throws InterruptedException {
     ensureTimeToPoll(); // otherwise we could read 1 event but not all the events we're expecting
     WatchKey key = watcher.take();
     List<WatchEvent<?>> keyEvents = key.pollEvents();

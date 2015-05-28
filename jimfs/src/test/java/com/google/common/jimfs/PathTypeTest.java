@@ -97,8 +97,7 @@ public class PathTypeTest {
     assertUriRoundTripsCorrectly(type, "$foo/bar baz");
   }
 
-  static void assertParseResult(
-      ParseResult result, @Nullable String root, String... names) {
+  static void assertParseResult(ParseResult result, @Nullable String root, String... names) {
     assertThat(result.root()).isEqualTo(root);
     assertThat(result.names()).containsExactly((Object[]) names).inOrder();
   }

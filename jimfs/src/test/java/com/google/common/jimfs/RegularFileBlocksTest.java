@@ -140,7 +140,7 @@ public class RegularFileBlocksTest {
     assertThat(file.blockCount()).isEqualTo(1);
     assertThat(other.blockCount()).isEqualTo(2);
     assertThat(other.getBlock(2)).isNull();
-    assertThat(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[]{1, 2, 3}));
+    assertThat(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1, 2, 3}));
     assertThat(file.getBlock(1)).isNull();
   }
 }

@@ -47,17 +47,18 @@ public class AttributeServiceTest {
 
   @Before
   public void setUp() {
-    ImmutableSet<AttributeProvider> providers = ImmutableSet.of(
-        StandardAttributeProviders.get("basic"),
-        StandardAttributeProviders.get("owner"),
-        new TestAttributeProvider());
+    ImmutableSet<AttributeProvider> providers =
+        ImmutableSet.of(
+            StandardAttributeProviders.get("basic"),
+            StandardAttributeProviders.get("owner"),
+            new TestAttributeProvider());
     service = new AttributeService(providers, ImmutableMap.<String, Object>of());
   }
 
   @Test
   public void testSupportedFileAttributeViews() {
-    assertThat(service.supportedFileAttributeViews()).isEqualTo(
-        ImmutableSet.of("basic", "test", "owner"));
+    assertThat(service.supportedFileAttributeViews())
+        .isEqualTo(ImmutableSet.of("basic", "test", "owner"));
   }
 
   @Test
@@ -132,8 +133,8 @@ public class AttributeServiceTest {
     File file = Directory.create(0);
     service.setAttribute(file, "test:lastModifiedTime", FileTime.fromMillis(0), false);
     assertThat(file.getAttribute("test", "lastModifiedTime")).isNull();
-    assertThat(service.getAttribute(file, "basic:lastModifiedTime")).isEqualTo(
-        FileTime.fromMillis(0));
+    assertThat(service.getAttribute(file, "basic:lastModifiedTime"))
+        .isEqualTo(FileTime.fromMillis(0));
   }
 
   @Test
@@ -235,20 +236,19 @@ public class AttributeServiceTest {
     final File file = Directory.create(0);
     service.setInitialAttributes(file);
 
-    FileLookup fileLookup = new FileLookup() {
-      @Override
-      public File lookup() throws IOException {
-        return file;
-      }
-    };
+    FileLookup fileLookup =
+        new FileLookup() {
+          @Override
+          public File lookup() throws IOException {
+            return file;
+          }
+        };
 
-    assertThat(service.getFileAttributeView(fileLookup, TestAttributeView.class))
-        .isNotNull();
-    assertThat(service.getFileAttributeView(fileLookup, BasicFileAttributeView.class))
-        .isNotNull();
+    assertThat(service.getFileAttributeView(fileLookup, TestAttributeView.class)).isNotNull();
+    assertThat(service.getFileAttributeView(fileLookup, BasicFileAttributeView.class)).isNotNull();
 
-    TestAttributes attrs
-        = service.getFileAttributeView(fileLookup, TestAttributeView.class).readAttributes();
+    TestAttributes attrs =
+        service.getFileAttributeView(fileLookup, TestAttributeView.class).readAttributes();
     assertThat(attrs.foo()).isEqualTo("hello");
     assertThat(attrs.bar()).isEqualTo(0);
     assertThat(attrs.baz()).isEqualTo(1);
@@ -257,14 +257,14 @@ public class AttributeServiceTest {
   @Test
   public void testGetFileAttributeView_isNullForUnsupportedView() {
     final File file = Directory.create(0);
-    FileLookup fileLookup = new FileLookup() {
-      @Override
-      public File lookup() throws IOException {
-        return file;
-      }
-    };
-    assertThat(service.getFileAttributeView(fileLookup, PosixFileAttributeView.class))
-        .isNull();
+    FileLookup fileLookup =
+        new FileLookup() {
+          @Override
+          public File lookup() throws IOException {
+            return file;
+          }
+        };
+    assertThat(service.getFileAttributeView(fileLookup, PosixFileAttributeView.class)).isNull();
   }
 
   @Test
@@ -273,44 +273,47 @@ public class AttributeServiceTest {
     service.setInitialAttributes(file);
 
     ImmutableMap<String, Object> map = service.readAttributes(file, "test:foo,bar,baz");
-    assertThat(map).isEqualTo(
-        ImmutableMap.of(
-            "foo", "hello",
-            "bar", 0L,
-            "baz", 1));
+    assertThat(map)
+        .isEqualTo(
+            ImmutableMap.of(
+                "foo", "hello",
+                "bar", 0L,
+                "baz", 1));
 
     FileTime time = (FileTime) service.getAttribute(file, "basic:creationTime");
 
     map = service.readAttributes(file, "test:*");
-    assertThat(map).isEqualTo(
-        ImmutableMap.<String, Object>builder()
-            .put("foo", "hello")
-            .put("bar", 0L)
-            .put("baz", 1)
-            .put("fileKey", 0)
-            .put("isDirectory", true)
-            .put("isRegularFile", false)
-            .put("isSymbolicLink", false)
-            .put("isOther", false)
-            .put("size", 0L)
-            .put("lastModifiedTime", time)
-            .put("lastAccessTime", time)
-            .put("creationTime", time)
-            .build());
+    assertThat(map)
+        .isEqualTo(
+            ImmutableMap.<String, Object>builder()
+                .put("foo", "hello")
+                .put("bar", 0L)
+                .put("baz", 1)
+                .put("fileKey", 0)
+                .put("isDirectory", true)
+                .put("isRegularFile", false)
+                .put("isSymbolicLink", false)
+                .put("isOther", false)
+                .put("size", 0L)
+                .put("lastModifiedTime", time)
+                .put("lastAccessTime", time)
+                .put("creationTime", time)
+                .build());
 
     map = service.readAttributes(file, "basic:*");
-    assertThat(map).isEqualTo(
-        ImmutableMap.<String, Object>builder()
-            .put("fileKey", 0)
-            .put("isDirectory", true)
-            .put("isRegularFile", false)
-            .put("isSymbolicLink", false)
-            .put("isOther", false)
-            .put("size", 0L)
-            .put("lastModifiedTime", time)
-            .put("lastAccessTime", time)
-            .put("creationTime", time)
-            .build());
+    assertThat(map)
+        .isEqualTo(
+            ImmutableMap.<String, Object>builder()
+                .put("fileKey", 0)
+                .put("isDirectory", true)
+                .put("isRegularFile", false)
+                .put("isSymbolicLink", false)
+                .put("isOther", false)
+                .put("size", 0L)
+                .put("lastModifiedTime", time)
+                .put("lastAccessTime", time)
+                .put("creationTime", time)
+                .build());
   }
 
   @Test
