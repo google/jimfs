@@ -238,13 +238,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         .and().hasNameComponents("bar");
 
     try {
-      path("/foo/bar").relativize(path("bar"));
+      Path unused = path("/foo/bar").relativize(path("bar"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      path("bar").relativize(path("/foo/bar"));
+      Path unused = path("bar").relativize(path("/foo/bar"));
       fail();
     } catch (IllegalArgumentException expected) {
     }

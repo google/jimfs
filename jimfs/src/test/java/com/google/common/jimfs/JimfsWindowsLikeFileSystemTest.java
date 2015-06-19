@@ -158,13 +158,13 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
         .and().hasNameComponents("bar");
 
     try {
-      path("C:\\foo\\bar").relativize(path("bar"));
+      Path unused = path("C:\\foo\\bar").relativize(path("bar"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      path("bar").relativize(path("C:\\foo\\bar"));
+      Path unused = path("bar").relativize(path("C:\\foo\\bar"));
       fail();
     } catch (IllegalArgumentException expected) {
     }

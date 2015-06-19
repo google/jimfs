@@ -204,7 +204,7 @@ public class JimfsFileSystemCloseTest {
     }
 
     try {
-      p.toRealPath();
+      p = p.toRealPath();
       fail();
     } catch (ClosedFileSystemException expected) {
     }
