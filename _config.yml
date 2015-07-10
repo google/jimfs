@@ -1,0 +1,37 @@
+# Main site settings
+title: Jimfs
+subtitle: An in-memory file system for Java 7+
+description: An in-memory file system for Java 7+
+baseurl: /jimfs
+url: http://google.github.io
+permalink: /news/:year/:month/:day/:title/
+
+exclude:
+- "Gemfile*"
+- "README.md"
+- "*.sh"
+
+# GitHub-flavored Markdown support
+markdown: kramdown
+kramdown:
+  input: GFM
+
+# Set by default by GitHub pages (can't be changed)
+safe: true
+lsi: false
+# source: <top level directory>
+
+# Set by default by GitHub pages (can be changed)
+# highlighter: pygments
+# github: <repository metadata> (https://help.github.com/articles/repository-metadata-on-github-pages/)
+
+# Collections
+collections:
+ releases:
+   output: true
+   permalink: /:collection/:path/
+
+# Release data
+# Do not change! updaterelease.sh automatically updates these fields
+latest_release: 1.0
+latest_snapshot: 1.1-SNAPSHOT
