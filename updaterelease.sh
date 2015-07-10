@@ -163,11 +163,17 @@ else
 
   # Change changes.html to index.html, making the url for a diff just _releases/<release>/api/diffs/
   mv $tempdir/diffs/changes.html $tempdir/diffs/index.html
-  # Change references to ../changes.html in the changes/ subdirectory  to reference the new URL (just ..)
-  find $tempdir/diffs/changes -name *.html -exec sed -i'.bak' -e 's#\.\./changes.html#..#g' {} ";"
-  # Just create backup files and then delete them... doesn't seem to be any good way to avoid this if
-  # you want this to work with either GNU or BSD sed.
-  rm $tempdir/diffs/changes/*.bak
+
+  if [ -d "$tempdir/diffs/changes" ]; then
+    # Change references to ../changes.html in the changes/ subdirectory  to reference the new URL (just ..)
+    find $tempdir/diffs/changes -name *.html -exec sed -i'.bak' -e 's#\.\./changes.html#..#g' {} ";"
+    # Just create backup files and then delete them... doesn't seem to be any good way to avoid this if
+    # you want this to work with either GNU or BSD sed.
+    # Note: if there were no HTML files, there will be no .bak files
+    if ls $tempdir/diffs/changes/*.bak 1> /dev/null 2>&1; then
+      rm $tempdir/diffs/changes/*.bak
+    fi
+  fi
 fi
 
 # Put the generated JDiff XML file in the correct place in the diffs dir.
