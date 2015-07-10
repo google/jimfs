@@ -106,25 +106,46 @@ function major_version {
   echo $majorversion
 }
 
+# Gets the minor version part of a version number
+function minor_version {
+  minorversion=$(echo "$1" | sed -e 's/-/./g' | cut -d . -f 2)
+  if [[ ! $minorversion =~ ^[0-9]+$ ]]; then
+    echo "Invalid version number: $1" >&2
+    exit 1
+  fi
+  echo $minorversion
+}
+
 # Prints the highest non-rc release from the sorted list of releases
 # produced by sort_releases. If a release argument is provided, print
-# the highest non-rc release that has a major version that is lower than
-# the given release. For example, given "16.0.1", return "15.0".
+# the highest non-rc release that has a major or minor version that
+# is lower than the given release. For example, given "2.0", return
+# "1.1" and given "1.1", return "1.0".
 function latest_release {
   if [[ $# -eq 1 ]]; then
-    ceiling=$(major_version "$1")
+    ceiling_major=$(major_version "$1")
+    ceiling_minor=$(minor_version "$1")
   else
-    ceiling=""
+    ceiling_major=""
+    ceiling_minor=""
   fi
 
   releases=$(sort_releases)
   for release in $releases; do
-    if [[ ! -z "$ceiling" ]]; then
+    if [[ ! -z "$ceiling_major" ]]; then
       releasemajor=$(major_version "$release")
-      if (( ceiling <= releasemajor )); then
+      if (( releasemajor == ceiling_major )); then
+        releaseminor=$(minor_version "$release")
+        if (( releaseminor >= ceiling_minor )); then
+          continue
+        fi
+      elif (( releasemajor > ceiling_major )); then 
         continue
       fi
     fi
+
+    # Only get to this point if the release is < the ceiling
+    # If the release is an RC, ignore it, otherwise return it
     if [[ ! $release =~ ^.+-rc[0-9]+$ ]]; then
       echo $release
       break
