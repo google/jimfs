@@ -7,7 +7,7 @@
 <meta name="description" content="JDiff is a Javadoc doclet which generates an HTML report of all the packages, classes, constructors, methods, and fields which have been removed, added or changed in any way, including their documentation, when two APIs are compared.">
 <meta name="keywords" content="diff, jdiff, javadiff, java diff, java difference, API difference, difference between two APIs, API diff, Javadoc, doclet">
 <TITLE>
-com.google.common.jimfs.PathType
+com.google.common.jimfs.FileLookup
 </TITLE>
 <LINK REL="stylesheet" TYPE="text/css" HREF="../stylesheet-jdiff.css" TITLE="Style">
 </HEAD>
@@ -18,7 +18,7 @@ com.google.common.jimfs.PathType
     <TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
     <TABLE summary="Navigation bar" BORDER="0" CELLPADDING="0" CELLSPACING="3">
     <TR ALIGN="center" VALIGN="top">
-      <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"> <A HREF="../../docs/com/google/common/jimfs/PathType.html" target="_top"><FONT CLASS="NavBarFont1"><B><tt>Guava 1.1-SNAPSHOT</tt></B></FONT></A>&nbsp;</TD>
+      <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"> <A HREF="../../docs/com/google/common/jimfs/FileLookup.html" target="_top"><FONT CLASS="NavBarFont1"><B><tt>Guava 1.1-SNAPSHOT</tt></B></FONT></A>&nbsp;</TD>
       <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"> <A HREF="changes-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
       <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"> <A HREF="pkg_com.google.common.jimfs.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
       <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
@@ -30,11 +30,11 @@ com.google.common.jimfs.PathType
 </TR>
 <TR>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="com.google.common.jimfs.FileLookup.html"><B>PREV CLASS</B></A>
-&nbsp;<B>NEXT CLASS</B>&nbsp;
+&nbsp;<B>PREV CLASS</B>&nbsp;
+&nbsp;<A HREF="com.google.common.jimfs.PathType.html"><B>NEXT CLASS</B></A>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <A HREF="../changes.html" TARGET="_top"><B>FRAMES</B></A>  &nbsp;
-  &nbsp;<A HREF="com.google.common.jimfs.PathType.html" TARGET="_top"><B>NO FRAMES</B></A></FONT></TD>
+  &nbsp;<A HREF="com.google.common.jimfs.FileLookup.html" TARGET="_top"><B>NO FRAMES</B></A></FONT></TD>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell3"><FONT SIZE="-2"> DETAIL: &nbsp;
 CONSTRUCTORS&nbsp;|&nbsp;
 <a href="#methods">METHODS</a>&nbsp;|&nbsp;
@@ -45,7 +45,7 @@ FIELDS
 <HR>
 <!-- End of nav bar -->
 <H2>
-Class com.google.common.jimfs.<A HREF="../../docs/com/google/common/jimfs/PathType.html" target="_top"><tt>PathType</tt></A>
+Interface com.google.common.jimfs.<A HREF="../../docs/com/google/common/jimfs/FileLookup.html" target="_top"><tt>FileLookup</tt></A>
 </H2>
 <a NAME="constructors"></a>
 <a NAME="methods"></a>
@@ -57,23 +57,13 @@ Class com.google.common.jimfs.<A HREF="../../docs/com/google/common/jimfs/PathTy
 </TR>
 <TR BGCOLOR="#FFFFFF" CLASS="TableRowColor">
   <TD VALIGN="TOP" WIDTH="25%">
-  <A NAME="com.google.common.jimfs.PathType.toUri_changed(java.net.URI, java.lang.String, java.lang.Iterable<java.lang.String>, boolean)"></A>
-  <nobr><code>URI</code>&nbsp;<A HREF="../../docs/com/google/common/jimfs/PathType.html#toUri(java.net.URI, java.lang.String, java.lang.Iterable<java.lang.String>, boolean)" target="_top"><tt>toUri</tt></A>(<code>URI,</nobr> String<nobr>,</nobr> Iterable&lt;String&gt;<nobr>,</nobr> boolean<nobr><nobr></code>)  </nobr>
+  <A NAME="com.google.common.jimfs.FileLookup.lookup_changed()"></A>
+  <nobr><code>File</code>&nbsp;<A HREF="../../docs/com/google/common/jimfs/FileLookup.html#lookup()" target="_top"><tt>lookup</tt></A>()  </nobr>
   </TD>
   <TD VALIGN="TOP" WIDTH="30%">
-Change in signature from (<code>URI, String, Iterable&lt;String&gt;</code>) to (<code>URI, String, Iterable&lt;String&gt;, boolean</code>).<br>
+Changed from abstract to non-abstract.
   </TD>
-  <TD VALIGN="TOP">Creates a URI for the path with the given root and names in the file system with the given URI.</TD>
-</TR>
-<TR BGCOLOR="#FFFFFF" CLASS="TableRowColor">
-  <TD VALIGN="TOP" WIDTH="25%">
-  <A NAME="com.google.common.jimfs.PathType.toUriPath_changed(java.lang.String, java.lang.Iterable<java.lang.String>, boolean)"></A>
-  <nobr><code>String</code>&nbsp;<A HREF="../../docs/com/google/common/jimfs/PathType.html#toUriPath(java.lang.String, java.lang.Iterable<java.lang.String>, boolean)" target="_top"><tt>toUriPath</tt></A>(<code>String,</nobr> Iterable&lt;String&gt;<nobr>,</nobr> boolean<nobr><nobr></code>)  </nobr>
-  </TD>
-  <TD VALIGN="TOP" WIDTH="30%">
-Change in signature from (<code>String, Iterable&lt;String&gt;</code>) to (<code>String, Iterable&lt;String&gt;, boolean</code>).<br>
-  </TD>
-  <TD VALIGN="TOP">Returns the string form of the given path for use in the path part of a URI.</TD>
+  <TD VALIGN="TOP">Looks up the file.</TD>
 </TR>
 </TABLE>
 &nbsp;
@@ -85,7 +75,7 @@ Change in signature from (<code>String, Iterable&lt;String&gt;</code>) to (<code
     <TD COLSPAN=2 BGCOLOR="#EEEEFF" CLASS="NavBarCell1">
     <TABLE summary="Navigation bar" BORDER="0" CELLPADDING="0" CELLSPACING="3">
     <TR ALIGN="center" VALIGN="top">
-      <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"> <A HREF="../../docs/com/google/common/jimfs/PathType.html" target="_top"><FONT CLASS="NavBarFont1"><B><tt>Guava 1.1-SNAPSHOT</tt></B></FONT></A>&nbsp;</TD>
+      <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"> <A HREF="../../docs/com/google/common/jimfs/FileLookup.html" target="_top"><FONT CLASS="NavBarFont1"><B><tt>Guava 1.1-SNAPSHOT</tt></B></FONT></A>&nbsp;</TD>
       <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"> <A HREF="changes-summary.html"><FONT CLASS="NavBarFont1"><B>Overview</B></FONT></A>&nbsp;</TD>
       <TD BGCOLOR="#EEEEFF" CLASS="NavBarCell1"> <A HREF="pkg_com.google.common.jimfs.html"><FONT CLASS="NavBarFont1"><B>Package</B></FONT></A>&nbsp;</TD>
       <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell1Rev"> &nbsp;<FONT CLASS="NavBarFont1Rev"><B>Class</B></FONT>&nbsp;</TD>
@@ -97,11 +87,11 @@ Change in signature from (<code>String, Iterable&lt;String&gt;</code>) to (<code
 </TR>
 <TR>
   <TD BGCOLOR="#FFFFFF" CLASS="NavBarCell2"><FONT SIZE="-2">
-&nbsp;<A HREF="com.google.common.jimfs.FileLookup.html"><B>PREV CLASS</B></A>
-&nbsp;<B>NEXT CLASS</B>&nbsp;
+&nbsp;<B>PREV CLASS</B>&nbsp;
+&nbsp;<A HREF="com.google.common.jimfs.PathType.html"><B>NEXT CLASS</B></A>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <A HREF="../changes.html" TARGET="_top"><B>FRAMES</B></A>  &nbsp;
-  &nbsp;<A HREF="com.google.common.jimfs.PathType.html" TARGET="_top"><B>NO FRAMES</B></A></FONT></TD>
+  &nbsp;<A HREF="com.google.common.jimfs.FileLookup.html" TARGET="_top"><B>NO FRAMES</B></A></FONT></TD>
 <TD BGCOLOR="0xFFFFFF" CLASS="NavBarCell3"></TD>
 </TR>
 </TABLE>
