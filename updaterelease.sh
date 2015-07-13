@@ -30,6 +30,9 @@
 
 set -e -u
 
+PROJECT="Jimfs"
+MODULE="jimfs"
+
 # Ensure working dir is the root of the git repo and load util functions.
 cd $(dirname $0)
 source _util/util.sh
@@ -69,16 +72,16 @@ function cleanup {
 }
 trap cleanup INT TERM EXIT
 
-# Switch to the git ref for the release to do things with the actual Guava repo.
+# Switch to the git ref for the release to do things with the actual source repo.
 git_checkout_ref $releaseref
 
 # Get the current version from Maven.
-mavenversion=$(maven_version)
+mavenversion=$(maven_version $MODULE)
 
-echo "Updating Javadoc and JDiff for Jimfs $mavenversion"
+echo "Updating Javadoc and JDiff for $PROJECT $mavenversion"
 
 # Copy source files to a temp dir.
-cp -r jimfs/src/main/java $tempdir/src
+cp -r $MODULE/src/main/java $tempdir/src
 
 # Compile and generate Javadoc, putting class files in $tempdir/classes and docs in $tempdir/docs.
 
@@ -89,17 +92,17 @@ mvn \
     javadoc:javadoc \
     dependency:build-classpath \
     -Dmdep.outputFile=$tempdir/classpath \
-    -pl jimfs >> $logfile 2>&1
+    -pl $MODULE >> $logfile 2>&1
 echo " Done."
 
-mv jimfs/target/classes $tempdir/classes
-mv jimfs/target/site/apidocs $tempdir/docs
+mv $MODULE/target/classes $tempdir/classes
+mv $MODULE/target/site/apidocs $tempdir/docs
 
 # Create classpath string for JDiff to use.
 classpath=$tempdir/classes:$(cat $tempdir/classpath)
 
 # Cleanup target dir.
-rm -fr jimfs/target
+rm -fr $MODULE/target
 
 # Switch back to gh-pages.
 git_checkout_ref $initialref
@@ -114,7 +117,7 @@ javadoc \
   -encoding UTF-8 \
   -doclet jdiff.JDiff \
   -docletpath $jdiffpath \
-  -apiname "Guava $mavenversion" \
+  -apiname "$PROJECT $mavenversion" \
   -apidir $tempdir \
   -exclude com.google.common.base.internal \
   -protected >> $logfile 2>&1
@@ -132,7 +135,7 @@ if [ -z "$prevrelease" ]; then
 else
   echo " $prevrelease"
 
-  cp _releases/$prevrelease/api/diffs/$prevrelease.xml $tempdir/Guava_$prevrelease.xml
+  cp _releases/$prevrelease/api/diffs/$prevrelease.xml $tempdir/"$PROJECT"_$prevrelease.xml
 
   # Generate Jdiff report, putting it in $tempdir/diffs
 
@@ -143,14 +146,14 @@ else
   # _releases/$prevrelease/api/docs/
   prevjavadocpath="../../../../$prevrelease/api/docs/"
 
-  echo -n "Generating JDiff report between Guava $prevrelease and $mavenversion..."
+  echo -n "Generating JDiff report between $PROJECT $prevrelease and $mavenversion..."
   javadoc \
     -subpackages com \
     -doclet jdiff.JDiff \
     -docletpath $jdiffpath \
-    -oldapi "Guava $prevrelease" \
+    -oldapi "$PROJECT $prevrelease" \
     -oldapidir $tempdir \
-    -newapi "Guava $mavenversion" \
+    -newapi "$PROJECT $mavenversion" \
     -newapidir $tempdir \
     -javadocold $prevjavadocpath \
     -javadocnew $releasejavadocpath \
@@ -159,7 +162,7 @@ else
 
   # Make changes to the JDiff output
   # Remove the useless user comments xml file
-  rm $tempdir/diffs/user_comments_for_Guava_*
+  rm $tempdir/diffs/user_comments_for_"$PROJECT"_*
 
   # Change changes.html to index.html, making the url for a diff just _releases/<release>/api/diffs/
   mv $tempdir/diffs/changes.html $tempdir/diffs/index.html
@@ -177,7 +180,7 @@ else
 fi
 
 # Put the generated JDiff XML file in the correct place in the diffs dir.
-mv $tempdir/Guava_$mavenversion.xml $tempdir/diffs/$release.xml
+mv $tempdir/"$PROJECT"_$mavenversion.xml $tempdir/diffs/$release.xml
 
 # Move generated output to the appropriate final directories.
 docsdir=_releases/$release/api/docs
@@ -196,7 +199,7 @@ echo " Done."
 # Commit
 echo -n "Committing changes..."
 git add .
-git commit -q -m "Generate Javadoc and JDiff for Guava $mavenversion"
+git commit -q -m "Generate Javadoc and JDiff for $PROJECT $mavenversion"
 echo " Done."
 
 # Update version info in _config.yml

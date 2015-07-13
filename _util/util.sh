@@ -20,11 +20,12 @@ function current_git_ref {
   fi
 }
 
-# Returns the version of com.google.jimfs:jimfs at the current revision, pulled from Maven.
+# Returns the version of the given module at the current revision, pulled from Maven.
 function maven_version {
+  module="$1"
   mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate \
       -Dexpression=project.version \
-      -pl jimfs \
+      -pl $module \
       | grep -Ev '(^\[|Download\w+:)'
 }
 
