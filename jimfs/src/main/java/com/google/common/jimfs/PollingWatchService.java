@@ -111,10 +111,6 @@ final class PollingWatchService extends AbstractWatchService {
 
     Snapshot snapshot = takeSnapshot(path);
 
-    if (snapshot == null) {
-      throw new NotDirectoryException(path.toString());
-    }
-
     synchronized (this) {
       snapshots.put(key, snapshot);
       if (pollingFuture == null) {
