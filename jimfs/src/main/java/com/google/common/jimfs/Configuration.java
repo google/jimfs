@@ -346,6 +346,7 @@ public final class Configuration {
             normalization = n;
             break;
           case CASE_FOLD_UNICODE:
+          case CASE_FOLD_TURKISH:
           case CASE_FOLD_ASCII:
             checkNormalizationNotSet(n, caseFold);
             caseFold = n;

@@ -68,8 +68,6 @@ public enum PathNormalization implements Function<String, String> {
    * Unicode case folding for case insensitive paths. Requires ICU4J on the classpath.
    */
   CASE_FOLD_UNICODE(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE) {
-    // TODO(cgdecker): This does default case folding, e.g. non-Turkish case folding.
-    // Should there be an option to use the Turkish-correct case folding instead?
     @Override
     public String apply(String string) {
       try {
@@ -78,6 +76,26 @@ public enum PathNormalization implements Function<String, String> {
         NoClassDefFoundError error =
             new NoClassDefFoundError(
                 "PathNormalization.CASE_FOLD_UNICODE requires ICU4J. "
+                    + "Did you forget to include it on your classpath?");
+        error.initCause(e);
+        throw error;
+      }
+    }
+  },
+
+  /**
+   * Unicode case folding for case insensitive paths using Turkic languages (Turkish, Azerbaijani).
+   * Requires ICU4J on the classpath.
+   */
+  CASE_FOLD_TURKISH(-1) {
+    @Override
+    public String apply(String string) {
+      try {
+        return UCharacter.foldCase(string, UCharacter.FOLD_CASE_EXCLUDE_SPECIAL_I);
+      } catch (NoClassDefFoundError e) {
+        NoClassDefFoundError error =
+            new NoClassDefFoundError(
+                "PathNormalization.CASE_FOLD_TURKISH requires ICU4J. "
                     + "Did you forget to include it on your classpath?");
         error.initCause(e);
         throw error;
@@ -133,7 +151,13 @@ public enum PathNormalization implements Function<String, String> {
   public static Pattern compilePattern(String regex, Iterable<PathNormalization> normalizations) {
     int flags = 0;
     for (PathNormalization normalization : normalizations) {
-      flags |= normalization.patternFlags();
+      int normalizationFlags = normalization.patternFlags();
+      if (normalizationFlags != -1) {
+        flags |= normalizationFlags;
+      } else {
+        throw new UnsupportedOperationException(
+            "Path normalization does not support regular expressions");
+      }
     }
     return Pattern.compile(regex, flags);
   }
