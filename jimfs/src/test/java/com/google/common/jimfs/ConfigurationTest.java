@@ -17,6 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
+import static com.google.common.jimfs.PathNormalization.CASE_FOLD_TURKISH;
 import static com.google.common.jimfs.PathNormalization.CASE_FOLD_UNICODE;
 import static com.google.common.jimfs.PathNormalization.NFC;
 import static com.google.common.jimfs.PathNormalization.NFD;
@@ -334,5 +335,15 @@ public class ConfigurationTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  @Test
+  public void testTurkishNormalization() {
+    Configuration config =
+        Configuration.windows()
+            .toBuilder()
+            .setNameCanonicalNormalization(CASE_FOLD_TURKISH)
+            .build();
+    assertThat(config.nameCanonicalNormalization).containsExactly(CASE_FOLD_TURKISH);
   }
 }

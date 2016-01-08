@@ -17,6 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
+import static com.google.common.jimfs.PathNormalization.CASE_FOLD_TURKISH;
 import static com.google.common.jimfs.PathNormalization.CASE_FOLD_UNICODE;
 import static com.google.common.jimfs.PathNormalization.NFC;
 import static com.google.common.jimfs.PathNormalization.NFD;
@@ -27,7 +28,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableSet;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -42,6 +45,9 @@ import java.util.regex.Pattern;
 public class PathNormalizationTest {
 
   private ImmutableSet<PathNormalization> normalizations;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testNone() {
@@ -303,6 +309,29 @@ public class PathNormalizationTest {
     assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AM\u00c9LIE");
     assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
     assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
+  }
+
+  @Test
+  public void testCaseFoldTurkish() {
+    normalizations = ImmutableSet.of(CASE_FOLD_TURKISH);
+    assertNormalizedEqual("hello", "HELLO");
+    assertNormalizedEqual("istanbul", "\u0130stanbul");
+    assertNormalizedUnequal("istanbul", "ISTANBUL");
+    assertNormalizedEqual("Y\u0131ld\u0131r\u0131m", "YILDIRIM");
+    assertNormalizedUnequal("Y\u0131ld\u0131r\u0131m", "Yildirim");
+
+    // My favorites!
+    assertNormalizedEqual("c:\\windows", "C:\\W\u0130NDOWS");
+    assertNormalizedUnequal("c:\\windows", "C:\\WINDOWS");
+    assertNormalizedEqual(".git", ".G\u0130T");
+    assertNormalizedUnequal(".git", ".GIT");
+  }
+
+  @Test
+  public void testCaseFoldTurkishPatternThrows() {
+    thrown.expectMessage("Path normalization does not support regular expressions");
+    normalizations = ImmutableSet.of(CASE_FOLD_TURKISH);
+    PathNormalization.compilePattern("hello", normalizations);
   }
 
   /**
