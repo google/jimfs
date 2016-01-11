@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -29,7 +28,6 @@ import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.io.IOException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchService;
@@ -73,30 +71,25 @@ final class PollingWatchService extends AbstractWatchService {
   private final PathService pathService;
   private final FileSystemState fileSystemState;
 
-  private final long pollingTime;
-  private final TimeUnit timeUnit;
+  @VisibleForTesting
+  final long interval;
+  @VisibleForTesting
+  final TimeUnit timeUnit;
 
   private ScheduledFuture<?> pollingFuture;
 
-  public PollingWatchService(
-      FileSystemView view, PathService pathService, FileSystemState fileSystemState) {
-    this(view, pathService, fileSystemState, 5, SECONDS);
-  }
-
-  // TODO(cgdecker): make user configurable somehow? meh
-  @VisibleForTesting
   PollingWatchService(
       FileSystemView view,
       PathService pathService,
       FileSystemState fileSystemState,
-      long pollingTime,
+      long interval,
       TimeUnit timeUnit) {
     this.view = checkNotNull(view);
     this.pathService = checkNotNull(pathService);
     this.fileSystemState = checkNotNull(fileSystemState);
 
-    checkArgument(pollingTime >= 0, "polling time (%s) may not be negative", pollingTime);
-    this.pollingTime = pollingTime;
+    checkArgument(interval >= 0, "interval (%s) may not be negative", interval);
+    this.interval = interval;
     this.timeUnit = checkNotNull(timeUnit);
 
     fileSystemState.register(this);
@@ -168,7 +161,7 @@ final class PollingWatchService extends AbstractWatchService {
 
   private void startPolling() {
     pollingFuture =
-        pollingService.scheduleAtFixedRate(pollingTask, pollingTime, pollingTime, timeUnit);
+        pollingService.scheduleAtFixedRate(pollingTask, interval, interval, timeUnit);
   }
 
   private void stopPolling() {

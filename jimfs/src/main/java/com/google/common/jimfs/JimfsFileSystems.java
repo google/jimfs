@@ -90,9 +90,10 @@ final class JimfsFileSystems {
 
     JimfsFileStore fileStore = createFileStore(config, pathService, state);
     FileSystemView defaultView = createDefaultView(config, fileStore, pathService);
+    WatchServiceConfiguration watchServiceConfig = config.watchServiceConfig;
 
     JimfsFileSystem fileSystem =
-        new JimfsFileSystem(provider, uri, fileStore, pathService, defaultView);
+        new JimfsFileSystem(provider, uri, fileStore, pathService, defaultView, watchServiceConfig);
 
     pathService.setFileSystem(fileSystem);
     return fileSystem;

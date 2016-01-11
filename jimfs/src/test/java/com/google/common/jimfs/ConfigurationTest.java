@@ -22,8 +22,11 @@ import static com.google.common.jimfs.PathNormalization.CASE_FOLD_UNICODE;
 import static com.google.common.jimfs.PathNormalization.NFC;
 import static com.google.common.jimfs.PathNormalization.NFD;
 import static com.google.common.jimfs.PathSubject.paths;
+import static com.google.common.jimfs.WatchServiceConfiguration.polling;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assert_;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
@@ -38,7 +41,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link Configuration}, {@link Configuration.Builder} and file systems created from
@@ -335,6 +340,32 @@ public class ConfigurationTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  @Test
+  public void testFileSystemWithDefaultWatchService() throws IOException {
+    FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+
+    WatchService watchService = fs.newWatchService();
+    assertThat(watchService).isInstanceOf(PollingWatchService.class);
+
+    PollingWatchService pollingWatchService = (PollingWatchService) watchService;
+    assertThat(pollingWatchService.interval).isEqualTo(5);
+    assertThat(pollingWatchService.timeUnit).isEqualTo(SECONDS);
+  }
+
+  @Test
+  public void testFileSystemWithCustomWatchServicePollingInterval() throws IOException {
+    FileSystem fs = Jimfs.newFileSystem(Configuration.unix().toBuilder()
+        .setWatchServiceConfiguration(polling(10, MILLISECONDS))
+        .build());
+
+    WatchService watchService = fs.newWatchService();
+    assertThat(watchService).isInstanceOf(PollingWatchService.class);
+
+    PollingWatchService pollingWatchService = (PollingWatchService) watchService;
+    assertThat(pollingWatchService.interval).isEqualTo(10);
+    assertThat(pollingWatchService.timeUnit).isEqualTo(MILLISECONDS);
   }
 
   @Test

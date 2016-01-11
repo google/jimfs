@@ -35,6 +35,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
 import java.nio.file.SecureDirectoryStream;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -209,6 +210,9 @@ public final class Configuration {
   final ImmutableSet<AttributeProvider> attributeProviders;
   final ImmutableMap<String, Object> defaultAttributeValues;
 
+  // Watch service
+  final WatchServiceConfiguration watchServiceConfig;
+
   // Other
   final ImmutableSet<String> roots;
   final String workingDirectory;
@@ -234,6 +238,7 @@ public final class Configuration {
         builder.defaultAttributeValues == null
             ? ImmutableMap.<String, Object>of()
             : ImmutableMap.copyOf(builder.defaultAttributeValues);
+    this.watchServiceConfig = builder.watchServiceConfig;
     this.roots = builder.roots;
     this.workingDirectory = builder.workingDirectory;
     this.supportedFeatures = builder.supportedFeatures;
@@ -276,6 +281,9 @@ public final class Configuration {
     private Set<AttributeProvider> attributeProviders = null;
     private Map<String, Object> defaultAttributeValues;
 
+    // Watch service
+    private WatchServiceConfiguration watchServiceConfig = WatchServiceConfiguration.DEFAULT;
+
     // Other
     private ImmutableSet<String> roots = ImmutableSet.of();
     private String workingDirectory;
@@ -302,6 +310,7 @@ public final class Configuration {
           configuration.defaultAttributeValues.isEmpty()
               ? null
               : new HashMap<>(configuration.defaultAttributeValues);
+      this.watchServiceConfig = configuration.watchServiceConfig;
       this.roots = configuration.roots;
       this.workingDirectory = configuration.workingDirectory;
       this.supportedFeatures = configuration.supportedFeatures;
@@ -604,6 +613,17 @@ public final class Configuration {
      */
     public Builder setSupportedFeatures(Feature... features) {
       supportedFeatures = Sets.immutableEnumSet(Arrays.asList(features));
+      return this;
+    }
+
+    /**
+     * Sets the configuration that {@link WatchService} instances created by the file system
+     * should use. The default configuration polls watched directories for changes every 5 seconds.
+     *
+     * @since 1.1
+     */
+    public Builder setWatchServiceConfiguration(WatchServiceConfiguration config) {
+      this.watchServiceConfig = checkNotNull(config);
       return this;
     }
 

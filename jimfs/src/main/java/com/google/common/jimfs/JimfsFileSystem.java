@@ -180,17 +180,21 @@ final class JimfsFileSystem extends FileSystem {
 
   private final FileSystemView defaultView;
 
+  private final WatchServiceConfiguration watchServiceConfig;
+
   JimfsFileSystem(
       JimfsFileSystemProvider provider,
       URI uri,
       JimfsFileStore fileStore,
       PathService pathService,
-      FileSystemView defaultView) {
+      FileSystemView defaultView,
+      WatchServiceConfiguration watchServiceConfig) {
     this.provider = checkNotNull(provider);
     this.uri = checkNotNull(uri);
     this.fileStore = checkNotNull(fileStore);
     this.pathService = checkNotNull(pathService);
     this.defaultView = checkNotNull(defaultView);
+    this.watchServiceConfig = checkNotNull(watchServiceConfig);
   }
 
   @Override
@@ -296,7 +300,7 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public WatchService newWatchService() throws IOException {
-    return new PollingWatchService(defaultView, pathService, fileStore.state());
+    return watchServiceConfig.newWatchService(defaultView, pathService);
   }
 
   @Nullable private ExecutorService defaultThreadPool;

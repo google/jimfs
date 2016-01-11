@@ -69,8 +69,11 @@ public class PollingWatchServiceTest {
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws IOException {
     watcher.close();
+    fs.close();
+    watcher = null;
+    fs = null;
   }
 
   @Test
