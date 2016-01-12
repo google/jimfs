@@ -63,6 +63,18 @@ public enum PathNormalization implements Function<String, String> {
       return Normalizer.normalize(string, Normalizer.Form.NFD);
     }
   },
+    
+  /*
+   * Some notes on case folding/case insensitivity of file systems:
+   *
+   * In general (I don't have any counterexamples) case-insensitive file systems handle
+   * their case insensitivity in a locale-independent way. NTFS, for example, writes a
+   * special case mapping file ($UpCase) to the file system when it's first initialized,
+   * and this is not affected by the locale of either the user or the copy of Windows
+   * being used. This means that it will NOT handle i/I-variants in filenames as you'd
+   * expect for Turkic languages, even for a Turkish user who has installed a Turkish
+   * copy of Windows.
+   */
 
   /**
    * Unicode case folding for case insensitive paths. Requires ICU4J on the classpath.
@@ -76,26 +88,6 @@ public enum PathNormalization implements Function<String, String> {
         NoClassDefFoundError error =
             new NoClassDefFoundError(
                 "PathNormalization.CASE_FOLD_UNICODE requires ICU4J. "
-                    + "Did you forget to include it on your classpath?");
-        error.initCause(e);
-        throw error;
-      }
-    }
-  },
-
-  /**
-   * Unicode case folding for case insensitive paths using Turkic languages (Turkish, Azerbaijani).
-   * Requires ICU4J on the classpath.
-   */
-  CASE_FOLD_TURKISH(-1) {
-    @Override
-    public String apply(String string) {
-      try {
-        return UCharacter.foldCase(string, UCharacter.FOLD_CASE_EXCLUDE_SPECIAL_I);
-      } catch (NoClassDefFoundError e) {
-        NoClassDefFoundError error =
-            new NoClassDefFoundError(
-                "PathNormalization.CASE_FOLD_TURKISH requires ICU4J. "
                     + "Did you forget to include it on your classpath?");
         error.initCause(e);
         throw error;
@@ -151,13 +143,7 @@ public enum PathNormalization implements Function<String, String> {
   public static Pattern compilePattern(String regex, Iterable<PathNormalization> normalizations) {
     int flags = 0;
     for (PathNormalization normalization : normalizations) {
-      int normalizationFlags = normalization.patternFlags();
-      if (normalizationFlags != -1) {
-        flags |= normalizationFlags;
-      } else {
-        throw new UnsupportedOperationException(
-            "Path normalization does not support regular expressions");
-      }
+      flags |= normalization.patternFlags();
     }
     return Pattern.compile(regex, flags);
   }
