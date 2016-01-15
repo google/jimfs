@@ -77,29 +77,29 @@ public final class Jimfs {
    */
   public static final String URI_SCHEME = "jimfs";
 
-  /**
-   * The key used for mapping to the {@link Configuration} in the {@code env} map when creating a
-   * new file system instance using {@code FileSystems.newFileSystem()}.
-   */
-  public static final String CONFIG_KEY = "config";
-
   private Jimfs() {}
 
   /**
-   * Creates a new in-memory file system with a default configuration appropriate to the current
-   * operating system. More specifically, if the operating system is Windows,
-   * {@link Configuration#windows()} is used; if the operating system is Mac OS X,
-   * {@link Configuration#osX()} is used; otherwise, {@link Configuration#unix()} is used.
+   * Creates a new in-memory file system with a
+   * {@linkplain Configuration#forCurrentPlatform() default configuration} appropriate to the
+   * current operating system.
+   *
+   * <p>More specifically, if the operating system is Windows, {@link Configuration#windows()} is
+   * used; if the operating system is Mac OS X, {@link Configuration#osX()} is used; otherwise,
+   * {@link Configuration#unix()} is used.
    */
   public static FileSystem newFileSystem() {
     return newFileSystem(newRandomFileSystemName());
   }
 
   /**
-   * Creates a new in-memory file system with a default configuration appropriate to the current
-   * operating system. More specifically, if the operating system is Windows,
-   * {@link Configuration#windows()} is used; if the operating system is Mac OS X,
-   * {@link Configuration#osX()} is used; otherwise, {@link Configuration#unix()} is used.
+   * Creates a new in-memory file system with a
+   * {@linkplain Configuration#forCurrentPlatform() default configuration} appropriate to the
+   * current operating system.
+   *
+   * <p>More specifically, if the operating system is Windows, {@link Configuration#windows()} is
+   * used; if the operating system is Mac OS X, {@link Configuration#osX()} is used; otherwise,
+   * {@link Configuration#unix()} is used.
    *
    * <p>The returned file system uses the given name as the host part of its URI and the URIs of
    * paths in the file system. For example, given the name {@code my-file-system}, the file
@@ -107,18 +107,7 @@ public final class Jimfs {
    * will be {@code jimfs://my-file-system/foo/bar}.
    */
   public static FileSystem newFileSystem(String name) {
-    String os = System.getProperty("os.name");
-
-    Configuration config;
-    if (os.contains("Windows")) {
-      config = Configuration.windows();
-    } else if (os.contains("OS X")) {
-      config = Configuration.osX();
-    } else {
-      config = Configuration.unix();
-    }
-
-    return newFileSystem(name, config);
+    return newFileSystem(name, Configuration.forCurrentPlatform());
   }
 
   /**

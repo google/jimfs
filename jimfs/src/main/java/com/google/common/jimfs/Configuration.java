@@ -188,6 +188,30 @@ public final class Configuration {
   }
 
   /**
+   * Returns a default configuration appropriate to the current operating system.
+   *
+   * <p>More specifically, if the operating system is Windows, {@link Configuration#windows()} is
+   * returned; if the operating system is Mac OS X, {@link Configuration#osX()} is returned;
+   * otherwise, {@link Configuration#unix()} is returned.
+   *
+   * <p>This is the configuration used by the {@code Jimfs.newFileSystem} methods that do not take
+   * a {@code Configuration} parameter.
+   *
+   * @since 1.1
+   */
+  public static Configuration forCurrentPlatform() {
+    String os = System.getProperty("os.name");
+
+    if (os.contains("Windows")) {
+      return windows();
+    } else if (os.contains("OS X")) {
+      return osX();
+    } else {
+      return unix();
+    }
+  }
+
+  /**
    * Creates a new mutable {@link Configuration} builder using the given path type.
    */
   public static Builder builder(PathType pathType) {
