@@ -1,4 +1,5 @@
 MISSING @SINCE TAG: com.google.common.jimfs.Handler Class
 MISSING @SINCE TAG: com.google.common.jimfs.SystemJimfsFileSystemProvider Class
 OK: com.google.common.jimfs.WatchServiceConfiguration Class
+OK: com.google.common.jimfs.Configuration Method forCurrentPlatform()
 OK: com.google.common.jimfs.Configuration.Builder Method setWatchServiceConfiguration(com.google.common.jimfs.WatchServiceConfiguration)
