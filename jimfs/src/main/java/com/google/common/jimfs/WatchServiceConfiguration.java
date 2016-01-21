@@ -44,7 +44,7 @@ public abstract class WatchServiceConfiguration {
   public static WatchServiceConfiguration polling(long interval, TimeUnit timeUnit) {
     return new PollingConfig(interval, timeUnit);
   }
-  
+
   WatchServiceConfiguration() {}
 
   /**
@@ -54,7 +54,7 @@ public abstract class WatchServiceConfiguration {
   // implementations
   abstract AbstractWatchService newWatchService(FileSystemView view, PathService pathService);
 
-  /** 
+  /**
    * Implementation for {@link #polling}.
    */
   private static final class PollingConfig extends WatchServiceConfiguration {

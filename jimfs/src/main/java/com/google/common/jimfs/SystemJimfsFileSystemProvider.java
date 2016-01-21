@@ -58,9 +58,10 @@ import java.util.concurrent.ConcurrentMap;
  * instance, see {@link Jimfs}. For other operations, use the public APIs in {@code java.nio.file}.
  *
  * @author Colin Decker
+ * @since 1.1
  */
 @AutoService(FileSystemProvider.class)
-public class SystemJimfsFileSystemProvider extends FileSystemProvider {
+public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
 
   /**
    * Env map key that maps to the already-created {@code FileSystem} instance in
@@ -88,6 +89,12 @@ public class SystemJimfsFileSystemProvider extends FileSystemProvider {
    */
   private static final ConcurrentMap<URI, FileSystem> fileSystems =
       new MapMaker().weakValues().makeMap();
+
+  /**
+   * @deprecated Not intended to be called directly; this class is only for use by Java itself.
+   */
+  @Deprecated
+  public SystemJimfsFileSystemProvider() {} // a public, no-arg constructor is required
 
   @Override
   public String getScheme() {
