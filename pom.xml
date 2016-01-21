@@ -28,7 +28,7 @@
   <groupId>com.google.jimfs</groupId>
   <artifactId>jimfs-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.1-SNAPSHOT</version>
+  <version>1.1-rc1</version>
 
   <modules>
     <module>jimfs</module>
