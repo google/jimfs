@@ -24,6 +24,9 @@ It is available in Maven Central as
 </dependency>
 ```
 
+**Next release:** version [1.1-rc1](https://github.com/google/jimfs/releases/tag/v1.1-rc1)
+is currently available.
+
 Basic use
 ---------
 
