@@ -11,16 +11,16 @@ abstract file system APIs.
 Getting started
 ---------------
 
-The latest release is [1.0](https://github.com/google/jimfs/releases/tag/v1.0).
+The latest release is [1.1](https://github.com/google/jimfs/releases/tag/v1.1).
 
 It is available in Maven Central as
-[com.google.jimfs:jimfs:1.0](http://search.maven.org/#artifactdetails%7Ccom.google.jimfs%7Cjimfs%7C1.0%7Cjar):
+[com.google.jimfs:jimfs:1.1](http://search.maven.org/#artifactdetails%7Ccom.google.jimfs%7Cjimfs%7C1.1%7Cjar):
 
 ```xml
 <dependency>
   <groupId>com.google.jimfs</groupId>
   <artifactId>jimfs</artifactId>
-  <version>1.0</version>
+  <version>1.1</version>
 </dependency>
 ```
 
