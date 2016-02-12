@@ -48,13 +48,13 @@ import java.nio.file.ClosedFileSystemException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.nio.file.spi.FileSystemProvider;
 
 /**
  * Tests for what happens when a file system is closed.
@@ -75,14 +75,13 @@ public class JimfsFileSystemCloseTest {
 
   @Test
   public void testIsNotAvailableFromProvider() throws IOException {
-    FileSystemProvider provider = fs.provider();
     URI uri = fs.getUri();
-    assertEquals(fs, provider.getFileSystem(uri));
+    assertEquals(fs, FileSystems.getFileSystem(uri));
 
     fs.close();
 
     try {
-      provider.getFileSystem(uri);
+      FileSystems.getFileSystem(uri);
       fail();
     } catch (FileSystemNotFoundException expected) {
     }
@@ -205,7 +204,7 @@ public class JimfsFileSystemCloseTest {
     }
 
     try {
-      p.toRealPath();
+      p = p.toRealPath();
       fail();
     } catch (ClosedFileSystemException expected) {
     }

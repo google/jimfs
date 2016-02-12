@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -37,8 +37,8 @@ import java.util.Set;
  * @author Colin Decker
  */
 @RunWith(JUnit4.class)
-public class BasicAttributeProviderTest extends
-    AbstractAttributeProviderTest<BasicAttributeProvider> {
+public class BasicAttributeProviderTest
+    extends AbstractAttributeProviderTest<BasicAttributeProvider> {
 
   @Override
   protected BasicAttributeProvider createProvider() {
@@ -52,18 +52,27 @@ public class BasicAttributeProviderTest extends
 
   @Test
   public void testSupportedAttributes() {
-    assertSupportsAll("fileKey", "size", "isDirectory", "isRegularFile", "isSymbolicLink",
-        "isOther", "creationTime", "lastModifiedTime", "lastAccessTime");
+    assertSupportsAll(
+        "fileKey",
+        "size",
+        "isDirectory",
+        "isRegularFile",
+        "isSymbolicLink",
+        "isOther",
+        "creationTime",
+        "lastModifiedTime",
+        "lastAccessTime");
   }
 
   @Test
   public void testInitialAttributes() {
     long time = file.getCreationTime();
-    ASSERT.that(time).isNotEqualTo(0L);
-    ASSERT.that(time).isEqualTo(file.getLastAccessTime());
-    ASSERT.that(time).isEqualTo(file.getLastModifiedTime());
+    assertThat(time).isNotEqualTo(0L);
+    assertThat(time).isEqualTo(file.getLastAccessTime());
+    assertThat(time).isEqualTo(file.getLastModifiedTime());
 
-    assertContainsAll(file,
+    assertContainsAll(
+        file,
         ImmutableMap.<String, Object>builder()
             .put("fileKey", 0)
             .put("size", 0L)
@@ -108,37 +117,37 @@ public class BasicAttributeProviderTest extends
   public void testView() throws IOException {
     BasicFileAttributeView view = provider.view(fileLookup(), NO_INHERITED_VIEWS);
 
-    ASSERT.that(view).isNotNull();
-    ASSERT.that(view.name()).is("basic");
+    assertThat(view).isNotNull();
+    assertThat(view.name()).isEqualTo("basic");
 
     BasicFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.fileKey()).is(0);
+    assertThat(attrs.fileKey()).isEqualTo(0);
 
     FileTime time = attrs.creationTime();
-    ASSERT.that(attrs.lastAccessTime()).is(time);
-    ASSERT.that(attrs.lastModifiedTime()).is(time);
+    assertThat(attrs.lastAccessTime()).isEqualTo(time);
+    assertThat(attrs.lastModifiedTime()).isEqualTo(time);
 
     view.setTimes(null, null, null);
 
     attrs = view.readAttributes();
-    ASSERT.that(attrs.creationTime()).is(time);
-    ASSERT.that(attrs.lastAccessTime()).is(time);
-    ASSERT.that(attrs.lastModifiedTime()).is(time);
+    assertThat(attrs.creationTime()).isEqualTo(time);
+    assertThat(attrs.lastAccessTime()).isEqualTo(time);
+    assertThat(attrs.lastModifiedTime()).isEqualTo(time);
 
     view.setTimes(FileTime.fromMillis(0L), null, null);
 
     attrs = view.readAttributes();
-    ASSERT.that(attrs.creationTime()).is(time);
-    ASSERT.that(attrs.lastAccessTime()).is(time);
-    ASSERT.that(attrs.lastModifiedTime()).is(FileTime.fromMillis(0L));
+    assertThat(attrs.creationTime()).isEqualTo(time);
+    assertThat(attrs.lastAccessTime()).isEqualTo(time);
+    assertThat(attrs.lastModifiedTime()).isEqualTo(FileTime.fromMillis(0L));
   }
 
   @Test
   public void testAttributes() {
     BasicFileAttributes attrs = provider.readAttributes(file);
-    ASSERT.that(attrs.fileKey()).is(0);
-    ASSERT.that(attrs.isDirectory()).isTrue();
-    ASSERT.that(attrs.isRegularFile()).isFalse();
-    ASSERT.that(attrs.creationTime()).isNotNull();
+    assertThat(attrs.fileKey()).isEqualTo(0);
+    assertThat(attrs.isDirectory()).isTrue();
+    assertThat(attrs.isRegularFile()).isFalse();
+    assertThat(attrs.creationTime()).isNotNull();
   }
 }

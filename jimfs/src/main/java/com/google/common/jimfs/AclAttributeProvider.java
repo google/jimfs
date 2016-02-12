@@ -84,8 +84,7 @@ final class AclAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public void set(
-      File file, String view, String attribute, Object value, boolean create) {
+  public void set(File file, String view, String attribute, Object value, boolean create) {
     if (attribute.equals("acl")) {
       checkNotCreate(view, attribute, create);
       file.setAttribute("acl", "acl", toAcl(checkType(view, attribute, value, List.class)));
@@ -97,8 +96,9 @@ final class AclAttributeProvider extends AttributeProvider {
     ImmutableList<?> copy = ImmutableList.copyOf(list);
     for (Object obj : copy) {
       if (!(obj instanceof AclEntry)) {
-        throw new IllegalArgumentException("invalid element for attribute 'acl:acl': "
-            + "should be List<AclEntry>, found element of type " + obj.getClass());
+        throw new IllegalArgumentException(
+            "invalid element for attribute 'acl:acl': should be List<AclEntry>, "
+                + "found element of type " + obj.getClass());
       }
     }
 
@@ -111,8 +111,8 @@ final class AclAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public AclFileAttributeView view(FileLookup lookup,
-      ImmutableMap<String, FileAttributeView> inheritedViews) {
+  public AclFileAttributeView view(
+      FileLookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup, (FileOwnerAttributeView) inheritedViews.get("owner"));
   }
 

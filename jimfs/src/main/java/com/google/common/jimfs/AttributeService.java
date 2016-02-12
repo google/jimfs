@@ -69,10 +69,8 @@ final class AttributeService {
    */
   public AttributeService(
       Iterable<? extends AttributeProvider> providers, Map<String, ?> userProvidedDefaults) {
-    ImmutableMap.Builder<String, AttributeProvider> byViewNameBuilder =
-        ImmutableMap.builder();
-    ImmutableMap.Builder<Class<?>, AttributeProvider> byViewTypeBuilder =
-        ImmutableMap.builder();
+    ImmutableMap.Builder<String, AttributeProvider> byViewNameBuilder = ImmutableMap.builder();
+    ImmutableMap.Builder<Class<?>, AttributeProvider> byViewTypeBuilder = ImmutableMap.builder();
     ImmutableMap.Builder<Class<?>, AttributeProvider> byAttributesTypeBuilder =
         ImmutableMap.builder();
 
@@ -200,7 +198,7 @@ final class AttributeService {
    * Gets the value of the given attribute for the given file. {@code attribute} must be of the
    * form "view:attribute" or "attribute".
    */
-  public <V> V getAttribute(File file, String attribute) {
+  public Object getAttribute(File file, String attribute) {
     String view = getViewName(attribute);
     String attr = getSingleAttribute(attribute);
     return getAttribute(file, view, attr);
@@ -210,14 +208,12 @@ final class AttributeService {
    * Gets the value of the given attribute for the given view and file. Neither view nor attribute
    * may have a ':' character.
    */
-  @SuppressWarnings("unchecked")
-  public <V> V getAttribute(File file, String view, String attribute) {
+  public Object getAttribute(File file, String view, String attribute) {
     Object value = getAttributeInternal(file, view, attribute);
     if (value == null) {
-      throw new IllegalArgumentException(
-          "invalid attribute for view '" + view + "': " + attribute);
+      throw new IllegalArgumentException("invalid attribute for view '" + view + "': " + attribute);
     }
-    return (V) value;
+    return value;
   }
 
   @Nullable
@@ -277,8 +273,7 @@ final class AttributeService {
    */
   @SuppressWarnings("unchecked")
   @Nullable
-  public <V extends FileAttributeView> V getFileAttributeView(
-      FileLookup lookup, Class<V> type) {
+  public <V extends FileAttributeView> V getFileAttributeView(FileLookup lookup, Class<V> type) {
     AttributeProvider provider = providersByViewType.get(type);
 
     if (provider != null) {
@@ -299,22 +294,26 @@ final class AttributeService {
     return ImmutableMap.copyOf(inheritedViews);
   }
 
-  private void createInheritedViews(FileLookup lookup, AttributeProvider provider,
+  private void createInheritedViews(
+      FileLookup lookup,
+      AttributeProvider provider,
       Map<String, FileAttributeView> inheritedViews) {
 
     for (String inherited : provider.inherits()) {
       if (!inheritedViews.containsKey(inherited)) {
         AttributeProvider inheritedProvider = providersByName.get(inherited);
-        FileAttributeView inheritedView = getFileAttributeView(
-            lookup, inheritedProvider.viewType(), inheritedViews);
+        FileAttributeView inheritedView =
+            getFileAttributeView(lookup, inheritedProvider.viewType(), inheritedViews);
 
         inheritedViews.put(inherited, inheritedView);
       }
     }
   }
 
-  private FileAttributeView getFileAttributeView(FileLookup lookup,
-      Class<? extends FileAttributeView> viewType, Map<String, FileAttributeView> inheritedViews) {
+  private FileAttributeView getFileAttributeView(
+      FileLookup lookup,
+      Class<? extends FileAttributeView> viewType,
+      Map<String, FileAttributeView> inheritedViews) {
     AttributeProvider provider = providersByViewType.get(viewType);
     createInheritedViews(lookup, provider, inheritedViews);
     return provider.view(lookup, ImmutableMap.copyOf(inheritedViews));

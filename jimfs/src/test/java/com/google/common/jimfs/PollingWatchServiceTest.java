@@ -16,12 +16,12 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.AbstractWatchService.Event;
@@ -60,27 +60,34 @@ public class PollingWatchServiceTest {
   @Before
   public void setUp() {
     fs = (JimfsFileSystem) Jimfs.newFileSystem(Configuration.unix());
-    watcher = new PollingWatchService(fs.getDefaultView(),
-        fs.getPathService(), new FileSystemState(Runnables.doNothing()), 4, MILLISECONDS);
+    watcher =
+        new PollingWatchService(
+            fs.getDefaultView(),
+            fs.getPathService(),
+            new FileSystemState(Runnables.doNothing()),
+            4, MILLISECONDS);
   }
 
   @After
-  public void tearDown() {
+  public void tearDown() throws IOException {
     watcher.close();
+    fs.close();
+    watcher = null;
+    fs = null;
   }
 
   @Test
   public void testNewWatcher() {
-    ASSERT.that(watcher.isOpen()).isTrue();
-    ASSERT.that(watcher.isPolling()).isFalse();
+    assertThat(watcher.isOpen()).isTrue();
+    assertThat(watcher.isPolling()).isFalse();
   }
 
   @Test
   public void testRegister() throws IOException {
     Key key = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
-    ASSERT.that(key.isValid()).isTrue();
+    assertThat(key.isValid()).isTrue();
 
-    ASSERT.that(watcher.isPolling()).isTrue();
+    assertThat(watcher.isPolling()).isTrue();
   }
 
   @Test
@@ -107,22 +114,22 @@ public class PollingWatchServiceTest {
   public void testCancellingLastKeyStopsPolling() throws IOException {
     Key key = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     key.cancel();
-    ASSERT.that(key.isValid()).isFalse();
+    assertThat(key.isValid()).isFalse();
 
-    ASSERT.that(watcher.isPolling()).isFalse();
+    assertThat(watcher.isPolling()).isFalse();
 
     Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     Key key3 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
 
-    ASSERT.that(watcher.isPolling()).isTrue();
+    assertThat(watcher.isPolling()).isTrue();
 
     key2.cancel();
 
-    ASSERT.that(watcher.isPolling()).isTrue();
+    assertThat(watcher.isPolling()).isTrue();
 
     key3.cancel();
 
-    ASSERT.that(watcher.isPolling()).isFalse();
+    assertThat(watcher.isPolling()).isFalse();
   }
 
   @Test
@@ -130,35 +137,35 @@ public class PollingWatchServiceTest {
     Key key1 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_CREATE));
     Key key2 = watcher.register(createDirectory(), ImmutableList.of(ENTRY_DELETE));
 
-    ASSERT.that(key1.isValid()).isTrue();
-    ASSERT.that(key2.isValid()).isTrue();
-    ASSERT.that(watcher.isPolling()).isTrue();
+    assertThat(key1.isValid()).isTrue();
+    assertThat(key2.isValid()).isTrue();
+    assertThat(watcher.isPolling()).isTrue();
 
     watcher.close();
 
-    ASSERT.that(key1.isValid()).isFalse();
-    ASSERT.that(key2.isValid()).isFalse();
-    ASSERT.that(watcher.isPolling()).isFalse();
+    assertThat(key1.isValid()).isFalse();
+    assertThat(key2.isValid()).isFalse();
+    assertThat(watcher.isPolling()).isFalse();
   }
 
-  @Test(timeout = 200)
+  @Test(timeout = 2000)
   public void testWatchForOneEventType() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE));
 
     Files.createFile(path.resolve("foo"));
 
-    assertWatcherHasEvents(watcher, new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")));
+    assertWatcherHasEvents(new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")));
 
     Files.createFile(path.resolve("bar"));
     Files.createFile(path.resolve("baz"));
 
-    assertWatcherHasEvents(watcher,
+    assertWatcherHasEvents(
         new Event<>(ENTRY_CREATE, 1, fs.getPath("bar")),
         new Event<>(ENTRY_CREATE, 1, fs.getPath("baz")));
   }
 
-  @Test(timeout = 200)
+  @Test(timeout = 2000)
   public void testWatchForMultipleEventTypes() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY));
@@ -166,15 +173,15 @@ public class PollingWatchServiceTest {
     Files.createDirectory(path.resolve("foo"));
     Files.createFile(path.resolve("bar"));
 
-    assertWatcherHasEvents(watcher,
-        new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")),
-        new Event<>(ENTRY_CREATE, 1, fs.getPath("bar")));
+    assertWatcherHasEvents(
+        new Event<>(ENTRY_CREATE, 1, fs.getPath("bar")),
+        new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")));
 
     Files.createFile(path.resolve("baz"));
     Files.delete(path.resolve("bar"));
     Files.createFile(path.resolve("foo/bar"));
 
-    assertWatcherHasEvents(watcher,
+    assertWatcherHasEvents(
         new Event<>(ENTRY_CREATE, 1, fs.getPath("baz")),
         new Event<>(ENTRY_DELETE, 1, fs.getPath("bar")),
         new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")));
@@ -183,42 +190,54 @@ public class PollingWatchServiceTest {
     ensureTimeToPoll(); // watcher polls, seeing modification, then polls again, seeing delete
     Files.delete(path.resolve("foo"));
 
-    assertWatcherHasEvents(watcher,
+    assertWatcherHasEvents(
         new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
         new Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
 
     Files.createDirectories(path.resolve("foo/bar"));
 
-    assertWatcherHasEvents(watcher, new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")));
+    // polling here may either see just the creation of foo, or may first see the creation of foo
+    // and then the creation of foo/bar (modification of foo) since those don't happen atomically
+    assertWatcherHasEvents(
+        ImmutableList.<WatchEvent<?>>of(new Event<>(ENTRY_CREATE, 1, fs.getPath("foo"))),
+        // or
+        ImmutableList.<WatchEvent<?>>of(
+            new Event<>(ENTRY_CREATE, 1, fs.getPath("foo")),
+            new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo"))));
 
     Files.delete(path.resolve("foo/bar"));
     Files.delete(path.resolve("foo"));
 
-    // foo should be deleted before polling detects its modification, but it may not be
-    // so check for either an ENTRY_DELETE event or both an ENTRY_MODIFY and ENTRY_DELETE event
-    ensureTimeToPoll();
-    WatchKey key = watcher.take();
-    List<WatchEvent<?>> keyEvents = key.pollEvents();
-    if (keyEvents.size() == 1) {
-      ASSERT.that(keyEvents).has().exactly(new Event<>(ENTRY_DELETE, 1, fs.getPath("foo")));
-    } else {
-      ASSERT.that(keyEvents).has().exactlyAs(Arrays.<WatchEvent<?>>asList(
-          new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
-          new Event<>(ENTRY_DELETE, 1, fs.getPath("foo"))));
-    }
+    // polling here may either just see the deletion of foo, or may first see the deletion of bar
+    // (modification of foo) and then the deletion of foo
+    assertWatcherHasEvents(
+        ImmutableList.<WatchEvent<?>>of(new Event<>(ENTRY_DELETE, 1, fs.getPath("foo"))),
+        // or
+        ImmutableList.<WatchEvent<?>>of(
+            new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
+            new Event<>(ENTRY_DELETE, 1, fs.getPath("foo"))));
   }
 
-  private static void assertWatcherHasEvents(
-      PollingWatchService watcher, Event<?>... events) throws InterruptedException {
+  private void assertWatcherHasEvents(WatchEvent<?>... events) throws InterruptedException {
+    assertWatcherHasEvents(Arrays.asList(events), ImmutableList.<WatchEvent<?>>of());
+  }
+
+  private void assertWatcherHasEvents(List<WatchEvent<?>> expected, List<WatchEvent<?>> alternate)
+      throws InterruptedException {
     ensureTimeToPoll(); // otherwise we could read 1 event but not all the events we're expecting
     WatchKey key = watcher.take();
     List<WatchEvent<?>> keyEvents = key.pollEvents();
-    ASSERT.that(keyEvents).has().exactlyAs(Arrays.<WatchEvent<?>>asList(events));
+
+    if (keyEvents.size() == expected.size() || alternate.isEmpty()) {
+      assertThat(keyEvents).containsExactlyElementsIn(expected);
+    } else {
+      assertThat(keyEvents).containsExactlyElementsIn(alternate);
+    }
     key.reset();
   }
 
   private static void ensureTimeToPoll() {
-    Uninterruptibles.sleepUninterruptibly(10, MILLISECONDS);
+    Uninterruptibles.sleepUninterruptibly(40, MILLISECONDS);
   }
 
   private JimfsPath createDirectory() throws IOException {

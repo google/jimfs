@@ -35,10 +35,7 @@ import javax.annotation.Nullable;
  */
 public final class TestAttributeProvider extends AttributeProvider {
 
-  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
-      "foo",
-      "bar",
-      "baz");
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of("foo", "bar", "baz");
 
   @Override
   public String name() {
@@ -74,17 +71,15 @@ public final class TestAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public void set(
-      File file, String view, String attribute, Object value, boolean create) {
+  public void set(File file, String view, String attribute, Object value, boolean create) {
     switch (attribute) {
       case "bar":
         checkNotCreate(view, attribute, create);
-        file.setAttribute("test", "bar",
-            checkType(view, attribute, value, Number.class).longValue());
+        file.setAttribute(
+            "test", "bar", checkType(view, attribute, value, Number.class).longValue());
         break;
       case "baz":
-        file.setAttribute("test", "baz",
-            checkType(view, attribute, value, Integer.class));
+        file.setAttribute("test", "baz", checkType(view, attribute, value, Integer.class));
         break;
       default:
         throw unsettable(view, attribute);
@@ -144,7 +139,8 @@ public final class TestAttributeProvider extends AttributeProvider {
     public void setTimes(
         @Nullable FileTime lastModifiedTime,
         @Nullable FileTime lastAccessTime,
-        @Nullable FileTime createTime) throws IOException {
+        @Nullable FileTime createTime)
+        throws IOException {
       basicView.setTimes(lastModifiedTime, lastAccessTime, createTime);
     }
 

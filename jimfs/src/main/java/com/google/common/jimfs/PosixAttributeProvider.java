@@ -47,9 +47,7 @@ import javax.annotation.Nullable;
  */
 final class PosixAttributeProvider extends AttributeProvider {
 
-  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
-      "group",
-      "permissions");
+  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of("group", "permissions");
 
   private static final ImmutableSet<String> INHERITED_VIEWS = ImmutableSet.of("basic", "owner");
 
@@ -82,9 +80,10 @@ final class PosixAttributeProvider extends AttributeProvider {
       if (userProvidedGroup instanceof String) {
         group = createGroupPrincipal((String) userProvidedGroup);
       } else {
-        throw new IllegalArgumentException("invalid type " + userProvidedGroup.getClass()
-            + " for attribute 'posix:group': should be one of " + String.class + " or "
-            + GroupPrincipal.class);
+        throw new IllegalArgumentException(
+            "invalid type " + userProvidedGroup.getClass().getName()
+                + " for attribute 'posix:group': should be one of "
+                + String.class + " or " + GroupPrincipal.class);
       }
     }
 
@@ -93,14 +92,16 @@ final class PosixAttributeProvider extends AttributeProvider {
     Set<PosixFilePermission> permissions = DEFAULT_PERMISSIONS;
     if (userProvidedPermissions != null) {
       if (userProvidedPermissions instanceof String) {
-        permissions = Sets.immutableEnumSet(
-            PosixFilePermissions.fromString((String) userProvidedPermissions));
+        permissions =
+            Sets.immutableEnumSet(
+                PosixFilePermissions.fromString((String) userProvidedPermissions));
       } else if (userProvidedPermissions instanceof Set) {
         permissions = toPermissions((Set<?>) userProvidedPermissions);
       } else {
-        throw new IllegalArgumentException("invalid type " + userProvidedPermissions.getClass()
-            + " for attribute 'posix:permissions': should be one of " + String.class + " or "
-            + Set.class);
+        throw new IllegalArgumentException(
+            "invalid type " + userProvidedPermissions.getClass().getName()
+                + " for attribute 'posix:permissions': should be one of "
+                + String.class + " or " + Set.class);
       }
     }
 
@@ -135,8 +136,8 @@ final class PosixAttributeProvider extends AttributeProvider {
         file.setAttribute("posix", "group", group);
         break;
       case "permissions":
-        file.setAttribute("posix", "permissions",
-            toPermissions(checkType(view, attribute, value, Set.class)));
+        file.setAttribute(
+            "posix", "permissions", toPermissions(checkType(view, attribute, value, Set.class)));
         break;
       default:
     }
@@ -147,8 +148,10 @@ final class PosixAttributeProvider extends AttributeProvider {
     ImmutableSet<?> copy = ImmutableSet.copyOf(set);
     for (Object obj : copy) {
       if (!(obj instanceof PosixFilePermission)) {
-        throw new IllegalArgumentException("invalid element for attribute 'posix:permissions': "
-            + "should be Set<PosixFilePermission>, found element of type " + obj.getClass());
+        throw new IllegalArgumentException(
+            "invalid element for attribute 'posix:permissions': "
+                + "should be Set<PosixFilePermission>, found element of type "
+                + obj.getClass());
       }
     }
 
@@ -161,9 +164,10 @@ final class PosixAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public PosixFileAttributeView view(FileLookup lookup,
-      ImmutableMap<String, FileAttributeView> inheritedViews) {
-    return new View(lookup,
+  public PosixFileAttributeView view(
+      FileLookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
+    return new View(
+        lookup,
         (BasicFileAttributeView) inheritedViews.get("basic"),
         (FileOwnerAttributeView) inheritedViews.get("owner"));
   }
@@ -186,8 +190,8 @@ final class PosixAttributeProvider extends AttributeProvider {
     private final BasicFileAttributeView basicView;
     private final FileOwnerAttributeView ownerView;
 
-    protected View(FileLookup lookup,
-        BasicFileAttributeView basicView, FileOwnerAttributeView ownerView) {
+    protected View(
+        FileLookup lookup, BasicFileAttributeView basicView, FileOwnerAttributeView ownerView) {
       super(lookup);
       this.basicView = checkNotNull(basicView);
       this.ownerView = checkNotNull(ownerView);

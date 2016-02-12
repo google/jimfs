@@ -180,13 +180,21 @@ final class JimfsFileSystem extends FileSystem {
 
   private final FileSystemView defaultView;
 
-  JimfsFileSystem(JimfsFileSystemProvider provider, URI uri, JimfsFileStore fileStore,
-      PathService pathService, FileSystemView defaultView) {
+  private final WatchServiceConfiguration watchServiceConfig;
+
+  JimfsFileSystem(
+      JimfsFileSystemProvider provider,
+      URI uri,
+      JimfsFileStore fileStore,
+      PathService pathService,
+      FileSystemView defaultView,
+      WatchServiceConfiguration watchServiceConfig) {
     this.provider = checkNotNull(provider);
     this.uri = checkNotNull(uri);
     this.fileStore = checkNotNull(fileStore);
     this.pathService = checkNotNull(pathService);
     this.defaultView = checkNotNull(defaultView);
+    this.watchServiceConfig = checkNotNull(watchServiceConfig);
   }
 
   @Override
@@ -292,11 +300,10 @@ final class JimfsFileSystem extends FileSystem {
 
   @Override
   public WatchService newWatchService() throws IOException {
-    return new PollingWatchService(defaultView, pathService, fileStore.state());
+    return watchServiceConfig.newWatchService(defaultView, pathService);
   }
 
-  @Nullable
-  private ExecutorService defaultThreadPool;
+  @Nullable private ExecutorService defaultThreadPool;
 
   /**
    * Returns a default thread pool to use for asynchronous file channels when users do not provide
@@ -305,18 +312,23 @@ final class JimfsFileSystem extends FileSystem {
    */
   public synchronized ExecutorService getDefaultThreadPool() {
     if (defaultThreadPool == null) {
-      defaultThreadPool = Executors.newCachedThreadPool(new ThreadFactoryBuilder()
-          .setDaemon(true)
-          .setNameFormat("JimfsFileSystem-" + uri.getHost() + "-defaultThreadPool-%s")
-          .build());
+      defaultThreadPool =
+          Executors.newCachedThreadPool(
+              new ThreadFactoryBuilder()
+                  .setDaemon(true)
+                  .setNameFormat("JimfsFileSystem-" + uri.getHost() + "-defaultThreadPool-%s")
+                  .build());
 
       // ensure thread pool is closed when file system is closed
-      fileStore.state().register(new Closeable() {
-        @Override
-        public void close() {
-          defaultThreadPool.shutdown();
-        }
-      });
+      fileStore
+          .state()
+          .register(
+              new Closeable() {
+                @Override
+                public void close() {
+                  defaultThreadPool.shutdown();
+                }
+              });
     }
     return defaultThreadPool;
   }

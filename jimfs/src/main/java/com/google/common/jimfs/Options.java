@@ -123,8 +123,8 @@ final class Options {
     }
 
     // just return the link options for finding the file, nothing else is needed
-    return (ImmutableSet<OpenOption>) (ImmutableSet<?>)
-        (nofollowLinks ? NOFOLLOW_LINKS : FOLLOW_LINKS);
+    return (ImmutableSet<OpenOption>)
+        (ImmutableSet<?>) (nofollowLinks ? NOFOLLOW_LINKS : FOLLOW_LINKS);
   }
 
   /**

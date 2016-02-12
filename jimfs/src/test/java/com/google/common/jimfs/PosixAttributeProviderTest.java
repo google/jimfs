@@ -18,8 +18,8 @@ package com.google.common.jimfs;
 
 import static com.google.common.jimfs.UserLookupService.createGroupPrincipal;
 import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertNotNull;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -42,8 +42,8 @@ import java.util.Set;
  * @author Colin Decker
  */
 @RunWith(JUnit4.class)
-public class PosixAttributeProviderTest extends
-    AbstractAttributeProviderTest<PosixAttributeProvider> {
+public class PosixAttributeProviderTest
+    extends AbstractAttributeProviderTest<PosixAttributeProvider> {
 
   @Override
   protected PosixAttributeProvider createProvider() {
@@ -57,7 +57,8 @@ public class PosixAttributeProviderTest extends
 
   @Test
   public void testInitialAttributes() {
-    assertContainsAll(file,
+    assertContainsAll(
+        file,
         ImmutableMap.of(
             "group", createGroupPrincipal("group"),
             "permissions", PosixFilePermissions.fromString("rw-r--r--")));
@@ -83,41 +84,43 @@ public class PosixAttributeProviderTest extends
   public void testView() throws IOException {
     file.setAttribute("owner", "owner", createUserPrincipal("user"));
 
-    PosixFileAttributeView view = provider.view(fileLookup(),
-        ImmutableMap.of(
-            "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS),
-            "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
+    PosixFileAttributeView view =
+        provider.view(
+            fileLookup(),
+            ImmutableMap.of(
+                "basic", new BasicAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS),
+                "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
-    ASSERT.that(view.name()).is("posix");
-    ASSERT.that(view.getOwner()).is(createUserPrincipal("user"));
+    assertThat(view.name()).isEqualTo("posix");
+    assertThat(view.getOwner()).isEqualTo(createUserPrincipal("user"));
 
     PosixFileAttributes attrs = view.readAttributes();
-    ASSERT.that(attrs.fileKey()).is(0);
-    ASSERT.that(attrs.owner()).is(createUserPrincipal("user"));
-    ASSERT.that(attrs.group()).is(createGroupPrincipal("group"));
-    ASSERT.that(attrs.permissions()).is(PosixFilePermissions.fromString("rw-r--r--"));
+    assertThat(attrs.fileKey()).isEqualTo(0);
+    assertThat(attrs.owner()).isEqualTo(createUserPrincipal("user"));
+    assertThat(attrs.group()).isEqualTo(createGroupPrincipal("group"));
+    assertThat(attrs.permissions()).isEqualTo(PosixFilePermissions.fromString("rw-r--r--"));
 
     view.setOwner(createUserPrincipal("root"));
-    ASSERT.that(view.getOwner()).is(createUserPrincipal("root"));
-    ASSERT.that(file.getAttribute("owner", "owner")).is(createUserPrincipal("root"));
+    assertThat(view.getOwner()).isEqualTo(createUserPrincipal("root"));
+    assertThat(file.getAttribute("owner", "owner")).isEqualTo(createUserPrincipal("root"));
 
     view.setGroup(createGroupPrincipal("root"));
-    ASSERT.that(view.readAttributes().group()).is(createGroupPrincipal("root"));
-    ASSERT.that(file.getAttribute("posix", "group")).is(createGroupPrincipal("root"));
+    assertThat(view.readAttributes().group()).isEqualTo(createGroupPrincipal("root"));
+    assertThat(file.getAttribute("posix", "group")).isEqualTo(createGroupPrincipal("root"));
 
     view.setPermissions(PosixFilePermissions.fromString("rwx------"));
-    ASSERT.that(view.readAttributes().permissions())
-        .is(PosixFilePermissions.fromString("rwx------"));
-    ASSERT.that(file.getAttribute("posix", "permissions"))
-        .is(PosixFilePermissions.fromString("rwx------"));
+    assertThat(view.readAttributes().permissions())
+        .isEqualTo(PosixFilePermissions.fromString("rwx------"));
+    assertThat(file.getAttribute("posix", "permissions"))
+        .isEqualTo(PosixFilePermissions.fromString("rwx------"));
   }
 
   @Test
   public void testAttributes() {
     PosixFileAttributes attrs = provider.readAttributes(file);
-    ASSERT.that(attrs.permissions()).is(PosixFilePermissions.fromString("rw-r--r--"));
-    ASSERT.that(attrs.group()).is(createGroupPrincipal("group"));
-    ASSERT.that(attrs.fileKey()).is(0);
+    assertThat(attrs.permissions()).isEqualTo(PosixFilePermissions.fromString("rw-r--r--"));
+    assertThat(attrs.group()).isEqualTo(createGroupPrincipal("group"));
+    assertThat(attrs.fileKey()).isEqualTo(0);
   }
 }

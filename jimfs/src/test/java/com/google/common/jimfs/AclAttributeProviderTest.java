@@ -17,12 +17,12 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.attribute.AclEntryFlag.DIRECTORY_INHERIT;
 import static java.nio.file.attribute.AclEntryPermission.APPEND_DATA;
 import static java.nio.file.attribute.AclEntryPermission.DELETE;
 import static java.nio.file.attribute.AclEntryType.ALLOW;
 import static org.junit.Assert.assertNotNull;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -51,20 +51,23 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
   private static final UserPrincipal USER = createUserPrincipal("user");
   private static final UserPrincipal FOO = createUserPrincipal("foo");
 
-  private static final ImmutableList<AclEntry> defaultAcl = new ImmutableList.Builder<AclEntry>()
-      .add(AclEntry.newBuilder()
-          .setType(ALLOW)
-          .setFlags(DIRECTORY_INHERIT)
-          .setPermissions(DELETE, APPEND_DATA)
-          .setPrincipal(USER)
-          .build())
-      .add(AclEntry.newBuilder()
-          .setType(ALLOW)
-          .setFlags(DIRECTORY_INHERIT)
-          .setPermissions(DELETE, APPEND_DATA)
-          .setPrincipal(FOO)
-          .build())
-      .build();
+  private static final ImmutableList<AclEntry> defaultAcl =
+      new ImmutableList.Builder<AclEntry>()
+          .add(
+              AclEntry.newBuilder()
+                  .setType(ALLOW)
+                  .setFlags(DIRECTORY_INHERIT)
+                  .setPermissions(DELETE, APPEND_DATA)
+                  .setPrincipal(USER)
+                  .build())
+          .add(
+              AclEntry.newBuilder()
+                  .setType(ALLOW)
+                  .setFlags(DIRECTORY_INHERIT)
+                  .setPermissions(DELETE, APPEND_DATA)
+                  .setPrincipal(FOO)
+                  .build())
+          .build();
 
   @Override
   protected AclAttributeProvider createProvider() {
@@ -83,7 +86,7 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
 
   @Test
   public void testInitialAttributes() {
-    ASSERT.that(provider.get(file, "acl")).is(defaultAcl);
+    assertThat(provider.get(file, "acl")).isEqualTo(defaultAcl);
   }
 
   @Test
@@ -96,21 +99,23 @@ public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclA
 
   @Test
   public void testView() throws IOException {
-    AclFileAttributeView view = provider.view(fileLookup(),
-        ImmutableMap.<String, FileAttributeView>of(
-            "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
+    AclFileAttributeView view =
+        provider.view(
+            fileLookup(),
+            ImmutableMap.<String, FileAttributeView>of(
+                "owner", new OwnerAttributeProvider().view(fileLookup(), NO_INHERITED_VIEWS)));
     assertNotNull(view);
 
-    ASSERT.that(view.name()).is("acl");
+    assertThat(view.name()).isEqualTo("acl");
 
-    ASSERT.that(view.getAcl()).is(defaultAcl);
+    assertThat(view.getAcl()).isEqualTo(defaultAcl);
 
     view.setAcl(ImmutableList.<AclEntry>of());
     view.setOwner(FOO);
 
-    ASSERT.that(view.getAcl()).is(ImmutableList.<AclEntry>of());
-    ASSERT.that(view.getOwner()).is(FOO);
+    assertThat(view.getAcl()).isEqualTo(ImmutableList.<AclEntry>of());
+    assertThat(view.getOwner()).isEqualTo(FOO);
 
-    ASSERT.that(file.getAttribute("acl", "acl")).is(ImmutableList.<AclEntry>of());
+    assertThat(file.getAttribute("acl", "acl")).isEqualTo(ImmutableList.<AclEntry>of());
   }
 }

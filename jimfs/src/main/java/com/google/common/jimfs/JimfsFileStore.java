@@ -61,8 +61,12 @@ final class JimfsFileStore extends FileStore {
   private final Lock readLock;
   private final Lock writeLock;
 
-  public JimfsFileStore(FileTree tree, FileFactory factory, HeapDisk disk,
-      AttributeService attributes, ImmutableSet<Feature> supportedFeatures,
+  public JimfsFileStore(
+      FileTree tree,
+      FileFactory factory,
+      HeapDisk disk,
+      AttributeService attributes,
+      ImmutableSet<Feature> supportedFeatures,
       FileSystemState state) {
     this.tree = checkNotNull(tree);
     this.factory = checkNotNull(factory);
@@ -132,8 +136,8 @@ final class JimfsFileStore extends FileStore {
    * @throws IOException if a symbolic link cycle is detected or the depth of symbolic link
    *    recursion otherwise exceeds a threshold
    */
-  DirectoryEntry lookUp(File workingDirectory,
-      JimfsPath path, Set<? super LinkOption> options) throws IOException {
+  DirectoryEntry lookUp(File workingDirectory, JimfsPath path, Set<? super LinkOption> options)
+      throws IOException {
     state.checkOpen();
     return tree.lookUp(workingDirectory, path, options);
   }

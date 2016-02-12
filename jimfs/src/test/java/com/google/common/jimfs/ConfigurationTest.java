@@ -20,8 +20,13 @@ import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static com.google.common.jimfs.PathNormalization.CASE_FOLD_UNICODE;
 import static com.google.common.jimfs.PathNormalization.NFC;
 import static com.google.common.jimfs.PathNormalization.NFD;
+import static com.google.common.jimfs.PathSubject.paths;
+import static com.google.common.jimfs.WatchServiceConfiguration.polling;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assert_;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -34,7 +39,10 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.PosixFilePermissions;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link Configuration}, {@link Configuration.Builder} and file systems created from
@@ -45,33 +53,39 @@ import java.nio.file.attribute.PosixFilePermissions;
 @RunWith(JUnit4.class)
 public class ConfigurationTest {
 
+  private static PathSubject assertThatPath(Path path) {
+    return assert_().about(paths()).that(path);
+  }
+
   @Test
   public void testDefaultUnixConfiguration() {
     Configuration config = Configuration.unix();
 
-    ASSERT.that(config.pathType).is(PathType.unix());
-    ASSERT.that(config.roots).has().exactly("/");
-    ASSERT.that(config.workingDirectory).is("/work");
-    ASSERT.that(config.nameCanonicalNormalization).isEmpty();
-    ASSERT.that(config.nameDisplayNormalization).isEmpty();
-    ASSERT.that(config.pathEqualityUsesCanonicalForm).isFalse();
-    ASSERT.that(config.blockSize).is(8192);
-    ASSERT.that(config.maxSize).is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(config.maxCacheSize).is(-1);
-    ASSERT.that(config.attributeViews).has().exactly("basic");
-    ASSERT.that(config.attributeProviders).isEmpty();
-    ASSERT.that(config.defaultAttributeValues).isEmpty();
+    assertThat(config.pathType).isEqualTo(PathType.unix());
+    assertThat(config.roots).containsExactly("/");
+    assertThat(config.workingDirectory).isEqualTo("/work");
+    assertThat(config.nameCanonicalNormalization).isEmpty();
+    assertThat(config.nameDisplayNormalization).isEmpty();
+    assertThat(config.pathEqualityUsesCanonicalForm).isFalse();
+    assertThat(config.blockSize).isEqualTo(8192);
+    assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
+    assertThat(config.maxCacheSize).isEqualTo(-1);
+    assertThat(config.attributeViews).containsExactly("basic");
+    assertThat(config.attributeProviders).isEmpty();
+    assertThat(config.defaultAttributeValues).isEmpty();
   }
 
   @Test
   public void testFileSystemForDefaultUnixConfiguration() throws IOException {
     FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
 
-    ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
-    ASSERT.that(fs.getPath("").toRealPath()).is(fs.getPath("/work"));
-    ASSERT.that(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
-        .is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(fs.supportedFileAttributeViews()).has().exactly("basic");
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
+        .inOrder();
+    assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
+        .isEqualTo(4L * 1024 * 1024 * 1024);
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("/foo"));
     Files.createFile(fs.getPath("/FOO"));
@@ -81,29 +95,31 @@ public class ConfigurationTest {
   public void testDefaultOsXConfiguration() {
     Configuration config = Configuration.osX();
 
-    ASSERT.that(config.pathType).is(PathType.unix());
-    ASSERT.that(config.roots).has().exactly("/");
-    ASSERT.that(config.workingDirectory).is("/work");
-    ASSERT.that(config.nameCanonicalNormalization).has().exactly(NFD, CASE_FOLD_ASCII);
-    ASSERT.that(config.nameDisplayNormalization).has().exactly(NFC);
-    ASSERT.that(config.pathEqualityUsesCanonicalForm).isFalse();
-    ASSERT.that(config.blockSize).is(8192);
-    ASSERT.that(config.maxSize).is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(config.maxCacheSize).is(-1);
-    ASSERT.that(config.attributeViews).has().exactly("basic");
-    ASSERT.that(config.attributeProviders).isEmpty();
-    ASSERT.that(config.defaultAttributeValues).isEmpty();
+    assertThat(config.pathType).isEqualTo(PathType.unix());
+    assertThat(config.roots).containsExactly("/");
+    assertThat(config.workingDirectory).isEqualTo("/work");
+    assertThat(config.nameCanonicalNormalization).containsExactly(NFD, CASE_FOLD_ASCII);
+    assertThat(config.nameDisplayNormalization).containsExactly(NFC);
+    assertThat(config.pathEqualityUsesCanonicalForm).isFalse();
+    assertThat(config.blockSize).isEqualTo(8192);
+    assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
+    assertThat(config.maxCacheSize).isEqualTo(-1);
+    assertThat(config.attributeViews).containsExactly("basic");
+    assertThat(config.attributeProviders).isEmpty();
+    assertThat(config.defaultAttributeValues).isEmpty();
   }
 
   @Test
   public void testFileSystemForDefaultOsXConfiguration() throws IOException {
     FileSystem fs = Jimfs.newFileSystem(Configuration.osX());
 
-    ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
-    ASSERT.that(fs.getPath("").toRealPath()).is(fs.getPath("/work"));
-    ASSERT.that(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
-        .is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(fs.supportedFileAttributeViews()).has().exactly("basic");
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
+        .inOrder();
+    assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/work"));
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
+        .isEqualTo(4L * 1024 * 1024 * 1024);
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("/foo"));
 
@@ -118,29 +134,31 @@ public class ConfigurationTest {
   public void testDefaultWindowsConfiguration() {
     Configuration config = Configuration.windows();
 
-    ASSERT.that(config.pathType).is(PathType.windows());
-    ASSERT.that(config.roots).has().exactly("C:\\");
-    ASSERT.that(config.workingDirectory).is("C:\\work");
-    ASSERT.that(config.nameCanonicalNormalization).has().exactly(CASE_FOLD_ASCII);
-    ASSERT.that(config.nameDisplayNormalization).isEmpty();
-    ASSERT.that(config.pathEqualityUsesCanonicalForm).isTrue();
-    ASSERT.that(config.blockSize).is(8192);
-    ASSERT.that(config.maxSize).is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(config.maxCacheSize).is(-1);
-    ASSERT.that(config.attributeViews).has().exactly("basic");
-    ASSERT.that(config.attributeProviders).isEmpty();
-    ASSERT.that(config.defaultAttributeValues).isEmpty();
+    assertThat(config.pathType).isEqualTo(PathType.windows());
+    assertThat(config.roots).containsExactly("C:\\");
+    assertThat(config.workingDirectory).isEqualTo("C:\\work");
+    assertThat(config.nameCanonicalNormalization).containsExactly(CASE_FOLD_ASCII);
+    assertThat(config.nameDisplayNormalization).isEmpty();
+    assertThat(config.pathEqualityUsesCanonicalForm).isTrue();
+    assertThat(config.blockSize).isEqualTo(8192);
+    assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
+    assertThat(config.maxCacheSize).isEqualTo(-1);
+    assertThat(config.attributeViews).containsExactly("basic");
+    assertThat(config.attributeProviders).isEmpty();
+    assertThat(config.defaultAttributeValues).isEmpty();
   }
 
   @Test
   public void testFileSystemForDefaultWindowsConfiguration() throws IOException {
     FileSystem fs = Jimfs.newFileSystem(Configuration.windows());
 
-    ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("C:\\")));
-    ASSERT.that(fs.getPath("").toRealPath()).is(fs.getPath("C:\\work"));
-    ASSERT.that(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
-        .is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(fs.supportedFileAttributeViews()).has().exactly("basic");
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableList.of(fs.getPath("C:\\")))
+        .inOrder();
+    assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("C:\\work"));
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
+        .isEqualTo(4L * 1024 * 1024 * 1024);
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic");
 
     Files.createFile(fs.getPath("C:\\foo"));
 
@@ -155,63 +173,66 @@ public class ConfigurationTest {
   public void testBuilder() {
     AttributeProvider unixProvider = StandardAttributeProviders.get("unix");
 
-    Configuration config = Configuration.builder(PathType.unix())
-        .setRoots("/")
-        .setWorkingDirectory("/hello/world")
-        .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
-        .setNameDisplayNormalization(NFC)
-        .setPathEqualityUsesCanonicalForm(true)
-        .setBlockSize(10)
-        .setMaxSize(100)
-        .setMaxCacheSize(50)
-        .setAttributeViews("basic", "posix")
-        .addAttributeProvider(unixProvider)
-        .setDefaultAttributeValue(
-            "posix:permissions", PosixFilePermissions.fromString("---------"))
-        .build();
+    Configuration config =
+        Configuration.builder(PathType.unix())
+            .setRoots("/")
+            .setWorkingDirectory("/hello/world")
+            .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
+            .setNameDisplayNormalization(NFC)
+            .setPathEqualityUsesCanonicalForm(true)
+            .setBlockSize(10)
+            .setMaxSize(100)
+            .setMaxCacheSize(50)
+            .setAttributeViews("basic", "posix")
+            .addAttributeProvider(unixProvider)
+            .setDefaultAttributeValue(
+                "posix:permissions", PosixFilePermissions.fromString("---------"))
+            .build();
 
-    ASSERT.that(config.pathType).is(PathType.unix());
-    ASSERT.that(config.roots).has().exactly("/");
-    ASSERT.that(config.workingDirectory).is("/hello/world");
-    ASSERT.that(config.nameCanonicalNormalization).has().exactly(NFD, CASE_FOLD_UNICODE);
-    ASSERT.that(config.nameDisplayNormalization).has().exactly(NFC);
-    ASSERT.that(config.pathEqualityUsesCanonicalForm).isTrue();
-    ASSERT.that(config.blockSize).is(10);
-    ASSERT.that(config.maxSize).is(100);
-    ASSERT.that(config.maxCacheSize).is(50);
-    ASSERT.that(config.attributeViews).has().exactly("basic", "posix");
-    ASSERT.that(config.attributeProviders).has().exactly(unixProvider);
-    ASSERT.that(config.defaultAttributeValues)
-        .hasKey("posix:permissions").withValue(PosixFilePermissions.fromString("---------"));
+    assertThat(config.pathType).isEqualTo(PathType.unix());
+    assertThat(config.roots).containsExactly("/");
+    assertThat(config.workingDirectory).isEqualTo("/hello/world");
+    assertThat(config.nameCanonicalNormalization).containsExactly(NFD, CASE_FOLD_UNICODE);
+    assertThat(config.nameDisplayNormalization).containsExactly(NFC);
+    assertThat(config.pathEqualityUsesCanonicalForm).isTrue();
+    assertThat(config.blockSize).isEqualTo(10);
+    assertThat(config.maxSize).isEqualTo(100);
+    assertThat(config.maxCacheSize).isEqualTo(50);
+    assertThat(config.attributeViews).containsExactly("basic", "posix");
+    assertThat(config.attributeProviders).containsExactly(unixProvider);
+    assertThat(config.defaultAttributeValues)
+        .containsEntry("posix:permissions", PosixFilePermissions.fromString("---------"));
   }
 
   @Test
   public void testFileSystemForCustomConfiguration() throws IOException {
-    Configuration config = Configuration.builder(PathType.unix())
-        .setRoots("/")
-        .setWorkingDirectory("/hello/world")
-        .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
-        .setNameDisplayNormalization(NFC)
-        .setPathEqualityUsesCanonicalForm(true)
-        .setBlockSize(10)
-        .setMaxSize(100)
-        .setMaxCacheSize(50)
-        .setAttributeViews("unix")
-        .setDefaultAttributeValue(
-            "posix:permissions", PosixFilePermissions.fromString("---------"))
-        .build();
+    Configuration config =
+        Configuration.builder(PathType.unix())
+            .setRoots("/")
+            .setWorkingDirectory("/hello/world")
+            .setNameCanonicalNormalization(NFD, CASE_FOLD_UNICODE)
+            .setNameDisplayNormalization(NFC)
+            .setPathEqualityUsesCanonicalForm(true)
+            .setBlockSize(10)
+            .setMaxSize(100)
+            .setMaxCacheSize(50)
+            .setAttributeViews("unix")
+            .setDefaultAttributeValue(
+                "posix:permissions", PosixFilePermissions.fromString("---------"))
+            .build();
 
     FileSystem fs = Jimfs.newFileSystem(config);
 
-    ASSERT.that(fs.getRootDirectories()).iteratesAs(ImmutableList.of(fs.getPath("/")));
-    ASSERT.that(fs.getPath("").toRealPath()).is(fs.getPath("/hello/world"));
-    ASSERT.that(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace())
-        .is(100);
-    ASSERT.that(fs.supportedFileAttributeViews()).has().exactly("basic", "owner", "posix", "unix");
+    assertThat(fs.getRootDirectories())
+        .containsExactlyElementsIn(ImmutableList.of(fs.getPath("/")))
+        .inOrder();
+    assertThatPath(fs.getPath("").toRealPath()).isEqualTo(fs.getPath("/hello/world"));
+    assertThat(Iterables.getOnlyElement(fs.getFileStores()).getTotalSpace()).isEqualTo(100);
+    assertThat(fs.supportedFileAttributeViews()).containsExactly("basic", "owner", "posix", "unix");
 
     Files.createFile(fs.getPath("/foo"));
-    ASSERT.that(Files.getAttribute(fs.getPath("/foo"), "posix:permissions"))
-        .is(PosixFilePermissions.fromString("---------"));
+    assertThat(Files.getAttribute(fs.getPath("/foo"), "posix:permissions"))
+        .isEqualTo(PosixFilePermissions.fromString("---------"));
 
     try {
       Files.createFile(fs.getPath("/FOO"));
@@ -222,23 +243,25 @@ public class ConfigurationTest {
 
   @Test
   public void testToBuilder() {
-    Configuration config = Configuration.unix().toBuilder()
-        .setWorkingDirectory("/hello/world")
-        .setAttributeViews("basic", "posix")
-        .build();
+    Configuration config =
+        Configuration.unix()
+            .toBuilder()
+            .setWorkingDirectory("/hello/world")
+            .setAttributeViews("basic", "posix")
+            .build();
 
-    ASSERT.that(config.pathType).is(PathType.unix());
-    ASSERT.that(config.roots).has().exactly("/");
-    ASSERT.that(config.workingDirectory).is("/hello/world");
-    ASSERT.that(config.nameCanonicalNormalization).isEmpty();
-    ASSERT.that(config.nameDisplayNormalization).isEmpty();
-    ASSERT.that(config.pathEqualityUsesCanonicalForm).isFalse();
-    ASSERT.that(config.blockSize).is(8192);
-    ASSERT.that(config.maxSize).is(4L * 1024 * 1024 * 1024);
-    ASSERT.that(config.maxCacheSize).is(-1);
-    ASSERT.that(config.attributeViews).has().exactly("basic", "posix");
-    ASSERT.that(config.attributeProviders).isEmpty();
-    ASSERT.that(config.defaultAttributeValues).isEmpty();
+    assertThat(config.pathType).isEqualTo(PathType.unix());
+    assertThat(config.roots).containsExactly("/");
+    assertThat(config.workingDirectory).isEqualTo("/hello/world");
+    assertThat(config.nameCanonicalNormalization).isEmpty();
+    assertThat(config.nameDisplayNormalization).isEmpty();
+    assertThat(config.pathEqualityUsesCanonicalForm).isFalse();
+    assertThat(config.blockSize).isEqualTo(8192);
+    assertThat(config.maxSize).isEqualTo(4L * 1024 * 1024 * 1024);
+    assertThat(config.maxCacheSize).isEqualTo(-1);
+    assertThat(config.attributeViews).containsExactly("basic", "posix");
+    assertThat(config.attributeProviders).isEmpty();
+    assertThat(config.defaultAttributeValues).isEmpty();
   }
 
   @Test
@@ -280,7 +303,8 @@ public class ConfigurationTest {
     assertIllegalNormalizations(CASE_FOLD_ASCII, CASE_FOLD_UNICODE);
   }
 
-  private static void assertIllegalNormalizations(PathNormalization first, PathNormalization... more) {
+  private static void assertIllegalNormalizations(
+      PathNormalization first, PathNormalization... more) {
     try {
       Configuration.builder(PathType.unix()).setNameCanonicalNormalization(first, more);
       fail();
@@ -306,12 +330,40 @@ public class ConfigurationTest {
   @Test // how's that for a name?
   public void testCreateFileSystemFromConfigurationWithWorkingDirectoryNotUnderConfiguredRoot() {
     try {
-      Jimfs.newFileSystem(Configuration.windows().toBuilder()
-          .setRoots("C:\\", "D:\\")
-          .setWorkingDirectory("E:\\foo")
-          .build());
+      Jimfs.newFileSystem(
+          Configuration.windows()
+              .toBuilder()
+              .setRoots("C:\\", "D:\\")
+              .setWorkingDirectory("E:\\foo")
+              .build());
       fail();
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  @Test
+  public void testFileSystemWithDefaultWatchService() throws IOException {
+    FileSystem fs = Jimfs.newFileSystem(Configuration.unix());
+
+    WatchService watchService = fs.newWatchService();
+    assertThat(watchService).isInstanceOf(PollingWatchService.class);
+
+    PollingWatchService pollingWatchService = (PollingWatchService) watchService;
+    assertThat(pollingWatchService.interval).isEqualTo(5);
+    assertThat(pollingWatchService.timeUnit).isEqualTo(SECONDS);
+  }
+
+  @Test
+  public void testFileSystemWithCustomWatchServicePollingInterval() throws IOException {
+    FileSystem fs = Jimfs.newFileSystem(Configuration.unix().toBuilder()
+        .setWatchServiceConfiguration(polling(10, MILLISECONDS))
+        .build());
+
+    WatchService watchService = fs.newWatchService();
+    assertThat(watchService).isInstanceOf(PollingWatchService.class);
+
+    PollingWatchService pollingWatchService = (PollingWatchService) watchService;
+    assertThat(pollingWatchService.interval).isEqualTo(10);
+    assertThat(pollingWatchService.timeUnit).isEqualTo(MILLISECONDS);
   }
 }

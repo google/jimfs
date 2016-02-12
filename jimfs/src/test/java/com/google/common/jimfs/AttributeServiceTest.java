@@ -16,8 +16,8 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -47,24 +47,25 @@ public class AttributeServiceTest {
 
   @Before
   public void setUp() {
-    ImmutableSet<AttributeProvider> providers = ImmutableSet.of(
-        StandardAttributeProviders.get("basic"),
-        StandardAttributeProviders.get("owner"),
-        new TestAttributeProvider());
+    ImmutableSet<AttributeProvider> providers =
+        ImmutableSet.of(
+            StandardAttributeProviders.get("basic"),
+            StandardAttributeProviders.get("owner"),
+            new TestAttributeProvider());
     service = new AttributeService(providers, ImmutableMap.<String, Object>of());
   }
 
   @Test
   public void testSupportedFileAttributeViews() {
-    ASSERT.that(service.supportedFileAttributeViews())
-        .is(ImmutableSet.of("basic", "test", "owner"));
+    assertThat(service.supportedFileAttributeViews())
+        .isEqualTo(ImmutableSet.of("basic", "test", "owner"));
   }
 
   @Test
   public void testSupportsFileAttributeView() {
-    ASSERT.that(service.supportsFileAttributeView(BasicFileAttributeView.class)).isTrue();
-    ASSERT.that(service.supportsFileAttributeView(TestAttributeView.class)).isTrue();
-    ASSERT.that(service.supportsFileAttributeView(PosixFileAttributeView.class)).isFalse();
+    assertThat(service.supportsFileAttributeView(BasicFileAttributeView.class)).isTrue();
+    assertThat(service.supportsFileAttributeView(TestAttributeView.class)).isTrue();
+    assertThat(service.supportsFileAttributeView(PosixFileAttributeView.class)).isFalse();
   }
 
   @Test
@@ -72,12 +73,12 @@ public class AttributeServiceTest {
     File file = Directory.create(0);
     service.setInitialAttributes(file);
 
-    ASSERT.that(file.getAttributeNames("test")).has().exactly("bar", "baz");
-    ASSERT.that(file.getAttributeNames("owner")).has().exactly("owner");
+    assertThat(file.getAttributeNames("test")).containsExactly("bar", "baz");
+    assertThat(file.getAttributeNames("owner")).containsExactly("owner");
 
-    ASSERT.that(service.getAttribute(file, "basic:lastModifiedTime")).isA(FileTime.class);
-    ASSERT.that(file.getAttribute("test", "bar")).is(0L);
-    ASSERT.that(file.getAttribute("test", "baz")).is(1);
+    assertThat(service.getAttribute(file, "basic:lastModifiedTime")).isInstanceOf(FileTime.class);
+    assertThat(file.getAttribute("test", "bar")).isEqualTo(0L);
+    assertThat(file.getAttribute("test", "baz")).isEqualTo(1);
   }
 
   @Test
@@ -85,19 +86,19 @@ public class AttributeServiceTest {
     File file = Directory.create(0);
     service.setInitialAttributes(file);
 
-    ASSERT.that(service.getAttribute(file, "test:foo")).is("hello");
-    ASSERT.that(service.getAttribute(file, "test", "foo")).is("hello");
-    ASSERT.that(service.getAttribute(file, "basic:isRegularFile")).is(false);
-    ASSERT.that(service.getAttribute(file, "isDirectory")).is(true);
-    ASSERT.that(service.getAttribute(file, "test:baz")).is(1);
+    assertThat(service.getAttribute(file, "test:foo")).isEqualTo("hello");
+    assertThat(service.getAttribute(file, "test", "foo")).isEqualTo("hello");
+    assertThat(service.getAttribute(file, "basic:isRegularFile")).isEqualTo(false);
+    assertThat(service.getAttribute(file, "isDirectory")).isEqualTo(true);
+    assertThat(service.getAttribute(file, "test:baz")).isEqualTo(1);
   }
 
   @Test
   public void testGetAttribute_fromInheritedProvider() {
     File file = Directory.create(0);
-    ASSERT.that(service.getAttribute(file, "test:isRegularFile")).is(false);
-    ASSERT.that(service.getAttribute(file, "test:isDirectory")).is(true);
-    ASSERT.that(service.getAttribute(file, "test", "fileKey")).is(0);
+    assertThat(service.getAttribute(file, "test:isRegularFile")).isEqualTo(false);
+    assertThat(service.getAttribute(file, "test:isDirectory")).isEqualTo(true);
+    assertThat(service.getAttribute(file, "test", "fileKey")).isEqualTo(0);
   }
 
   @Test
@@ -121,35 +122,36 @@ public class AttributeServiceTest {
   public void testSetAttribute() {
     File file = Directory.create(0);
     service.setAttribute(file, "test:bar", 10L, false);
-    ASSERT.that(file.getAttribute("test", "bar")).is(10L);
+    assertThat(file.getAttribute("test", "bar")).isEqualTo(10L);
 
     service.setAttribute(file, "test:baz", 100, false);
-    ASSERT.that(file.getAttribute("test", "baz")).is(100);
+    assertThat(file.getAttribute("test", "baz")).isEqualTo(100);
   }
 
   @Test
   public void testSetAttribute_forInheritedProvider() {
     File file = Directory.create(0);
     service.setAttribute(file, "test:lastModifiedTime", FileTime.fromMillis(0), false);
-    ASSERT.that(file.getAttribute("test", "lastModifiedTime")).isNull();
-    ASSERT.that(service.getAttribute(file, "basic:lastModifiedTime")).is(FileTime.fromMillis(0));
+    assertThat(file.getAttribute("test", "lastModifiedTime")).isNull();
+    assertThat(service.getAttribute(file, "basic:lastModifiedTime"))
+        .isEqualTo(FileTime.fromMillis(0));
   }
 
   @Test
   public void testSetAttribute_withAlternateAcceptedType() {
     File file = Directory.create(0);
     service.setAttribute(file, "test:bar", 10F, false);
-    ASSERT.that(file.getAttribute("test", "bar")).is(10L);
+    assertThat(file.getAttribute("test", "bar")).isEqualTo(10L);
 
     service.setAttribute(file, "test:bar", BigInteger.valueOf(123), false);
-    ASSERT.that(file.getAttribute("test", "bar")).is(123L);
+    assertThat(file.getAttribute("test", "bar")).isEqualTo(123L);
   }
 
   @Test
   public void testSetAttribute_onCreate() {
     File file = Directory.create(0);
     service.setInitialAttributes(file, new BasicFileAttribute<>("test:baz", 123));
-    ASSERT.that(file.getAttribute("test", "baz")).is(123);
+    assertThat(file.getAttribute("test", "baz")).isEqualTo(123);
   }
 
   @Test
@@ -170,7 +172,7 @@ public class AttributeServiceTest {
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(file.getAttribute("test", "baz")).is(1);
+    assertThat(file.getAttribute("test", "baz")).isEqualTo(1);
   }
 
   @Test
@@ -183,7 +185,7 @@ public class AttributeServiceTest {
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(file.getAttribute("test", "bar")).is(0L);
+    assertThat(file.getAttribute("test", "bar")).isEqualTo(0L);
   }
 
   @Test
@@ -196,7 +198,7 @@ public class AttributeServiceTest {
     } catch (NullPointerException expected) {
     }
 
-    ASSERT.that(file.getAttribute("test", "bar")).is(0L);
+    assertThat(file.getAttribute("test", "bar")).isEqualTo(0L);
   }
 
   @Test
@@ -208,7 +210,7 @@ public class AttributeServiceTest {
     } catch (IllegalArgumentException expected) {
     }
 
-    ASSERT.that(file.getAttribute("test", "foo")).isNull();
+    assertThat(file.getAttribute("test", "foo")).isNull();
   }
 
   @Test
@@ -234,36 +236,35 @@ public class AttributeServiceTest {
     final File file = Directory.create(0);
     service.setInitialAttributes(file);
 
-    FileLookup fileLookup = new FileLookup() {
-      @Override
-      public File lookup() throws IOException {
-        return file;
-      }
-    };
+    FileLookup fileLookup =
+        new FileLookup() {
+          @Override
+          public File lookup() throws IOException {
+            return file;
+          }
+        };
 
-    ASSERT.that(service.getFileAttributeView(fileLookup, TestAttributeView.class))
-        .isNotNull();
-    ASSERT.that(service.getFileAttributeView(fileLookup, BasicFileAttributeView.class))
-        .isNotNull();
+    assertThat(service.getFileAttributeView(fileLookup, TestAttributeView.class)).isNotNull();
+    assertThat(service.getFileAttributeView(fileLookup, BasicFileAttributeView.class)).isNotNull();
 
-    TestAttributes attrs
-        = service.getFileAttributeView(fileLookup, TestAttributeView.class).readAttributes();
-    ASSERT.that(attrs.foo()).is("hello");
-    ASSERT.that(attrs.bar()).is(0);
-    ASSERT.that(attrs.baz()).is(1);
+    TestAttributes attrs =
+        service.getFileAttributeView(fileLookup, TestAttributeView.class).readAttributes();
+    assertThat(attrs.foo()).isEqualTo("hello");
+    assertThat(attrs.bar()).isEqualTo(0);
+    assertThat(attrs.baz()).isEqualTo(1);
   }
 
   @Test
   public void testGetFileAttributeView_isNullForUnsupportedView() {
     final File file = Directory.create(0);
-    FileLookup fileLookup = new FileLookup() {
-      @Override
-      public File lookup() throws IOException {
-        return file;
-      }
-    };
-    ASSERT.that(service.getFileAttributeView(fileLookup, PosixFileAttributeView.class))
-        .isNull();
+    FileLookup fileLookup =
+        new FileLookup() {
+          @Override
+          public File lookup() throws IOException {
+            return file;
+          }
+        };
+    assertThat(service.getFileAttributeView(fileLookup, PosixFileAttributeView.class)).isNull();
   }
 
   @Test
@@ -272,44 +273,47 @@ public class AttributeServiceTest {
     service.setInitialAttributes(file);
 
     ImmutableMap<String, Object> map = service.readAttributes(file, "test:foo,bar,baz");
-    ASSERT.that(map).isEqualTo(
-        ImmutableMap.of(
-            "foo", "hello",
-            "bar", 0L,
-            "baz", 1));
+    assertThat(map)
+        .isEqualTo(
+            ImmutableMap.of(
+                "foo", "hello",
+                "bar", 0L,
+                "baz", 1));
 
-    FileTime time = service.getAttribute(file, "basic:creationTime");
+    FileTime time = (FileTime) service.getAttribute(file, "basic:creationTime");
 
     map = service.readAttributes(file, "test:*");
-    ASSERT.that(map).isEqualTo(
-        ImmutableMap.<String, Object>builder()
-            .put("foo", "hello")
-            .put("bar", 0L)
-            .put("baz", 1)
-            .put("fileKey", 0)
-            .put("isDirectory", true)
-            .put("isRegularFile", false)
-            .put("isSymbolicLink", false)
-            .put("isOther", false)
-            .put("size", 0L)
-            .put("lastModifiedTime", time)
-            .put("lastAccessTime", time)
-            .put("creationTime", time)
-            .build());
+    assertThat(map)
+        .isEqualTo(
+            ImmutableMap.<String, Object>builder()
+                .put("foo", "hello")
+                .put("bar", 0L)
+                .put("baz", 1)
+                .put("fileKey", 0)
+                .put("isDirectory", true)
+                .put("isRegularFile", false)
+                .put("isSymbolicLink", false)
+                .put("isOther", false)
+                .put("size", 0L)
+                .put("lastModifiedTime", time)
+                .put("lastAccessTime", time)
+                .put("creationTime", time)
+                .build());
 
     map = service.readAttributes(file, "basic:*");
-    ASSERT.that(map).isEqualTo(
-        ImmutableMap.<String, Object>builder()
-            .put("fileKey", 0)
-            .put("isDirectory", true)
-            .put("isRegularFile", false)
-            .put("isSymbolicLink", false)
-            .put("isOther", false)
-            .put("size", 0L)
-            .put("lastModifiedTime", time)
-            .put("lastAccessTime", time)
-            .put("creationTime", time)
-            .build());
+    assertThat(map)
+        .isEqualTo(
+            ImmutableMap.<String, Object>builder()
+                .put("fileKey", 0)
+                .put("isDirectory", true)
+                .put("isRegularFile", false)
+                .put("isSymbolicLink", false)
+                .put("isOther", false)
+                .put("size", 0L)
+                .put("lastModifiedTime", time)
+                .put("lastAccessTime", time)
+                .put("creationTime", time)
+                .build());
   }
 
   @Test
@@ -319,14 +323,14 @@ public class AttributeServiceTest {
       service.readAttributes(file, "basic:fileKey,isOther,*,creationTime");
       fail();
     } catch (IllegalArgumentException expected) {
-      ASSERT.that(expected.getMessage()).contains("invalid attributes");
+      assertThat(expected.getMessage()).contains("invalid attributes");
     }
 
     try {
       service.readAttributes(file, "basic:fileKey,isOther,foo");
       fail();
     } catch (IllegalArgumentException expected) {
-      ASSERT.that(expected.getMessage()).contains("invalid attribute");
+      assertThat(expected.getMessage()).contains("invalid attribute");
     }
   }
 
@@ -336,17 +340,17 @@ public class AttributeServiceTest {
     service.setInitialAttributes(file);
 
     BasicFileAttributes basicAttrs = service.readAttributes(file, BasicFileAttributes.class);
-    ASSERT.that(basicAttrs.fileKey()).is(0);
-    ASSERT.that(basicAttrs.isDirectory()).isTrue();
-    ASSERT.that(basicAttrs.isRegularFile()).isFalse();
+    assertThat(basicAttrs.fileKey()).isEqualTo(0);
+    assertThat(basicAttrs.isDirectory()).isTrue();
+    assertThat(basicAttrs.isRegularFile()).isFalse();
 
     TestAttributes testAttrs = service.readAttributes(file, TestAttributes.class);
-    ASSERT.that(testAttrs.foo()).is("hello");
-    ASSERT.that(testAttrs.bar()).is(0);
-    ASSERT.that(testAttrs.baz()).is(1);
+    assertThat(testAttrs.foo()).isEqualTo("hello");
+    assertThat(testAttrs.bar()).isEqualTo(0);
+    assertThat(testAttrs.baz()).isEqualTo(1);
 
     file.setAttribute("test", "baz", 100);
-    ASSERT.that(service.readAttributes(file, TestAttributes.class).baz()).is(100);
+    assertThat(service.readAttributes(file, TestAttributes.class).baz()).isEqualTo(100);
   }
 
   @Test
@@ -366,28 +370,28 @@ public class AttributeServiceTest {
       service.getAttribute(file, ":bar");
       fail();
     } catch (IllegalArgumentException expected) {
-      ASSERT.that(expected.getMessage()).contains("attribute format");
+      assertThat(expected.getMessage()).contains("attribute format");
     }
 
     try {
       service.getAttribute(file, "test:");
       fail();
     } catch (IllegalArgumentException expected) {
-      ASSERT.that(expected.getMessage()).contains("attribute format");
+      assertThat(expected.getMessage()).contains("attribute format");
     }
 
     try {
       service.getAttribute(file, "basic:test:isDirectory");
       fail();
     } catch (IllegalArgumentException expected) {
-      ASSERT.that(expected.getMessage()).contains("attribute format");
+      assertThat(expected.getMessage()).contains("attribute format");
     }
 
     try {
       service.getAttribute(file, "basic:fileKey,size");
       fail();
     } catch (IllegalArgumentException expected) {
-      ASSERT.that(expected.getMessage()).contains("single attribute");
+      assertThat(expected.getMessage()).contains("single attribute");
     }
   }
 }

@@ -49,8 +49,8 @@ final class GlobToRegex {
     return new GlobToRegex(glob, separators).convert();
   }
 
-  private static final InternalCharMatcher REGEX_RESERVED
-      = InternalCharMatcher.anyOf("^$.?+*\\[]{}()");
+  private static final InternalCharMatcher REGEX_RESERVED =
+      InternalCharMatcher.anyOf("^$.?+*\\[]{}()");
 
   private final String glob;
   private final String separators;
@@ -248,200 +248,205 @@ final class GlobToRegex {
     /**
      * Called after all characters have been read.
      */
-    void finish(GlobToRegex converter) {
-    }
+    void finish(GlobToRegex converter) {}
   }
 
   /**
    * Normal state.
    */
-  private static final State NORMAL = new State() {
-    @Override
-    void process(GlobToRegex converter, char c) {
-      switch (c) {
-        case '?':
-          converter.appendQuestionMark();
-          return;
-        case '[':
-          converter.appendBracketStart();
-          converter.pushState(BRACKET_FIRST_CHAR);
-          return;
-        case '{':
-          converter.appendCurlyBraceStart();
-          converter.pushState(CURLY_BRACE);
-          return;
-        case '*':
-          converter.pushState(STAR);
-          return;
-        case '\\':
-          converter.pushState(ESCAPE);
-          return;
-        default:
-          converter.append(c);
-      }
-    }
+  private static final State NORMAL =
+      new State() {
+        @Override
+        void process(GlobToRegex converter, char c) {
+          switch (c) {
+            case '?':
+              converter.appendQuestionMark();
+              return;
+            case '[':
+              converter.appendBracketStart();
+              converter.pushState(BRACKET_FIRST_CHAR);
+              return;
+            case '{':
+              converter.appendCurlyBraceStart();
+              converter.pushState(CURLY_BRACE);
+              return;
+            case '*':
+              converter.pushState(STAR);
+              return;
+            case '\\':
+              converter.pushState(ESCAPE);
+              return;
+            default:
+              converter.append(c);
+          }
+        }
 
-    @Override
-    public String toString() {
-      return "NORMAL";
-    }
-  };
+        @Override
+        public String toString() {
+          return "NORMAL";
+        }
+      };
 
   /**
    * State following the reading of a single \.
    */
-  private static final State ESCAPE = new State() {
-    @Override
-    void process(GlobToRegex converter, char c) {
-      converter.append(c);
-      converter.popState();
-    }
+  private static final State ESCAPE =
+      new State() {
+        @Override
+        void process(GlobToRegex converter, char c) {
+          converter.append(c);
+          converter.popState();
+        }
 
-    @Override
-    void finish(GlobToRegex converter) {
-      throw converter.syntaxError("Hanging escape (\\) at end of pattern");
-    }
+        @Override
+        void finish(GlobToRegex converter) {
+          throw converter.syntaxError("Hanging escape (\\) at end of pattern");
+        }
 
-    @Override
-    public String toString() {
-      return "ESCAPE";
-    }
-  };
+        @Override
+        public String toString() {
+          return "ESCAPE";
+        }
+      };
 
   /**
    * State following the reading of a single *.
    */
-  private static final State STAR = new State() {
-    @Override
-    void process(GlobToRegex converter, char c) {
-      if (c == '*') {
-        converter.appendStarStar();
-        converter.popState();
-      } else {
-        converter.appendStar();
-        converter.popState();
-        converter.currentState().process(converter, c);
-      }
-    }
+  private static final State STAR =
+      new State() {
+        @Override
+        void process(GlobToRegex converter, char c) {
+          if (c == '*') {
+            converter.appendStarStar();
+            converter.popState();
+          } else {
+            converter.appendStar();
+            converter.popState();
+            converter.currentState().process(converter, c);
+          }
+        }
 
-    @Override
-    void finish(GlobToRegex converter) {
-      converter.appendStar();
-    }
+        @Override
+        void finish(GlobToRegex converter) {
+          converter.appendStar();
+        }
 
-    @Override
-    public String toString() {
-      return "STAR";
-    }
-  };
+        @Override
+        public String toString() {
+          return "STAR";
+        }
+      };
 
   /**
    * State immediately following the reading of a [.
    */
-  private static final State BRACKET_FIRST_CHAR = new State() {
-    @Override
-    void process(GlobToRegex converter, char c) {
-      if (c == ']') {
-        // A glob like "[]]" or "[]q]" is apparently fine in Unix (when used with ls for example)
-        // but doesn't work for the default java.nio.file implementations. In the cases of "[]]" it
-        // produces:
-        // java.util.regex.PatternSyntaxException: Unclosed character class near index 13
-        // ^[[^/]&&[]]\]$
-        //              ^
-        // The error here is slightly different, but trying to make this work would require some
-        // kind of lookahead and break the simplicity of char-by-char conversion here. Also, if
-        // someone wants to include a ']' inside a character class, they should escape it.
-        throw converter.syntaxError("Empty []");
-      }
-      if (c == '!') {
-        converter.appendExact('^');
-      } else if (c == '-') {
-        converter.appendExact(c);
-      } else {
-        converter.appendInBracket(c);
-      }
-      converter.popState();
-      converter.pushState(BRACKET);
-    }
+  private static final State BRACKET_FIRST_CHAR =
+      new State() {
+        @Override
+        void process(GlobToRegex converter, char c) {
+          if (c == ']') {
+            // A glob like "[]]" or "[]q]" is apparently fine in Unix (when used with ls for example)
+            // but doesn't work for the default java.nio.file implementations. In the cases of "[]]" it
+            // produces:
+            // java.util.regex.PatternSyntaxException: Unclosed character class near index 13
+            // ^[[^/]&&[]]\]$
+            //              ^
+            // The error here is slightly different, but trying to make this work would require some
+            // kind of lookahead and break the simplicity of char-by-char conversion here. Also, if
+            // someone wants to include a ']' inside a character class, they should escape it.
+            throw converter.syntaxError("Empty []");
+          }
+          if (c == '!') {
+            converter.appendExact('^');
+          } else if (c == '-') {
+            converter.appendExact(c);
+          } else {
+            converter.appendInBracket(c);
+          }
+          converter.popState();
+          converter.pushState(BRACKET);
+        }
 
-    @Override
-    void finish(GlobToRegex converter) {
-      throw converter.syntaxError("Unclosed [");
-    }
+        @Override
+        void finish(GlobToRegex converter) {
+          throw converter.syntaxError("Unclosed [");
+        }
 
-    @Override
-    public String toString() {
-      return "BRACKET_FIRST_CHAR";
-    }
-  };
+        @Override
+        public String toString() {
+          return "BRACKET_FIRST_CHAR";
+        }
+      };
 
   /**
    * State inside [brackets], but not at the first character inside the brackets.
    */
-  private static final State BRACKET = new State() {
-    @Override
-    void process(GlobToRegex converter, char c) {
-      if (c == ']') {
-        converter.appendBracketEnd();
-        converter.popState();
-      } else {
-        converter.appendInBracket(c);
-      }
-    }
+  private static final State BRACKET =
+      new State() {
+        @Override
+        void process(GlobToRegex converter, char c) {
+          if (c == ']') {
+            converter.appendBracketEnd();
+            converter.popState();
+          } else {
+            converter.appendInBracket(c);
+          }
+        }
 
-    @Override
-    void finish(GlobToRegex converter) {
-      throw converter.syntaxError("Unclosed [");
-    }
+        @Override
+        void finish(GlobToRegex converter) {
+          throw converter.syntaxError("Unclosed [");
+        }
 
-    @Override
-    public String toString() {
-      return "BRACKET";
-    }
-  };
+        @Override
+        public String toString() {
+          return "BRACKET";
+        }
+      };
 
   /**
    * State inside {curly braces}.
    */
-  private static final State CURLY_BRACE = new State() {
-    @Override
-    void process(GlobToRegex converter, char c) {
-      switch (c) {
-        case '?':
-          converter.appendQuestionMark();
-          break;
-        case '[':
-          converter.appendBracketStart();
-          converter.pushState(BRACKET_FIRST_CHAR);
-          break;
-        case '{':
-          throw converter.syntaxError("{ not allowed in subpattern group");
-        case '*':
-          converter.pushState(STAR);
-          break;
-        case '\\':
-          converter.pushState(ESCAPE);
-          break;
-        case '}':
-          converter.appendCurlyBraceEnd();
-          converter.popState();
-          break;
-        case ',':
-          converter.appendSubpatternSeparator();
-          break;
-        default:
-          converter.append(c);
-      }
-    }
+  private static final State CURLY_BRACE =
+      new State() {
+        @Override
+        void process(GlobToRegex converter, char c) {
+          switch (c) {
+            case '?':
+              converter.appendQuestionMark();
+              break;
+            case '[':
+              converter.appendBracketStart();
+              converter.pushState(BRACKET_FIRST_CHAR);
+              break;
+            case '{':
+              throw converter.syntaxError("{ not allowed in subpattern group");
+            case '*':
+              converter.pushState(STAR);
+              break;
+            case '\\':
+              converter.pushState(ESCAPE);
+              break;
+            case '}':
+              converter.appendCurlyBraceEnd();
+              converter.popState();
+              break;
+            case ',':
+              converter.appendSubpatternSeparator();
+              break;
+            default:
+              converter.append(c);
+          }
+        }
 
-    @Override
-    void finish(GlobToRegex converter) {
-      throw converter.syntaxError("Unclosed {");
-    }
+        @Override
+        void finish(GlobToRegex converter) {
+          throw converter.syntaxError("Unclosed {");
+        }
 
-    @Override
-    public String toString() {
-      return "CURLY_BRACE";
-    }
-  };
+        @Override
+        public String toString() {
+          return "CURLY_BRACE";
+        }
+      };
 }

@@ -352,8 +352,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   public Iterator<DirectoryEntry> iterator() {
     return new AbstractIterator<DirectoryEntry>() {
       int index;
-      @Nullable
-      DirectoryEntry entry;
+      @Nullable DirectoryEntry entry;
 
       @Override
       protected DirectoryEntry computeNext() {

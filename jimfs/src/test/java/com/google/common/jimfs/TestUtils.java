@@ -19,7 +19,6 @@ package com.google.common.jimfs;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.assertFalse;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
@@ -31,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -87,7 +87,8 @@ public final class TestUtils {
    * Returns a number of permutations of the given path that should all locate the same file.
    */
   public static Iterable<Path> permutations(Path path) throws IOException {
-    Path workingDir = path.getFileSystem().getPath("").toRealPath();
+    Path workingDir =
+        path.getFileSystem().getPath("").toRealPath();
     boolean directory = Files.isDirectory(path);
 
     Set<Path> results = new HashSet<>();
@@ -106,9 +107,12 @@ public final class TestUtils {
             && !fileName.toString().equals(".")
             && !fileName.toString().equals("..")) {
           results.add(p.resolve("..").resolve(fileName));
-          results.add(p.resolve("..").resolve(".").resolve(fileName));
-          results.add(p.resolve("..").resolve(".").resolve(fileName).resolve("."));
-          results.add(p.resolve(".").resolve("..").resolve(".").resolve(fileName));
+          results.add(
+              p.resolve("..").resolve(".").resolve(fileName));
+          results.add(
+              p.resolve("..").resolve(".").resolve(fileName).resolve("."));
+          results.add(
+              p.resolve(".").resolve("..").resolve(".").resolve(fileName));
         }
       }
 
@@ -118,10 +122,12 @@ public final class TestUtils {
             Path childName = child.getFileName();
             for (Path p : ImmutableList.copyOf(results)) {
               results.add(p.resolve(childName).resolve(".."));
-              results.add(p.resolve(childName).resolve(".").resolve(".").resolve(".."));
-              results.add(p.resolve(childName).resolve("..").resolve("."));
-              results.add(p.resolve(childName).resolve("..")
-                  .resolve(childName).resolve(".").resolve(".."));
+              results.add(
+                  p.resolve(childName).resolve(".").resolve(".").resolve(".."));
+              results.add(
+                  p.resolve(childName).resolve("..").resolve("."));
+              results.add(
+                  p.resolve(childName).resolve("..").resolve(childName).resolve(".").resolve(".."));
             }
             break; // no need to add more than one child
           }
@@ -133,8 +139,8 @@ public final class TestUtils {
 
   // equivalent to the Junit 4.11 method.
   public static void assertNotEquals(Object unexpected, Object actual) {
-    assertFalse("Values should be different. Actual: " + actual,
-        Objects.equal(unexpected, actual));
+    assertFalse(
+        "Values should be different. Actual: " + actual, Objects.equals(unexpected, actual));
   }
 
   static RegularFile regularFile(int size) {

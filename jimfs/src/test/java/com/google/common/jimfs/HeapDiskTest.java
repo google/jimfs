@@ -16,8 +16,8 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -48,26 +48,28 @@ public class HeapDiskTest {
   public void testInitialSettings_basic() {
     HeapDisk disk = new HeapDisk(8192, 100, 100);
 
-    ASSERT.that(disk.blockSize()).is(8192);
-    ASSERT.that(disk.getTotalSpace()).is(819200);
-    ASSERT.that(disk.getUnallocatedSpace()).is(819200);
-    ASSERT.that(disk.blockCache.blockCount()).is(0);
+    assertThat(disk.blockSize()).isEqualTo(8192);
+    assertThat(disk.getTotalSpace()).isEqualTo(819200);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(819200);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(0);
   }
 
   @Test
   public void testInitialSettings_fromConfiguration() {
-    Configuration config = Configuration.unix().toBuilder()
-        .setBlockSize(4)
-        .setMaxSize(99) // not a multiple of 4
-        .setMaxCacheSize(25)
-        .build();
+    Configuration config =
+        Configuration.unix()
+            .toBuilder()
+            .setBlockSize(4)
+            .setMaxSize(99) // not a multiple of 4
+            .setMaxCacheSize(25)
+            .build();
 
     HeapDisk disk = new HeapDisk(config);
 
-    ASSERT.that(disk.blockSize()).is(4);
-    ASSERT.that(disk.getTotalSpace()).is(96);
-    ASSERT.that(disk.getUnallocatedSpace()).is(96);
-    ASSERT.that(disk.blockCache.blockCount()).is(0);
+    assertThat(disk.blockSize()).isEqualTo(4);
+    assertThat(disk.getTotalSpace()).isEqualTo(96);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(96);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(0);
   }
 
   @Test
@@ -76,18 +78,18 @@ public class HeapDiskTest {
 
     disk.allocate(blocks, 1);
 
-    ASSERT.that(blocks.blockCount()).is(1);
-    ASSERT.that(blocks.getBlock(0).length).is(4);
-    ASSERT.that(disk.getUnallocatedSpace()).is(36);
+    assertThat(blocks.blockCount()).isEqualTo(1);
+    assertThat(blocks.getBlock(0).length).isEqualTo(4);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(36);
 
     disk.allocate(blocks, 5);
 
-    ASSERT.that(blocks.blockCount()).is(6);
+    assertThat(blocks.blockCount()).isEqualTo(6);
     for (int i = 0; i < blocks.blockCount(); i++) {
-      ASSERT.that(blocks.getBlock(i).length).is(4);
+      assertThat(blocks.getBlock(i).length).isEqualTo(4);
     }
-    ASSERT.that(disk.getUnallocatedSpace()).is(16);
-    ASSERT.that(disk.blockCache.blockCount()).is(0);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(16);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(0);
   }
 
   @Test
@@ -96,16 +98,15 @@ public class HeapDiskTest {
     disk.allocate(blocks, 6);
 
     disk.free(blocks, 2);
+    assertThat(blocks.blockCount()).isEqualTo(4);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(24);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(0);
 
-    ASSERT.that(blocks.blockCount()).is(4);
-    ASSERT.that(disk.getUnallocatedSpace()).is(24);
-    ASSERT.that(disk.blockCache.blockCount()).is(0);
-    
     disk.free(blocks);
 
-    ASSERT.that(blocks.blockCount()).is(0);
-    ASSERT.that(disk.getUnallocatedSpace()).is(40);
-    ASSERT.that(disk.blockCache.blockCount()).is(0);
+    assertThat(blocks.blockCount()).isEqualTo(0);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(40);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(0);
   }
 
   @Test
@@ -115,15 +116,15 @@ public class HeapDiskTest {
 
     disk.free(blocks, 2);
 
-    ASSERT.that(blocks.blockCount()).is(4);
-    ASSERT.that(disk.getUnallocatedSpace()).is(24);
-    ASSERT.that(disk.blockCache.blockCount()).is(2);
+    assertThat(blocks.blockCount()).isEqualTo(4);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(24);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(2);
 
     disk.free(blocks);
 
-    ASSERT.that(blocks.blockCount()).is(0);
-    ASSERT.that(disk.getUnallocatedSpace()).is(40);
-    ASSERT.that(disk.blockCache.blockCount()).is(6);
+    assertThat(blocks.blockCount()).isEqualTo(0);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(40);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(6);
   }
 
   @Test
@@ -133,15 +134,15 @@ public class HeapDiskTest {
 
     disk.free(blocks, 2);
 
-    ASSERT.that(blocks.blockCount()).is(4);
-    ASSERT.that(disk.getUnallocatedSpace()).is(24);
-    ASSERT.that(disk.blockCache.blockCount()).is(2);
+    assertThat(blocks.blockCount()).isEqualTo(4);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(24);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(2);
 
     disk.free(blocks);
 
-    ASSERT.that(blocks.blockCount()).is(0);
-    ASSERT.that(disk.getUnallocatedSpace()).is(40);
-    ASSERT.that(disk.blockCache.blockCount()).is(4);
+    assertThat(blocks.blockCount()).isEqualTo(0);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(40);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(4);
   }
 
   @Test
@@ -149,12 +150,12 @@ public class HeapDiskTest {
     HeapDisk disk = new HeapDisk(4, 10, 10);
     disk.allocate(blocks, 10);
 
-    ASSERT.that(disk.getUnallocatedSpace()).is(0);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(0);
 
     disk.free(blocks);
 
-    ASSERT.that(blocks.blockCount()).is(0);
-    ASSERT.that(disk.blockCache.blockCount()).is(10);
+    assertThat(blocks.blockCount()).isEqualTo(0);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(10);
 
     List<byte[]> cachedBlocks = new ArrayList<>();
     for (int i = 0; i < 10; i++) {
@@ -163,12 +164,12 @@ public class HeapDiskTest {
 
     disk.allocate(blocks, 6);
 
-    ASSERT.that(blocks.blockCount()).is(6);
-    ASSERT.that(disk.blockCache.blockCount()).is(4);
+    assertThat(blocks.blockCount()).isEqualTo(6);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(4);
 
     // the 6 arrays in blocks are the last 6 arrays that were cached
     for (int i = 0; i < 6; i++) {
-      ASSERT.that(blocks.getBlock(i)).is(cachedBlocks.get(i + 4));
+      assertThat(blocks.getBlock(i)).isEqualTo(cachedBlocks.get(i + 4));
     }
   }
 
@@ -177,12 +178,12 @@ public class HeapDiskTest {
     HeapDisk disk = new HeapDisk(4, 10, 4);
     disk.allocate(blocks, 10);
 
-    ASSERT.that(disk.getUnallocatedSpace()).is(0);
+    assertThat(disk.getUnallocatedSpace()).isEqualTo(0);
 
     disk.free(blocks);
 
-    ASSERT.that(blocks.blockCount()).is(0);
-    ASSERT.that(disk.blockCache.blockCount()).is(4);
+    assertThat(blocks.blockCount()).isEqualTo(0);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(4);
 
     List<byte[]> cachedBlocks = new ArrayList<>();
     for (int i = 0; i < 4; i++) {
@@ -191,12 +192,12 @@ public class HeapDiskTest {
 
     disk.allocate(blocks, 6);
 
-    ASSERT.that(blocks.blockCount()).is(6);
-    ASSERT.that(disk.blockCache.blockCount()).is(0);
+    assertThat(blocks.blockCount()).isEqualTo(6);
+    assertThat(disk.blockCache.blockCount()).isEqualTo(0);
 
     // the last 4 arrays in blocks are the 4 arrays that were cached
     for (int i = 2; i < 6; i++) {
-      ASSERT.that(blocks.getBlock(i)).is(cachedBlocks.get(i - 2));
+      assertThat(blocks.getBlock(i)).isEqualTo(cachedBlocks.get(i - 2));
     }
   }
 
@@ -208,7 +209,8 @@ public class HeapDiskTest {
     try {
       disk.allocate(blocks, 1);
       fail();
-    } catch (IOException expected) {}
+    } catch (IOException expected) {
+    }
   }
 
   @Test
@@ -221,8 +223,9 @@ public class HeapDiskTest {
     try {
       disk.allocate(blocks2, 5);
       fail();
-    } catch (IOException expected) {}
+    } catch (IOException expected) {
+    }
 
-    ASSERT.that(blocks2.blockCount()).is(0);
+    assertThat(blocks2.blockCount()).isEqualTo(0);
   }
 }

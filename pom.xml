@@ -28,7 +28,7 @@
   <groupId>com.google.jimfs</groupId>
   <artifactId>jimfs-parent</artifactId>
   <packaging>pom</packaging>
-  <version>1.0</version>
+  <version>1.1</version>
 
   <modules>
     <module>jimfs</module>
@@ -76,7 +76,7 @@
     <url>http://github.com/google/jimfs/</url>
     <connection>scm:git:git://github.com/google/jimfs.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/google/jimfs.git</developerConnection>
-    <tag>v1.0-rc2</tag>
+    <tag>v1.1</tag>
   </scm>
 
   <issueManagement>
@@ -91,7 +91,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.7</java.version>
-    <guava.version>16.0.1</guava.version>
+    <guava.version>18.0</guava.version>
     <gpg.skip>true</gpg.skip>
   </properties>
 
@@ -115,7 +115,7 @@
       <dependency>
         <groupId>com.google.auto.service</groupId>
         <artifactId>auto-service</artifactId>
-        <version>1.0-rc1</version>
+        <version>1.0-rc2</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
@@ -127,7 +127,7 @@
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
-        <version>4.10</version>
+        <version>4.12</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -137,9 +137,9 @@
         <scope>test</scope>
       </dependency>
       <dependency>
-        <groupId>org.truth0</groupId>
+        <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
-        <version>0.16</version>
+        <version>0.27</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -164,6 +164,11 @@
           <artifactId>maven-gpg-plugin</artifactId>
           <version>1.4</version>
         </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>2.4.0</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -173,7 +178,26 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
+          <compilerId>javac-with-errorprone</compilerId>
+          <forceJavacCompilerUse>true</forceJavacCompilerUse>
         </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_core</artifactId>
+            <version>1.1.1</version>
+          </dependency>
+          <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-compiler-javac</artifactId>
+            <version>2.4</version>
+          </dependency>
+          <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-compiler-javac-errorprone</artifactId>
+            <version>2.4</version>
+          </dependency>
+        </dependencies>
       </plugin>
       <plugin>
         <artifactId>maven-gpg-plugin</artifactId>
@@ -189,5 +213,37 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>jdk8</id>
+      <activation>
+        <jdk>[1.8,)</jdk>
+      </activation>
+      <!-- Disable HTML checking in doclint under JDK 8 -->
+      <reporting>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <additionalparam>-Xdoclint:-html</additionalparam>
+            </configuration>
+          </plugin>
+        </plugins>
+      </reporting>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <additionalparam>-Xdoclint:-html</additionalparam>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>

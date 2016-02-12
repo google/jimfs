@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Ascii;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
 
 import java.nio.file.FileSystem;
@@ -50,8 +50,8 @@ final class PathMatchers {
   public static PathMatcher getPathMatcher(
       String syntaxAndPattern, String separators, ImmutableSet<PathNormalization> normalizations) {
     int syntaxSeparator = syntaxAndPattern.indexOf(':');
-    checkArgument(syntaxSeparator > 0, "Must be of the form 'syntax:pattern': %s",
-        syntaxAndPattern);
+    checkArgument(
+        syntaxSeparator > 0, "Must be of the form 'syntax:pattern': %s", syntaxAndPattern);
 
     String syntax = Ascii.toLowerCase(syntaxAndPattern.substring(0, syntaxSeparator));
     String pattern = syntaxAndPattern.substring(syntaxSeparator + 1);
@@ -91,7 +91,7 @@ final class PathMatchers {
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this).addValue(pattern).toString();
+      return MoreObjects.toStringHelper(this).addValue(pattern).toString();
     }
   }
 }

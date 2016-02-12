@@ -16,9 +16,9 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -55,8 +55,8 @@ public class UserDefinedAttributeProviderTest
   @Test
   public void testInitialAttributes() {
     // no initial attributes
-    ASSERT.that(ImmutableList.copyOf(file.getAttributeKeys())).isEmpty();
-    ASSERT.that(provider.attributes(file)).isEmpty();
+    assertThat(ImmutableList.copyOf(file.getAttributeKeys())).isEmpty();
+    assertThat(provider.attributes(file)).isEmpty();
   }
 
   @Test
@@ -67,12 +67,12 @@ public class UserDefinedAttributeProviderTest
 
     byte[] one = (byte[]) provider.get(file, "one");
     byte[] two = (byte[]) provider.get(file, "two");
-    ASSERT.that(Arrays.equals(one, bytes)).isTrue();
-    ASSERT.that(Arrays.equals(two, bytes)).isTrue();
+    assertThat(Arrays.equals(one, bytes)).isTrue();
+    assertThat(Arrays.equals(two, bytes)).isTrue();
 
     assertSetFails("foo", "hello");
 
-    ASSERT.that(provider.attributes(file)).has().exactly("one", "two");
+    assertThat(provider.attributes(file)).containsExactly("one", "two");
   }
 
   @Test
@@ -85,8 +85,8 @@ public class UserDefinedAttributeProviderTest
     UserDefinedFileAttributeView view = provider.view(fileLookup(), NO_INHERITED_VIEWS);
     assertNotNull(view);
 
-    ASSERT.that(view.name()).is("user");
-    ASSERT.that(view.list()).isEmpty();
+    assertThat(view.name()).isEqualTo("user");
+    assertThat(view.list()).isEmpty();
 
     byte[] b1 = {0, 1, 2};
     byte[] b2 = {0, 1, 2, 3, 4};
@@ -94,11 +94,11 @@ public class UserDefinedAttributeProviderTest
     view.write("b1", ByteBuffer.wrap(b1));
     view.write("b2", ByteBuffer.wrap(b2));
 
-    ASSERT.that(view.list()).has().allOf("b1", "b2");
-    ASSERT.that(file.getAttributeKeys()).has().exactly("user:b1", "user:b2");
+    assertThat(view.list()).containsAllOf("b1", "b2");
+    assertThat(file.getAttributeKeys()).containsExactly("user:b1", "user:b2");
 
-    ASSERT.that(view.size("b1")).is(3);
-    ASSERT.that(view.size("b2")).is(5);
+    assertThat(view.size("b1")).isEqualTo(3);
+    assertThat(view.size("b2")).isEqualTo(5);
 
     ByteBuffer buf1 = ByteBuffer.allocate(view.size("b1"));
     ByteBuffer buf2 = ByteBuffer.allocate(view.size("b2"));
@@ -106,30 +106,30 @@ public class UserDefinedAttributeProviderTest
     view.read("b1", buf1);
     view.read("b2", buf2);
 
-    ASSERT.that(Arrays.equals(b1, buf1.array())).isTrue();
-    ASSERT.that(Arrays.equals(b2, buf2.array())).isTrue();
+    assertThat(Arrays.equals(b1, buf1.array())).isTrue();
+    assertThat(Arrays.equals(b2, buf2.array())).isTrue();
 
     view.delete("b2");
 
-    ASSERT.that(view.list()).has().exactly("b1");
-    ASSERT.that(file.getAttributeKeys()).has().exactly("user:b1");
+    assertThat(view.list()).containsExactly("b1");
+    assertThat(file.getAttributeKeys()).containsExactly("user:b1");
 
     try {
       view.size("b2");
       fail();
     } catch (IllegalArgumentException expected) {
-      ASSERT.that(expected.getMessage()).contains("not set");
+      assertThat(expected.getMessage()).contains("not set");
     }
 
     try {
       view.read("b2", ByteBuffer.allocate(10));
       fail();
     } catch (IllegalArgumentException expected) {
-      ASSERT.that(expected.getMessage()).contains("not set");
+      assertThat(expected.getMessage()).contains("not set");
     }
 
     view.write("b1", ByteBuffer.wrap(b2));
-    ASSERT.that(view.size("b1")).is(5);
+    assertThat(view.size("b1")).isEqualTo(5);
 
     view.delete("b2"); // succeeds
   }

@@ -96,6 +96,5 @@ public class ByteBufferChannel implements SeekableByteChannel {
   }
 
   @Override
-  public void close() throws IOException {
-  }
+  public void close() throws IOException {}
 }

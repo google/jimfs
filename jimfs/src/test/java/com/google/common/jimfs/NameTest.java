@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,10 +32,10 @@ public class NameTest {
 
   @Test
   public void testNames() {
-    ASSERT.that(Name.create("foo", "foo")).isEqualTo(Name.create("foo", "foo"));
-    ASSERT.that(Name.create("FOO", "foo")).isEqualTo(Name.create("foo", "foo"));
-    ASSERT.that(Name.create("FOO", "foo")).isNotEqualTo(Name.create("FOO", "FOO"));
+    assertThat(Name.create("foo", "foo")).isEqualTo(Name.create("foo", "foo"));
+    assertThat(Name.create("FOO", "foo")).isEqualTo(Name.create("foo", "foo"));
+    assertThat(Name.create("FOO", "foo")).isNotEqualTo(Name.create("FOO", "FOO"));
 
-    ASSERT.that(Name.create("a", "b").toString()).is("a");
+    assertThat(Name.create("a", "b").toString()).isEqualTo("a");
   }
 }

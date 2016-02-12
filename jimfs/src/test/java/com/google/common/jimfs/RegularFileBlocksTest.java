@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.primitives.Bytes;
 
@@ -46,25 +46,25 @@ public class RegularFileBlocksTest {
 
   @Test
   public void testInitialState() {
-    ASSERT.that(file.blockCount()).is(0);
+    assertThat(file.blockCount()).isEqualTo(0);
 
     // no bounds checking, but there should never be a block at an index >= size
-    ASSERT.that(file.getBlock(0)).isNull();
+    assertThat(file.getBlock(0)).isNull();
   }
 
   @Test
   public void testAddAndGet() {
     file.addBlock(new byte[] {1});
 
-    ASSERT.that(file.blockCount()).is(1);
-    ASSERT.that(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1}));
-    ASSERT.that(file.getBlock(1)).isNull();
+    assertThat(file.blockCount()).isEqualTo(1);
+    assertThat(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1}));
+    assertThat(file.getBlock(1)).isNull();
 
     file.addBlock(new byte[] {1, 2});
 
-    ASSERT.that(file.blockCount()).is(2);
-    ASSERT.that(Bytes.asList(file.getBlock(1))).isEqualTo(Bytes.asList(new byte[] {1, 2}));
-    ASSERT.that(file.getBlock(2)).isNull();
+    assertThat(file.blockCount()).isEqualTo(2);
+    assertThat(Bytes.asList(file.getBlock(1))).isEqualTo(Bytes.asList(new byte[] {1, 2}));
+    assertThat(file.getBlock(2)).isNull();
   }
 
   @Test
@@ -74,18 +74,18 @@ public class RegularFileBlocksTest {
     file.addBlock(new byte[0]);
     file.addBlock(new byte[0]);
 
-    ASSERT.that(file.blockCount()).is(4);
+    assertThat(file.blockCount()).isEqualTo(4);
 
     file.truncateBlocks(2);
 
-    ASSERT.that(file.blockCount()).is(2);
-    ASSERT.that(file.getBlock(2)).isNull();
-    ASSERT.that(file.getBlock(3)).isNull();
-    ASSERT.that(file.getBlock(0)).isNotNull();
+    assertThat(file.blockCount()).isEqualTo(2);
+    assertThat(file.getBlock(2)).isNull();
+    assertThat(file.getBlock(3)).isNull();
+    assertThat(file.getBlock(0)).isNotNull();
 
     file.truncateBlocks(0);
-    ASSERT.that(file.blockCount()).is(0);
-    ASSERT.that(file.getBlock(0)).isNull();
+    assertThat(file.blockCount()).isEqualTo(0);
+    assertThat(file.getBlock(0)).isNull();
   }
 
   @Test
@@ -94,25 +94,25 @@ public class RegularFileBlocksTest {
     file.addBlock(new byte[] {1, 2});
     RegularFile other = createFile();
 
-    ASSERT.that(other.blockCount()).is(0);
+    assertThat(other.blockCount()).isEqualTo(0);
 
     file.copyBlocksTo(other, 2);
 
-    ASSERT.that(other.blockCount()).is(2);
-    ASSERT.that(other.getBlock(0)).is(file.getBlock(0));
-    ASSERT.that(other.getBlock(1)).is(file.getBlock(1));
+    assertThat(other.blockCount()).isEqualTo(2);
+    assertThat(other.getBlock(0)).isEqualTo(file.getBlock(0));
+    assertThat(other.getBlock(1)).isEqualTo(file.getBlock(1));
 
     file.copyBlocksTo(other, 1); // should copy the last block
 
-    ASSERT.that(other.blockCount()).is(3);
-    ASSERT.that(other.getBlock(2)).is(file.getBlock(1));
+    assertThat(other.blockCount()).isEqualTo(3);
+    assertThat(other.getBlock(2)).isEqualTo(file.getBlock(1));
 
     other.copyBlocksTo(file, 3);
 
-    ASSERT.that(file.blockCount()).is(5);
-    ASSERT.that(file.getBlock(2)).is(other.getBlock(0));
-    ASSERT.that(file.getBlock(3)).is(other.getBlock(1));
-    ASSERT.that(file.getBlock(4)).is(other.getBlock(2));
+    assertThat(file.blockCount()).isEqualTo(5);
+    assertThat(file.getBlock(2)).isEqualTo(other.getBlock(0));
+    assertThat(file.getBlock(3)).isEqualTo(other.getBlock(1));
+    assertThat(file.getBlock(4)).isEqualTo(other.getBlock(2));
   }
 
   @Test
@@ -122,25 +122,25 @@ public class RegularFileBlocksTest {
     file.addBlock(new byte[] {1, 2, 3});
     RegularFile other = createFile();
 
-    ASSERT.that(file.blockCount()).is(3);
-    ASSERT.that(other.blockCount()).is(0);
+    assertThat(file.blockCount()).isEqualTo(3);
+    assertThat(other.blockCount()).isEqualTo(0);
 
     file.transferBlocksTo(other, 3);
 
-    ASSERT.that(file.blockCount()).is(0);
-    ASSERT.that(other.blockCount()).is(3);
+    assertThat(file.blockCount()).isEqualTo(0);
+    assertThat(other.blockCount()).isEqualTo(3);
 
-    ASSERT.that(file.getBlock(0)).isNull();
-    ASSERT.that(Bytes.asList(other.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1}));
-    ASSERT.that(Bytes.asList(other.getBlock(1))).isEqualTo(Bytes.asList(new byte[] {1, 2}));
-    ASSERT.that(Bytes.asList(other.getBlock(2))).isEqualTo(Bytes.asList(new byte[] {1, 2, 3}));
+    assertThat(file.getBlock(0)).isNull();
+    assertThat(Bytes.asList(other.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1}));
+    assertThat(Bytes.asList(other.getBlock(1))).isEqualTo(Bytes.asList(new byte[] {1, 2}));
+    assertThat(Bytes.asList(other.getBlock(2))).isEqualTo(Bytes.asList(new byte[] {1, 2, 3}));
 
     other.transferBlocksTo(file, 1);
 
-    ASSERT.that(file.blockCount()).is(1);
-    ASSERT.that(other.blockCount()).is(2);
-    ASSERT.that(other.getBlock(2)).isNull();
-    ASSERT.that(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[]{1, 2, 3}));
-    ASSERT.that(file.getBlock(1)).isNull();
+    assertThat(file.blockCount()).isEqualTo(1);
+    assertThat(other.blockCount()).isEqualTo(2);
+    assertThat(other.getBlock(2)).isNull();
+    assertThat(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1, 2, 3}));
+    assertThat(file.getBlock(1)).isNull();
   }
 }

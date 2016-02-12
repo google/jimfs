@@ -99,8 +99,8 @@ public class FileSystemStateTest {
 
   @Test
   public void testClose_multipleRegisteredResourcesAreClosed() throws IOException {
-    List<TestCloseable> resources = ImmutableList.of(
-        new TestCloseable(), new TestCloseable(), new TestCloseable());
+    List<TestCloseable> resources =
+        ImmutableList.of(new TestCloseable(), new TestCloseable(), new TestCloseable());
     for (TestCloseable resource : resources) {
       state.register(resource);
       assertFalse(resource.closed);
@@ -113,14 +113,15 @@ public class FileSystemStateTest {
 
   @Test
   public void testClose_resourcesThatThrowOnClose() {
-    List<TestCloseable> resources = ImmutableList.of(
-        new TestCloseable(),
-        new ThrowsOnClose("a"),
-        new TestCloseable(),
-        new ThrowsOnClose("b"),
-        new ThrowsOnClose("c"),
-        new TestCloseable(),
-        new TestCloseable());
+    List<TestCloseable> resources =
+        ImmutableList.of(
+            new TestCloseable(),
+            new ThrowsOnClose("a"),
+            new TestCloseable(),
+            new ThrowsOnClose("b"),
+            new ThrowsOnClose("c"),
+            new TestCloseable(),
+            new TestCloseable());
     for (TestCloseable resource : resources) {
       state.register(resource);
       assertFalse(resource.closed);
@@ -132,10 +133,9 @@ public class FileSystemStateTest {
     } catch (IOException expected) {
       Throwable[] suppressed = expected.getSuppressed();
       assertEquals(2, suppressed.length);
-      ImmutableSet<String> messages = ImmutableSet.of(
-          expected.getMessage(),
-          suppressed[0].getMessage(),
-          suppressed[1].getMessage());
+      ImmutableSet<String> messages =
+          ImmutableSet.of(
+              expected.getMessage(), suppressed[0].getMessage(), suppressed[1].getMessage());
       assertEquals(ImmutableSet.of("a", "b", "c"), messages);
     }
 

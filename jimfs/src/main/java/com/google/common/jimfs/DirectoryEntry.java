@@ -19,13 +19,14 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -41,11 +42,9 @@ final class DirectoryEntry {
   private final Directory directory;
   private final Name name;
 
-  @Nullable
-  private final File file;
+  @Nullable private final File file;
 
-  @Nullable
-  DirectoryEntry next; // for use in Directory
+  @Nullable DirectoryEntry next; // for use in Directory
 
   DirectoryEntry(Directory directory, Name name, @Nullable File file) {
     this.directory = checkNotNull(directory);
@@ -79,8 +78,8 @@ final class DirectoryEntry {
    * @return this
    * @throws FileAlreadyExistsException if this entry does not exist
    */
-  public DirectoryEntry requireDoesNotExist(
-      Path pathForException) throws FileAlreadyExistsException {
+  public DirectoryEntry requireDoesNotExist(Path pathForException)
+      throws FileAlreadyExistsException {
     if (exists()) {
       throw new FileAlreadyExistsException(pathForException.toString());
     }
@@ -94,8 +93,8 @@ final class DirectoryEntry {
    * @throws NoSuchFileException if this entry does not exist
    * @throws NotDirectoryException if this entry does not link to a directory
    */
-  public DirectoryEntry requireDirectory(
-      Path pathForException) throws NoSuchFileException, NotDirectoryException {
+  public DirectoryEntry requireDirectory(Path pathForException)
+      throws NoSuchFileException, NotDirectoryException {
     requireExists(pathForException);
     if (!file().isDirectory()) {
       throw new NotDirectoryException(pathForException.toString());
@@ -110,8 +109,8 @@ final class DirectoryEntry {
    * @throws NoSuchFileException if this entry does not exist
    * @throws NotLinkException if this entry does not link to a symbolic link
    */
-  public DirectoryEntry requireSymbolicLink(
-      Path pathForException) throws NoSuchFileException, NotLinkException {
+  public DirectoryEntry requireSymbolicLink(Path pathForException)
+      throws NoSuchFileException, NotLinkException {
     requireExists(pathForException);
     if (!file().isSymbolicLink()) {
       throw new NotLinkException(pathForException.toString());
@@ -157,19 +156,19 @@ final class DirectoryEntry {
       DirectoryEntry other = (DirectoryEntry) obj;
       return directory.equals(other.directory)
           && name.equals(other.name)
-          && Objects.equal(file, other.file);
+          && Objects.equals(file, other.file);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(directory, name, file);
+    return Objects.hash(directory, name, file);
   }
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("directory", directory)
         .add("name", name)
         .add("file", file)

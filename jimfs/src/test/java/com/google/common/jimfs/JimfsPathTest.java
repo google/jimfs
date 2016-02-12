@@ -108,26 +108,23 @@ public class JimfsPathTest {
   public void testPathParsing_withAlternateSeparator() {
     // windows recognizes / as an alternate separator
     PathService windowsPathService = PathServiceTest.fakeWindowsPathService();
-    assertEquals(windowsPathService.parsePath("foo\\bar\\baz"),
-        windowsPathService.parsePath("foo/bar/baz"));
-    assertEquals(windowsPathService.parsePath("C:\\foo\\bar"),
-        windowsPathService.parsePath("C:\\foo/bar"));
-    assertEquals(windowsPathService.parsePath("c:\\foo\\bar\\baz"),
+    assertEquals(
+        windowsPathService.parsePath("foo\\bar\\baz"), windowsPathService.parsePath("foo/bar/baz"));
+    assertEquals(
+        windowsPathService.parsePath("C:\\foo\\bar"), windowsPathService.parsePath("C:\\foo/bar"));
+    assertEquals(
+        windowsPathService.parsePath("c:\\foo\\bar\\baz"),
         windowsPathService.parsePath("c:", "foo/", "bar/baz"));
   }
 
   @Test
   public void testRootPath() {
-    new PathTester(pathService, "/")
-        .root("/")
-        .test("/");
+    new PathTester(pathService, "/").root("/").test("/");
   }
 
   @Test
   public void testRelativePath_singleName() {
-    new PathTester(pathService, "test")
-        .names("test")
-        .test("test");
+    new PathTester(pathService, "test").names("test").test("test");
 
     Path path = pathService.parsePath("test");
     assertEquals(path, path.getFileName());
@@ -135,8 +132,7 @@ public class JimfsPathTest {
 
   @Test
   public void testRelativePath_twoNames() {
-    PathTester tester = new PathTester(pathService, "foo/bar")
-        .names("foo", "bar");
+    PathTester tester = new PathTester(pathService, "foo/bar").names("foo", "bar");
 
     tester.test("foo/bar");
   }
@@ -144,8 +140,7 @@ public class JimfsPathTest {
   @Test
   public void testRelativePath_fourNames() {
     new PathTester(pathService, "foo/bar/baz/test")
-        .names("foo", "bar", "baz", "test")
-        .test("foo/bar/baz/test");
+        .names("foo", "bar", "baz", "test").test("foo/bar/baz/test");
   }
 
   @Test
@@ -346,8 +341,8 @@ public class JimfsPathTest {
 
   @Test
   public void testNullPointerExceptions() throws NoSuchMethodException {
-    NullPointerTester tester = new NullPointerTester()
-        .ignore(JimfsPath.class.getMethod("toRealPath", LinkOption[].class));
+    NullPointerTester tester =
+        new NullPointerTester().ignore(JimfsPath.class.getMethod("toRealPath", LinkOption[].class));
     // ignore toRealPath because the pathService creates fake paths that do not have a
     // JimfsFileSystem instance, causing it to fail since it needs to access the file system
 
@@ -362,8 +357,8 @@ public class JimfsPathTest {
     tester.testAllPublicInstanceMethods(pathService.parsePath(".."));
   }
 
-  private void assertResolvedPathEquals(String expected, Path path, String firstResolvePath,
-      String... moreResolvePaths) {
+  private void assertResolvedPathEquals(
+      String expected, Path path, String firstResolvePath, String... moreResolvePaths) {
     Path resolved = path.resolve(firstResolvePath);
     for (String additionalPath : moreResolvePaths) {
       resolved = resolved.resolve(additionalPath);

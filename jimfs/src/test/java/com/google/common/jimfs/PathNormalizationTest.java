@@ -54,21 +54,21 @@ public class PathNormalizationTest {
   }
 
   private static final String[][] CASE_FOLD_TEST_DATA = {
-      {"foo", "fOo", "foO", "Foo", "FOO"},
-      {"eﬃcient", "efficient", "eﬃcient", "Eﬃcient", "EFFICIENT"},
-      {"ﬂour", "flour", "ﬂour", "Flour", "FLOUR"},
-      {"poſt", "post", "poſt", "Poſt", "POST"},
-      {"poﬅ", "post", "poﬅ", "Poﬅ", "POST"},
-      {"ﬅop", "stop", "ﬅop", "Stop", "STOP"},
-      {"tschüß", "tschüss", "tschüß", "Tschüß", "TSCHÜSS"},
-      {"weiß", "weiss", "weiß", "Weiß", "WEISS"},
-      {"WEIẞ", "weiss", "weiß", "Weiß", "WEIẞ"},
-      {"στιγμας", "στιγμασ", "στιγμας", "Στιγμας", "ΣΤΙΓΜΑΣ"},
-      {"ᾲ στο διάολο", "ὰι στο διάολο", "ᾲ στο διάολο", "Ὰͅ Στο Διάολο", "ᾺΙ ΣΤΟ ΔΙΆΟΛΟ"},
-      {"Henry Ⅷ", "henry ⅷ", "henry ⅷ", "Henry Ⅷ", "HENRY Ⅷ"},
-      {"I Work At Ⓚ", "i work at ⓚ", "i work at ⓚ", "I Work At Ⓚ", "I WORK AT Ⓚ"},
-      {"ʀᴀʀᴇ", "ʀᴀʀᴇ", "ʀᴀʀᴇ", "Ʀᴀʀᴇ", "ƦᴀƦᴇ"},
-      {"Ὰͅ", "ὰι", "ᾲ", "Ὰͅ", "ᾺΙ"}
+    {"foo", "fOo", "foO", "Foo", "FOO"},
+    {"eﬃcient", "efficient", "eﬃcient", "Eﬃcient", "EFFICIENT"},
+    {"ﬂour", "flour", "ﬂour", "Flour", "FLOUR"},
+    {"poſt", "post", "poſt", "Poſt", "POST"},
+    {"poﬅ", "post", "poﬅ", "Poﬅ", "POST"},
+    {"ﬅop", "stop", "ﬅop", "Stop", "STOP"},
+    {"tschüß", "tschüss", "tschüß", "Tschüß", "TSCHÜSS"},
+    {"weiß", "weiss", "weiß", "Weiß", "WEISS"},
+    {"WEIẞ", "weiss", "weiß", "Weiß", "WEIẞ"},
+    {"στιγμας", "στιγμασ", "στιγμας", "Στιγμας", "ΣΤΙΓΜΑΣ"},
+    {"ᾲ στο διάολο", "ὰι στο διάολο", "ᾲ στο διάολο", "Ὰͅ Στο Διάολο", "ᾺΙ ΣΤΟ ΔΙΆΟΛΟ"},
+    {"Henry Ⅷ", "henry ⅷ", "henry ⅷ", "Henry Ⅷ", "HENRY Ⅷ"},
+    {"I Work At Ⓚ", "i work at ⓚ", "i work at ⓚ", "I Work At Ⓚ", "I WORK AT Ⓚ"},
+    {"ʀᴀʀᴇ", "ʀᴀʀᴇ", "ʀᴀʀᴇ", "Ʀᴀʀᴇ", "ƦᴀƦᴇ"},
+    {"Ὰͅ", "ὰι", "ᾲ", "Ὰͅ", "ᾺΙ"}
   };
 
   @Test
@@ -99,8 +99,8 @@ public class PathNormalizationTest {
   }
 
   private static final String[][] NORMALIZE_TEST_DATA = {
-      {"\u00c5", "\u212b"}, // two forms of Å (one code point each)
-      {"Am\u00e9lie", "Ame\u0301lie"} // two forms of Amélie (one composed, one decomposed)
+    {"\u00c5", "\u212b"}, // two forms of Å (one code point each)
+    {"Am\u00e9lie", "Ame\u0301lie"} // two forms of Amélie (one composed, one decomposed)
   };
 
   @Test
@@ -130,8 +130,8 @@ public class PathNormalizationTest {
   }
 
   private static final String[][] NORMALIZE_CASE_FOLD_TEST_DATA = {
-      {"\u00c5", "\u00e5", "\u212b"},
-      {"Am\u00e9lie", "Am\u00c9lie", "Ame\u0301lie", "AME\u0301LIE"}
+    {"\u00c5", "\u00e5", "\u212b"},
+    {"Am\u00e9lie", "Am\u00c9lie", "Ame\u0301lie", "AME\u0301LIE"}
   };
 
   @Test
@@ -161,8 +161,8 @@ public class PathNormalizationTest {
   }
 
   private static final String[][] NORMALIZED_CASE_INSENSITIVE_ASCII_TEST_DATA = {
-      {"\u00e5", "\u212b"},
-      {"Am\u00e9lie", "AME\u0301LIE"}
+    {"\u00e5", "\u212b"},
+    {"Am\u00e9lie", "AME\u0301LIE"}
   };
 
   @Test
@@ -329,11 +329,13 @@ public class PathNormalizationTest {
    */
   private void assertNormalizedPatternMatches(String first, String second) {
     Pattern pattern = PathNormalization.compilePattern(first, normalizations);
-    assertTrue("pattern '" + pattern + "' does not match '" + second + "'",
+    assertTrue(
+        "pattern '" + pattern + "' does not match '" + second + "'",
         pattern.matcher(second).matches());
 
     pattern = PathNormalization.compilePattern(second, normalizations);
-    assertTrue("pattern '" + pattern + "' does not match '" + first + "'",
+    assertTrue(
+        "pattern '" + pattern + "' does not match '" + first + "'",
         pattern.matcher(first).matches());
   }
 
@@ -343,11 +345,13 @@ public class PathNormalizationTest {
    */
   private void assertNormalizedPatternDoesNotMatch(String first, String second) {
     Pattern pattern = PathNormalization.compilePattern(first, normalizations);
-    assertFalse("pattern '" + pattern + "' should not match '" + second + "'",
+    assertFalse(
+        "pattern '" + pattern + "' should not match '" + second + "'",
         pattern.matcher(second).matches());
 
     pattern = PathNormalization.compilePattern(second, normalizations);
-    assertFalse("pattern '" + pattern + "' should not match '" + first + "'",
+    assertFalse(
+        "pattern '" + pattern + "' should not match '" + first + "'",
         pattern.matcher(first).matches());
   }
 }

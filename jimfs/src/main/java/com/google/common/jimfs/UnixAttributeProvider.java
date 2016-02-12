@@ -38,15 +38,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 final class UnixAttributeProvider extends AttributeProvider {
 
-  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
-      "uid",
-      "ino",
-      "dev",
-      "nlink",
-      "rdev",
-      "ctime",
-      "mode",
-      "gid");
+  private static final ImmutableSet<String> ATTRIBUTES =
+      ImmutableSet.of("uid", "ino", "dev", "nlink", "rdev", "ctime", "mode", "gid");
 
   private static final ImmutableSet<String> INHERITED_VIEWS =
       ImmutableSet.of("basic", "owner", "posix");
@@ -75,8 +68,8 @@ final class UnixAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public UnixFileAttributeView view(FileLookup lookup,
-      ImmutableMap<String, FileAttributeView> inheritedViews) {
+  public UnixFileAttributeView view(
+      FileLookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
     // This method should not be called... and it cannot be called through the public APIs in
     // java.nio.file since there is no public UnixFileAttributeView type.
     throw new UnsupportedOperationException();
@@ -134,8 +127,7 @@ final class UnixAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public void set(
-      File file, String view, String attribute, Object value, boolean create) {
+  public void set(File file, String view, String attribute, Object value, boolean create) {
     throw unsettable(view, attribute);
   }
 

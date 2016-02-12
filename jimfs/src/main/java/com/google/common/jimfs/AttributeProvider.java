@@ -112,8 +112,7 @@ public abstract class AttributeProvider {
    * @throws UnsupportedOperationException if the given attribute is one supported by this provider
    *     and is allowed to be set by the user, but not on file creation and {@code create} is true
    */
-  public abstract void set(
-      File file, String view, String attribute, Object value, boolean create);
+  public abstract void set(File file, String view, String attribute, Object value, boolean create);
 
   // optional
 
@@ -175,9 +174,11 @@ public abstract class AttributeProvider {
    */
   protected static IllegalArgumentException invalidType(
       String view, String attribute, Object value, Class<?>... expectedTypes) {
-    Object expected = expectedTypes.length == 1 ?
-       expectedTypes[0] : "one of " + Arrays.toString(expectedTypes);
-    throw new IllegalArgumentException("invalid type " + value.getClass() + " for attribute '"
-        + view + ":" + attribute + "': expected " + expected);
+    Object expected =
+        expectedTypes.length == 1 ? expectedTypes[0] : "one of " + Arrays.toString(expectedTypes);
+    throw new IllegalArgumentException(
+        "invalid type " + value.getClass() 
+            + " for attribute '" + view + ":" + attribute
+            + "': expected " + expected);
   }
 }

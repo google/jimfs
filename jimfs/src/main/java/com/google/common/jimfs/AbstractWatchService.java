@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -34,6 +34,7 @@ import java.nio.file.Watchable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -90,8 +91,7 @@ abstract class AbstractWatchService implements WatchService {
   /**
    * Called when the given key is cancelled. Does nothing by default.
    */
-  public void cancelled(Key key) {
-  }
+  public void cancelled(Key key) {}
 
   @VisibleForTesting
   ImmutableList<WatchKey> queuedKeys() {
@@ -156,8 +156,7 @@ abstract class AbstractWatchService implements WatchService {
     private final Kind<T> kind;
     private final int count;
 
-    @Nullable
-    private final T context;
+    @Nullable private final T context;
 
     public Event(Kind<T> kind, int count, @Nullable T context) {
       this.kind = checkNotNull(kind);
@@ -188,19 +187,19 @@ abstract class AbstractWatchService implements WatchService {
         Event<?> other = (Event<?>) obj;
         return kind().equals(other.kind())
             && count() == other.count()
-            && Objects.equal(context(), other.context());
+            && Objects.equals(context(), other.context());
       }
       return false;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(kind(), count(), context());
+      return Objects.hash(kind(), count(), context());
     }
 
     @Override
     public String toString() {
-      return Objects.toStringHelper(this)
+      return MoreObjects.toStringHelper(this)
           .add("kind", kind())
           .add("count", count())
           .add("context", context())
@@ -213,8 +212,7 @@ abstract class AbstractWatchService implements WatchService {
    */
   static final class Key implements WatchKey {
 
-    @VisibleForTesting
-    static final int MAX_QUEUE_SIZE = 256;
+    @VisibleForTesting static final int MAX_QUEUE_SIZE = 256;
 
     private static WatchEvent<Object> overflowEvent(int count) {
       return new Event<>(OVERFLOW, count, null);
@@ -230,7 +228,9 @@ abstract class AbstractWatchService implements WatchService {
 
     private final BlockingQueue<WatchEvent<?>> events = new ArrayBlockingQueue<>(MAX_QUEUE_SIZE);
 
-    public Key(AbstractWatchService watcher, @Nullable Watchable watchable,
+    public Key(
+        AbstractWatchService watcher,
+        @Nullable Watchable watchable,
         Iterable<? extends WatchEvent.Kind<?>> subscribedTypes) {
       this.watcher = checkNotNull(watcher);
       this.watchable = watchable; // nullable for Watcher poison

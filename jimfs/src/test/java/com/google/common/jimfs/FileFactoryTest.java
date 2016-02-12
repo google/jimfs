@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,31 +41,31 @@ public class FileFactoryTest {
   @Test
   public void testCreateFiles_basic() {
     File file = factory.createDirectory();
-    ASSERT.that(file.id()).is(0L);
-    ASSERT.that(file.isDirectory()).isTrue();
+    assertThat(file.id()).isEqualTo(0L);
+    assertThat(file.isDirectory()).isTrue();
 
     file = factory.createRegularFile();
-    ASSERT.that(file.id()).is(1L);
-    ASSERT.that(file.isRegularFile()).isTrue();
+    assertThat(file.id()).isEqualTo(1L);
+    assertThat(file.isRegularFile()).isTrue();
 
     file = factory.createSymbolicLink(fakePath());
-    ASSERT.that(file.id()).is(2L);
-    ASSERT.that(file.isSymbolicLink()).isTrue();
+    assertThat(file.id()).isEqualTo(2L);
+    assertThat(file.isSymbolicLink()).isTrue();
   }
 
   @Test
   public void testCreateFiles_withSupplier() {
     File file = factory.directoryCreator().get();
-    ASSERT.that(file.id()).is(0L);
-    ASSERT.that(file.isDirectory()).isTrue();
+    assertThat(file.id()).isEqualTo(0L);
+    assertThat(file.isDirectory()).isTrue();
 
     file = factory.regularFileCreator().get();
-    ASSERT.that(file.id()).is(1L);
-    ASSERT.that(file.isRegularFile()).isTrue();
+    assertThat(file.id()).isEqualTo(1L);
+    assertThat(file.isRegularFile()).isTrue();
 
     file = factory.symbolicLinkCreator(fakePath()).get();
-    ASSERT.that(file.id()).is(2L);
-    ASSERT.that(file.isSymbolicLink()).isTrue();
+    assertThat(file.id()).isEqualTo(2L);
+    assertThat(file.isSymbolicLink()).isTrue();
   }
 
   static JimfsPath fakePath() {

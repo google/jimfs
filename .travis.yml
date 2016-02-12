@@ -1,0 +1,30 @@
+sudo: false
+
+language: java
+
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+  - openjdk7
+
+install: mvn install -U -DskipTests=true
+
+script: mvn verify -U -Dmaven.javadoc.skip=true
+
+after_success:
+  - util/deploy_snapshot.sh
+  - util/update_snapshot_docs.sh
+
+cache:
+  directories:
+  - $HOME/.m2
+
+env:
+  global:
+    - secure: "YlCxYTG64KLbyyD2tvA7LwCrNMDCxBigClh8enVicY2Rw6EN9ZTE1YYZivsXAN42YtI1snpy4fTn1z42KUx6FhrlkXVnhLi9TO1lz1lVL4czhqj8MGew20+DJs7tlw3xWRJlRVhqGIXFfximqBsYskm7/+qnHga6uyyV59/VwEI="
+    - secure: "bTcwsovwxPXplZysfwgNkTR3hfHjb7UvWMlxeEkHHt3GQiZxIDKkiJbgW2mHAG/e/H0wfKQyujeCgQwxn1fa5ttR+UbGz+TIIY2tgjpIFkSbBRzlNGOO0Y23wQpFXXUv3lAY//cV1pa0HlCz+IWNq7ZqPZAoReDAkxExbbmydtE="
+    - secure: "JZnVEfpNSCLBZQg1MP7MuhzP9H8t2gGUU4salm5VsRKck27fgg1HwBxADolcVeON2k+2masSKLEQPkeYQizc/VN5hZsCZpTgYjuMke1ZLe1v0KsIdH3Rdt77fhhTqiT1BEkMV8tlBwiraYZz+41iLo+Ug5yjgfmXXayDjYm4h4w="
+
+branches:
+  except:
+    - gh-pages

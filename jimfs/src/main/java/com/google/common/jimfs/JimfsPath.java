@@ -19,7 +19,6 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -42,6 +41,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 
@@ -53,8 +53,7 @@ import javax.annotation.Nullable;
  */
 final class JimfsPath implements Path {
 
-  @Nullable
-  private final Name root;
+  @Nullable private final Name root;
   private final ImmutableList<Name> names;
   private final PathService pathService;
 
@@ -95,7 +94,9 @@ final class JimfsPath implements Path {
    * Returns whether or not this is the empty path, with no root and a single, empty string, name.
    */
   public boolean isEmptyPath() {
-    return root == null && names.size() == 1 && names.get(0).toString().isEmpty();
+    return root == null
+        && names.size() == 1
+        && names.get(0).toString().isEmpty();
   }
 
   @Override
@@ -147,16 +148,22 @@ final class JimfsPath implements Path {
 
   @Override
   public JimfsPath getName(int index) {
-    checkArgument(index >= 0 && index < names.size(),
-        "index (%s) must be >= 0 and < name count (%s)", index, names.size());
+    checkArgument(
+        index >= 0 && index < names.size(),
+        "index (%s) must be >= 0 and < name count (%s)",
+        index,
+        names.size());
     return pathService.createFileName(names.get(index));
   }
 
   @Override
   public JimfsPath subpath(int beginIndex, int endIndex) {
-    checkArgument(beginIndex >= 0 && endIndex <= names.size() && endIndex > beginIndex,
+    checkArgument(
+        beginIndex >= 0 && endIndex <= names.size() && endIndex > beginIndex,
         "beginIndex (%s) must be >= 0; endIndex (%s) must be <= name count (%s) and > beginIndex",
-        beginIndex, endIndex, names.size());
+        beginIndex,
+        endIndex,
+        names.size());
     return pathService.createRelativePath(names.subList(beginIndex, endIndex));
   }
 
@@ -172,7 +179,7 @@ final class JimfsPath implements Path {
     JimfsPath otherPath = checkPath(other);
     return otherPath != null
         && getFileSystem().equals(otherPath.getFileSystem())
-        && Objects.equal(root, otherPath.root)
+        && Objects.equals(root, otherPath.root)
         && startsWith(names, otherPath.names);
   }
 
@@ -259,10 +266,12 @@ final class JimfsPath implements Path {
     if (name.toString().isEmpty()) {
       return this;
     }
-    return pathService.createPathInternal(root, ImmutableList.<Name>builder()
-        .addAll(names)
-        .add(name)
-        .build());
+    return pathService.createPathInternal(
+        root,
+        ImmutableList.<Name>builder()
+            .addAll(names)
+            .add(name)
+            .build());
   }
 
   @Override
@@ -278,10 +287,12 @@ final class JimfsPath implements Path {
     if (otherPath.isEmptyPath()) {
       return this;
     }
-    return pathService.createPath(root, ImmutableList.<Name>builder()
-        .addAll(names)
-        .addAll(otherPath.names)
-        .build());
+    return pathService.createPath(
+        root,
+        ImmutableList.<Name>builder()
+            .addAll(names)
+            .addAll(otherPath.names)
+            .build());
   }
 
   @Override
@@ -318,8 +329,8 @@ final class JimfsPath implements Path {
       throw new ProviderMismatchException(other.toString());
     }
 
-    checkArgument(Objects.equal(root, otherPath.root),
-        "Paths have different roots: %s, %s", this, other);
+    checkArgument(
+        Objects.equals(root, otherPath.root), "Paths have different roots: %s, %s", this, other);
 
     if (equals(other)) {
       return pathService.emptyPath();
@@ -341,9 +352,10 @@ final class JimfsPath implements Path {
 
     int extraNamesInThis = Math.max(0, getNameCount() - sharedSubsequenceLength);
 
-    ImmutableList<Name> extraNamesInOther = (otherNames.size() <= sharedSubsequenceLength)
-        ? ImmutableList.<Name>of()
-        : otherNames.subList(sharedSubsequenceLength, otherNames.size());
+    ImmutableList<Name> extraNamesInOther =
+        (otherNames.size() <= sharedSubsequenceLength)
+            ? ImmutableList.<Name>of()
+            : otherNames.subList(sharedSubsequenceLength, otherNames.size());
 
     List<Name> parts = new ArrayList<>(extraNamesInThis + extraNamesInOther.size());
 
@@ -362,13 +374,15 @@ final class JimfsPath implements Path {
 
   @Override
   public JimfsPath toRealPath(LinkOption... options) throws IOException {
-    return getJimfsFileSystem().getDefaultView()
+    return getJimfsFileSystem()
+        .getDefaultView()
         .toRealPath(this, pathService, Options.getLinkOptions(options));
   }
 
   @Override
-  public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events,
-      WatchEvent.Modifier... modifiers) throws IOException {
+  public WatchKey register(
+      WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
+      throws IOException {
     checkNotNull(modifiers);
     return register(watcher, events);
   }
@@ -443,8 +457,7 @@ final class JimfsPath implements Path {
 
   @Nullable
   private JimfsPath checkPath(Path other) {
-    if (checkNotNull(other) instanceof JimfsPath
-        && other.getFileSystem().equals(getFileSystem())) {
+    if (checkNotNull(other) instanceof JimfsPath && other.getFileSystem().equals(getFileSystem())) {
       return (JimfsPath) other;
     }
     return null;

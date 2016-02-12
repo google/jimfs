@@ -411,8 +411,7 @@ final class RegularFile extends File {
    * @throws IOException if the file needs more blocks but the disk is full or if reading from src
    *     throws an exception
    */
-  public long transferFrom(
-      ReadableByteChannel src, long pos, long count) throws IOException {
+  public long transferFrom(ReadableByteChannel src, long pos, long count) throws IOException {
     prepareForWrite(pos, 0); // don't assume the full count bytes will be written
 
     if (count == 0) {
@@ -445,7 +444,8 @@ final class RegularFile extends File {
     }
 
     if (read != -1) {
-      outer: while (remaining > 0) {
+      outer:
+      while (remaining > 0) {
         block = blockForWrite(++blockIndex);
 
         buf = ByteBuffer.wrap(block, 0, length(remaining));
@@ -577,8 +577,7 @@ final class RegularFile extends File {
    * equal to the current size. This for consistency with {@link FileChannel#transferTo}, which
    * this method is primarily intended as an implementation of.
    */
-  public long transferTo(
-      long pos, long count, WritableByteChannel dest) throws IOException {
+  public long transferTo(long pos, long count, WritableByteChannel dest) throws IOException {
     long bytesToRead = bytesToRead(pos, count);
 
     if (bytesToRead > 0) {

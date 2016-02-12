@@ -17,7 +17,8 @@
 package com.google.common.jimfs;
 
 import static com.google.common.jimfs.PathSubject.paths;
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assert_;
 
 import org.junit.After;
 import org.junit.Before;
@@ -62,12 +63,12 @@ public abstract class AbstractJimfsIntegrationTest {
     return Files.getAttribute(path(path), "fileKey", options);
   }
 
-  protected PathSubject assertThat(String path, LinkOption... options) {
-    return assertThat(path(path), options);
+  protected PathSubject assertThatPath(String path, LinkOption... options) {
+    return assertThatPath(path(path), options);
   }
 
-  protected static PathSubject assertThat(Path path, LinkOption... options) {
-    PathSubject subject = ASSERT.about(paths()).that(path);
+  protected static PathSubject assertThatPath(Path path, LinkOption... options) {
+    PathSubject subject = assert_().about(paths()).that(path);
     if (options.length != 0) {
       subject = subject.noFollowLinks();
     }
@@ -98,24 +99,24 @@ public abstract class AbstractJimfsIntegrationTest {
 
     public void assertAccessTimeChanged() throws IOException {
       FileTime t = attrs().lastAccessTime();
-      ASSERT.that(t).isNotEqualTo(accessTime);
+      assertThat(t).isNotEqualTo(accessTime);
       accessTime = t;
     }
 
     public void assertAccessTimeDidNotChange() throws IOException {
       FileTime t = attrs().lastAccessTime();
-      ASSERT.that(t).isEqualTo(accessTime);
+      assertThat(t).isEqualTo(accessTime);
     }
 
     public void assertModifiedTimeChanged() throws IOException {
       FileTime t = attrs().lastModifiedTime();
-      ASSERT.that(t).isNotEqualTo(modifiedTime);
+      assertThat(t).isNotEqualTo(modifiedTime);
       modifiedTime = t;
     }
 
     public void assertModifiedTimeDidNotChange() throws IOException {
       FileTime t = attrs().lastModifiedTime();
-      ASSERT.that(t).isEqualTo(modifiedTime);
+      assertThat(t).isEqualTo(modifiedTime);
     }
   }
 }

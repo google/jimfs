@@ -51,12 +51,12 @@ final class FileTree {
   /**
    * Map of root names to root directories.
    */
-  private final ImmutableSortedMap<Name, File> roots;
+  private final ImmutableSortedMap<Name, Directory> roots;
 
   /**
    * Creates a new file tree with the given root directories.
    */
-  FileTree(Map<Name, File> roots) {
+  FileTree(Map<Name, Directory> roots) {
     this.roots = ImmutableSortedMap.copyOf(roots, Name.canonicalOrdering());
   }
 
@@ -73,15 +73,15 @@ final class FileTree {
    */
   @Nullable
   public DirectoryEntry getRoot(Name name) {
-    File file = roots.get(name);
-    return file == null ? null : ((Directory) file).entryInParent();
+    Directory dir = roots.get(name);
+    return dir == null ? null : dir.entryInParent();
   }
 
   /**
    * Returns the result of the file lookup for the given path.
    */
-  public DirectoryEntry lookUp(File workingDirectory,
-      JimfsPath path, Set<? super LinkOption> options) throws IOException {
+  public DirectoryEntry lookUp(
+      File workingDirectory, JimfsPath path, Set<? super LinkOption> options) throws IOException {
     checkNotNull(path);
     checkNotNull(options);
 
@@ -94,8 +94,8 @@ final class FileTree {
   }
 
   @Nullable
-  private DirectoryEntry lookUp(File dir,
-      JimfsPath path, Set<? super LinkOption> options, int linkDepth) throws IOException {
+  private DirectoryEntry lookUp(
+      File dir, JimfsPath path, Set<? super LinkOption> options, int linkDepth) throws IOException {
     ImmutableList<Name> names = path.names();
 
     if (path.isAbsolute()) {
@@ -120,18 +120,14 @@ final class FileTree {
     return lookUp(dir, names, options, linkDepth);
   }
 
-  private static boolean isEmpty(ImmutableList<Name> names) {
-    // the empty path (created by FileSystem.getPath("")), has no root and a single name, ""
-    return names.isEmpty() || names.size() == 1 && names.get(0).toString().isEmpty();
-  }
-
   /**
    * Looks up the given names against the given base file. If the file is not a directory, the
    * lookup fails.
    */
   @Nullable
-  private DirectoryEntry lookUp(File dir, Iterable<Name> names,
-      Set<? super LinkOption> options, int linkDepth) throws IOException {
+  private DirectoryEntry lookUp(
+      File dir, Iterable<Name> names, Set<? super LinkOption> options, int linkDepth)
+      throws IOException {
     Iterator<Name> nameIterator = names.iterator();
     Name name = nameIterator.next();
     while (nameIterator.hasNext()) {
@@ -168,8 +164,9 @@ final class FileTree {
    * Looks up the last element of a path.
    */
   @Nullable
-  private DirectoryEntry lookUpLast(@Nullable File dir,
-      Name name, Set<? super LinkOption> options, int linkDepth) throws IOException {
+  private DirectoryEntry lookUpLast(
+      @Nullable File dir, Name name, Set<? super LinkOption> options, int linkDepth)
+      throws IOException {
     Directory directory = toDirectory(dir);
     if (directory == null) {
       return null;
@@ -193,8 +190,8 @@ final class FileTree {
    * relative to the given directory.
    */
   @Nullable
-  private DirectoryEntry followSymbolicLink(
-      File dir, SymbolicLink link, int linkDepth) throws IOException {
+  private DirectoryEntry followSymbolicLink(File dir, SymbolicLink link, int linkDepth)
+      throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");
     }
@@ -216,7 +213,9 @@ final class FileTree {
     Name name = entry.name();
 
     if (name.equals(Name.SELF) || name.equals(Name.PARENT)) {
-      return ((Directory) entry.file()).entryInParent();
+      Directory dir = toDirectory(entry.file());
+      assert dir != null;
+      return dir.entryInParent();
     } else {
       return entry;
     }
@@ -225,5 +224,11 @@ final class FileTree {
   @Nullable
   private Directory toDirectory(@Nullable File file) {
     return file == null || !file.isDirectory() ? null : (Directory) file;
+  }
+
+  private static boolean isEmpty(ImmutableList<Name> names) {
+    // the empty path (created by FileSystem.getPath("")), has no root and a single name, ""
+    return names.isEmpty()
+        || names.size() == 1 && names.get(0).toString().isEmpty();
   }
 }

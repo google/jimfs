@@ -59,9 +59,8 @@ final class HeapDisk {
   public HeapDisk(Configuration config) {
     this.blockSize = config.blockSize;
     this.maxBlockCount = toBlockCount(config.maxSize, blockSize);
-    this.maxCachedBlockCount = config.maxCacheSize == -1
-        ? maxBlockCount
-        : toBlockCount(config.maxCacheSize, blockSize);
+    this.maxCachedBlockCount =
+        config.maxCacheSize == -1 ? maxBlockCount : toBlockCount(config.maxCacheSize, blockSize);
     this.blockCache = createBlockCache(maxCachedBlockCount);
   }
 
@@ -77,8 +76,8 @@ final class HeapDisk {
   public HeapDisk(int blockSize, int maxBlockCount, int maxCachedBlockCount) {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
     checkArgument(maxBlockCount > 0, "maxBlockCount (%s) must be positive", maxBlockCount);
-    checkArgument(maxCachedBlockCount >= 0,
-        "maxCachedBlockCount must be non-negative", maxCachedBlockCount);
+    checkArgument(
+        maxCachedBlockCount >= 0, "maxCachedBlockCount must be non-negative", maxCachedBlockCount);
     this.blockSize = blockSize;
     this.maxBlockCount = maxBlockCount;
     this.maxCachedBlockCount = maxCachedBlockCount;

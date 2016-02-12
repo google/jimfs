@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.jimfs.UserLookupService.createGroupPrincipal;
 import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -37,8 +37,8 @@ import java.util.Set;
  */
 @RunWith(JUnit4.class)
 @SuppressWarnings("OctalInteger")
-public class UnixAttributeProviderTest extends
-    AbstractAttributeProviderTest<UnixAttributeProvider> {
+public class UnixAttributeProviderTest
+    extends AbstractAttributeProviderTest<UnixAttributeProvider> {
 
   @Override
   protected UnixAttributeProvider createProvider() {
@@ -48,9 +48,7 @@ public class UnixAttributeProviderTest extends
   @Override
   protected Set<? extends AttributeProvider> createInheritedProviders() {
     return ImmutableSet.of(
-        new BasicAttributeProvider(),
-        new OwnerAttributeProvider(),
-        new PosixAttributeProvider());
+        new BasicAttributeProvider(), new OwnerAttributeProvider(), new PosixAttributeProvider());
   }
 
   @Test
@@ -58,29 +56,28 @@ public class UnixAttributeProviderTest extends
     // unix provider relies on other providers to set their initial attributes
     file.setAttribute("owner", "owner", createUserPrincipal("foo"));
     file.setAttribute("posix", "group", createGroupPrincipal("bar"));
-    file.setAttribute("posix", "permissions",
-        ImmutableSet.copyOf(PosixFilePermissions.fromString("rw-r--r--")));
+    file.setAttribute(
+        "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("rw-r--r--")));
 
     // these are pretty much meaningless here since they aren't properties this
     // file system actually has, so don't really care about the exact value of these
-    ASSERT.that(provider.get(file, "uid")).isA(Integer.class);
-    ASSERT.that(provider.get(file, "gid")).isA(Integer.class);
-    ASSERT.that(provider.get(file, "rdev")).is(0L);
-    ASSERT.that(provider.get(file, "dev")).is(1L);
-    ASSERT.that(provider.get(file, "ino")).isA(Integer.class);
+    assertThat(provider.get(file, "uid")).isInstanceOf(Integer.class);
+    assertThat(provider.get(file, "gid")).isInstanceOf(Integer.class);
+    assertThat(provider.get(file, "rdev")).isEqualTo(0L);
+    assertThat(provider.get(file, "dev")).isEqualTo(1L);
+    assertThat(provider.get(file, "ino")).isInstanceOf(Integer.class);
 
     // these have logical origins in attributes from other views
-    ASSERT.that(provider.get(file, "mode")).is(0644); // rw-r--r--
-    ASSERT.that(provider.get(file, "ctime"))
-        .isEqualTo(FileTime.fromMillis(file.getCreationTime()));
+    assertThat(provider.get(file, "mode")).isEqualTo(0644); // rw-r--r--
+    assertThat(provider.get(file, "ctime")).isEqualTo(FileTime.fromMillis(file.getCreationTime()));
 
     // this is based on a property this file system does actually have
-    ASSERT.that(provider.get(file, "nlink")).is(1);
+    assertThat(provider.get(file, "nlink")).isEqualTo(1);
 
     file.incrementLinkCount();
-    ASSERT.that(provider.get(file, "nlink")).is(2);
+    assertThat(provider.get(file, "nlink")).isEqualTo(2);
     file.decrementLinkCount();
-    ASSERT.that(provider.get(file, "nlink")).is(1);
+    assertThat(provider.get(file, "nlink")).isEqualTo(1);
   }
 
   @Test

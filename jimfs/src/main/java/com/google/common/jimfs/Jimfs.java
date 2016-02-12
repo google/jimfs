@@ -17,6 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.jimfs.SystemJimfsFileSystemProvider.FILE_SYSTEM_KEY;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -76,29 +77,29 @@ public final class Jimfs {
    */
   public static final String URI_SCHEME = "jimfs";
 
-  /**
-   * The key used for mapping to the {@link Configuration} in the {@code env} map when creating a
-   * new file system instance using {@code FileSystems.newFileSystem()}.
-   */
-  public static final String CONFIG_KEY = "config";
-
   private Jimfs() {}
 
   /**
-   * Creates a new in-memory file system with a default configuration appropriate to the current
-   * operating system. More specifically, if the operating system is Windows,
-   * {@link Configuration#windows()} is used; if the operating system is Mac OS X,
-   * {@link Configuration#osX()} is used; otherwise, {@link Configuration#unix()} is used.
+   * Creates a new in-memory file system with a
+   * {@linkplain Configuration#forCurrentPlatform() default configuration} appropriate to the
+   * current operating system.
+   *
+   * <p>More specifically, if the operating system is Windows, {@link Configuration#windows()} is
+   * used; if the operating system is Mac OS X, {@link Configuration#osX()} is used; otherwise,
+   * {@link Configuration#unix()} is used.
    */
   public static FileSystem newFileSystem() {
     return newFileSystem(newRandomFileSystemName());
   }
 
   /**
-   * Creates a new in-memory file system with a default configuration appropriate to the current
-   * operating system. More specifically, if the operating system is Windows,
-   * {@link Configuration#windows()} is used; if the operating system is Mac OS X,
-   * {@link Configuration#osX()} is used; otherwise, {@link Configuration#unix()} is used.
+   * Creates a new in-memory file system with a
+   * {@linkplain Configuration#forCurrentPlatform() default configuration} appropriate to the
+   * current operating system.
+   *
+   * <p>More specifically, if the operating system is Windows, {@link Configuration#windows()} is
+   * used; if the operating system is Mac OS X, {@link Configuration#osX()} is used; otherwise,
+   * {@link Configuration#unix()} is used.
    *
    * <p>The returned file system uses the given name as the host part of its URI and the URIs of
    * paths in the file system. For example, given the name {@code my-file-system}, the file
@@ -106,18 +107,7 @@ public final class Jimfs {
    * will be {@code jimfs://my-file-system/foo/bar}.
    */
   public static FileSystem newFileSystem(String name) {
-    String os = System.getProperty("os.name");
-
-    Configuration config;
-    if (os.contains("Windows")) {
-      config = Configuration.windows();
-    } else if (os.contains("OS X")) {
-      config = Configuration.osX();
-    } else {
-      config = Configuration.unix();
-    }
-
-    return newFileSystem(name, config);
+    return newFileSystem(name, Configuration.forCurrentPlatform());
   }
 
   /**
@@ -146,17 +136,26 @@ public final class Jimfs {
 
   @VisibleForTesting
   static FileSystem newFileSystem(URI uri, Configuration config) {
-    checkArgument(URI_SCHEME.equals(uri.getScheme()),
-        "uri (%s) must have scheme %s", uri, URI_SCHEME);
+    checkArgument(
+        URI_SCHEME.equals(uri.getScheme()), "uri (%s) must have scheme %s", uri, URI_SCHEME);
 
-    ImmutableMap<String, ?> env = ImmutableMap.of(CONFIG_KEY, config);
     try {
-      // Using FileSystems.newFileSystem so that we use the same FileSystemProvider that users will
-      // get if they use FileSystems (or other methods like Paths.get(URI)) directly, if possible.
-      // We pass in the ClassLoader that loaded this class to ensure that JimfsFileSystemProvider
-      // will be found, though if that ClassLoader isn't the system ClassLoader, a new
-      // JimfsFileSystemProvider will be created each time.
-      return FileSystems.newFileSystem(uri, env, Jimfs.class.getClassLoader());
+      // Create the FileSystem. It uses JimfsFileSystemProvider as its provider, as that is
+      // the provider that actually implements the operations needed for Files methods to work.
+      JimfsFileSystem fileSystem =
+          JimfsFileSystems.newFileSystem(JimfsFileSystemProvider.instance(), uri, config);
+
+      // Now, call FileSystems.newFileSystem, passing it the FileSystem we just created. This
+      // allows the system-loaded SystemJimfsFileSystemProvider instance to cache the FileSystem
+      // so that methods like Paths.get(URI) work.
+      // We do it in this awkward way to avoid issues when the classes in the API (this class
+      // and Configuration, for example) are loaded by a different classloader than the one that
+      // loads SystemJimfsFileSystemProvider using ServiceLoader. See
+      // https://github.com/google/jimfs/issues/18 for gory details.
+      ImmutableMap<String, ?> env = ImmutableMap.of(FILE_SYSTEM_KEY, fileSystem);
+      FileSystems.newFileSystem(uri, env, SystemJimfsFileSystemProvider.class.getClassLoader());
+
+      return fileSystem;
     } catch (IOException e) {
       throw new AssertionError(e);
     }

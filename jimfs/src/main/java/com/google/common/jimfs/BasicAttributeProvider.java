@@ -36,16 +36,17 @@ import javax.annotation.Nullable;
  */
 final class BasicAttributeProvider extends AttributeProvider {
 
-  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
-      "size",
-      "fileKey",
-      "isDirectory",
-      "isRegularFile",
-      "isSymbolicLink",
-      "isOther",
-      "creationTime",
-      "lastAccessTime",
-      "lastModifiedTime");
+  private static final ImmutableSet<String> ATTRIBUTES =
+      ImmutableSet.of(
+          "size",
+          "fileKey",
+          "isDirectory",
+          "isRegularFile",
+          "isSymbolicLink",
+          "isOther",
+          "creationTime",
+          "lastAccessTime",
+          "lastModifiedTime");
 
   @Override
   public String name() {
@@ -84,13 +85,11 @@ final class BasicAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public void set(File file,
-      String view, String attribute, Object value, boolean create) {
+  public void set(File file, String view, String attribute, Object value, boolean create) {
     switch (attribute) {
       case "creationTime":
         checkNotCreate(view, attribute, create);
-        file.setCreationTime(
-            checkType(view, attribute, value, FileTime.class).toMillis());
+        file.setCreationTime(checkType(view, attribute, value, FileTime.class).toMillis());
         break;
       case "lastAccessTime":
         checkNotCreate(view, attribute, create);
@@ -117,8 +116,8 @@ final class BasicAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public BasicFileAttributeView view(FileLookup lookup,
-      ImmutableMap<String, FileAttributeView> inheritedViews) {
+  public BasicFileAttributeView view(
+      FileLookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup);
   }
 
@@ -155,7 +154,8 @@ final class BasicAttributeProvider extends AttributeProvider {
     public void setTimes(
         @Nullable FileTime lastModifiedTime,
         @Nullable FileTime lastAccessTime,
-        @Nullable FileTime createTime) throws IOException {
+        @Nullable FileTime createTime)
+        throws IOException {
       File file = lookupFile();
 
       if (lastModifiedTime != null) {

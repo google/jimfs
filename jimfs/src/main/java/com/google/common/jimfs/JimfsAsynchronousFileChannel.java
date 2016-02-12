@@ -56,8 +56,8 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     return channel.size();
   }
 
-  private <R, A> void addCallback(ListenableFuture<R> future,
-      CompletionHandler<R, ? super A> handler, @Nullable A attachment) {
+  private <R, A> void addCallback(
+      ListenableFuture<R> future, CompletionHandler<R, ? super A> handler, @Nullable A attachment) {
     future.addListener(new CompletionHandlerCallback<>(future, handler, attachment), executor);
   }
 
@@ -73,7 +73,11 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   }
 
   @Override
-  public <A> void lock(long position, long size, boolean shared, @Nullable A attachment,
+  public <A> void lock(
+      long position,
+      long size,
+      boolean shared,
+      @Nullable A attachment,
       CompletionHandler<FileLock, ? super A> handler) {
     checkNotNull(handler);
     addCallback(lock(position, size, shared), handler, attachment);
@@ -92,12 +96,13 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     } else {
       channel.checkWritable();
     }
-    return executor.submit(new Callable<FileLock>() {
-      @Override
-      public FileLock call() throws IOException {
-        return tryLock(position, size, shared);
-      }
-    });
+    return executor.submit(
+        new Callable<FileLock>() {
+          @Override
+          public FileLock call() throws IOException {
+            return tryLock(position, size, shared);
+          }
+        });
   }
 
   @Override
@@ -114,7 +119,10 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   }
 
   @Override
-  public <A> void read(ByteBuffer dst, long position, @Nullable A attachment,
+  public <A> void read(
+      ByteBuffer dst,
+      long position,
+      @Nullable A attachment,
       CompletionHandler<Integer, ? super A> handler) {
     addCallback(read(dst, position), handler, attachment);
   }
@@ -127,16 +135,20 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
       return closedChannelFuture();
     }
     channel.checkReadable();
-    return executor.submit(new Callable<Integer>() {
-      @Override
-      public Integer call() throws IOException {
-        return channel.read(dst, position);
-      }
-    });
+    return executor.submit(
+        new Callable<Integer>() {
+          @Override
+          public Integer call() throws IOException {
+            return channel.read(dst, position);
+          }
+        });
   }
 
   @Override
-  public <A> void write(ByteBuffer src, long position, @Nullable A attachment,
+  public <A> void write(
+      ByteBuffer src,
+      long position,
+      @Nullable A attachment,
       CompletionHandler<Integer, ? super A> handler) {
     addCallback(write(src, position), handler, attachment);
   }
@@ -148,12 +160,13 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
       return closedChannelFuture();
     }
     channel.checkWritable();
-    return executor.submit(new Callable<Integer>() {
-      @Override
-      public Integer call() throws IOException {
-        return channel.write(src, position);
-      }
-    });
+    return executor.submit(
+        new Callable<Integer>() {
+          @Override
+          public Integer call() throws IOException {
+            return channel.write(src, position);
+          }
+        });
   }
 
   @Override
@@ -182,11 +195,12 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
 
     private final ListenableFuture<R> future;
     private final CompletionHandler<R, ? super A> completionHandler;
-    @Nullable
-    private final A attachment;
+    @Nullable private final A attachment;
 
-    private CompletionHandlerCallback(ListenableFuture<R> future,
-        CompletionHandler<R, ? super A> completionHandler, @Nullable A attachment) {
+    private CompletionHandlerCallback(
+        ListenableFuture<R> future,
+        CompletionHandler<R, ? super A> completionHandler,
+        @Nullable A attachment) {
       this.future = checkNotNull(future);
       this.completionHandler = checkNotNull(completionHandler);
       this.attachment = attachment;

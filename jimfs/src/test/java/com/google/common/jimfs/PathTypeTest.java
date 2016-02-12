@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.jimfs.PathType.ParseResult;
-import static org.truth0.Truth.ASSERT;
+import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 
@@ -43,8 +43,8 @@ public class PathTypeTest {
 
   @Test
   public void testBasicProperties() {
-    ASSERT.that(type.getSeparator()).is("/");
-    ASSERT.that(type.getOtherSeparators()).is("\\");
+    assertThat(type.getSeparator()).isEqualTo("/");
+    assertThat(type.getOtherSeparators()).isEqualTo("\\");
   }
 
   @Test
@@ -59,29 +59,33 @@ public class PathTypeTest {
   @Test
   public void testToString() {
     ParseResult path = type.parsePath("foo/bar\\baz");
-    ASSERT.that(type.toString(path.root(), path.names())).is("foo/bar/baz");
+    assertThat(type.toString(path.root(), path.names())).isEqualTo("foo/bar/baz");
 
     ParseResult path2 = type.parsePath("$/foo/bar");
-    ASSERT.that(type.toString(path2.root(), path2.names())).is("$foo/bar");
+    assertThat(type.toString(path2.root(), path2.names())).isEqualTo("$foo/bar");
   }
 
   @Test
   public void testToUri() {
-    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"));
-    ASSERT.that(fileUri.toString()).is("jimfs://foo/$/foo/bar");
-    ASSERT.that(fileUri.getPath()).is("/$/foo/bar");
+    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"), false);
+    assertThat(fileUri.toString()).isEqualTo("jimfs://foo/$/foo/bar");
+    assertThat(fileUri.getPath()).isEqualTo("/$/foo/bar");
 
-    URI rootUri = type.toUri(fileSystemUri, "$", ImmutableList.<String>of());
-    ASSERT.that(rootUri.toString()).is("jimfs://foo/$");
-    ASSERT.that(rootUri.getPath()).is("/$");
+    URI directoryUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar"), true);
+    assertThat(directoryUri.toString()).isEqualTo("jimfs://foo/$/foo/bar/");
+    assertThat(directoryUri.getPath()).isEqualTo("/$/foo/bar/");
+
+    URI rootUri = type.toUri(fileSystemUri, "$", ImmutableList.<String>of(), true);
+    assertThat(rootUri.toString()).isEqualTo("jimfs://foo/$/");
+    assertThat(rootUri.getPath()).isEqualTo("/$/");
   }
 
   @Test
   public void testToUri_escaping() {
-    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar baz"));
-    ASSERT.that(fileUri.toString()).is("jimfs://foo/$/foo/bar%20baz");
-    ASSERT.that(fileUri.getRawPath()).is("/$/foo/bar%20baz");
-    ASSERT.that(fileUri.getPath()).is("/$/foo/bar baz");
+    URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("foo", "bar baz"), false);
+    assertThat(fileUri.toString()).isEqualTo("jimfs://foo/$/foo/bar%20baz");
+    assertThat(fileUri.getRawPath()).isEqualTo("/$/foo/bar%20baz");
+    assertThat(fileUri.getPath()).isEqualTo("/$/foo/bar baz");
   }
 
   @Test
@@ -93,18 +97,17 @@ public class PathTypeTest {
     assertUriRoundTripsCorrectly(type, "$foo/bar baz");
   }
 
-  static void assertParseResult(
-      ParseResult result, @Nullable String root, String... names) {
-    ASSERT.that(result.root()).is(root);
-    ASSERT.that(result.names()).iteratesAs((Object[]) names);
+  static void assertParseResult(ParseResult result, @Nullable String root, String... names) {
+    assertThat(result.root()).isEqualTo(root);
+    assertThat(result.names()).containsExactly((Object[]) names).inOrder();
   }
 
   static void assertUriRoundTripsCorrectly(PathType type, String path) {
     ParseResult result = type.parsePath(path);
-    URI uri = type.toUri(fileSystemUri, result.root(), result.names());
+    URI uri = type.toUri(fileSystemUri, result.root(), result.names(), false);
     ParseResult parsedUri = type.fromUri(uri);
-    ASSERT.that(parsedUri.root()).isEqualTo(result.root());
-    ASSERT.that(parsedUri.names()).iteratesAs(result.names());
+    assertThat(parsedUri.root()).isEqualTo(result.root());
+    assertThat(parsedUri.names()).containsExactlyElementsIn(result.names()).inOrder();
   }
 
   /**
@@ -138,11 +141,14 @@ public class PathTypeTest {
     }
 
     @Override
-    public String toUriPath(String root, Iterable<String> names) {
+    public String toUriPath(String root, Iterable<String> names, boolean directory) {
       StringBuilder builder = new StringBuilder();
       builder.append('/').append(root);
       for (String name : names) {
         builder.append('/').append(name);
+      }
+      if (directory) {
+        builder.append('/');
       }
       return builder.toString();
     }

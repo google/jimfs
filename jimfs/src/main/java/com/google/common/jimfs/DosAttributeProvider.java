@@ -39,11 +39,8 @@ import javax.annotation.Nullable;
  */
 final class DosAttributeProvider extends AttributeProvider {
 
-  private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of(
-      "readonly",
-      "hidden",
-      "archive",
-      "system");
+  private static final ImmutableSet<String> ATTRIBUTES =
+      ImmutableSet.of("readonly", "hidden", "archive", "system");
 
   private static final ImmutableSet<String> INHERITED_VIEWS = ImmutableSet.of("basic", "owner");
 
@@ -71,8 +68,7 @@ final class DosAttributeProvider extends AttributeProvider {
         "dos:system", getDefaultValue("dos:system", userProvidedDefaults));
   }
 
-  private static Boolean getDefaultValue(
-      String attribute, Map<String, ?> userProvidedDefaults) {
+  private static Boolean getDefaultValue(String attribute, Map<String, ?> userProvidedDefaults) {
     Object userProvidedValue = userProvidedDefaults.get(attribute);
     if (userProvidedValue != null) {
       return checkType("dos", attribute, userProvidedValue, Boolean.class);
@@ -92,8 +88,7 @@ final class DosAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public void set(File file, String view, String attribute, Object value,
-      boolean create) {
+  public void set(File file, String view, String attribute, Object value, boolean create) {
     if (supports(attribute)) {
       checkNotCreate(view, attribute, create);
       file.setAttribute("dos", attribute, checkType(view, attribute, value, Boolean.class));
@@ -106,8 +101,8 @@ final class DosAttributeProvider extends AttributeProvider {
   }
 
   @Override
-  public DosFileAttributeView view(FileLookup lookup,
-      ImmutableMap<String, FileAttributeView> inheritedViews) {
+  public DosFileAttributeView view(
+      FileLookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup, (BasicFileAttributeView) inheritedViews.get("basic"));
   }
 

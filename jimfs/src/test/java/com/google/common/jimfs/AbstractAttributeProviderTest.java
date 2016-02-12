@@ -16,8 +16,8 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
-import static org.truth0.Truth.ASSERT;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -93,17 +93,16 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
 
   protected void assertSupportsAll(String... attributes) {
     for (String attribute : attributes) {
-      ASSERT.that(provider.supports(attribute)).isTrue();
+      assertThat(provider.supports(attribute)).isTrue();
     }
   }
 
-  protected void assertContainsAll(
-      File file, ImmutableMap<String, Object> expectedAttributes) {
+  protected void assertContainsAll(File file, ImmutableMap<String, Object> expectedAttributes) {
     for (Map.Entry<String, Object> entry : expectedAttributes.entrySet()) {
       String attribute = entry.getKey();
       Object value = entry.getValue();
 
-      ASSERT.that(provider.get(file, attribute)).is(value);
+      assertThat(provider.get(file, attribute)).isEqualTo(value);
     }
   }
 
@@ -117,7 +116,7 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
 
   protected void assertSetAndGetSucceeds(String attribute, Object value, boolean create) {
     provider.set(file, provider.name(), attribute, value, create);
-    ASSERT.that(provider.get(file, attribute)).is(value);
+    assertThat(provider.get(file, attribute)).isEqualTo(value);
   }
 
   @SuppressWarnings("EmptyCatchBlock")

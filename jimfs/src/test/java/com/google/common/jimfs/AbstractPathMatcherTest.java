@@ -60,14 +60,16 @@ public abstract class AbstractPathMatcherTest {
     try {
       matcher(pattern);
       fail();
-    } catch (PatternSyntaxException expected) {}
+    } catch (PatternSyntaxException expected) {
+    }
 
     try {
       PathMatcher real = realMatcher(pattern);
       if (real != null) {
         fail();
       }
-    } catch (PatternSyntaxException expected) {}
+    } catch (PatternSyntaxException expected) {
+    }
   }
 
   protected final PatternAsserter assertThat(String pattern) {
@@ -78,8 +80,7 @@ public abstract class AbstractPathMatcherTest {
 
     private final PathMatcher matcher;
 
-    @Nullable
-    private final PathMatcher realMatcher;
+    @Nullable private final PathMatcher realMatcher;
 
     PatternAsserter(String pattern) {
       this.matcher = matcher(pattern);
@@ -88,11 +89,12 @@ public abstract class AbstractPathMatcherTest {
 
     PatternAsserter matches(String... paths) {
       for (String path : paths) {
-        assertTrue("matcher '" + matcher + "' did not match '" + path + "'",
-            matcher.matches(fake(path)));
+        assertTrue(
+            "matcher '" + matcher + "' did not match '" + path + "'", matcher.matches(fake(path)));
         if (realMatcher != null) {
           Path realPath = Paths.get(path);
-          assertTrue("real matcher '" + realMatcher + "' did not match '" + realPath + "'",
+          assertTrue(
+              "real matcher '" + realMatcher + "' did not match '" + realPath + "'",
               realMatcher.matches(realPath));
         }
       }
@@ -101,11 +103,13 @@ public abstract class AbstractPathMatcherTest {
 
     PatternAsserter doesNotMatch(String... paths) {
       for (String path : paths) {
-        assertFalse("glob '" + matcher + "' should not have matched '" + path + "'",
+        assertFalse(
+            "glob '" + matcher + "' should not have matched '" + path + "'",
             matcher.matches(fake(path)));
         if (realMatcher != null) {
           Path realPath = Paths.get(path);
-          assertFalse("real matcher '" + realMatcher + "' matched '" + realPath + "'",
+          assertFalse(
+              "real matcher '" + realMatcher + "' matched '" + realPath + "'",
               realMatcher.matches(realPath));
         }
       }
@@ -229,8 +233,9 @@ public abstract class AbstractPathMatcherTest {
       }
 
       @Override
-      public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events,
-          WatchEvent.Modifier... modifiers) throws IOException {
+      public WatchKey register(
+          WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
+          throws IOException {
         return null;
       }
 
