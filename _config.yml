@@ -38,4 +38,4 @@ lsi: false
 # Release data
 # Do not change! updaterelease.sh automatically updates these fields
 latest_release: 1.1
-latest_snapshot: 1.1-SNAPSHOT
+latest_snapshot: 2.0-SNAPSHOT
