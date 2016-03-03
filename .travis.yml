@@ -25,6 +25,8 @@ env:
     - secure: "bTcwsovwxPXplZysfwgNkTR3hfHjb7UvWMlxeEkHHt3GQiZxIDKkiJbgW2mHAG/e/H0wfKQyujeCgQwxn1fa5ttR+UbGz+TIIY2tgjpIFkSbBRzlNGOO0Y23wQpFXXUv3lAY//cV1pa0HlCz+IWNq7ZqPZAoReDAkxExbbmydtE="
     - secure: "JZnVEfpNSCLBZQg1MP7MuhzP9H8t2gGUU4salm5VsRKck27fgg1HwBxADolcVeON2k+2masSKLEQPkeYQizc/VN5hZsCZpTgYjuMke1ZLe1v0KsIdH3Rdt77fhhTqiT1BEkMV8tlBwiraYZz+41iLo+Ug5yjgfmXXayDjYm4h4w="
 
+
 branches:
-  except:
-    - gh-pages
+  only:
+    - master
+    - /^release.*$/
