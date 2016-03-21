@@ -684,7 +684,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try {
       Files.createFile(path("/foo"), new BasicFileAttribute<>("basic:noSuchAttribute", "foo"));
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (UnsupportedOperationException expected) {
     }
 
     assertThatPath("/foo").doesNotExist();
