@@ -162,14 +162,14 @@ public class AttributeServiceTest {
     try {
       service.setAttribute(file, "test:blah", "blah", false);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (UnsupportedOperationException expected) {
     }
 
     try {
       // baz is defined by "test", but basic doesn't inherit test
       service.setAttribute(file, "basic:baz", 5, false);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (UnsupportedOperationException expected) {
     }
 
     assertThat(file.getAttribute("test", "baz")).isEqualTo(1);
