@@ -264,7 +264,8 @@ final class AttributeService {
       }
     }
 
-    throw new UnsupportedOperationException("cannot set attribute '" + view + ":" + attribute + "'");
+    throw new UnsupportedOperationException(
+        "cannot set attribute '" + view + ":" + attribute + "'");
   }
 
   /**
