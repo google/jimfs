@@ -657,16 +657,6 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     assertThatPath("/normal").attribute("posix:permissions").isNot(permissions);
     assertThatPath("/foo").attribute("posix:permissions").is(permissions);
-
-    FileAttribute<UserPrincipal> ownerAttr =
-        new BasicFileAttribute<>(
-            "posix:owner", fs.getUserPrincipalLookupService().lookupPrincipalByName("foo"));
-
-    Files.createFile(path("/foo2"), ownerAttr, permissionsAttr);
-
-    assertThatPath("/normal").attribute("owner:owner").isNot(ownerAttr.value());
-    assertThatPath("/foo2").attribute("owner:owner").is(ownerAttr.value());
-    assertThatPath("/foo2").attribute("posix:permissions").is(permissions);
   }
 
   @Test

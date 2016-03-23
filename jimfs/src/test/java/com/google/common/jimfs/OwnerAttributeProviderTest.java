@@ -56,7 +56,7 @@ public class OwnerAttributeProviderTest
   @Test
   public void testSet() {
     assertSetAndGetSucceeds("owner", createUserPrincipal("user"));
-    assertSetAndGetSucceedsOnCreate("owner", createUserPrincipal("user"));
+    assertSetFailsOnCreate("owner", createUserPrincipal("user"));
 
     // invalid type
     assertSetFails("owner", "root");

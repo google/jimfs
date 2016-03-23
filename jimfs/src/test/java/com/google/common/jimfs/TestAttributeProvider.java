@@ -82,7 +82,7 @@ public final class TestAttributeProvider extends AttributeProvider {
         file.setAttribute("test", "baz", checkType(view, attribute, value, Integer.class));
         break;
       default:
-        throw unsettable(view, attribute);
+        throw unsettable(view, attribute, create);
     }
   }
 

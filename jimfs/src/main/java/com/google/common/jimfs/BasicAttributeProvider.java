@@ -105,7 +105,7 @@ final class BasicAttributeProvider extends AttributeProvider {
       case "isRegularFile":
       case "isSymbolicLink":
       case "isOther":
-        throw unsettable(view, attribute);
+        throw unsettable(view, attribute, create);
       default:
     }
   }

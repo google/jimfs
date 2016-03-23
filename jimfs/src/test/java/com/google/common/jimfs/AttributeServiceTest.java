@@ -219,8 +219,9 @@ public class AttributeServiceTest {
     try {
       service.setInitialAttributes(file, new BasicFileAttribute<>("test:foo", "world"));
       fail();
-    } catch (IllegalArgumentException expected) {
-      // IAE because test:foo just can't be set
+    } catch (UnsupportedOperationException expected) {
+      // it turns out that UOE should be thrown on create even if the attribute isn't settable
+      // under any circumstances
     }
 
     try {

@@ -128,7 +128,7 @@ final class UnixAttributeProvider extends AttributeProvider {
 
   @Override
   public void set(File file, String view, String attribute, Object value, boolean create) {
-    throw unsettable(view, attribute);
+    throw unsettable(view, attribute, create);
   }
 
   @SuppressWarnings("OctalInteger")
@@ -138,7 +138,7 @@ final class UnixAttributeProvider extends AttributeProvider {
       checkNotNull(permission);
       switch (permission) {
         case OWNER_READ:
-          result |= 0400;
+          result |= 0400; // note: octal numbers
           break;
         case OWNER_WRITE:
           result |= 0200;
