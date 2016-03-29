@@ -25,6 +25,7 @@ import java.net.URI;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  * Initializes and configures new file system instances.
@@ -47,6 +48,22 @@ final class JimfsFileSystems {
         return provider;
       }
     }
+
+    /*
+     * Jimfs.newFileSystem passes SystemJimfsFileSystemProvider.class.getClassLoader() to
+     * FileSystems.newFileSystem so that it will fall back to loading from that classloader if
+     * the provider isn't found in the installed providers. So do the same fallback here to ensure
+     * that we can remove file systems from the static cache on SystemJimfsFileSystemProvider if it
+     * gets loaded that way.
+     */
+    ServiceLoader<FileSystemProvider> loader = ServiceLoader
+        .load(FileSystemProvider.class, SystemJimfsFileSystemProvider.class.getClassLoader());
+    for (FileSystemProvider provider : loader) {
+      if (provider.getScheme().equals(URI_SCHEME)) {
+        return provider;
+      }
+    }
+
     return null;
   }
 
@@ -72,7 +89,7 @@ final class JimfsFileSystems {
     try {
       Method method =
           systemJimfsProvider.getClass().getDeclaredMethod("removeFileSystemRunnable", URI.class);
-      return (Runnable) method.invoke(systemJimfsProvider, uri);
+      return (Runnable) method.invoke(null, uri);
     } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(
           "Unable to get Runnable for removing the FileSystem from the cache when it is closed", e);
