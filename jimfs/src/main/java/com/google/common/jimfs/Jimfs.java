@@ -27,7 +27,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.ProviderNotFoundException;
+import java.nio.file.spi.FileSystemProvider;
+import java.util.ServiceConfigurationError;
+import java.util.ServiceLoader;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.annotation.Nullable;
 
 /**
  * Static factory methods for creating new Jimfs file systems. File systems may either be created
@@ -76,6 +84,8 @@ public final class Jimfs {
    * The URI scheme for the Jimfs file system ("jimfs").
    */
   public static final String URI_SCHEME = "jimfs";
+
+  private static final Logger LOGGER = Logger.getLogger(Jimfs.class.getName());
 
   private Jimfs() {}
 
@@ -145,20 +155,97 @@ public final class Jimfs {
       JimfsFileSystem fileSystem =
           JimfsFileSystems.newFileSystem(JimfsFileSystemProvider.instance(), uri, config);
 
-      // Now, call FileSystems.newFileSystem, passing it the FileSystem we just created. This
-      // allows the system-loaded SystemJimfsFileSystemProvider instance to cache the FileSystem
-      // so that methods like Paths.get(URI) work.
-      // We do it in this awkward way to avoid issues when the classes in the API (this class
-      // and Configuration, for example) are loaded by a different classloader than the one that
-      // loads SystemJimfsFileSystemProvider using ServiceLoader. See
-      // https://github.com/google/jimfs/issues/18 for gory details.
-      ImmutableMap<String, ?> env = ImmutableMap.of(FILE_SYSTEM_KEY, fileSystem);
-      FileSystems.newFileSystem(uri, env, SystemJimfsFileSystemProvider.class.getClassLoader());
+      /*
+       * Now, call FileSystems.newFileSystem, passing it the FileSystem we just created. This
+       * allows the system-loaded SystemJimfsFileSystemProvider instance to cache the FileSystem
+       * so that methods like Paths.get(URI) work.
+       * We do it in this awkward way to avoid issues when the classes in the API (this class
+       * and Configuration, for example) are loaded by a different classloader than the one that
+       * loads SystemJimfsFileSystemProvider using ServiceLoader. See
+       * https://github.com/google/jimfs/issues/18 for gory details.
+       */
+      try {
+        ImmutableMap<String, ?> env = ImmutableMap.of(FILE_SYSTEM_KEY, fileSystem);
+        FileSystems.newFileSystem(uri, env, SystemJimfsFileSystemProvider.class.getClassLoader());
+      } catch (ProviderNotFoundException | ServiceConfigurationError ignore) {
+        // See the similar catch block below for why we ignore this.
+        // We log there rather than here so that there's only typically one such message per VM.
+      }
 
       return fileSystem;
     } catch (IOException e) {
       throw new AssertionError(e);
     }
+  }
+
+  /**
+   * The system-loaded instance of {@code SystemJimfsFileSystemProvider}, or {@code null}
+   * if it could not be found or loaded.
+   */
+  @Nullable
+  static final FileSystemProvider systemProvider = getSystemJimfsProvider();
+
+  /**
+   * Returns the system-loaded instance of {@code SystemJimfsFileSystemProvider} or {@code null}
+   * if it could not be found or loaded.
+   *
+   * <p>Like {@link FileSystems#newFileSystem(URI, Map, ClassLoader)}, this method first looks in
+   * the list of {@linkplain FileSystemProvider#installedProviders() installed providers} and if
+   * not found there, attempts to load it from the {@code ClassLoader} with {@link ServiceLoader}.
+   *
+   * <p>The idea is that this method should return an instance of the same class (i.e. loaded by
+   * the same class loader) as the class whose static cache a {@code JimfsFileSystem} instance will
+   * be placed in when {@code FileSystems.newFileSystem} is called in {@code Jimfs.newFileSystem}.
+   */
+  @Nullable
+  private static FileSystemProvider getSystemJimfsProvider() {
+    try {
+      for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
+        if (provider.getScheme().equals(URI_SCHEME)) {
+          return provider;
+        }
+      }
+
+      /*
+       * Jimfs.newFileSystem passes SystemJimfsFileSystemProvider.class.getClassLoader() to
+       * FileSystems.newFileSystem so that it will fall back to loading from that classloader if
+       * the provider isn't found in the installed providers. So do the same fallback here to ensure
+       * that we can remove file systems from the static cache on SystemJimfsFileSystemProvider if
+       * it gets loaded that way.
+       */
+      ServiceLoader<FileSystemProvider> loader =
+          ServiceLoader.load(
+              FileSystemProvider.class, SystemJimfsFileSystemProvider.class.getClassLoader());
+      for (FileSystemProvider provider : loader) {
+        if (provider.getScheme().equals(URI_SCHEME)) {
+          return provider;
+        }
+      }
+    } catch (ProviderNotFoundException | ServiceConfigurationError e) {
+      /*
+       * This can apparently (https://github.com/google/jimfs/issues/31) occur in an environment
+       * where services are not loaded from META-INF/services, such as JBoss/Wildfly. In this
+       * case, FileSystems.newFileSystem will most likely fail in the same way when called from
+       * Jimfs.newFileSystem above, and there will be no way to make URI-based methods like
+       * Paths.get(URI) work. Rather than making the user completly unable to use Jimfs, just
+       * log this exception and continue.
+       *
+       * Note: Catching both ProviderNotFoundException, which would occur if no provider matching
+       * the "jimfs" URI scheme is found, and ServiceConfigurationError, which can occur if the
+       * ServiceLoader finds the META-INF/services entry for Jimfs (or some other
+       * FileSystemProvider!) but is then unable to load that class.
+       */
+      LOGGER.log(
+          Level.INFO,
+          "An exception occurred when attempting to find the system-loaded FileSystemProvider "
+              + "for Jimfs. This likely means that your environment does not support loading "
+              + "services via ServiceLoader or is not configured correctly. This does not prevent "
+              + "using Jimfs, but it will mean that methods that look up via URI such as "
+              + "Paths.get(URI) cannot work.",
+          e);
+    }
+
+    return null;
   }
 
   private static String newRandomFileSystemName() {

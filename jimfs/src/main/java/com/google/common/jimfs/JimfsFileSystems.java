@@ -16,16 +16,12 @@
 
 package com.google.common.jimfs;
 
-import static com.google.common.jimfs.Jimfs.URI_SCHEME;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ServiceLoader;
 
 /**
  * Initializes and configures new file system instances.
@@ -35,37 +31,6 @@ import java.util.ServiceLoader;
 final class JimfsFileSystems {
 
   private JimfsFileSystems() {}
-
-  /**
-   * The system-loaded {@code JimfsFileSystemProvider} that caches {@code JimfsFileSystem}
-   * instances.
-   */
-  private static final FileSystemProvider systemJimfsProvider = getSystemJimfsProvider();
-
-  private static FileSystemProvider getSystemJimfsProvider() {
-    for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {
-      if (provider.getScheme().equals(URI_SCHEME)) {
-        return provider;
-      }
-    }
-
-    /*
-     * Jimfs.newFileSystem passes SystemJimfsFileSystemProvider.class.getClassLoader() to
-     * FileSystems.newFileSystem so that it will fall back to loading from that classloader if
-     * the provider isn't found in the installed providers. So do the same fallback here to ensure
-     * that we can remove file systems from the static cache on SystemJimfsFileSystemProvider if it
-     * gets loaded that way.
-     */
-    ServiceLoader<FileSystemProvider> loader = ServiceLoader
-        .load(FileSystemProvider.class, SystemJimfsFileSystemProvider.class.getClassLoader());
-    for (FileSystemProvider provider : loader) {
-      if (provider.getScheme().equals(URI_SCHEME)) {
-        return provider;
-      }
-    }
-
-    return null;
-  }
 
   private static final Runnable DO_NOTHING =
       new Runnable() {
@@ -78,7 +43,7 @@ final class JimfsFileSystems {
    * the system provider's cache when called.
    */
   private static Runnable removeFileSystemRunnable(URI uri) {
-    if (systemJimfsProvider == null) {
+    if (Jimfs.systemProvider == null) {
       // TODO(cgdecker): Use Runnables.doNothing() when it's out of @Beta
       return DO_NOTHING;
     }
@@ -88,7 +53,7 @@ final class JimfsFileSystems {
     // than the one we'd get if we tried to cast it and call it like normal here.
     try {
       Method method =
-          systemJimfsProvider.getClass().getDeclaredMethod("removeFileSystemRunnable", URI.class);
+          Jimfs.systemProvider.getClass().getDeclaredMethod("removeFileSystemRunnable", URI.class);
       return (Runnable) method.invoke(null, uri);
     } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(
