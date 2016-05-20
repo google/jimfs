@@ -66,6 +66,25 @@ Jimfs also supports creating file systems that, for example, use Windows-style p
 extent) behavior. In general, however, file system behavior is modeled after UNIX and may not
 exactly match any particular real file system or platform.
 
+OSGi considerations
+-----------------
+
+The SPI mechanism that registers file system providers is not
+OSGi-friendly. It will load the provider class into the system class
+loader, and then if you try to use `Paths.get(URI)` from inside your
+OSGi code, you'll fail with an `IllegalAccessException`. 
+
+There are two ways around this. In spite of the fact that the Jimfs
+jar has full OSGi metadata, you can set up the `com.google.common.jimfs`
+as part of the system bundle. This is, by far, the most convenient if
+you are just using Jimfs for testing.
+
+Your alternative is to never use `Paths.get(URI)` or any other API
+that uses the SPI to obtain the file system provider. If you always
+create your own `FileSystem` objects and call `getPath(...)` on them,
+it all works fine.
+
+
 License
 -------
 
