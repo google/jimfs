@@ -88,7 +88,6 @@ final class JimfsFileSystems {
       Configuration config, PathService pathService, FileSystemState state) {
     AttributeService attributeService = new AttributeService(config);
 
-    // TODO(cgdecker): Make disk values configurable
     HeapDisk disk = new HeapDisk(config);
     FileFactory fileFactory = new FileFactory(disk);
 
