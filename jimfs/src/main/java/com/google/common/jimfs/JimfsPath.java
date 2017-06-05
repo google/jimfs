@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -42,7 +41,6 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-
 import javax.annotation.Nullable;
 
 /**
@@ -134,7 +132,7 @@ final class JimfsPath implements Path {
 
   @Override
   public JimfsPath getParent() {
-    if (names.isEmpty() || names.size() == 1 && root == null) {
+    if (names.isEmpty() || (names.size() == 1 && root == null)) {
       return null;
     }
 
@@ -227,7 +225,7 @@ final class JimfsPath implements Path {
       }
     }
 
-    return newNames.equals(names) ? this : pathService.createPath(root, newNames);
+    return Iterables.elementsEqual(newNames, names) ? this : pathService.createPath(root, newNames);
   }
 
   /**
@@ -235,7 +233,7 @@ final class JimfsPath implements Path {
    * "." names and contains no ".." names in a location other than the start of the path.
    */
   private boolean isNormal() {
-    if (getNameCount() == 0 || getNameCount() == 1 && !isAbsolute()) {
+    if (getNameCount() == 0 || (getNameCount() == 1 && !isAbsolute())) {
       return true;
     }
 
