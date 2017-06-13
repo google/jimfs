@@ -168,6 +168,11 @@ public abstract class PathType {
    */
   public abstract ParseResult parsePath(String path);
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName();
+  }
+
   /**
    * Returns the string form of the given path.
    */

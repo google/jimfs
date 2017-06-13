@@ -26,11 +26,11 @@ import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static com.google.common.jimfs.PathNormalization.NFC;
 import static com.google.common.jimfs.PathNormalization.NFD;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
 
 /**
@@ -89,6 +88,7 @@ public final class Configuration {
   private static final class UnixHolder {
     private static final Configuration UNIX =
         Configuration.builder(PathType.unix())
+            .setDisplayName("Unix")
             .setRoots("/")
             .setWorkingDirectory("/work")
             .setAttributeViews("basic")
@@ -135,7 +135,9 @@ public final class Configuration {
 
   private static final class OsxHolder {
     private static final Configuration OS_X =
-        unix().toBuilder()
+        unix()
+            .toBuilder()
+            .setDisplayName("OSX")
             .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
             .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
             .setSupportedFeatures(LINKS, SYMBOLIC_LINKS, FILE_CHANNEL)
@@ -178,6 +180,7 @@ public final class Configuration {
   private static final class WindowsHolder {
     private static final Configuration WINDOWS =
         Configuration.builder(PathType.windows())
+            .setDisplayName("Windows")
             .setRoots("C:\\")
             .setWorkingDirectory("C:\\work")
             .setNameCanonicalNormalization(CASE_FOLD_ASCII)
@@ -241,6 +244,7 @@ public final class Configuration {
   final ImmutableSet<String> roots;
   final String workingDirectory;
   final ImmutableSet<Feature> supportedFeatures;
+  private final String displayName;
 
   /**
    * Creates an immutable configuration object from the given builder.
@@ -266,6 +270,46 @@ public final class Configuration {
     this.roots = builder.roots;
     this.workingDirectory = builder.workingDirectory;
     this.supportedFeatures = builder.supportedFeatures;
+    this.displayName = builder.displayName;
+  }
+
+  @Override
+  public String toString() {
+    if (displayName != null) {
+      return MoreObjects.toStringHelper(this).addValue(displayName).toString();
+    }
+    MoreObjects.ToStringHelper helper =
+        MoreObjects.toStringHelper(this)
+            .add("pathType", pathType)
+            .add("roots", roots)
+            .add("supportedFeatures", supportedFeatures)
+            .add("workingDirectory", workingDirectory);
+    if (!nameDisplayNormalization.isEmpty()) {
+      helper.add("nameDisplayNormalization", nameDisplayNormalization);
+    }
+    if (!nameCanonicalNormalization.isEmpty()) {
+      helper.add("nameCanonicalNormalization", nameCanonicalNormalization);
+    }
+    helper
+        .add("pathEqualityUsesCanonicalForm", pathEqualityUsesCanonicalForm)
+        .add("blockSize", blockSize)
+        .add("maxSize", maxSize);
+    if (maxCacheSize != Builder.DEFAULT_MAX_CACHE_SIZE) {
+      helper.add("maxCacheSize", maxCacheSize);
+    }
+    if (!attributeViews.isEmpty()) {
+      helper.add("attributeViews", attributeViews);
+    }
+    if (!attributeProviders.isEmpty()) {
+      helper.add("attributeProviders", attributeProviders);
+    }
+    if (!defaultAttributeValues.isEmpty()) {
+      helper.add("defaultAttributeValues", defaultAttributeValues);
+    }
+    if (watchServiceConfig != WatchServiceConfiguration.DEFAULT) {
+      helper.add("watchServiceConfig", watchServiceConfig);
+    }
+    return helper.toString();
   }
 
   /**
@@ -312,6 +356,7 @@ public final class Configuration {
     private ImmutableSet<String> roots = ImmutableSet.of();
     private String workingDirectory;
     private ImmutableSet<Feature> supportedFeatures = ImmutableSet.of();
+    private String displayName;
 
     private Builder(PathType pathType) {
       this.pathType = checkNotNull(pathType);
@@ -338,6 +383,7 @@ public final class Configuration {
       this.roots = configuration.roots;
       this.workingDirectory = configuration.workingDirectory;
       this.supportedFeatures = configuration.supportedFeatures;
+      // displayName intentionally not copied from the Configuration
     }
 
     /**
@@ -647,6 +693,11 @@ public final class Configuration {
      */
     public Builder setWatchServiceConfiguration(WatchServiceConfiguration config) {
       this.watchServiceConfig = checkNotNull(config);
+      return this;
+    }
+
+    private Builder setDisplayName(String displayName) {
+      this.displayName = checkNotNull(displayName);
       return this;
     }
 
