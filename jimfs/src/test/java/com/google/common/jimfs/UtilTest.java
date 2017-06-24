@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * Unit tests for class {@link Util}.
  *
- * @date 23.06.2017
+ * @date 24.06.2017
  * @see Util
  */
 public class UtilTest {
