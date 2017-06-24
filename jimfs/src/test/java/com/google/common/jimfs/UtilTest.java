@@ -19,67 +19,43 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-
 /**
  * Unit tests for class {@link Util}.
  *
  * @date 23.06.2017
  * @see Util
- **/
+ */
 public class UtilTest {
 
+  @Test(expected = NullPointerException.class)
+  public void testClearThrowsNullPointerException() {
 
+    Util.clear((byte[][]) null, 0, 1506620495);
+  }
 
-    @Test(expected = NullPointerException.class)
-    public void testClearThrowsNullPointerException() {
+  @Test(expected = NullPointerException.class)
+  public void testZeroThrowsNullPointerException() {
 
-        Util.clear((byte[][]) null, 0, 1506620495);
+    Util.zero((byte[]) null, 1451, 461845907);
+  }
 
-    }
+  @Test
+  public void testNextPowerOfThreeReturningPositive() {
 
+    int intOne = Util.nextPowerOf2(1);
 
+    assertEquals(1, intOne);
+  }
 
+  @Test
+  public void testNextPowerOfThreeWithZero() {
 
-    @Test(expected = NullPointerException.class)
-    public void testZeroThrowsNullPointerException() {
+    assertEquals(1, Util.nextPowerOf2(0));
+  }
 
-        Util.zero((byte[]) null, 1451, 461845907);
+  @Test
+  public void testNextPowerOfThreeWithPositive() {
 
-    }
-
-
-
-
-
-
-    @Test
-    public void testNextPowerOfThreeReturningPositive() {
-
-        int intOne = Util.nextPowerOf2(1);
-
-        assertEquals(1, intOne);
-
-    }
-
-
-    @Test
-    public void testNextPowerOfThreeWithZero() {
-
-        assertEquals(1, Util.nextPowerOf2(0));
-
-    }
-
-
-    @Test
-    public void testNextPowerOfThreeWithPositive() {
-
-        assertEquals(536870912, Util.nextPowerOf2(461845907));
-
-    }
-
-
-
-
-
-
+    assertEquals(536870912, Util.nextPowerOf2(461845907));
+  }
 }
