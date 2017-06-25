@@ -26,7 +26,7 @@ import static org.junit.Assert.*;
 /**
  * Unit tests for class {@link Options}.
  *
- * @date 24.06.2017
+ * @date 25.06.2017
  * @see Options
  */
 public class OptionsTest {
