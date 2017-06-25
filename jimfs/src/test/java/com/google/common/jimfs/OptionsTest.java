@@ -56,7 +56,7 @@ public class OptionsTest {
       fail("Expecting exception: UnsupportedOperationException");
     } catch (UnsupportedOperationException e) {
       assertEquals("'WRITE' not allowed", e.getMessage());
-      assertEquals("com.google.common.jimfs.Options", e.getStackTrace()[0].getClassName());
+      assertEquals(Options.class.getName(), e.getStackTrace()[0].getClassName());
     }
   }
 
@@ -78,7 +78,7 @@ public class OptionsTest {
       fail("Expecting exception: UnsupportedOperationException");
     } catch (UnsupportedOperationException e) {
       assertEquals("'READ' + 'APPEND' not allowed", e.getMessage());
-      assertEquals("com.google.common.jimfs.Options", e.getStackTrace()[0].getClassName());
+      assertEquals(Options.class.getName(), e.getStackTrace()[0].getClassName());
     }
   }
 
