@@ -11,5 +11,5 @@ Please also ensure that the code compiles and that changes have appropriate
 tests.
 
 [1]: https://developers.google.com/open-source/cla/individual
-[2]: http://google-styleguide.googlecode.com/svn/trunk/javaguide.html
+[2]: https://google.github.io/styleguide/javaguide.html
 
