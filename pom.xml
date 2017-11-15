@@ -139,7 +139,7 @@
       <dependency>
         <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
-        <version>0.28</version>
+        <version>0.36</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
