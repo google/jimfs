@@ -21,10 +21,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import com.google.common.truth.FailureStrategy;
+import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
-import com.google.common.truth.SubjectFactory;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
@@ -36,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
 import javax.annotation.Nullable;
 
 /**
@@ -46,10 +43,8 @@ import javax.annotation.Nullable;
  */
 public final class PathSubject extends Subject<PathSubject, Path> {
 
-  /**
-   * Returns the subject factory for doing assertions on paths.
-   */
-  public static SubjectFactory<PathSubject, Path> paths() {
+  /** Returns the subject factory for doing assertions on paths. */
+  public static Subject.Factory<PathSubject, Path> paths() {
     return new PathSubjectFactory();
   }
 
@@ -59,8 +54,8 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   protected LinkOption[] linkOptions = FOLLOW_LINKS;
   private Charset charset = UTF_8;
 
-  private PathSubject(FailureStrategy failureStrategy, Path subject) {
-    super(failureStrategy, subject);
+  private PathSubject(FailureMetadata failureMetadata, Path subject) {
+    super(failureMetadata, subject);
   }
 
   private Path toPath(String path) {
@@ -79,7 +74,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
    */
   // TODO(cgruber): Talk to cdecker about removing this as an anti-pattern.
   public PathSubject andThat(String path, LinkOption... linkOptions) {
-    PathSubject newSubject = new PathSubject(failureStrategy, toPath(path));
+    PathSubject newSubject = check().about(paths()).that(toPath(path));
     if (linkOptions.length != 0) {
       newSubject = newSubject.noFollowLinks();
     }
@@ -445,11 +440,11 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     };
   }
 
-  private static class PathSubjectFactory extends SubjectFactory<PathSubject, Path> {
+  private static class PathSubjectFactory implements Subject.Factory<PathSubject, Path> {
 
     @Override
-    public PathSubject getSubject(FailureStrategy fs, Path that) {
-      return new PathSubject(fs, that);
+    public PathSubject createSubject(FailureMetadata failureMetadata, Path that) {
+      return new PathSubject(failureMetadata, that);
     }
   }
 
