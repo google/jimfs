@@ -30,11 +30,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,6 +50,9 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for what happens when a file system is closed.
@@ -154,14 +152,15 @@ public class JimfsFileSystemCloseTest {
     Path p = fs.getPath("/foo");
     Files.createDirectory(p);
 
-    DirectoryStream<Path> stream = Files.newDirectoryStream(p);
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
 
-    fs.close();
+      fs.close();
 
-    try {
-      stream.iterator();
-      fail();
-    } catch (ClosedDirectoryStreamException expected) {
+      try {
+        stream.iterator();
+        fail();
+      } catch (ClosedDirectoryStreamException expected) {
+      }
     }
   }
 
