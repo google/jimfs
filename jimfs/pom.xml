@@ -99,10 +99,10 @@
           <charset>UTF-8</charset>
           <excludePackageNames>com.google.jimfs.internal</excludePackageNames>
           <links>
-            <link>http://google.github.io/guava/releases/${guava.version}/api/docs/</link>
-            <link>http://jsr-305.googlecode.com/svn/trunk/javadoc/</link>
-            <link>http://icu-project.org/apiref/icu4j/</link>
-            <link>http://docs.oracle.com/javase/7/docs/api/</link>
+            <link>https://google.github.io/guava/releases/${guava.version}/api/docs/</link>
+            <link>https://static.javadoc.io/com.google.code.findbugs/jsr305/3.0.2/</link>
+            <link>https://ssl.icu-project.org/apiref/icu4j/</link>
+            <link>https://docs.oracle.com/javase/7/docs/api/</link>
           </links>
         </configuration>
         <executions>
