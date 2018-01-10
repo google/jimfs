@@ -2051,57 +2051,58 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Test
   public void testClosedSecureDirectoryStream() throws IOException {
     Files.createDirectory(path("/foo"));
-    SecureDirectoryStream<Path> stream =
-        (SecureDirectoryStream<Path>) Files.newDirectoryStream(path("/foo"));
 
-    stream.close();
+    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(path("/foo"));
+         SecureDirectoryStream<Path> stream = (SecureDirectoryStream<Path>)dirStream) {
+      stream.close();
 
-    try {
-      stream.iterator();
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        stream.iterator();
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      stream.deleteDirectory(fs.getPath("a"));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        stream.deleteDirectory(fs.getPath("a"));
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      stream.deleteFile(fs.getPath("a"));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        stream.deleteFile(fs.getPath("a"));
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      stream.newByteChannel(fs.getPath("a"), ImmutableSet.of(CREATE, WRITE));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        stream.newByteChannel(fs.getPath("a"), ImmutableSet.of(CREATE, WRITE));
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      stream.newDirectoryStream(fs.getPath("a"));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        stream.newDirectoryStream(fs.getPath("a"));
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      stream.move(fs.getPath("a"), stream, fs.getPath("b"));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        stream.move(fs.getPath("a"), stream, fs.getPath("b"));
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      stream.getFileAttributeView(BasicFileAttributeView.class);
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        stream.getFileAttributeView(BasicFileAttributeView.class);
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      stream.getFileAttributeView(fs.getPath("a"), BasicFileAttributeView.class);
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
+      try {
+        stream.getFileAttributeView(fs.getPath("a"), BasicFileAttributeView.class);
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
     }
   }
 
@@ -2109,50 +2110,51 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   public void testClosedSecureDirectoryStreamAttributeViewAndIterator() throws IOException {
     Files.createDirectory(path("/foo"));
     Files.createDirectory(path("/foo/bar"));
-    SecureDirectoryStream<Path> stream =
-        (SecureDirectoryStream<Path>) Files.newDirectoryStream(path("/foo"));
+    try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(path("/foo"));
+         SecureDirectoryStream<Path> stream = (SecureDirectoryStream<Path>)dirStream) {
 
-    Iterator<Path> iter = stream.iterator();
-    BasicFileAttributeView view1 = stream.getFileAttributeView(BasicFileAttributeView.class);
-    BasicFileAttributeView view2 =
-        stream.getFileAttributeView(path("bar"), BasicFileAttributeView.class);
+      Iterator<Path> iter = stream.iterator();
+      BasicFileAttributeView view1 = stream.getFileAttributeView(BasicFileAttributeView.class);
+      BasicFileAttributeView view2 =
+          stream.getFileAttributeView(path("bar"), BasicFileAttributeView.class);
 
-    try {
-      stream.iterator();
-      fail("expected IllegalStateException");
-    } catch (IllegalStateException expected) {
-    }
+      try {
+        stream.iterator();
+        fail("expected IllegalStateException");
+      } catch (IllegalStateException expected) {
+      }
 
-    stream.close();
+      stream.close();
 
-    try {
-      iter.next();
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        iter.next();
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      view1.readAttributes();
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        view1.readAttributes();
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      view2.readAttributes();
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        view2.readAttributes();
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      view1.setTimes(null, null, null);
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+      try {
+        view1.setTimes(null, null, null);
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
 
-    try {
-      view2.setTimes(null, null, null);
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
+      try {
+        view2.setTimes(null, null, null);
+        fail("expected ClosedDirectoryStreamException");
+      } catch (ClosedDirectoryStreamException expected) {
+      }
     }
   }
 
