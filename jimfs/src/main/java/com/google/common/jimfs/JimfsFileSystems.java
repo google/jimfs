@@ -103,9 +103,11 @@ final class JimfsFileSystems {
 
       Name rootName = path.root();
 
-      Directory rootDir = fileFactory.createRootDirectory(rootName);
-      attributeService.setInitialAttributes(rootDir);
-      roots.put(rootName, rootDir);
+      if (rootName != null) {
+        Directory rootDir = fileFactory.createRootDirectory(rootName);
+        attributeService.setInitialAttributes(rootDir);
+        roots.put(rootName, rootDir);
+      }
     }
 
     return new JimfsFileStore(
