@@ -121,8 +121,14 @@ final class JimfsFileSystems {
       Configuration config, JimfsFileStore fileStore, PathService pathService) {
     JimfsPath workingDirPath = pathService.parsePath(config.workingDirectory);
 
-    Directory dir = fileStore.getRoot(workingDirPath.root());
-    if (dir == null) {
+      Directory dir = null;
+      Name root = workingDirPath.root();
+
+      if (root != null) {
+          dir = fileStore.getRoot(root);
+      }
+
+      if (dir == null) {
       throw new IllegalArgumentException("Invalid working dir path: " + workingDirPath);
     }
 
