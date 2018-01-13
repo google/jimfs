@@ -122,7 +122,7 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
   public static final Filter<Object> ALWAYS_TRUE_FILTER =
       new Filter<Object>() {
         @Override
-        public boolean accept(Object entry) throws IOException {
+        public boolean accept(Object entry) {
           return true;
         }
       };

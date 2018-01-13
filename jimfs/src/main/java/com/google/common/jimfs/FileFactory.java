@@ -79,7 +79,7 @@ final class FileFactory {
   /**
    * Creates and returns a copy of the given file.
    */
-  public File copyWithoutContent(File file) throws IOException {
+  public File copyWithoutContent(File file) {
     return file.copyWithoutContent(nextFileId());
   }
 

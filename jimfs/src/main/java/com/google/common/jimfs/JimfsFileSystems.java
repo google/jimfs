@@ -116,7 +116,7 @@ final class JimfsFileSystems {
    * Creates the default view of the file system using the given working directory.
    */
   private static FileSystemView createDefaultView(
-      Configuration config, JimfsFileStore fileStore, PathService pathService) throws IOException {
+      Configuration config, JimfsFileStore fileStore, PathService pathService) {
     JimfsPath workingDirPath = pathService.parsePath(config.workingDirectory);
 
     Directory dir = fileStore.getRoot(workingDirPath.root());

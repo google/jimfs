@@ -249,7 +249,7 @@ final class JimfsFileStore extends FileStore {
   }
 
   @Override
-  public long getTotalSpace() throws IOException {
+  public long getTotalSpace() {
     state.checkOpen();
     return disk.getTotalSpace();
   }
@@ -261,7 +261,7 @@ final class JimfsFileStore extends FileStore {
   }
 
   @Override
-  public long getUnallocatedSpace() throws IOException {
+  public long getUnallocatedSpace() {
     state.checkOpen();
     return disk.getUnallocatedSpace();
   }
@@ -285,7 +285,7 @@ final class JimfsFileStore extends FileStore {
   }
 
   @Override
-  public Object getAttribute(String attribute) throws IOException {
+  public Object getAttribute(String attribute) {
     throw new UnsupportedOperationException();
   }
 }
