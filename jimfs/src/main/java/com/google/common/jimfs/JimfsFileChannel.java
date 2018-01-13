@@ -63,7 +63,7 @@ final class JimfsFileChannel extends FileChannel {
    * channel is closed by another thread.
    */
   @GuardedBy("blockingThreads")
-  private final Set<Thread> blockingThreads = new HashSet<Thread>();
+  private final Set<Thread> blockingThreads = new HashSet<>();
 
   private final RegularFile file;
   private final FileSystemState fileSystemState;
