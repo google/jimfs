@@ -79,8 +79,9 @@ final class AttributeService {
     for (AttributeProvider provider : providers) {
       byViewNameBuilder.put(provider.name(), provider);
       byViewTypeBuilder.put(provider.viewType(), provider);
-      if (provider.attributesType() != null) {
-        byAttributesTypeBuilder.put(provider.attributesType(), provider);
+        Class<? extends BasicFileAttributes> attributesType = provider.attributesType();
+        if (attributesType != null) {
+            byAttributesTypeBuilder.put(attributesType, provider);
       }
 
       for (Map.Entry<String, ?> entry : provider.defaultValues(userProvidedDefaults).entrySet()) {
