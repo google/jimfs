@@ -107,7 +107,7 @@ public enum PathNormalization implements Function<String, String> {
 
   private final int patternFlags;
 
-  private PathNormalization(int patternFlags) {
+  PathNormalization(int patternFlags) {
     this.patternFlags = patternFlags;
   }
 
