@@ -2048,6 +2048,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     }
   }
 
+  @SuppressWarnings("StreamResourceLeak")
   @Test
   public void testClosedSecureDirectoryStream() throws IOException {
     Files.createDirectory(path("/foo"));
@@ -2105,6 +2106,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     }
   }
 
+  @SuppressWarnings("StreamResourceLeak")
   @Test
   public void testClosedSecureDirectoryStreamAttributeViewAndIterator() throws IOException {
     Files.createDirectory(path("/foo"));
