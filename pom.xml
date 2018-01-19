@@ -157,7 +157,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.8</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
@@ -214,7 +214,9 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
-              <additionalparam>-Xdoclint:-html</additionalparam>
+              <additionalOptions>
+                <additionalOption>-Xdoclint:none</additionalOption>
+              </additionalOptions>
             </configuration>
           </plugin>
         </plugins>
@@ -225,7 +227,9 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
-              <additionalparam>-Xdoclint:-html</additionalparam>
+              <additionalOptions>
+                <additionalOption>-Xdoclint:none</additionalOption>
+              </additionalOptions>
             </configuration>
           </plugin>
         </plugins>
