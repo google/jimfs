@@ -78,7 +78,7 @@ public final class Handler extends URLStreamHandler {
   public Handler() {} // a public, no-arg constructor is required
 
   @Override
-  protected URLConnection openConnection(URL url) throws IOException {
+  protected URLConnection openConnection(URL url) {
     return new PathURLConnection(url);
   }
 }

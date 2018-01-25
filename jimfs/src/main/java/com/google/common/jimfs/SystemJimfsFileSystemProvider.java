@@ -102,7 +102,7 @@ public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
+  public FileSystem newFileSystem(URI uri, Map<String, ?> env) {
     checkArgument(
         uri.getScheme().equalsIgnoreCase(URI_SCHEME),
         "uri (%s) scheme must be '%s'",
@@ -206,53 +206,53 @@ public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public SeekableByteChannel newByteChannel(
-      Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+      Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   public DirectoryStream<Path> newDirectoryStream(
-      Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
+      Path dir, DirectoryStream.Filter<? super Path> filter) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
+  public void createDirectory(Path dir, FileAttribute<?>... attrs) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void delete(Path path) throws IOException {
+  public void delete(Path path) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void copy(Path source, Path target, CopyOption... options) throws IOException {
+  public void copy(Path source, Path target, CopyOption... options) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void move(Path source, Path target, CopyOption... options) throws IOException {
+  public void move(Path source, Path target, CopyOption... options) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public boolean isSameFile(Path path, Path path2) throws IOException {
+  public boolean isSameFile(Path path, Path path2) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public boolean isHidden(Path path) throws IOException {
+  public boolean isHidden(Path path) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public FileStore getFileStore(Path path) throws IOException {
+  public FileStore getFileStore(Path path) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void checkAccess(Path path, AccessMode... modes) throws IOException {
+  public void checkAccess(Path path, AccessMode... modes) {
     throw new UnsupportedOperationException();
   }
 
@@ -264,19 +264,17 @@ public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
 
   @Override
   public <A extends BasicFileAttributes> A readAttributes(
-      Path path, Class<A> type, LinkOption... options) throws IOException {
+      Path path, Class<A> type, LinkOption... options) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options)
-      throws IOException {
+  public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void setAttribute(Path path, String attribute, Object value, LinkOption... options)
-      throws IOException {
+  public void setAttribute(Path path, String attribute, Object value, LinkOption... options) {
     throw new UnsupportedOperationException();
   }
 }

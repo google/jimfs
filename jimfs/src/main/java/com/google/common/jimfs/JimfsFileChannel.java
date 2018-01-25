@@ -44,7 +44,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
@@ -64,7 +63,7 @@ final class JimfsFileChannel extends FileChannel {
    * channel is closed by another thread.
    */
   @GuardedBy("blockingThreads")
-  private final Set<Thread> blockingThreads = new HashSet<Thread>();
+  private final Set<Thread> blockingThreads = new HashSet<>();
 
   private final RegularFile file;
   private final FileSystemState fileSystemState;
@@ -592,7 +591,7 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
-  public MappedByteBuffer map(MapMode mode, long position, long size) throws IOException {
+  public MappedByteBuffer map(MapMode mode, long position, long size) {
     // would like this to pretend to work, but can't create an implementation of MappedByteBuffer
     // well, a direct buffer could be cast to MappedByteBuffer, but it couldn't work in general
     throw new UnsupportedOperationException();
@@ -673,7 +672,7 @@ final class JimfsFileChannel extends FileChannel {
     }
 
     @Override
-    public void release() throws IOException {
+    public void release() {
       valid.set(false);
     }
   }

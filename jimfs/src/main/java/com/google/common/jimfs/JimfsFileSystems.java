@@ -103,9 +103,11 @@ final class JimfsFileSystems {
 
       Name rootName = path.root();
 
-      Directory rootDir = fileFactory.createRootDirectory(rootName);
-      attributeService.setInitialAttributes(rootDir);
-      roots.put(rootName, rootDir);
+      if (rootName != null) {
+        Directory rootDir = fileFactory.createRootDirectory(rootName);
+        attributeService.setInitialAttributes(rootDir);
+        roots.put(rootName, rootDir);
+      }
     }
 
     return new JimfsFileStore(
@@ -116,11 +118,17 @@ final class JimfsFileSystems {
    * Creates the default view of the file system using the given working directory.
    */
   private static FileSystemView createDefaultView(
-      Configuration config, JimfsFileStore fileStore, PathService pathService) throws IOException {
+      Configuration config, JimfsFileStore fileStore, PathService pathService) {
     JimfsPath workingDirPath = pathService.parsePath(config.workingDirectory);
 
-    Directory dir = fileStore.getRoot(workingDirPath.root());
-    if (dir == null) {
+      Directory dir = null;
+      Name root = workingDirPath.root();
+
+      if (root != null) {
+          dir = fileStore.getRoot(root);
+      }
+
+      if (dir == null) {
       throw new IllegalArgumentException("Invalid working dir path: " + workingDirPath);
     }
 

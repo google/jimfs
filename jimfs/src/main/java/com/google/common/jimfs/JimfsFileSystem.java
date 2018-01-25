@@ -299,7 +299,7 @@ final class JimfsFileSystem extends FileSystem {
   }
 
   @Override
-  public WatchService newWatchService() throws IOException {
+  public WatchService newWatchService() {
     return watchServiceConfig.newWatchService(defaultView, pathService);
   }
 

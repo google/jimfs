@@ -144,7 +144,7 @@ final class JimfsInputStream extends InputStream {
   }
 
   @Override
-  public synchronized void close() throws IOException {
+  public synchronized void close() {
     if (isOpen()) {
       fileSystemState.unregister(this);
       file.closed();

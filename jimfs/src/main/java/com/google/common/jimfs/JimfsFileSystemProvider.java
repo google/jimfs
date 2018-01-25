@@ -86,7 +86,7 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
+  public FileSystem newFileSystem(URI uri, Map<String, ?> env) {
     throw new UnsupportedOperationException(
         "This method should not be called directly;"
             + "use an overload of Jimfs.newFileSystem() to create a FileSystem.");
@@ -100,7 +100,7 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public FileSystem newFileSystem(Path path, Map<String, ?> env) throws IOException {
+  public FileSystem newFileSystem(Path path, Map<String, ?> env) {
     JimfsPath checkedPath = checkPath(path);
     checkNotNull(env);
 
@@ -320,7 +320,7 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public FileStore getFileStore(Path path) throws IOException {
+  public FileStore getFileStore(Path path) {
     return getFileSystem(path).getFileStore();
   }
 
