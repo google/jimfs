@@ -28,7 +28,7 @@
   <groupId>com.google.jimfs</groupId>
   <artifactId>jimfs-parent</artifactId>
   <packaging>pom</packaging>
-  <version>2.0-SNAPSHOT</version>
+  <version>HEAD-SNAPSHOT</version>
 
   <modules>
     <module>jimfs</module>
@@ -84,14 +84,10 @@
     <url>http://github.com/google/jimfs/issues</url>
   </issueManagement>
 
-  <prerequisites>
-    <maven>3.0.3</maven>
-  </prerequisites>
-
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.7</java.version>
-    <guava.version>23.4-android</guava.version>
+    <guava.version>24.1-android</guava.version>
   </properties>
 
   <dependencyManagement>
@@ -107,19 +103,19 @@
       <dependency>
         <groupId>com.ibm.icu</groupId>
         <artifactId>icu4j</artifactId>
-        <version>51.2</version>
+        <version>61.1</version>
       </dependency>
 
       <!-- Compile-time dependencies -->
       <dependency>
         <groupId>com.google.auto.service</groupId>
         <artifactId>auto-service</artifactId>
-        <version>1.0-rc2</version>
+        <version>1.0-rc3</version>
       </dependency>
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
-        <version>2.0.1</version>
+        <version>3.0.2</version>
       </dependency>
 
       <!-- Test dependencies -->
@@ -138,7 +134,7 @@
       <dependency>
         <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
-        <version>0.36</version>
+        <version>0.40</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -149,11 +145,11 @@
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.1</version>
+          <version>3.7.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
-          <version>2.1.2</version>
+          <version>3.0.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
@@ -161,12 +157,12 @@
         </plugin>
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
-          <version>1.4</version>
+          <version>1.6</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>2.4.0</version>
+          <version>3.5.0</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -179,22 +175,38 @@
           <target>${java.version}</target>
           <compilerId>javac-with-errorprone</compilerId>
           <forceJavacCompilerUse>true</forceJavacCompilerUse>
+          <annotationProcessorPaths>
+            <path>
+              <groupId>com.google.guava</groupId>
+              <artifactId>guava-beta-checker</artifactId>
+              <version>1.0</version>
+            </path>
+          </annotationProcessorPaths>
         </configuration>
+        <executions>
+          <execution>
+            <id>default-testCompile</id>
+            <phase>test-compile</phase>
+            <goals>
+              <goal>testCompile</goal>
+            </goals>
+            <configuration>
+              <compilerArgs>
+                <arg>-Xep:BetaApi:OFF</arg> <!-- Disable Beta Checker for tests -->
+              </compilerArgs>
+            </configuration>
+          </execution>
+        </executions>
         <dependencies>
           <dependency>
             <groupId>com.google.errorprone</groupId>
             <artifactId>error_prone_core</artifactId>
-            <version>1.1.1</version>
-          </dependency>
-          <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-compiler-javac</artifactId>
-            <version>2.4</version>
+            <version>2.2.0</version>
           </dependency>
           <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-compiler-javac-errorprone</artifactId>
-            <version>2.4</version>
+            <version>2.8.3</version>
           </dependency>
         </dependencies>
       </plugin>
