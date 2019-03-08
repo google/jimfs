@@ -308,6 +308,9 @@ final class FileSystemView {
       // assume file exists unless we're explicitly trying to create a new file
       RegularFile file = lookUpRegularFile(path, options);
       if (file != null) {
+        if (options.contains(TRUNCATE_EXISTING)) {
+          file.truncate(0);
+        }
         return file;
       }
     }
