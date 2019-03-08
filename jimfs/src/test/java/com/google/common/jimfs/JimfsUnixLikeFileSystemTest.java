@@ -56,13 +56,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
@@ -1382,6 +1376,20 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try (Reader reader = Files.newBufferedReader(path("/test.txt"), UTF_8)) {
       assertEquals("hello world", CharStreams.toString(reader));
     }
+  }
+
+  @Test
+  public void testStreamsTruncating() throws IOException {
+    try(OutputStream os = Files.newOutputStream(path("/test"), CREATE_NEW);
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os))) {
+      bw.write("This is a very-very-very-very long line.");
+    }
+
+    try(OutputStream os = Files.newOutputStream(path("/test"), CREATE, TRUNCATE_EXISTING);
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os))) {
+      bw.write("This is a short line.");
+    }
+    assertThatPath("/test").containsLines("This is a short line.");
   }
 
   @Test
