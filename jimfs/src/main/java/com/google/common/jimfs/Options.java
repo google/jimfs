@@ -26,10 +26,11 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-
 import java.nio.file.CopyOption;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -95,15 +96,7 @@ final class Options {
 
     // options contains write or append and may also contain read
     // it does not contain both read and append
-
-    if (options.contains(WRITE)) {
-      return ImmutableSet.copyOf(options);
-    } else {
-      return new ImmutableSet.Builder<OpenOption>()
-          .add(WRITE)
-          .addAll(options)
-          .build();
-    }
+    return addWrite(options);
   }
 
   /**
@@ -135,11 +128,21 @@ final class Options {
       return DEFAULT_WRITE;
     }
 
-    ImmutableSet<OpenOption> result = ImmutableSet.copyOf(options);
+    ImmutableSet<OpenOption> result = addWrite(Arrays.asList(options));
     if (result.contains(READ)) {
       throw new UnsupportedOperationException("'READ' not allowed");
     }
     return result;
+  }
+
+  /**
+   * Returns an {@link ImmutableSet} copy of the given {@code options}, adding {@link
+   * StandardOpenOption#WRITE} if it isn't already present.
+   */
+  private static ImmutableSet<OpenOption> addWrite(Collection<? extends OpenOption> options) {
+    return options.contains(WRITE)
+        ? ImmutableSet.copyOf(options)
+        : ImmutableSet.<OpenOption>builder().add(WRITE).addAll(options).build();
   }
 
   /**
