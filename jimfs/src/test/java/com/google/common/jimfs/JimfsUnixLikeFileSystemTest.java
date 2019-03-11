@@ -51,11 +51,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.common.primitives.Bytes;
 import com.google.common.util.concurrent.Uninterruptibles;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -96,6 +91,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests an in-memory file system through the public APIs in {@link Files}, etc. This also acts as
@@ -1382,6 +1380,20 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     try (Reader reader = Files.newBufferedReader(path("/test.txt"), UTF_8)) {
       assertEquals("hello world", CharStreams.toString(reader));
     }
+  }
+
+  @Test
+  public void testOutputStream_withTruncateExistingAndNotWrite_truncatesFile() throws IOException {
+    // https://github.com/google/jimfs/pull/77
+    Path path = path("/test");
+    Files.write(path, new byte[] {1, 2, 3});
+    assertThatPath(path).containsBytes(1, 2, 3);
+
+    try (OutputStream out = Files.newOutputStream(path, CREATE, TRUNCATE_EXISTING)) {
+      out.write(new byte[] {1, 2});
+    }
+
+    assertThatPath(path).containsBytes(1, 2);
   }
 
   @Test
