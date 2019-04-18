@@ -38,9 +38,10 @@ public abstract class WatchServiceConfiguration {
 
   /**
    * Returns a configuration for a {@link WatchService} that polls watched directories for changes
-   * every {@code interval} of the given {@code timeUnit} (e.g. every 5
-   * {@link TimeUnit#SECONDS seconds}).
+   * every {@code interval} of the given {@code timeUnit} (e.g. every 5 {@link TimeUnit#SECONDS
+   * seconds}).
    */
+  @SuppressWarnings("GoodTime") // should accept a java.time.Duration
   public static WatchServiceConfiguration polling(long interval, TimeUnit timeUnit) {
     return new PollingConfig(interval, timeUnit);
   }
