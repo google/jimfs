@@ -23,10 +23,8 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Table;
-
 import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
-
 import javax.annotation.Nullable;
 
 /**
@@ -176,23 +174,20 @@ public abstract class File {
     links--;
   }
 
-  /**
-   * Gets the creation time of the file.
-   */
+  /** Gets the creation time of the file. */
+  @SuppressWarnings("GoodTime") // should return a java.time.Instant
   public synchronized final long getCreationTime() {
     return creationTime;
   }
 
-  /**
-   * Gets the last access time of the file.
-   */
+  /** Gets the last access time of the file. */
+  @SuppressWarnings("GoodTime") // should return a java.time.Instant
   public synchronized final long getLastAccessTime() {
     return lastAccessTime;
   }
 
-  /**
-   * Gets the last modified time of the file.
-   */
+  /** Gets the last modified time of the file. */
+  @SuppressWarnings("GoodTime") // should return a java.time.Instant
   public synchronized final long getLastModifiedTime() {
     return lastModifiedTime;
   }
