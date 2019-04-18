@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.ClosedDirectoryStreamException;
@@ -36,7 +35,6 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.Iterator;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 /**
@@ -116,9 +114,7 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
     }
   }
 
-  /**
-   * A stream filter that always returns true.
-   */
+  /** A stream filter that always returns true. */
   public static final Filter<Object> ALWAYS_TRUE_FILTER =
       new Filter<Object>() {
         @Override
@@ -205,10 +201,7 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
           @Override
           public File lookup() throws IOException {
             checkOpen(); // per the spec, must check that the stream is open for each view operation
-            return view
-                .lookUpWithLock(checkedPath, optionsSet)
-                .requireExists(checkedPath)
-                .file();
+            return view.lookUpWithLock(checkedPath, optionsSet).requireExists(checkedPath).file();
           }
         },
         type);

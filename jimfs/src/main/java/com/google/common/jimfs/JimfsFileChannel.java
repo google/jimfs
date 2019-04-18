@@ -43,8 +43,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 /**
@@ -652,9 +650,7 @@ final class JimfsFileChannel extends FileChannel {
     }
   }
 
-  /**
-   * A file lock that does nothing, since only one JVM process has access to this file system.
-   */
+  /** A file lock that does nothing, since only one JVM process has access to this file system. */
   static final class FakeFileLock extends FileLock {
 
     private final AtomicBoolean valid = new AtomicBoolean(true);

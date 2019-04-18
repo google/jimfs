@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
@@ -33,7 +32,6 @@ import java.nio.channels.FileLock;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-
 import javax.annotation.Nullable;
 
 /**
@@ -179,18 +177,14 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     channel.close();
   }
 
-  /**
-   * Immediate future indicating that the channel is closed.
-   */
+  /** Immediate future indicating that the channel is closed. */
   private static <V> ListenableFuture<V> closedChannelFuture() {
     SettableFuture<V> future = SettableFuture.create();
     future.setException(new ClosedChannelException());
     return future;
   }
 
-  /**
-   * Runnable callback that wraps a {@link CompletionHandler} and an attachment.
-   */
+  /** Runnable callback that wraps a {@link CompletionHandler} and an attachment. */
   private static final class CompletionHandlerCallback<R, A> implements Runnable {
 
     private final ListenableFuture<R> future;

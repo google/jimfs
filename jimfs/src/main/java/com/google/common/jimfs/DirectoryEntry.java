@@ -20,14 +20,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.MoreObjects;
-
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
 import java.util.Objects;
-
 import javax.annotation.Nullable;
 
 /**
@@ -52,9 +50,7 @@ final class DirectoryEntry {
     this.file = file;
   }
 
-  /**
-   * Returns {@code true} if and only if this entry represents an existing file.
-   */
+  /** Returns {@code true} if and only if this entry represents an existing file. */
   public boolean exists() {
     return file != null;
   }
@@ -118,16 +114,12 @@ final class DirectoryEntry {
     return this;
   }
 
-  /**
-   * Returns the directory containing this entry.
-   */
+  /** Returns the directory containing this entry. */
   public Directory directory() {
     return directory;
   }
 
-  /**
-   * Returns the name of this entry.
-   */
+  /** Returns the name of this entry. */
   public Name name() {
     return name;
   }
@@ -142,9 +134,7 @@ final class DirectoryEntry {
     return file;
   }
 
-  /**
-   * Returns the file this entry links to or {@code null} if the file does not exist
-   */
+  /** Returns the file this entry links to or {@code null} if the file does not exist */
   @Nullable
   public File fileOrNull() {
     return file;

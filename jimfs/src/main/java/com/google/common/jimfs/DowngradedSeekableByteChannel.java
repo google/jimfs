@@ -24,8 +24,8 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 
 /**
- * A thin wrapper around a {@link FileChannel} that exists only to implement
- * {@link SeekableByteChannel} but NOT extend {@link FileChannel}.
+ * A thin wrapper around a {@link FileChannel} that exists only to implement {@link
+ * SeekableByteChannel} but NOT extend {@link FileChannel}.
  *
  * @author Colin Decker
  */

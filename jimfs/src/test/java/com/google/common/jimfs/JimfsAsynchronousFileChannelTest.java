@@ -33,11 +33,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
@@ -50,6 +45,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link JimfsAsynchronousFileChannel}.
@@ -222,21 +220,19 @@ public class JimfsAsynchronousFileChannelTest {
    */
   private static <T> CompletionHandler<T, Object> setFuture(final SettableFuture<T> future) {
     return new CompletionHandler<T, Object>() {
-        @Override
-        public void completed(T result, Object attachment) {
-          future.set(result);
-        }
+      @Override
+      public void completed(T result, Object attachment) {
+        future.set(result);
+      }
 
-        @Override
-        public void failed(Throwable exc, Object attachment) {
-          future.setException(exc);
-        }
-      };
+      @Override
+      public void failed(Throwable exc, Object attachment) {
+        future.setException(exc);
+      }
+    };
   }
 
-  /**
-   * Assert that the future fails, with the failure caused by {@code ClosedChannelException}.
-   */
+  /** Assert that the future fails, with the failure caused by {@code ClosedChannelException}. */
   private static void assertClosed(Future<?> future) throws Throwable {
     try {
       future.get(10, SECONDS);
@@ -247,8 +243,8 @@ public class JimfsAsynchronousFileChannelTest {
   }
 
   /**
-   * Assert that the future fails, with the failure caused by either
-   * {@code AsynchronousCloseException} or (rarely) {@code ClosedChannelException}.
+   * Assert that the future fails, with the failure caused by either {@code
+   * AsynchronousCloseException} or (rarely) {@code ClosedChannelException}.
    */
   private static void assertAsynchronousClose(Future<?> future) throws Throwable {
     try {
@@ -257,8 +253,9 @@ public class JimfsAsynchronousFileChannelTest {
     } catch (ExecutionException expected) {
       Throwable t = expected.getCause();
       if (!(t instanceof AsynchronousCloseException || t instanceof ClosedChannelException)) {
-        fail("expected AsynchronousCloseException (or in rare cases ClosedChannelException): "
-            + "got " + t);
+        fail(
+            "expected AsynchronousCloseException (or in rare cases ClosedChannelException); got "
+                + t);
       }
     }
   }

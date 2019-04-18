@@ -27,10 +27,6 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
-
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -40,6 +36,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
 /**
  * Tests for {@link RegularFile} and by extension for {@link HeapDisk}. These tests test files
@@ -100,34 +98,23 @@ public class RegularFileTest {
           .toList();
 
   /**
-   * Different strategies for handling reuse of disks and/or files between tests, intended to
-   * ensure that {@link HeapDisk} operates properly in a variety of usage states including newly
-   * created, having created files that have not been deleted yet, having created files that have
-   * been deleted, and having created files some of which have been deleted and some of which have
-   * not.
+   * Different strategies for handling reuse of disks and/or files between tests, intended to ensure
+   * that {@link HeapDisk} operates properly in a variety of usage states including newly created,
+   * having created files that have not been deleted yet, having created files that have been
+   * deleted, and having created files some of which have been deleted and some of which have not.
    */
   public enum ReuseStrategy {
-    /**
-     * Creates a new disk for each test.
-     */
+    /** Creates a new disk for each test. */
     NEW_DISK,
-    /**
-     * Retains files after each test, forcing new blocks to be allocated.
-     */
+    /** Retains files after each test, forcing new blocks to be allocated. */
     KEEP_FILES,
-    /**
-     * Deletes files after each test, allowing caching to be used if enabled.
-     */
+    /** Deletes files after each test, allowing caching to be used if enabled. */
     DELETE_FILES,
-    /**
-     * Randomly keeps or deletes a file after each test.
-     */
+    /** Randomly keeps or deletes a file after each test. */
     KEEP_OR_DELETE_FILES
   }
 
-  /**
-   * Configuration for a set of test cases.
-   */
+  /** Configuration for a set of test cases. */
   public static final class TestConfiguration {
 
     private final int blockSize;
@@ -181,9 +168,7 @@ public class RegularFileTest {
     }
   }
 
-  /**
-   * Actual test cases for testing RegularFiles.
-   */
+  /** Actual test cases for testing RegularFiles. */
   public static class RegularFileTestRunner extends TestCase {
 
     private final TestConfiguration configuration;

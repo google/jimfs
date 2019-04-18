@@ -18,9 +18,7 @@ package com.google.common.jimfs;
 
 import org.junit.Test;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public abstract class AbstractGlobMatcherTest extends AbstractPathMatcherTest {
 
   @Test
@@ -32,14 +30,10 @@ public abstract class AbstractGlobMatcherTest extends AbstractPathMatcherTest {
 
   @Test
   public void testMatching_questionMark() {
-    assertThat("?")
-        .matches("a", "A", "$", "5", "_")
-        .doesNotMatch("/", "ab", "");
+    assertThat("?").matches("a", "A", "$", "5", "_").doesNotMatch("/", "ab", "");
     assertThat("??").matches("ab");
     assertThat("????").matches("1234");
-    assertThat("?oo?")
-        .matches("book", "doom")
-        .doesNotMatch("/oom");
+    assertThat("?oo?").matches("book", "doom").doesNotMatch("/oom");
     assertThat("/?oo/ba?").matches("/foo/bar");
     assertThat("foo.?").matches("foo.h");
     assertThat("foo.??").matches("foo.cc");
@@ -50,15 +44,11 @@ public abstract class AbstractGlobMatcherTest extends AbstractPathMatcherTest {
     assertThat("*")
         .matches("a", "abc", "298347829473928423", "abc12345", "")
         .doesNotMatch("/", "/abc");
-    assertThat("/*")
-        .matches("/a", "/abcd", "/abc123", "/")
-        .doesNotMatch("/foo/bar");
+    assertThat("/*").matches("/a", "/abcd", "/abc123", "/").doesNotMatch("/foo/bar");
     assertThat("/*/*/*")
         .matches("/a/b/c", "/foo/bar/baz")
         .doesNotMatch("/foo/bar", "/foo/bar/baz/abc");
-    assertThat("/*/bar")
-        .matches("/foo/bar", "/abc/bar")
-        .doesNotMatch("/bar");
+    assertThat("/*/bar").matches("/foo/bar", "/abc/bar").doesNotMatch("/bar");
     assertThat("/foo/*")
         .matches("/foo/bar", "/foo/baz")
         .doesNotMatch("/foo", "foo/bar", "/foo/bar/baz");
@@ -71,12 +61,9 @@ public abstract class AbstractGlobMatcherTest extends AbstractPathMatcherTest {
     assertThat("Foo.*")
         .matches("Foo.java", "Foo.txt", "Foo.tar.gz", "Foo.Foo.", "Foo.")
         .doesNotMatch("Foo", ".Foo");
-    assertThat("*/*.java")
-        .matches("foo/Bar.java", "foo/.java");
-    assertThat("*/Bar.*")
-        .matches("foo/Bar.java");
-    assertThat(".*")
-        .matches(".bashrc", ".bash_profile");
+    assertThat("*/*.java").matches("foo/Bar.java", "foo/.java");
+    assertThat("*/Bar.*").matches("foo/Bar.java");
+    assertThat(".*").matches(".bashrc", ".bash_profile");
     assertThat("*.............").matches(
         "............a............a..............a.............a............a.........." +
         ".........................................................a....................");
@@ -102,56 +89,36 @@ public abstract class AbstractGlobMatcherTest extends AbstractPathMatcherTest {
     assertThat("/foo/**/bar.txt")
         .matches("/foo/baz/bar.txt", "/foo/bar/asdf/bar.txt")
         .doesNotMatch("/foo/bar.txt", "/foo/baz/bar");
-    assertThat("**/*.java")
-        .matches("/Foo.java", "foo/Bar.java", "/.java", "foo/.java");
+    assertThat("**/*.java").matches("/Foo.java", "foo/Bar.java", "/.java", "foo/.java");
   }
 
   @Test
   public void testMatching_brackets() {
-    assertThat("[ab]")
-        .matches("a", "b")
-        .doesNotMatch("ab", "ba", "aa", "bb", "c", "", "/");
+    assertThat("[ab]").matches("a", "b").doesNotMatch("ab", "ba", "aa", "bb", "c", "", "/");
     assertThat("[a-d]")
         .matches("a", "b", "c", "d")
         .doesNotMatch("e", "f", "z", "aa", "ab", "abcd", "", "/");
     assertThat("[a-dz]")
         .matches("a", "b", "c", "d", "z")
         .doesNotMatch("e", "f", "aa", "ab", "dz", "", "/");
-    assertThat("[!b]")
-        .matches("a", "c", "d", "0", "!", "$")
-        .doesNotMatch("b", "/", "", "ac");
+    assertThat("[!b]").matches("a", "c", "d", "0", "!", "$").doesNotMatch("b", "/", "", "ac");
     assertThat("[!b-d3]")
         .matches("a", "e", "f", "0", "1", "2", "4")
         .doesNotMatch("b", "c", "d", "3");
     assertThat("[-]").matches("-");
     assertThat("[-a-c]").matches("-", "a", "b", "c");
-    assertThat("[!-a-c]")
-        .matches("d", "e", "0")
-        .doesNotMatch("a", "b", "c", "-");
-    assertThat("[\\d]")
-        .matches("\\", "d")
-        .doesNotMatch("0", "1");
-    assertThat("[\\s]")
-        .matches("\\", "s")
-        .doesNotMatch(" ");
-    assertThat("[\\]")
-        .matches("\\")
-        .doesNotMatch("]");
+    assertThat("[!-a-c]").matches("d", "e", "0").doesNotMatch("a", "b", "c", "-");
+    assertThat("[\\d]").matches("\\", "d").doesNotMatch("0", "1");
+    assertThat("[\\s]").matches("\\", "s").doesNotMatch(" ");
+    assertThat("[\\]").matches("\\").doesNotMatch("]");
   }
 
   @Test
   public void testMatching_curlyBraces() {
-    assertThat("{a,b}")
-        .matches("a", "b")
-        .doesNotMatch("/", "c", "0", "", ",", "{", "}");
-    assertThat("{ab,cd}")
-        .matches("ab", "cd")
-        .doesNotMatch("bc", "ac", "ad", "ba", "dc", ",");
-    assertThat(".{h,cc}")
-        .matches(".h", ".cc")
-        .doesNotMatch("h", "cc");
-    assertThat("{?oo,ba?}")
-        .matches("foo", "boo", "moo", "bat", "bar", "baz");
+    assertThat("{a,b}").matches("a", "b").doesNotMatch("/", "c", "0", "", ",", "{", "}");
+    assertThat("{ab,cd}").matches("ab", "cd").doesNotMatch("bc", "ac", "ad", "ba", "dc", ",");
+    assertThat(".{h,cc}").matches(".h", ".cc").doesNotMatch("h", "cc");
+    assertThat("{?oo,ba?}").matches("foo", "boo", "moo", "bat", "bar", "baz");
     assertThat("{[Ff]oo*,[Bb]a*,[A-Ca-c]*/[!z]*.txt}")
         .matches("foo", "Foo", "fools", "ba", "Ba", "bar", "Bar", "Bart", "c/y.txt", "Cat/foo.txt")
         .doesNotMatch("Cat", "Cat/foo", "blah", "bAr", "c/z.txt", "c/.txt", "*");
@@ -166,9 +133,7 @@ public abstract class AbstractGlobMatcherTest extends AbstractPathMatcherTest {
     assertThat("\\{").matches("{");
     assertThat("\\a").matches("a");
     assertThat("{a,\\}}").matches("a", "}");
-    assertThat("{a\\,,b}")
-        .matches("a,", "b")
-        .doesNotMatch("a", ",");
+    assertThat("{a\\,,b}").matches("a,", "b").doesNotMatch("a", ",");
   }
 
   @Test

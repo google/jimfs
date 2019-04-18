@@ -28,13 +28,6 @@ import com.google.common.jimfs.AbstractWatchService.Event;
 import com.google.common.jimfs.AbstractWatchService.Key;
 import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -45,6 +38,11 @@ import java.nio.file.WatchKey;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link PollingWatchService}.
@@ -65,7 +63,8 @@ public class PollingWatchServiceTest {
             fs.getDefaultView(),
             fs.getPathService(),
             new FileSystemState(Runnables.doNothing()),
-            4, MILLISECONDS);
+            4,
+            MILLISECONDS);
   }
 
   @After

@@ -21,14 +21,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedSet;
-
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 /**
@@ -40,29 +38,23 @@ import javax.annotation.Nullable;
 final class FileTree {
 
   /**
-   * Doesn't much matter, but this number comes from MIN_ELOOP_THRESHOLD
-   * <a href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob_plain;f=sysdeps/generic/eloop-threshold.h;hb=HEAD">
+   * Doesn't much matter, but this number comes from MIN_ELOOP_THRESHOLD <a
+   * href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob_plain;f=sysdeps/generic/eloop-threshold.h;hb=HEAD">
    * here</a>
    */
   private static final int MAX_SYMBOLIC_LINK_DEPTH = 40;
 
   private static final ImmutableList<Name> EMPTY_PATH_NAMES = ImmutableList.of(Name.SELF);
 
-  /**
-   * Map of root names to root directories.
-   */
+  /** Map of root names to root directories. */
   private final ImmutableSortedMap<Name, Directory> roots;
 
-  /**
-   * Creates a new file tree with the given root directories.
-   */
+  /** Creates a new file tree with the given root directories. */
   FileTree(Map<Name, Directory> roots) {
     this.roots = ImmutableSortedMap.copyOf(roots, Name.canonicalOrdering());
   }
 
-  /**
-   * Returns the names of the root directories in this tree.
-   */
+  /** Returns the names of the root directories in this tree. */
   public ImmutableSortedSet<Name> getRootDirectoryNames() {
     return roots.keySet();
   }
@@ -77,9 +69,7 @@ final class FileTree {
     return dir == null ? null : dir.entryInParent();
   }
 
-  /**
-   * Returns the result of the file lookup for the given path.
-   */
+  /** Returns the result of the file lookup for the given path. */
   public DirectoryEntry lookUp(
       File workingDirectory, JimfsPath path, Set<? super LinkOption> options) throws IOException {
     checkNotNull(path);
@@ -160,9 +150,7 @@ final class FileTree {
     return lookUpLast(dir, name, options, linkDepth);
   }
 
-  /**
-   * Looks up the last element of a path.
-   */
+  /** Looks up the last element of a path. */
   @Nullable
   private DirectoryEntry lookUpLast(
       @Nullable File dir, Name name, Set<? super LinkOption> options, int linkDepth)
@@ -205,8 +193,8 @@ final class FileTree {
    * parent directory. In that case, we know the file must be a directory ("." and ".." can only
    * link to directories), so we can just get the entry in the directory's parent directory that
    * links to it. So, for example, if we have a directory "foo" that contains a directory "bar" and
-   * we find an entry [bar -> "." -> bar], we instead return the entry for bar in its parent,
-   * [foo -> "bar" -> bar].
+   * we find an entry [bar -> "." -> bar], we instead return the entry for bar in its parent, [foo
+   * -> "bar" -> bar].
    */
   @Nullable
   private DirectoryEntry getRealEntry(DirectoryEntry entry) {
@@ -228,7 +216,6 @@ final class FileTree {
 
   private static boolean isEmpty(ImmutableList<Name> names) {
     // the empty path (created by FileSystem.getPath("")), has no root and a single name, ""
-    return names.isEmpty()
-        || names.size() == 1 && names.get(0).toString().isEmpty();
+    return names.isEmpty() || names.size() == 1 && names.get(0).toString().isEmpty();
   }
 }

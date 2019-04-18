@@ -48,26 +48,26 @@ import javax.annotation.Nullable;
 
 /**
  * Immutable configuration for an in-memory file system. A {@code Configuration} is passed to a
- * method in {@link Jimfs} such as {@link Jimfs#newFileSystem(Configuration)} to create a new
- * {@link FileSystem} instance.
+ * method in {@link Jimfs} such as {@link Jimfs#newFileSystem(Configuration)} to create a new {@link
+ * FileSystem} instance.
  *
  * @author Colin Decker
  */
 public final class Configuration {
 
   /**
-   * <p>Returns the default configuration for a UNIX-like file system. A file system created with
-   * this configuration:
+   * Returns the default configuration for a UNIX-like file system. A file system created with this
+   * configuration:
    *
    * <ul>
    *   <li>uses {@code /} as the path name separator (see {@link PathType#unix()} for more
-   *   information on the path format)</li>
-   *   <li>has root {@code /} and working directory {@code /work}</li>
-   *   <li>performs case-sensitive file lookup</li>
-   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
-   *   avoid overhead for unneeded attributes</li>
-   *   <li>supports hard links, symbolic links, {@link SecureDirectoryStream} and
-   *   {@link FileChannel}</li>
+   *       information on the path format)
+   *   <li>has root {@code /} and working directory {@code /work}
+   *   <li>performs case-sensitive file lookup
+   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to avoid
+   *       overhead for unneeded attributes
+   *   <li>supports hard links, symbolic links, {@link SecureDirectoryStream} and {@link
+   *       FileChannel}
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of UNIX
@@ -97,7 +97,7 @@ public final class Configuration {
   }
 
   /**
-   * <p>Returns the default configuration for a Mac OS X-like file system.
+   * Returns the default configuration for a Mac OS X-like file system.
    *
    * <p>The primary differences between this configuration and the default {@link #unix()}
    * configuration are that this configuration does Unicode normalization on the display and
@@ -107,18 +107,18 @@ public final class Configuration {
    *
    * <ul>
    *   <li>uses {@code /} as the path name separator (see {@link PathType#unix()} for more
-   *   information on the path format)</li>
-   *   <li>has root {@code /} and working directory {@code /work}</li>
-   *   <li>does Unicode normalization on paths, both for lookup and for {@code Path} objects</li>
-   *   <li>does case-insensitive (for ASCII characters only) lookup</li>
-   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
-   *   avoid overhead for unneeded attributes</li>
-   *   <li>supports hard links, symbolic links and {@link FileChannel}</li>
+   *       information on the path format)
+   *   <li>has root {@code /} and working directory {@code /work}
+   *   <li>does Unicode normalization on paths, both for lookup and for {@code Path} objects
+   *   <li>does case-insensitive (for ASCII characters only) lookup
+   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to avoid
+   *       overhead for unneeded attributes
+   *   <li>supports hard links, symbolic links and {@link FileChannel}
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of UNIX
-   * file attribute views or to use full Unicode case insensitivity,
-   * {@linkplain #toBuilder() create a builder}.
+   * file attribute views or to use full Unicode case insensitivity, {@linkplain #toBuilder() create
+   * a builder}.
    *
    * <p>Example:
    *
@@ -135,8 +135,7 @@ public final class Configuration {
 
   private static final class OsxHolder {
     private static final Configuration OS_X =
-        unix()
-            .toBuilder()
+        unix().toBuilder()
             .setDisplayName("OSX")
             .setNameDisplayNormalization(NFC) // matches JDK 1.7u40+ behavior
             .setNameCanonicalNormalization(NFD, CASE_FOLD_ASCII) // NFD is default in HFS+
@@ -145,24 +144,24 @@ public final class Configuration {
   }
 
   /**
-   * <p>Returns the default configuration for a Windows-like file system. A file system created
-   * with this configuration:
+   * Returns the default configuration for a Windows-like file system. A file system created with
+   * this configuration:
    *
    * <ul>
    *   <li>uses {@code \} as the path name separator and recognizes {@code /} as a separator when
-   *   parsing paths (see {@link PathType#windows()} for more information on path format)</li>
-   *   <li>has root {@code C:\} and working directory {@code C:\work}</li>
-   *   <li>performs case-insensitive (for ASCII characters only) file lookup</li>
+   *       parsing paths (see {@link PathType#windows()} for more information on path format)
+   *   <li>has root {@code C:\} and working directory {@code C:\work}
+   *   <li>performs case-insensitive (for ASCII characters only) file lookup
    *   <li>creates {@code Path} objects that use case-insensitive (for ASCII characters only)
-   *   equality</li>
-   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to
-   *   avoid overhead for unneeded attributes</li>
-   *   <li>supports hard links, symbolic links and {@link FileChannel}</li>
+   *       equality
+   *   <li>supports only the {@linkplain BasicFileAttributeView basic} file attribute view, to avoid
+   *       overhead for unneeded attributes
+   *   <li>supports hard links, symbolic links and {@link FileChannel}
    * </ul>
    *
    * <p>To create a modified version of this configuration, such as to include the full set of
-   * Windows file attribute views or to use full Unicode case insensitivity,
-   * {@linkplain #toBuilder() create a builder}.
+   * Windows file attribute views or to use full Unicode case insensitivity, {@linkplain
+   * #toBuilder() create a builder}.
    *
    * <p>Example:
    *
@@ -197,8 +196,8 @@ public final class Configuration {
    * returned; if the operating system is Mac OS X, {@link Configuration#osX()} is returned;
    * otherwise, {@link Configuration#unix()} is returned.
    *
-   * <p>This is the configuration used by the {@code Jimfs.newFileSystem} methods that do not take
-   * a {@code Configuration} parameter.
+   * <p>This is the configuration used by the {@code Jimfs.newFileSystem} methods that do not take a
+   * {@code Configuration} parameter.
    *
    * @since 1.1
    */
@@ -214,9 +213,7 @@ public final class Configuration {
     }
   }
 
-  /**
-   * Creates a new mutable {@link Configuration} builder using the given path type.
-   */
+  /** Creates a new mutable {@link Configuration} builder using the given path type. */
   public static Builder builder(PathType pathType) {
     return new Builder(pathType);
   }
@@ -246,9 +243,7 @@ public final class Configuration {
   final ImmutableSet<Feature> supportedFeatures;
   private final String displayName;
 
-  /**
-   * Creates an immutable configuration object from the given builder.
-   */
+  /** Creates an immutable configuration object from the given builder. */
   private Configuration(Builder builder) {
     this.pathType = builder.pathType;
     this.nameDisplayNormalization = builder.nameDisplayNormalization;
@@ -319,9 +314,7 @@ public final class Configuration {
     return new Builder(this);
   }
 
-  /**
-   * Mutable builder for {@link Configuration} objects.
-   */
+  /** Mutable builder for {@link Configuration} objects. */
   public static final class Builder {
 
     /** 8 KB. */
@@ -475,13 +468,13 @@ public final class Configuration {
      * Sets the maximum size (in bytes) for the file system's in-memory file storage. This maximum
      * size determines the maximum number of blocks that can be allocated to regular files, so it
      * should generally be a multiple of the {@linkplain #setBlockSize(int) block size}. The actual
-     * maximum size will be the nearest multiple of the block size that is less than or equal to
-     * the given size.
+     * maximum size will be the nearest multiple of the block size that is less than or equal to the
+     * given size.
      *
      * <p><b>Note:</b> The in-memory file storage will not be eagerly initialized to this size, so
      * it won't use more memory than is needed for the files you create. Also note that in addition
-     * to this limit, you will of course be limited by the amount of heap space available to the
-     * JVM and the amount of heap used by other objects, both in the file system and elsewhere.
+     * to this limit, you will of course be limited by the amount of heap space available to the JVM
+     * and the amount of heap used by other objects, both in the file system and elsewhere.
      *
      * <p>The default is 4 GB.
      */
@@ -493,13 +486,13 @@ public final class Configuration {
 
     /**
      * Sets the maximum amount of unused space (in bytes) in the file system's in-memory file
-     * storage that should be cached for reuse. By default, this will be equal to the
-     * {@linkplain #setMaxSize(long) maximum size} of the storage, meaning that all space that is
-     * freed when files are truncated or deleted is cached for reuse. This helps to avoid lots of
-     * garbage collection when creating and deleting many files quickly. This can be set to 0 to
-     * disable caching entirely (all freed blocks become available for garbage collection) or to
-     * some other number to put an upper bound on the maximum amount of unused space the file
-     * system will keep around.
+     * storage that should be cached for reuse. By default, this will be equal to the {@linkplain
+     * #setMaxSize(long) maximum size} of the storage, meaning that all space that is freed when
+     * files are truncated or deleted is cached for reuse. This helps to avoid lots of garbage
+     * collection when creating and deleting many files quickly. This can be set to 0 to disable
+     * caching entirely (all freed blocks become available for garbage collection) or to some other
+     * number to put an upper bound on the maximum amount of unused space the file system will keep
+     * around.
      *
      * <p>Like the maximum size, the actual value will be the closest multiple of the block size
      * that is less than or equal to the given size.
@@ -565,9 +558,7 @@ public final class Configuration {
       return this;
     }
 
-    /**
-     * Adds an attribute provider for a custom view for the file system to support.
-     */
+    /** Adds an attribute provider for a custom view for the file system to support. */
     public Builder addAttributeProvider(AttributeProvider provider) {
       checkNotNull(provider);
       if (attributeProviders == null) {
@@ -579,8 +570,8 @@ public final class Configuration {
 
     /**
      * Sets the default value to use for the given file attribute when creating new files. The
-     * attribute must be in the form "view:attribute". The value must be of a type that the
-     * provider for the view accepts.
+     * attribute must be in the form "view:attribute". The value must be of a type that the provider
+     * for the view accepts.
      *
      * <p>For the included attribute views, default values can be set for the following attributes:
      *
@@ -643,10 +634,10 @@ public final class Configuration {
     /**
      * Sets the roots for the file system.
      *
-     * @throws InvalidPathException if any of the given roots is not a valid path for this
-     *     builder's path type
-     * @throws IllegalArgumentException if any of the given roots is a valid path for this
-     *     builder's path type but is not a root path with no name elements
+     * @throws InvalidPathException if any of the given roots is not a valid path for this builder's
+     *     path type
+     * @throws IllegalArgumentException if any of the given roots is a valid path for this builder's
+     *     path type but is not a root path with no name elements
      */
     public Builder setRoots(String first, String... more) {
       List<String> roots = Lists.asList(first, more);
@@ -659,8 +650,8 @@ public final class Configuration {
     }
 
     /**
-     * Sets the path to the working directory for the file system. The working directory must be
-     * an absolute path starting with one of the configured roots.
+     * Sets the path to the working directory for the file system. The working directory must be an
+     * absolute path starting with one of the configured roots.
      *
      * @throws InvalidPathException if the given path is not valid for this builder's path type
      * @throws IllegalArgumentException if the given path is valid for this builder's path type but
@@ -686,8 +677,8 @@ public final class Configuration {
     }
 
     /**
-     * Sets the configuration that {@link WatchService} instances created by the file system
-     * should use. The default configuration polls watched directories for changes every 5 seconds.
+     * Sets the configuration that {@link WatchService} instances created by the file system should
+     * use. The default configuration polls watched directories for changes every 5 seconds.
      *
      * @since 1.1
      */
@@ -701,9 +692,7 @@ public final class Configuration {
       return this;
     }
 
-    /**
-     * Creates a new immutable configuration object from this builder.
-     */
+    /** Creates a new immutable configuration object from this builder. */
     public Configuration build() {
       return new Configuration(this);
     }

@@ -23,14 +23,12 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 
 import com.google.common.util.concurrent.Runnables;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link JimfsOutputStream}.
@@ -171,8 +169,8 @@ public class JimfsOutputStreamTest {
     out.flush(); // does nothing
 
     try (JimfsOutputStream out2 = newOutputStream(false);
-         BufferedOutputStream bout = new BufferedOutputStream(out2);
-         OutputStreamWriter writer = new OutputStreamWriter(bout, UTF_8)) {
+        BufferedOutputStream bout = new BufferedOutputStream(out2);
+        OutputStreamWriter writer = new OutputStreamWriter(bout, UTF_8)) {
       /*
        * This specific scenario is why flush() shouldn't throw when the stream is already closed.
        * Nesting try-with-resources like this will cause close() to be called on the

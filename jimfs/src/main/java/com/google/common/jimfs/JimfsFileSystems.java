@@ -39,8 +39,8 @@ final class JimfsFileSystems {
       };
 
   /**
-   * Returns a {@code Runnable} that will remove the file system with the given {@code URI} from
-   * the system provider's cache when called.
+   * Returns a {@code Runnable} that will remove the file system with the given {@code URI} from the
+   * system provider's cache when called.
    */
   private static Runnable removeFileSystemRunnable(URI uri) {
     if (Jimfs.systemProvider == null) {
@@ -81,9 +81,7 @@ final class JimfsFileSystems {
     return fileSystem;
   }
 
-  /**
-   * Creates the file store for the file system.
-   */
+  /** Creates the file store for the file system. */
   private static JimfsFileStore createFileStore(
       Configuration config, PathService pathService, FileSystemState state) {
     AttributeService attributeService = new AttributeService(config);
@@ -112,9 +110,7 @@ final class JimfsFileSystems {
         new FileTree(roots), fileFactory, disk, attributeService, config.supportedFeatures, state);
   }
 
-  /**
-   * Creates the default view of the file system using the given working directory.
-   */
+  /** Creates the default view of the file system using the given working directory. */
   private static FileSystemView createDefaultView(
       Configuration config, JimfsFileStore fileStore, PathService pathService) throws IOException {
     JimfsPath workingDirPath = pathService.parsePath(config.workingDirectory);

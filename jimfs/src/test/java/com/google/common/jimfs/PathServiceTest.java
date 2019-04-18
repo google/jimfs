@@ -22,14 +22,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link PathService}.
@@ -51,47 +49,63 @@ public class PathServiceTest {
 
   @Test
   public void testPathCreation() {
-    assertAbout(paths()).that(service.emptyPath())
+    assertAbout(paths())
+        .that(service.emptyPath())
         .hasRootComponent(null)
-        .and().hasNameComponents("");
+        .and()
+        .hasNameComponents("");
 
-    assertAbout(paths()).that(service.createRoot(service.name("/")))
+    assertAbout(paths())
+        .that(service.createRoot(service.name("/")))
         .isAbsolute()
-        .and().hasRootComponent("/")
-        .and().hasNoNameComponents();
+        .and()
+        .hasRootComponent("/")
+        .and()
+        .hasNoNameComponents();
 
-    assertAbout(paths()).that(service.createFileName(service.name("foo")))
+    assertAbout(paths())
+        .that(service.createFileName(service.name("foo")))
         .hasRootComponent(null)
-        .and().hasNameComponents("foo");
+        .and()
+        .hasNameComponents("foo");
 
     JimfsPath relative = service.createRelativePath(service.names(ImmutableList.of("foo", "bar")));
-    assertAbout(paths()).that(relative)
+    assertAbout(paths())
+        .that(relative)
         .hasRootComponent(null)
-        .and().hasNameComponents("foo", "bar");
+        .and()
+        .hasNameComponents("foo", "bar");
 
     JimfsPath absolute =
         service.createPath(service.name("/"), service.names(ImmutableList.of("foo", "bar")));
-    assertAbout(paths()).that(absolute)
+    assertAbout(paths())
+        .that(absolute)
         .isAbsolute()
-        .and().hasRootComponent("/")
-        .and().hasNameComponents("foo", "bar");
+        .and()
+        .hasRootComponent("/")
+        .and()
+        .hasNameComponents("foo", "bar");
   }
 
   @Test
   public void testPathCreation_emptyPath() {
     // normalized to empty path with single empty string name
-    assertAbout(paths()).that(service.createPath(null, ImmutableList.<Name>of()))
+    assertAbout(paths())
+        .that(service.createPath(null, ImmutableList.<Name>of()))
         .hasRootComponent(null)
-        .and().hasNameComponents("");
+        .and()
+        .hasNameComponents("");
   }
 
   @Test
   public void testPathCreation_parseIgnoresEmptyString() {
     // if the empty string wasn't ignored, the resulting path would be "/foo" since the empty
     // string would be joined with foo
-    assertAbout(paths()).that(service.parsePath("", "foo"))
+    assertAbout(paths())
+        .that(service.parsePath("", "foo"))
         .hasRootComponent(null)
-        .and().hasNameComponents("foo");
+        .and()
+        .hasNameComponents("foo");
   }
 
   @Test

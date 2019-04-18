@@ -22,7 +22,6 @@ import static com.google.common.jimfs.Jimfs.URI_SCHEME;
 
 import com.google.auto.service.AutoService;
 import com.google.common.collect.MapMaker;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -64,8 +63,8 @@ import java.util.concurrent.ConcurrentMap;
 public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
 
   /**
-   * Env map key that maps to the already-created {@code FileSystem} instance in
-   * {@code newFileSystem}.
+   * Env map key that maps to the already-created {@code FileSystem} instance in {@code
+   * newFileSystem}.
    */
   static final String FILE_SYSTEM_KEY = "fileSystem";
 
@@ -90,9 +89,7 @@ public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
   private static final ConcurrentMap<URI, FileSystem> fileSystems =
       new MapMaker().weakValues().makeMap();
 
-  /**
-   * @deprecated Not intended to be called directly; this class is only for use by Java itself.
-   */
+  /** @deprecated Not intended to be called directly; this class is only for use by Java itself. */
   @Deprecated
   public SystemJimfsFileSystemProvider() {} // a public, no-arg constructor is required
 
@@ -113,7 +110,9 @@ public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
     checkArgument(
         env.get(FILE_SYSTEM_KEY) instanceof FileSystem,
         "env map (%s) must contain key '%s' mapped to an instance of %s",
-        env, FILE_SYSTEM_KEY, FileSystem.class);
+        env,
+        FILE_SYSTEM_KEY,
+        FileSystem.class);
 
     FileSystem fileSystem = (FileSystem) env.get(FILE_SYSTEM_KEY);
     if (fileSystems.putIfAbsent(uri, fileSystem) != null) {
@@ -155,9 +154,7 @@ public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
         && isNullOrEmpty(uri.getFragment());
   }
 
-  /**
-   * Returns the given URI with any path, query or fragment stripped off.
-   */
+  /** Returns the given URI with any path, query or fragment stripped off. */
   private static URI toFileSystemUri(URI uri) {
     try {
       return new URI(
@@ -167,9 +164,7 @@ public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
     }
   }
 
-  /**
-   * Invokes the {@code toPath(URI)} method on the given {@code FileSystem}.
-   */
+  /** Invokes the {@code toPath(URI)} method on the given {@code FileSystem}. */
   private static Path toPath(FileSystem fileSystem, URI uri) {
     // We have to invoke this method by reflection because while the file system should be
     // an instance of JimfsFileSystem, it may be loaded by a different class loader and as

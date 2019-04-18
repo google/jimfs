@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
@@ -82,9 +81,7 @@ final class UnixAttributeProvider extends AttributeProvider {
   // providers to create their default principals using the lookup service for the specific file
   // system.
 
-  /**
-   * Returns an ID that is guaranteed to be the same for any invocation with equal objects.
-   */
+  /** Returns an ID that is guaranteed to be the same for any invocation with equal objects. */
   private Integer getUniqueId(Object object) {
     Integer id = idCache.get(object);
     if (id == null) {

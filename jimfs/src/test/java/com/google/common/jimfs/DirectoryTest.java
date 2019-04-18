@@ -26,16 +26,13 @@ import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.annotation.Nullable;
 
 /**
  * Tests for {@link Directory}.

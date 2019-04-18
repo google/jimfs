@@ -28,12 +28,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.Path;
@@ -43,6 +37,10 @@ import java.nio.file.WatchService;
 import java.nio.file.Watchable;
 import java.util.Arrays;
 import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link AbstractWatchService}.
@@ -236,9 +234,7 @@ public class AbstractWatchServiceTest {
 
   // TODO(cgdecker): Test concurrent use of Watcher
 
-  /**
-   * A fake {@link Watchable} for testing.
-   */
+  /** A fake {@link Watchable} for testing. */
   private static final class StubWatchable implements Watchable {
 
     @Override

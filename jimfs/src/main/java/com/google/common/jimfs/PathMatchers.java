@@ -23,7 +23,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Ascii;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableSet;
-
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
@@ -39,11 +38,11 @@ final class PathMatchers {
   private PathMatchers() {}
 
   /**
-   * Gets a {@link PathMatcher} for the given syntax and pattern as specified by
-   * {@link FileSystem#getPathMatcher}. The {@code separators} string contains the path name
-   * element separators (one character each) recognized by the file system. For a glob-syntax path
-   * matcher, any of the given separators will be recognized as a separator in the pattern, and any
-   * of them will be matched as a separator when checking a path.
+   * Gets a {@link PathMatcher} for the given syntax and pattern as specified by {@link
+   * FileSystem#getPathMatcher}. The {@code separators} string contains the path name element
+   * separators (one character each) recognized by the file system. For a glob-syntax path matcher,
+   * any of the given separators will be recognized as a separator in the pattern, and any of them
+   * will be matched as a separator when checking a path.
    */
   // TODO(cgdecker): Should I be just canonicalizing separators rather than matching any separator?
   // Perhaps so, assuming Path always canonicalizes its separators

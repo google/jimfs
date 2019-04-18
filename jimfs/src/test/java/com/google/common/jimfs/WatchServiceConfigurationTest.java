@@ -20,17 +20,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import com.google.common.truth.Truth;
-
+import java.io.IOException;
+import java.nio.file.WatchService;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.IOException;
-import java.nio.file.WatchService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link WatchServiceConfiguration}.
@@ -68,8 +64,8 @@ public class WatchServiceConfigurationTest {
 
   @Test
   public void testDefaultConfig() {
-    WatchService watchService = WatchServiceConfiguration.DEFAULT
-        .newWatchService(fs.getDefaultView(), fs.getPathService());
+    WatchService watchService =
+        WatchServiceConfiguration.DEFAULT.newWatchService(fs.getDefaultView(), fs.getPathService());
     assertThat(watchService).isInstanceOf(PollingWatchService.class);
 
     PollingWatchService pollingWatchService = (PollingWatchService) watchService;

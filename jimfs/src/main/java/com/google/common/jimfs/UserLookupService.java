@@ -50,23 +50,17 @@ final class UserLookupService extends UserPrincipalLookupService {
     return createGroupPrincipal(group);
   }
 
-  /**
-   * Creates a {@link UserPrincipal} for the given user name.
-   */
+  /** Creates a {@link UserPrincipal} for the given user name. */
   static UserPrincipal createUserPrincipal(String name) {
     return new JimfsUserPrincipal(name);
   }
 
-  /**
-   * Creates a {@link GroupPrincipal} for the given group name.
-   */
+  /** Creates a {@link GroupPrincipal} for the given group name. */
   static GroupPrincipal createGroupPrincipal(String name) {
     return new JimfsGroupPrincipal(name);
   }
 
-  /**
-   * Base class for {@link UserPrincipal} and {@link GroupPrincipal} implementations.
-   */
+  /** Base class for {@link UserPrincipal} and {@link GroupPrincipal} implementations. */
   private abstract static class NamedPrincipal implements UserPrincipal {
 
     protected final String name;
@@ -91,9 +85,7 @@ final class UserLookupService extends UserPrincipalLookupService {
     }
   }
 
-  /**
-   * {@link UserPrincipal} implementation.
-   */
+  /** {@link UserPrincipal} implementation. */
   static final class JimfsUserPrincipal extends NamedPrincipal {
 
     private JimfsUserPrincipal(String name) {
@@ -107,9 +99,7 @@ final class UserLookupService extends UserPrincipalLookupService {
     }
   }
 
-  /**
-   * {@link GroupPrincipal} implementation.
-   */
+  /** {@link GroupPrincipal} implementation. */
   static final class JimfsGroupPrincipal extends NamedPrincipal implements GroupPrincipal {
 
     private JimfsGroupPrincipal(String name) {

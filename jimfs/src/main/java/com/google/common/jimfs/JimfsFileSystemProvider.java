@@ -23,7 +23,6 @@ import static com.google.common.jimfs.Jimfs.URI_SCHEME;
 import static java.nio.file.StandardOpenOption.APPEND;
 
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -49,14 +48,13 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-
 import javax.annotation.Nullable;
 
 /**
  * {@link FileSystemProvider} implementation for Jimfs. This provider implements the actual file
- * system operations but does not handle creation, caching or lookup of file systems. See
- * {@link SystemJimfsFileSystemProvider}, which is the {@code META-INF/services/} entry for Jimfs,
- * for those operations.
+ * system operations but does not handle creation, caching or lookup of file systems. See {@link
+ * SystemJimfsFileSystemProvider}, which is the {@code META-INF/services/} entry for Jimfs, for
+ * those operations.
  *
  * @author Colin Decker
  */
@@ -73,9 +71,7 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     }
   }
 
-  /**
-   * Returns the singleton instance of this provider.
-   */
+  /** Returns the singleton instance of this provider. */
   static JimfsFileSystemProvider instance() {
     return INSTANCE;
   }
@@ -131,16 +127,12 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
         "path " + path + " is not associated with a Jimfs file system");
   }
 
-  /**
-   * Gets the file system for the given path.
-   */
+  /** Gets the file system for the given path. */
   private static JimfsFileSystem getFileSystem(Path path) {
     return (JimfsFileSystem) checkPath(path).getFileSystem();
   }
 
-  /**
-   * Returns the default file system view for the given path.
-   */
+  /** Returns the default file system view for the given path. */
   private static FileSystemView getDefaultView(JimfsPath path) {
     return getFileSystem(path).getDefaultView();
   }
@@ -311,12 +303,10 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     JimfsPath checkedPath = checkPath(path);
     FileSystemView view = getDefaultView(checkedPath);
     if (getFileStore(path).supportsFileAttributeView("dos")) {
-      return view
-          .readAttributes(checkedPath, DosFileAttributes.class, Options.NOFOLLOW_LINKS)
+      return view.readAttributes(checkedPath, DosFileAttributes.class, Options.NOFOLLOW_LINKS)
           .isHidden();
     }
-    return path.getNameCount() > 0
-        && path.getFileName().toString().startsWith(".");
+    return path.getNameCount() > 0 && path.getFileName().toString().startsWith(".");
   }
 
   @Override

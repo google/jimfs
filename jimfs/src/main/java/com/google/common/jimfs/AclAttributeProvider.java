@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.file.attribute.AclEntry;
 import java.nio.file.attribute.AclFileAttributeView;
@@ -30,7 +29,6 @@ import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.List;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 /**
@@ -98,7 +96,8 @@ final class AclAttributeProvider extends AttributeProvider {
       if (!(obj instanceof AclEntry)) {
         throw new IllegalArgumentException(
             "invalid element for attribute 'acl:acl': should be List<AclEntry>, "
-                + "found element of type " + obj.getClass());
+                + "found element of type "
+                + obj.getClass());
       }
     }
 
@@ -116,9 +115,7 @@ final class AclAttributeProvider extends AttributeProvider {
     return new View(lookup, (FileOwnerAttributeView) inheritedViews.get("owner"));
   }
 
-  /**
-   * Implementation of {@link AclFileAttributeView}.
-   */
+  /** Implementation of {@link AclFileAttributeView}. */
   private static final class View extends AbstractAttributeView implements AclFileAttributeView {
 
     private final FileOwnerAttributeView ownerView;

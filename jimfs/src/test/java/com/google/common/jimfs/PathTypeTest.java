@@ -21,14 +21,11 @@ import static com.google.common.jimfs.PathType.ParseResult;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
-
+import java.net.URI;
+import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.net.URI;
-
-import javax.annotation.Nullable;
 
 /**
  * Tests for {@link PathType}.
@@ -110,9 +107,7 @@ public class PathTypeTest {
     assertThat(parsedUri.names()).containsExactlyElementsIn(result.names()).inOrder();
   }
 
-  /**
-   * Arbitrary path type with $ as the root, / as the separator and \ as an alternate separator.
-   */
+  /** Arbitrary path type with $ as the root, / as the separator and \ as an alternate separator. */
   private static final class FakePathType extends PathType {
 
     protected FakePathType() {

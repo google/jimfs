@@ -27,14 +27,11 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
-
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public final class PathTester {
 
   private final PathService pathService;
@@ -95,9 +92,7 @@ public final class PathTester {
       assertEquals(names.get(i), path.getName(i).toString());
       // don't test individual names if this is an individual name
       if (names.size() > 1) {
-        new PathTester(pathService, names.get(i))
-            .names(names.get(i))
-            .test(path.getName(i));
+        new PathTester(pathService, names.get(i)).names(names.get(i)).test(path.getName(i));
       }
     }
     if (names.size() > 0) {
@@ -105,9 +100,7 @@ public final class PathTester {
       assertEquals(fileName, path.getFileName().toString());
       // don't test individual names if this is an individual name
       if (names.size() > 1) {
-        new PathTester(pathService, fileName)
-            .names(fileName)
-            .test(path.getFileName());
+        new PathTester(pathService, fileName).names(fileName).test(path.getFileName());
       }
     }
   }
@@ -144,7 +137,8 @@ public final class PathTester {
               .subList(1, path.getNameCount());
 
       new PathTester(pathService, Joiner.on('/').join(startNames))
-          .names(startNames).test(startSubpath);
+          .names(startNames)
+          .test(startSubpath);
 
       Path endSubpath = path.subpath(0, path.getNameCount() - 1);
       List<String> endNames =

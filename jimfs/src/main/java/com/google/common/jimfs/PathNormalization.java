@@ -18,25 +18,21 @@ package com.google.common.jimfs;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.Function;
-
 import com.ibm.icu.lang.UCharacter;
-
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
 /**
  * Normalizations that can be applied to names in paths. Includes Unicode normalizations and
- * normalizations for case insensitive paths. These normalizations can be set in
- * {@code Configuration.Builder} when creating a Jimfs file system instance and are automatically
- * applied to paths in the file system.
+ * normalizations for case insensitive paths. These normalizations can be set in {@code
+ * Configuration.Builder} when creating a Jimfs file system instance and are automatically applied
+ * to paths in the file system.
  *
  * @author Colin Decker
  */
 public enum PathNormalization implements Function<String, String> {
 
-  /**
-   * No normalization.
-   */
+  /** No normalization. */
   NONE(0) {
     @Override
     public String apply(String string) {
@@ -44,9 +40,7 @@ public enum PathNormalization implements Function<String, String> {
     }
   },
 
-  /**
-   * Unicode composed normalization (form {@linkplain java.text.Normalizer.Form#NFC NFC}).
-   */
+  /** Unicode composed normalization (form {@linkplain java.text.Normalizer.Form#NFC NFC}). */
   NFC(Pattern.CANON_EQ) {
     @Override
     public String apply(String string) {
@@ -54,16 +48,14 @@ public enum PathNormalization implements Function<String, String> {
     }
   },
 
-  /**
-   * Unicode decomposed normalization (form {@linkplain java.text.Normalizer.Form#NFD NFD}).
-   */
+  /** Unicode decomposed normalization (form {@linkplain java.text.Normalizer.Form#NFD NFD}). */
   NFD(Pattern.CANON_EQ) {
     @Override
     public String apply(String string) {
       return Normalizer.normalize(string, Normalizer.Form.NFD);
     }
   },
-    
+
   /*
    * Some notes on case folding/case insensitivity of file systems:
    *
@@ -76,9 +68,7 @@ public enum PathNormalization implements Function<String, String> {
    * copy of Windows.
    */
 
-  /**
-   * Unicode case folding for case insensitive paths. Requires ICU4J on the classpath.
-   */
+  /** Unicode case folding for case insensitive paths. Requires ICU4J on the classpath. */
   CASE_FOLD_UNICODE(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE) {
     @Override
     public String apply(String string) {
@@ -95,9 +85,7 @@ public enum PathNormalization implements Function<String, String> {
     }
   },
 
-  /**
-   * ASCII case folding for simple case insensitive paths.
-   */
+  /** ASCII case folding for simple case insensitive paths. */
   CASE_FOLD_ASCII(Pattern.CASE_INSENSITIVE) {
     @Override
     public String apply(String string) {
@@ -111,9 +99,7 @@ public enum PathNormalization implements Function<String, String> {
     this.patternFlags = patternFlags;
   }
 
-  /**
-   * Applies this normalization to the given string, returning the normalized result.
-   */
+  /** Applies this normalization to the given string, returning the normalized result. */
   @Override
   public abstract String apply(String string);
 
@@ -126,8 +112,7 @@ public enum PathNormalization implements Function<String, String> {
   }
 
   /**
-   * Applies the given normalizations to the given string in order, returning the normalized
-   * result.
+   * Applies the given normalizations to the given string in order, returning the normalized result.
    */
   public static String normalize(String string, Iterable<PathNormalization> normalizations) {
     String result = string;
@@ -137,9 +122,7 @@ public enum PathNormalization implements Function<String, String> {
     return result;
   }
 
-  /**
-   * Compiles a regex pattern using flags based on the given normalizations.
-   */
+  /** Compiles a regex pattern using flags based on the given normalizations. */
   public static Pattern compilePattern(String regex, Iterable<PathNormalization> normalizations) {
     int flags = 0;
     for (PathNormalization normalization : normalizations) {

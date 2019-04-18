@@ -34,8 +34,8 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * Utility methods for normalizing user-provided options arrays and sets to canonical immutable
- * sets of options.
+ * Utility methods for normalizing user-provided options arrays and sets to canonical immutable sets
+ * of options.
  *
  * @author Colin Decker
  */
@@ -43,15 +43,11 @@ final class Options {
 
   private Options() {}
 
-  /**
-   * Immutable set containing LinkOption.NOFOLLOW_LINKS.
-   */
+  /** Immutable set containing LinkOption.NOFOLLOW_LINKS. */
   public static final ImmutableSet<LinkOption> NOFOLLOW_LINKS =
       ImmutableSet.of(LinkOption.NOFOLLOW_LINKS);
 
-  /**
-   * Immutable empty LinkOption set.
-   */
+  /** Immutable empty LinkOption set. */
   public static final ImmutableSet<LinkOption> FOLLOW_LINKS = ImmutableSet.of();
 
   private static final ImmutableSet<OpenOption> DEFAULT_READ = ImmutableSet.<OpenOption>of(READ);
@@ -62,16 +58,12 @@ final class Options {
   private static final ImmutableSet<OpenOption> DEFAULT_WRITE =
       ImmutableSet.<OpenOption>of(WRITE, CREATE, TRUNCATE_EXISTING);
 
-  /**
-   * Returns an immutable set of link options.
-   */
+  /** Returns an immutable set of link options. */
   public static ImmutableSet<LinkOption> getLinkOptions(LinkOption... options) {
     return options.length == 0 ? FOLLOW_LINKS : NOFOLLOW_LINKS;
   }
 
-  /**
-   * Returns an immutable set of open options for opening a new file channel.
-   */
+  /** Returns an immutable set of open options for opening a new file channel. */
   public static ImmutableSet<OpenOption> getOptionsForChannel(Set<? extends OpenOption> options) {
     if (options.isEmpty()) {
       return DEFAULT_READ;
@@ -99,9 +91,7 @@ final class Options {
     return addWrite(options);
   }
 
-  /**
-   * Returns an immutable set of open options for opening a new input stream.
-   */
+  /** Returns an immutable set of open options for opening a new input stream. */
   @SuppressWarnings("unchecked") // safe covariant cast
   public static ImmutableSet<OpenOption> getOptionsForInputStream(OpenOption... options) {
     boolean nofollowLinks = false;
@@ -120,9 +110,7 @@ final class Options {
         (ImmutableSet<?>) (nofollowLinks ? NOFOLLOW_LINKS : FOLLOW_LINKS);
   }
 
-  /**
-   * Returns an immutable set of open options for opening a new output stream.
-   */
+  /** Returns an immutable set of open options for opening a new output stream. */
   public static ImmutableSet<OpenOption> getOptionsForOutputStream(OpenOption... options) {
     if (options.length == 0) {
       return DEFAULT_WRITE;
@@ -145,16 +133,12 @@ final class Options {
         : ImmutableSet.<OpenOption>builder().add(WRITE).addAll(options).build();
   }
 
-  /**
-   * Returns an immutable set of the given options for a move.
-   */
+  /** Returns an immutable set of the given options for a move. */
   public static ImmutableSet<CopyOption> getMoveOptions(CopyOption... options) {
     return ImmutableSet.copyOf(Lists.asList(LinkOption.NOFOLLOW_LINKS, options));
   }
 
-  /**
-   * Returns an immutable set of the given options for a copy.
-   */
+  /** Returns an immutable set of the given options for a copy. */
   public static ImmutableSet<CopyOption> getCopyOptions(CopyOption... options) {
     ImmutableSet<CopyOption> result = ImmutableSet.copyOf(options);
     if (result.contains(ATOMIC_MOVE)) {

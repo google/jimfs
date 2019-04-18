@@ -20,7 +20,6 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.assertFalse;
 
 import com.google.common.collect.ImmutableList;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.DirectoryStream;
@@ -33,9 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public final class TestUtils {
 
   private TestUtils() {}
@@ -83,12 +80,9 @@ public final class TestUtils {
     return result;
   }
 
-  /**
-   * Returns a number of permutations of the given path that should all locate the same file.
-   */
+  /** Returns a number of permutations of the given path that should all locate the same file. */
   public static Iterable<Path> permutations(Path path) throws IOException {
-    Path workingDir =
-        path.getFileSystem().getPath("").toRealPath();
+    Path workingDir = path.getFileSystem().getPath("").toRealPath();
     boolean directory = Files.isDirectory(path);
 
     Set<Path> results = new HashSet<>();
@@ -107,12 +101,9 @@ public final class TestUtils {
             && !fileName.toString().equals(".")
             && !fileName.toString().equals("..")) {
           results.add(p.resolve("..").resolve(fileName));
-          results.add(
-              p.resolve("..").resolve(".").resolve(fileName));
-          results.add(
-              p.resolve("..").resolve(".").resolve(fileName).resolve("."));
-          results.add(
-              p.resolve(".").resolve("..").resolve(".").resolve(fileName));
+          results.add(p.resolve("..").resolve(".").resolve(fileName));
+          results.add(p.resolve("..").resolve(".").resolve(fileName).resolve("."));
+          results.add(p.resolve(".").resolve("..").resolve(".").resolve(fileName));
         }
       }
 
@@ -122,10 +113,8 @@ public final class TestUtils {
             Path childName = child.getFileName();
             for (Path p : ImmutableList.copyOf(results)) {
               results.add(p.resolve(childName).resolve(".."));
-              results.add(
-                  p.resolve(childName).resolve(".").resolve(".").resolve(".."));
-              results.add(
-                  p.resolve(childName).resolve("..").resolve("."));
+              results.add(p.resolve(childName).resolve(".").resolve(".").resolve(".."));
+              results.add(p.resolve(childName).resolve("..").resolve("."));
               results.add(
                   p.resolve(childName).resolve("..").resolve(childName).resolve(".").resolve(".."));
             }

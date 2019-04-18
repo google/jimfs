@@ -20,9 +20,6 @@ import static com.google.common.jimfs.PathSubject.paths;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assert_;
 
-import org.junit.After;
-import org.junit.Before;
-
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -30,10 +27,10 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import org.junit.After;
+import org.junit.Before;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public abstract class AbstractJimfsIntegrationTest {
 
   protected FileSystem fs;
@@ -48,9 +45,7 @@ public abstract class AbstractJimfsIntegrationTest {
     fs.close();
   }
 
-  /**
-   * Creates the file system to use in the tests.
-   */
+  /** Creates the file system to use in the tests. */
   protected abstract FileSystem createFileSystem();
 
   // helpers
@@ -75,9 +70,7 @@ public abstract class AbstractJimfsIntegrationTest {
     return subject;
   }
 
-  /**
-   * Tester for testing changes in file times.
-   */
+  /** Tester for testing changes in file times. */
   protected static final class FileTimeTester {
 
     private final Path path;

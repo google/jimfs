@@ -61,17 +61,13 @@ final class JimfsPath implements Path {
     this.names = ImmutableList.copyOf(names);
   }
 
-  /**
-   * Returns the root name, or null if there is no root.
-   */
+  /** Returns the root name, or null if there is no root. */
   @Nullable
   public Name root() {
     return root;
   }
 
-  /**
-   * Returns the list of name elements.
-   */
+  /** Returns the list of name elements. */
   public ImmutableList<Name> names() {
     return names;
   }
@@ -92,9 +88,7 @@ final class JimfsPath implements Path {
    * Returns whether or not this is the empty path, with no root and a single, empty string, name.
    */
   public boolean isEmptyPath() {
-    return root == null
-        && names.size() == 1
-        && names.get(0).toString().isEmpty();
+    return root == null && names.size() == 1 && names.get(0).toString().isEmpty();
   }
 
   @Override
@@ -165,9 +159,7 @@ final class JimfsPath implements Path {
     return pathService.createRelativePath(names.subList(beginIndex, endIndex));
   }
 
-  /**
-   * Returns true if list starts with all elements of other in the same order.
-   */
+  /** Returns true if list starts with all elements of other in the same order. */
   private static boolean startsWith(List<?> list, List<?> other) {
     return list.size() >= other.size() && list.subList(0, other.size()).equals(other);
   }
@@ -257,19 +249,13 @@ final class JimfsPath implements Path {
     return normal;
   }
 
-  /**
-   * Resolves the given name against this path. The name is assumed not to be a root name.
-   */
+  /** Resolves the given name against this path. The name is assumed not to be a root name. */
   JimfsPath resolve(Name name) {
     if (name.toString().isEmpty()) {
       return this;
     }
     return pathService.createPathInternal(
-        root,
-        ImmutableList.<Name>builder()
-            .addAll(names)
-            .add(name)
-            .build());
+        root, ImmutableList.<Name>builder().addAll(names).add(name).build());
   }
 
   @Override
@@ -286,11 +272,7 @@ final class JimfsPath implements Path {
       return this;
     }
     return pathService.createPath(
-        root,
-        ImmutableList.<Name>builder()
-            .addAll(names)
-            .addAll(otherPath.names)
-            .build());
+        root, ImmutableList.<Name>builder().addAll(names).addAll(otherPath.names).build());
   }
 
   @Override

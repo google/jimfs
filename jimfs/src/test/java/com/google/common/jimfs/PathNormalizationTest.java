@@ -26,12 +26,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableSet;
-
+import java.util.regex.Pattern;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.util.regex.Pattern;
 
 /**
  * Tests for {@link PathNormalization}.
@@ -305,18 +303,14 @@ public class PathNormalizationTest {
     assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
   }
 
-  /**
-   * Asserts that the given strings normalize to the same string using the current normalizer.
-   */
+  /** Asserts that the given strings normalize to the same string using the current normalizer. */
   private void assertNormalizedEqual(String first, String second) {
     assertEquals(
         PathNormalization.normalize(first, normalizations),
         PathNormalization.normalize(second, normalizations));
   }
 
-  /**
-   * Asserts that the given strings normalize to different strings using the current normalizer.
-   */
+  /** Asserts that the given strings normalize to different strings using the current normalizer. */
   private void assertNormalizedUnequal(String first, String second) {
     assertNotEquals(
         PathNormalization.normalize(first, normalizations),

@@ -62,9 +62,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return actual().getFileSystem().getPath(path);
   }
 
-  /**
-   * Returns this, for readability of chained assertions.
-   */
+  /** Returns this, for readability of chained assertions. */
   public PathSubject and() {
     return this;
   }
@@ -81,26 +79,22 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return newSubject;
   }
 
-  /**
-   * Do not follow links when looking up the path.
-   */
+  /** Do not follow links when looking up the path. */
   public PathSubject noFollowLinks() {
     this.linkOptions = NOFOLLOW_LINKS;
     return this;
   }
 
   /**
-   * Set the given charset to be used when reading the file at this path as text. Default charset
-   * if not set is UTF-8.
+   * Set the given charset to be used when reading the file at this path as text. Default charset if
+   * not set is UTF-8.
    */
   public PathSubject withCharset(Charset charset) {
     this.charset = checkNotNull(charset);
     return this;
   }
 
-  /**
-   * Asserts that the path is absolute (it has a root component).
-   */
+  /** Asserts that the path is absolute (it has a root component). */
   public PathSubject isAbsolute() {
     if (!actual().isAbsolute()) {
       fail("is absolute");
@@ -108,9 +102,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path is relative (it has no root component).
-   */
+  /** Asserts that the path is relative (it has no root component). */
   public PathSubject isRelative() {
     if (actual().isAbsolute()) {
       fail("is relative");
@@ -118,9 +110,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path has the given root component.
-   */
+  /** Asserts that the path has the given root component. */
   public PathSubject hasRootComponent(@Nullable String root) {
     Path rootComponent = actual().getRoot();
     if (root == null && rootComponent != null) {
@@ -131,9 +121,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path has no name components.
-   */
+  /** Asserts that the path has no name components. */
   public PathSubject hasNoNameComponents() {
     if (actual().getNameCount() != 0) {
       fail("has no name components");
@@ -141,9 +129,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path has the given name components.
-   */
+  /** Asserts that the path has the given name components. */
   public PathSubject hasNameComponents(String... names) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     for (Path name : actual()) {
@@ -156,9 +142,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path matches the given syntax and pattern.
-   */
+  /** Asserts that the path matches the given syntax and pattern. */
   public PathSubject matches(String syntaxAndPattern) {
     PathMatcher matcher = actual().getFileSystem().getPathMatcher(syntaxAndPattern);
     if (!matcher.matches(actual())) {
@@ -167,9 +151,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path does not match the given syntax and pattern.
-   */
+  /** Asserts that the path does not match the given syntax and pattern. */
   public PathSubject doesNotMatch(String syntaxAndPattern) {
     PathMatcher matcher = actual().getFileSystem().getPathMatcher(syntaxAndPattern);
     if (matcher.matches(actual())) {
@@ -178,9 +160,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path exists.
-   */
+  /** Asserts that the path exists. */
   public PathSubject exists() {
     if (!Files.exists(actual(), linkOptions)) {
       fail("exist");
@@ -191,9 +171,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path does not exist.
-   */
+  /** Asserts that the path does not exist. */
   public PathSubject doesNotExist() {
     if (!Files.notExists(actual(), linkOptions)) {
       fail("does not exist");
@@ -204,9 +182,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path is a directory.
-   */
+  /** Asserts that the path is a directory. */
   public PathSubject isDirectory() {
     exists(); // check for directoryness should imply check for existence
 
@@ -216,9 +192,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path is a regular file.
-   */
+  /** Asserts that the path is a regular file. */
   public PathSubject isRegularFile() {
     exists(); // check for regular fileness should imply check for existence
 
@@ -228,9 +202,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path is a symbolic link.
-   */
+  /** Asserts that the path is a symbolic link. */
   public PathSubject isSymbolicLink() {
     exists(); // check for symbolic linkness should imply check for existence
 
@@ -240,9 +212,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path, which is a symbolic link, has the given path as a target.
-   */
+  /** Asserts that the path, which is a symbolic link, has the given path as a target. */
   public PathSubject withTarget(String targetPath) throws IOException {
     if (!Files.readSymbolicLink(actual()).equals(toPath(targetPath))) {
       fail("symbolic link target is", targetPath);
@@ -251,8 +221,8 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   }
 
   /**
-   * Asserts that the file the path points to exists and has the given number of links to it.
-   * Fails on a file system that does not support the "unix" view.
+   * Asserts that the file the path points to exists and has the given number of links to it. Fails
+   * on a file system that does not support the "unix" view.
    */
   public PathSubject hasLinkCount(int count) throws IOException {
     exists();
@@ -264,16 +234,12 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path resolves to the same file as the given path.
-   */
+  /** Asserts that the path resolves to the same file as the given path. */
   public PathSubject isSameFileAs(String path) throws IOException {
     return isSameFileAs(toPath(path));
   }
 
-  /**
-   * Asserts that the path resolves to the same file as the given path.
-   */
+  /** Asserts that the path resolves to the same file as the given path. */
   public PathSubject isSameFileAs(Path path) throws IOException {
     if (!Files.isSameFile(actual(), path)) {
       fail("is same file as", path);
@@ -281,9 +247,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the path does not resolve to the same file as the given path.
-   */
+  /** Asserts that the path does not resolve to the same file as the given path. */
   public PathSubject isNotSameFileAs(String path) throws IOException {
     if (Files.isSameFile(actual(), toPath(path))) {
       fail("is not same file as", path);
@@ -291,9 +255,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the directory has no children.
-   */
+  /** Asserts that the directory has no children. */
   public PathSubject hasNoChildren() throws IOException {
     isDirectory();
 
@@ -305,9 +267,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the directory has children with the given names, in the given order.
-   */
+  /** Asserts that the directory has children with the given names, in the given order. */
   public PathSubject hasChildren(String... children) throws IOException {
     isDirectory();
 
@@ -329,9 +289,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the file has the given size.
-   */
+  /** Asserts that the file has the given size. */
   public PathSubject hasSize(long size) throws IOException {
     if (Files.size(actual()) != size) {
       fail("has size", size);
@@ -339,9 +297,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Asserts that the file is a regular file containing no bytes.
-   */
+  /** Asserts that the file is a regular file containing no bytes. */
   public PathSubject containsNoBytes() throws IOException {
     return containsBytes(new byte[0]);
   }
@@ -357,9 +313,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return containsBytes(realBytes);
   }
 
-  /**
-   * Asserts that the file is a regular file containing exactly the given bytes.
-   */
+  /** Asserts that the file is a regular file containing exactly the given bytes. */
   public PathSubject containsBytes(byte[] bytes) throws IOException {
     isRegularFile();
     hasSize(bytes.length);
@@ -410,9 +364,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Returns an object for making assertions about the given attribute.
-   */
+  /** Returns an object for making assertions about the given attribute. */
   public Attribute attribute(final String attribute) {
     return new Attribute() {
       @Override
@@ -448,24 +400,16 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     }
   }
 
-  /**
-   * Interface for assertions about a file attribute.
-   */
+  /** Interface for assertions about a file attribute. */
   public interface Attribute {
 
-    /**
-     * Asserts that the value of this attribute is equal to the given value.
-     */
+    /** Asserts that the value of this attribute is equal to the given value. */
     Attribute is(Object value) throws IOException;
 
-    /**
-     * Asserts that the value of this attribute is not equal to the given value.
-     */
+    /** Asserts that the value of this attribute is not equal to the given value. */
     Attribute isNot(Object value) throws IOException;
 
-    /**
-     * Returns the path subject for further chaining.
-     */
+    /** Returns the path subject for further chaining. */
     PathSubject and();
   }
 }

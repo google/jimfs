@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.DosFileAttributeView;
@@ -28,7 +27,6 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 /**
@@ -116,9 +114,7 @@ final class DosAttributeProvider extends AttributeProvider {
     return new Attributes(file);
   }
 
-  /**
-   * Implementation of {@link DosFileAttributeView}.
-   */
+  /** Implementation of {@link DosFileAttributeView}. */
   private static final class View extends AbstractAttributeView implements DosFileAttributeView {
 
     private final BasicFileAttributeView basicView;
@@ -165,9 +161,7 @@ final class DosAttributeProvider extends AttributeProvider {
     }
   }
 
-  /**
-   * Implementation of {@link DosFileAttributes}.
-   */
+  /** Implementation of {@link DosFileAttributes}. */
   static class Attributes extends BasicAttributeProvider.Attributes implements DosFileAttributes {
 
     private final boolean readOnly;

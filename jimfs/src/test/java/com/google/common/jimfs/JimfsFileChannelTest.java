@@ -37,11 +37,6 @@ import com.google.common.testing.NullPointerTester;
 import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousCloseException;
@@ -61,11 +56,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Most of the behavior of {@link JimfsFileChannel} is handled by the {@link RegularFile}
- * implementations, so the thorough tests of that are in {@link RegularFileTest}. This mostly
- * tests interactions with the file and channel positions.
+ * implementations, so the thorough tests of that are in {@link RegularFileTest}. This mostly tests
+ * interactions with the file and channel positions.
  *
  * @author Colin Decker
  */
@@ -777,9 +775,9 @@ public class JimfsFileChannelTest {
   private static final int BLOCKING_OP_COUNT = 10;
 
   /**
-   * Queues blocking operations on the channel in separate threads using the given executor.
-   * The given latch should have a count of BLOCKING_OP_COUNT to allow the caller wants to wait for
-   * all threads to start executing.
+   * Queues blocking operations on the channel in separate threads using the given executor. The
+   * given latch should have a count of BLOCKING_OP_COUNT to allow the caller wants to wait for all
+   * threads to start executing.
    */
   private List<Future<?>> queueAllBlockingOperations(
       final FileChannel channel, ExecutorService executor, final CountDownLatch startLatch) {
@@ -901,8 +899,7 @@ public class JimfsFileChannelTest {
 
   /**
    * Tests that the methods on the default FileChannel that support InterruptibleChannel behavior
-   * also support it on JimfsFileChannel, by just interrupting the thread before calling the
-   * method.
+   * also support it on JimfsFileChannel, by just interrupting the thread before calling the method.
    */
   @Test
   public void testInterruptedThreads() throws IOException {
@@ -1030,9 +1027,9 @@ public class JimfsFileChannelTest {
   }
 
   /**
-   * Asserts that when the given operation is run on an interrupted thread,
-   * {@code ClosedByInterruptException} is thrown, the channel is closed and the thread is no
-   * longer interrupted.
+   * Asserts that when the given operation is run on an interrupted thread, {@code
+   * ClosedByInterruptException} is thrown, the channel is closed and the thread is no longer
+   * interrupted.
    */
   private static void assertClosedByInterrupt(FileChannelMethod method) throws IOException {
     FileChannel channel = channel(regularFile(10), READ, WRITE);

@@ -21,15 +21,13 @@ import static org.junit.Assert.fail;
 
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link JimfsPath}.
@@ -61,7 +59,7 @@ public class JimfsPathTest {
     assertPathEquals("/foo/bar", "///foo/bar");
     assertPathEquals("/foo/bar", "/foo///bar//");
     assertPathEquals("/foo/bar/baz", "/foo", "/bar", "baz/");
-    //assertPathEquals("/foo/bar/baz", "/foo\\/bar//\\\\/baz\\/");
+    // assertPathEquals("/foo/bar/baz", "/foo\\/bar//\\\\/baz\\/");
   }
 
   @Test
@@ -140,23 +138,18 @@ public class JimfsPathTest {
   @Test
   public void testRelativePath_fourNames() {
     new PathTester(pathService, "foo/bar/baz/test")
-        .names("foo", "bar", "baz", "test").test("foo/bar/baz/test");
+        .names("foo", "bar", "baz", "test")
+        .test("foo/bar/baz/test");
   }
 
   @Test
   public void testAbsolutePath_singleName() {
-    new PathTester(pathService, "/foo")
-        .root("/")
-        .names("foo")
-        .test("/foo");
+    new PathTester(pathService, "/foo").root("/").names("foo").test("/foo");
   }
 
   @Test
   public void testAbsolutePath_twoNames() {
-    new PathTester(pathService, "/foo/bar")
-        .root("/")
-        .names("foo", "bar")
-        .test("/foo/bar");
+    new PathTester(pathService, "/foo/bar").root("/").names("foo", "bar").test("/foo/bar");
   }
 
   @Test
@@ -333,10 +326,7 @@ public class JimfsPathTest {
     Path path2 = pathService.createFileName(a2);
     Path path3 = pathService.createFileName(a3);
 
-    new EqualsTester()
-        .addEqualityGroup(path1, path3)
-        .addEqualityGroup(path2)
-        .testEquals();
+    new EqualsTester().addEqualityGroup(path1, path3).addEqualityGroup(path2).testEquals();
   }
 
   @Test

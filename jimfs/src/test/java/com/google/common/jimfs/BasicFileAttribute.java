@@ -20,9 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.nio.file.attribute.FileAttribute;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public class BasicFileAttribute<T> implements FileAttribute<T> {
 
   private final String name;

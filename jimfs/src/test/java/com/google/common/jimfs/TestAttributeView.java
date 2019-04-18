@@ -19,9 +19,7 @@ package com.google.common.jimfs;
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public interface TestAttributeView extends BasicFileAttributeView {
 
   TestAttributes readAttributes() throws IOException;

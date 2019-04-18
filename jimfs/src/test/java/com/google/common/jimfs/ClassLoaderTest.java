@@ -23,11 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
@@ -36,11 +31,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.List;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
- * Tests behavior when user code loads Jimfs in a separate class loader from the system class
- * loader (which is what {@link FileSystemProvider#installedProviders()} uses to load
- * {@link FileSystemProvider}s as services from the classpath).
+ * Tests behavior when user code loads Jimfs in a separate class loader from the system class loader
+ * (which is what {@link FileSystemProvider#installedProviders()} uses to load {@link
+ * FileSystemProvider}s as services from the classpath).
  *
  * @author Colin Decker
  */
@@ -97,12 +95,12 @@ public class ClassLoaderTest {
   }
 
   /**
-   * This method is really just testing that {@code Jimfs.newFileSystem()} succeeds. Without
-   * special handling, when the system class loader loads our {@code FileSystemProvider}
-   * implementation as a service and this code (the user code) is loaded in a separate class
-   * loader, the system-loaded provider won't see the instance of {@code Configuration} we give it
-   * as being an instance of the {@code Configuration} it's expecting (they're completely separate
-   * classes) and creation of the file system will fail.
+   * This method is really just testing that {@code Jimfs.newFileSystem()} succeeds. Without special
+   * handling, when the system class loader loads our {@code FileSystemProvider} implementation as a
+   * service and this code (the user code) is loaded in a separate class loader, the system-loaded
+   * provider won't see the instance of {@code Configuration} we give it as being an instance of the
+   * {@code Configuration} it's expecting (they're completely separate classes) and creation of the
+   * file system will fail.
    */
   public static FileSystem createFileSystem() throws IOException {
     FileSystem fs = Jimfs.newFileSystem(Configuration.unix());

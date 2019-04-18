@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.ClosedFileSystemException;
@@ -29,9 +28,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Object that manages the open/closed state of a file system, ensuring that all open resources
- * are closed when the file system is closed and that file system methods throw an exception when
- * the file system has been closed.
+ * Object that manages the open/closed state of a file system, ensuring that all open resources are
+ * closed when the file system is closed and that file system methods throw an exception when the
+ * file system has been closed.
  *
  * @author Colin Decker
  */
@@ -49,9 +48,7 @@ final class FileSystemState implements Closeable {
     this.onClose = checkNotNull(onClose);
   }
 
-  /**
-   * Returns whether or not the file system is open.
-   */
+  /** Returns whether or not the file system is open. */
   public boolean isOpen() {
     return open.get();
   }
@@ -66,8 +63,8 @@ final class FileSystemState implements Closeable {
   }
 
   /**
-   * Registers the given resource to be closed when the file system is closed. Should be called
-   * when the resource is opened.
+   * Registers the given resource to be closed when the file system is closed. Should be called when
+   * the resource is opened.
    */
   public <C extends Closeable> C register(C resource) {
     // Initial open check to avoid incrementing registering if we already know it's closed.
@@ -88,9 +85,7 @@ final class FileSystemState implements Closeable {
     }
   }
 
-  /**
-   * Unregisters the given resource. Should be called when the resource is closed.
-   */
+  /** Unregisters the given resource. Should be called when the resource is closed. */
   public void unregister(Closeable resource) {
     resources.remove(resource);
   }

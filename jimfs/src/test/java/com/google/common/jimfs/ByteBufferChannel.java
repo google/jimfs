@@ -20,9 +20,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public class ByteBufferChannel implements SeekableByteChannel {
 
   private final ByteBuffer buffer;

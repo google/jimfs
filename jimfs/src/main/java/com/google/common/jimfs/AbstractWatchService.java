@@ -24,7 +24,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.WatchEvent;
@@ -42,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
 import javax.annotation.Nullable;
 
 /**
@@ -71,26 +69,20 @@ abstract class AbstractWatchService implements WatchService {
     return new Key(this, watchable, eventTypes);
   }
 
-  /**
-   * Returns whether or not this watch service is open.
-   */
+  /** Returns whether or not this watch service is open. */
   @VisibleForTesting
   public boolean isOpen() {
     return open.get();
   }
 
-  /**
-   * Enqueues the given key if the watch service is open; does nothing otherwise.
-   */
+  /** Enqueues the given key if the watch service is open; does nothing otherwise. */
   final void enqueue(Key key) {
     if (isOpen()) {
       queue.add(key);
     }
   }
 
-  /**
-   * Called when the given key is cancelled. Does nothing by default.
-   */
+  /** Called when the given key is cancelled. Does nothing by default. */
   public void cancelled(Key key) {}
 
   @VisibleForTesting
@@ -118,9 +110,7 @@ abstract class AbstractWatchService implements WatchService {
     return check(queue.take());
   }
 
-  /**
-   * Returns the given key, throwing an exception if it's the poison.
-   */
+  /** Returns the given key, throwing an exception if it's the poison. */
   @Nullable
   private WatchKey check(@Nullable WatchKey key) {
     if (key == poison) {
@@ -131,9 +121,7 @@ abstract class AbstractWatchService implements WatchService {
     return key;
   }
 
-  /**
-   * Checks that the watch service is open, throwing {@link ClosedWatchServiceException} if not.
-   */
+  /** Checks that the watch service is open, throwing {@link ClosedWatchServiceException} if not. */
   protected final void checkOpen() {
     if (!open.get()) {
       throw new ClosedWatchServiceException();
@@ -148,9 +136,7 @@ abstract class AbstractWatchService implements WatchService {
     }
   }
 
-  /**
-   * A basic implementation of {@link WatchEvent}.
-   */
+  /** A basic implementation of {@link WatchEvent}. */
   static final class Event<T> implements WatchEvent<T> {
 
     private final Kind<T> kind;
@@ -207,9 +193,7 @@ abstract class AbstractWatchService implements WatchService {
     }
   }
 
-  /**
-   * Implementation of {@link WatchKey} for an {@link AbstractWatchService}.
-   */
+  /** Implementation of {@link WatchKey} for an {@link AbstractWatchService}. */
   static final class Key implements WatchKey {
 
     @VisibleForTesting static final int MAX_QUEUE_SIZE = 256;
@@ -237,17 +221,13 @@ abstract class AbstractWatchService implements WatchService {
       this.subscribedTypes = ImmutableSet.copyOf(subscribedTypes);
     }
 
-    /**
-     * Gets the current state of this key, State.READY or SIGNALLED.
-     */
+    /** Gets the current state of this key, State.READY or SIGNALLED. */
     @VisibleForTesting
     State state() {
       return state.get();
     }
 
-    /**
-     * Gets whether or not this key is subscribed to the given type of event.
-     */
+    /** Gets whether or not this key is subscribed to the given type of event. */
     public boolean subscribesTo(WatchEvent.Kind<?> eventType) {
       return subscribedTypes.contains(eventType);
     }
