@@ -22,7 +22,6 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -37,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 /**
@@ -56,9 +54,7 @@ final class AttributeService {
 
   private final ImmutableList<FileAttribute<?>> defaultValues;
 
-  /**
-   * Creates a new attribute service using the given configuration.
-   */
+  /** Creates a new attribute service using the given configuration. */
   public AttributeService(Configuration configuration) {
     this(getProviders(configuration), configuration.defaultAttributeValues);
   }
@@ -145,23 +141,17 @@ final class AttributeService {
     }
   }
 
-  /**
-   * Implements {@link FileSystem#supportedFileAttributeViews()}.
-   */
+  /** Implements {@link FileSystem#supportedFileAttributeViews()}. */
   public ImmutableSet<String> supportedFileAttributeViews() {
     return providersByName.keySet();
   }
 
-  /**
-   * Implements {@link FileStore#supportsFileAttributeView(Class)}.
-   */
+  /** Implements {@link FileStore#supportsFileAttributeView(Class)}. */
   public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
     return providersByViewType.containsKey(type);
   }
 
-  /**
-   * Sets all initial attributes for the given file, including the given attributes if possible.
-   */
+  /** Sets all initial attributes for the given file, including the given attributes if possible. */
   public void setInitialAttributes(File file, FileAttribute<?>... attrs) {
     // default values should already be sanitized by their providers
     for (int i = 0; i < defaultValues.size(); i++) {
@@ -178,9 +168,7 @@ final class AttributeService {
     }
   }
 
-  /**
-   * Copies the attributes of the given file to the given copy file.
-   */
+  /** Copies the attributes of the given file to the given copy file. */
   public void copyAttributes(File file, File copy, AttributeCopyOption copyOption) {
     switch (copyOption) {
       case ALL:
@@ -195,8 +183,8 @@ final class AttributeService {
   }
 
   /**
-   * Gets the value of the given attribute for the given file. {@code attribute} must be of the
-   * form "view:attribute" or "attribute".
+   * Gets the value of the given attribute for the given file. {@code attribute} must be of the form
+   * "view:attribute" or "attribute".
    */
   public Object getAttribute(File file, String attribute) {
     String view = getViewName(attribute);
@@ -236,9 +224,7 @@ final class AttributeService {
     return value;
   }
 
-  /**
-   * Sets the value of the given attribute to the given value for the given file.
-   */
+  /** Sets the value of the given attribute to the given value for the given file. */
   public void setAttribute(File file, String attribute, Object value, boolean create) {
     String view = getViewName(attribute);
     String attr = getSingleAttribute(attribute);
@@ -269,8 +255,8 @@ final class AttributeService {
   }
 
   /**
-   * Returns an attribute view of the given type for the given file lookup callback, or
-   * {@code null} if the view type is not supported.
+   * Returns an attribute view of the given type for the given file lookup callback, or {@code null}
+   * if the view type is not supported.
    */
   @SuppressWarnings("unchecked")
   @Nullable
@@ -320,9 +306,7 @@ final class AttributeService {
     return provider.view(lookup, ImmutableMap.copyOf(inheritedViews));
   }
 
-  /**
-   * Implements {@link Files#readAttributes(Path, String, LinkOption...)}.
-   */
+  /** Implements {@link Files#readAttributes(Path, String, LinkOption...)}. */
   public ImmutableMap<String, Object> readAttributes(File file, String attributes) {
     String view = getViewName(attributes);
     List<String> attrs = getAttributeNames(attributes);
@@ -415,9 +399,7 @@ final class AttributeService {
     return attributeNames.get(0);
   }
 
-  /**
-   * Simple implementation of {@link FileAttribute}.
-   */
+  /** Simple implementation of {@link FileAttribute}. */
   private static final class SimpleFileAttribute<T> implements FileAttribute<T> {
 
     private final String name;

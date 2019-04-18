@@ -23,11 +23,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
 import com.google.common.io.Resources;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -36,6 +31,9 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests that {@link URL} instances can be created and used from jimfs URIs.
@@ -71,8 +69,7 @@ public class UrlTest {
     Files.createDirectory(path.resolve("c"));
 
     URL url = path.toUri().toURL();
-    assertThat(Resources.asCharSource(url, UTF_8).read())
-        .isEqualTo("a.txt\nb.txt\nc\n");
+    assertThat(Resources.asCharSource(url, UTF_8).read()).isEqualTo("a.txt\nb.txt\nc\n");
   }
 
   @Test

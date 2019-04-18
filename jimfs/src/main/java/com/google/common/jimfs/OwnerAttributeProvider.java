@@ -21,13 +21,11 @@ import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 /**
@@ -100,9 +98,7 @@ final class OwnerAttributeProvider extends AttributeProvider {
     return new View(lookup);
   }
 
-  /**
-   * Implementation of {@link FileOwnerAttributeView}.
-   */
+  /** Implementation of {@link FileOwnerAttributeView}. */
   private static final class View extends AbstractAttributeView implements FileOwnerAttributeView {
 
     public View(FileLookup lookup) {

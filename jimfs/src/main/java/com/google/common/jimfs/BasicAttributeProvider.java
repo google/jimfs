@@ -18,19 +18,17 @@ package com.google.common.jimfs;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
-
 import javax.annotation.Nullable;
 
 /**
- * Attribute provider that provides attributes common to all file systems,
- * the {@link BasicFileAttributeView} ("basic" or no view prefix), and allows the reading of
- * {@link BasicFileAttributes}.
+ * Attribute provider that provides attributes common to all file systems, the {@link
+ * BasicFileAttributeView} ("basic" or no view prefix), and allows the reading of {@link
+ * BasicFileAttributes}.
  *
  * @author Colin Decker
  */
@@ -131,9 +129,7 @@ final class BasicAttributeProvider extends AttributeProvider {
     return new Attributes(file);
   }
 
-  /**
-   * Implementation of {@link BasicFileAttributeView}.
-   */
+  /** Implementation of {@link BasicFileAttributeView}. */
   private static final class View extends AbstractAttributeView implements BasicFileAttributeView {
 
     protected View(FileLookup lookup) {
@@ -172,9 +168,7 @@ final class BasicAttributeProvider extends AttributeProvider {
     }
   }
 
-  /**
-   * Implementation of {@link BasicFileAttributes}.
-   */
+  /** Implementation of {@link BasicFileAttributes}. */
   static class Attributes implements BasicFileAttributes {
 
     private final FileTime lastModifiedTime;

@@ -23,7 +23,6 @@ import static com.google.common.jimfs.Util.nextPowerOf2;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedBytes;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -53,9 +52,7 @@ final class RegularFile extends File {
 
   private long size;
 
-  /**
-   * Creates a new regular file with the given ID and using the given disk.
-   */
+  /** Creates a new regular file with the given ID and using the given disk. */
   public static RegularFile create(int id, HeapDisk disk) {
     return new RegularFile(id, disk, new byte[32][], 0, 0);
   }
@@ -73,16 +70,12 @@ final class RegularFile extends File {
   private int openCount = 0;
   private boolean deleted = false;
 
-  /**
-   * Returns the read lock for this file.
-   */
+  /** Returns the read lock for this file. */
   public Lock readLock() {
     return lock.readLock();
   }
 
-  /**
-   * Returns the write lock for this file.
-   */
+  /** Returns the write lock for this file. */
   public Lock writeLock() {
     return lock.writeLock();
   }
@@ -95,16 +88,12 @@ final class RegularFile extends File {
     }
   }
 
-  /**
-   * Returns the number of blocks this file contains.
-   */
+  /** Returns the number of blocks this file contains. */
   int blockCount() {
     return blockCount;
   }
 
-  /**
-   * Copies the last {@code count} blocks from this file to the end of the given target file.
-   */
+  /** Copies the last {@code count} blocks from this file to the end of the given target file. */
   void copyBlocksTo(RegularFile target, int count) {
     int start = blockCount - count;
     int targetEnd = target.blockCount + count;
@@ -114,33 +103,25 @@ final class RegularFile extends File {
     target.blockCount = targetEnd;
   }
 
-  /**
-   * Transfers the last {@code count} blocks from this file to the end of the given target file.
-   */
+  /** Transfers the last {@code count} blocks from this file to the end of the given target file. */
   void transferBlocksTo(RegularFile target, int count) {
     copyBlocksTo(target, count);
     truncateBlocks(blockCount - count);
   }
 
-  /**
-   * Truncates the blocks of this file to the given block count.
-   */
+  /** Truncates the blocks of this file to the given block count. */
   void truncateBlocks(int count) {
     clear(blocks, count, blockCount - count);
     blockCount = count;
   }
 
-  /**
-   * Adds the given block to the end of this file.
-   */
+  /** Adds the given block to the end of this file. */
   void addBlock(byte[] block) {
     expandIfNecessary(blockCount + 1);
     blocks[blockCount++] = block;
   }
 
-  /**
-   * Gets the block at the given index in this file.
-   */
+  /** Gets the block at the given index in this file. */
   @VisibleForTesting
   byte[] getBlock(int index) {
     return blocks[index];
@@ -149,8 +130,8 @@ final class RegularFile extends File {
   // end of lower-level methods dealing with the blocks array
 
   /**
-   * Gets the current size of this file in bytes. Does not do locking, so should only be called
-   * when holding a lock.
+   * Gets the current size of this file in bytes. Does not do locking, so should only be called when
+   * holding a lock.
    */
   public long sizeWithoutLocking() {
     return size;
@@ -207,8 +188,8 @@ final class RegularFile extends File {
   }
 
   /**
-   * Marks this file as deleted. If there are no streams or channels open to the file, its
-   * contents are deleted if necessary.
+   * Marks this file as deleted. If there are no streams or channels open to the file, its contents
+   * are deleted if necessary.
    */
   @Override
   public synchronized void deleted() {
@@ -231,10 +212,10 @@ final class RegularFile extends File {
 
   /**
    * Truncates this file to the given {@code size}. If the given size is less than the current size
-   * of this file, the size of the file is reduced to the given size and any bytes beyond that
-   * size are lost. If the given size is greater than the current size of the file, this method
-   * does nothing. Returns {@code true} if this file was modified by the call (its size changed)
-   * and {@code false} otherwise.
+   * of this file, the size of the file is reduced to the given size and any bytes beyond that size
+   * are lost. If the given size is greater than the current size of the file, this method does
+   * nothing. Returns {@code true} if this file was modified by the call (its size changed) and
+   * {@code false} otherwise.
    */
   public boolean truncate(long size) {
     if (size >= this.size) {
@@ -253,9 +234,7 @@ final class RegularFile extends File {
     return true;
   }
 
-  /**
-   * Prepares for a write of len bytes starting at position pos.
-   */
+  /** Prepares for a write of len bytes starting at position pos. */
   private void prepareForWrite(long pos, long len) throws IOException {
     long end = pos + len;
 
@@ -289,9 +268,9 @@ final class RegularFile extends File {
   }
 
   /**
-   * Writes the given byte to this file at position {@code pos}. {@code pos} may be greater than
-   * the current size of this file, in which case this file is resized and all bytes between the
-   * current size and {@code pos} are set to 0. Returns the number of bytes written.
+   * Writes the given byte to this file at position {@code pos}. {@code pos} may be greater than the
+   * current size of this file, in which case this file is resized and all bytes between the current
+   * size and {@code pos} are set to 0. Returns the number of bytes written.
    *
    * @throws IOException if the file needs more blocks but the disk is full
    */
@@ -312,8 +291,8 @@ final class RegularFile extends File {
   /**
    * Writes {@code len} bytes starting at offset {@code off} in the given byte array to this file
    * starting at position {@code pos}. {@code pos} may be greater than the current size of this
-   * file, in which case this file is resized and all bytes between the current size and {@code
-   * pos} are set to 0. Returns the number of bytes written.
+   * file, in which case this file is resized and all bytes between the current size and {@code pos}
+   * are set to 0. Returns the number of bytes written.
    *
    * @throws IOException if the file needs more blocks but the disk is full
    */
@@ -352,9 +331,9 @@ final class RegularFile extends File {
 
   /**
    * Writes all available bytes from buffer {@code buf} to this file starting at position {@code
-   * pos}. {@code pos} may be greater than the current size of this file, in which case this file
-   * is resized and all bytes between the current size and {@code pos} are set to 0. Returns the
-   * number of bytes written.
+   * pos}. {@code pos} may be greater than the current size of this file, in which case this file is
+   * resized and all bytes between the current size and {@code pos} are set to 0. Returns the number
+   * of bytes written.
    *
    * @throws IOException if the file needs more blocks but the disk is full
    */
@@ -388,10 +367,10 @@ final class RegularFile extends File {
   }
 
   /**
-   * Writes all available bytes from each buffer in {@code bufs}, in order, to this file starting
-   * at position {@code pos}. {@code pos} may be greater than the current size of this file, in
-   * which case this file is resized and all bytes between the current size and {@code pos} are set
-   * to 0. Returns the number of bytes written.
+   * Writes all available bytes from each buffer in {@code bufs}, in order, to this file starting at
+   * position {@code pos}. {@code pos} may be greater than the current size of this file, in which
+   * case this file is resized and all bytes between the current size and {@code pos} are set to 0.
+   * Returns the number of bytes written.
    *
    * @throws IOException if the file needs more blocks but the disk is full
    */
@@ -572,10 +551,10 @@ final class RegularFile extends File {
 
   /**
    * Transfers up to {@code count} bytes to the given channel starting at position {@code pos} in
-   * this file. Returns the number of bytes transferred, possibly 0. Note that unlike all other
-   * read methods in this class, this method does not return -1 if {@code pos} is greater than or
-   * equal to the current size. This for consistency with {@link FileChannel#transferTo}, which
-   * this method is primarily intended as an implementation of.
+   * this file. Returns the number of bytes transferred, possibly 0. Note that unlike all other read
+   * methods in this class, this method does not return -1 if {@code pos} is greater than or equal
+   * to the current size. This for consistency with {@link FileChannel#transferTo}, which this
+   * method is primarily intended as an implementation of.
    */
   public long transferTo(long pos, long count, WritableByteChannel dest) throws IOException {
     long bytesToRead = bytesToRead(pos, count);
@@ -608,9 +587,7 @@ final class RegularFile extends File {
     return Math.max(bytesToRead, 0); // don't return -1 for this method
   }
 
-  /**
-   * Gets the block at the given index, expanding to create the block if necessary.
-   */
+  /** Gets the block at the given index, expanding to create the block if necessary. */
   private byte[] blockForWrite(int index) throws IOException {
     if (index >= blockCount) {
       int additionalBlocksNeeded = index - blockCount + 1;
@@ -648,25 +625,19 @@ final class RegularFile extends File {
     return Math.min(available, max);
   }
 
-  /**
-   * Zeroes len bytes in the given block starting at the given offset. Returns len.
-   */
+  /** Zeroes len bytes in the given block starting at the given offset. Returns len. */
   private static int zero(byte[] block, int offset, int len) {
     Util.zero(block, offset, len);
     return len;
   }
 
-  /**
-   * Puts the given slice of the given array at the given offset in the given block.
-   */
+  /** Puts the given slice of the given array at the given offset in the given block. */
   private static int put(byte[] block, int offset, byte[] b, int off, int len) {
     System.arraycopy(b, off, block, offset, len);
     return len;
   }
 
-  /**
-   * Puts the contents of the given byte buffer at the given offset in the given block.
-   */
+  /** Puts the contents of the given byte buffer at the given offset in the given block. */
   private static int put(byte[] block, int offset, ByteBuffer buf) {
     int len = Math.min(block.length - offset, buf.remaining());
     buf.get(block, offset, len);
@@ -682,9 +653,7 @@ final class RegularFile extends File {
     return len;
   }
 
-  /**
-   * Reads len bytes starting at the given offset in the given block into the given byte buffer.
-   */
+  /** Reads len bytes starting at the given offset in the given block into the given byte buffer. */
   private static int get(byte[] block, int offset, ByteBuffer buf, int len) {
     buf.put(block, offset, len);
     return len;

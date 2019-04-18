@@ -22,12 +22,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.util.Arrays;
-
 import javax.annotation.Nullable;
 
 /**
@@ -51,19 +49,19 @@ public abstract class PathType {
    * Returns a Windows-style path type. The canonical separator character is "\". "/" is also
    * treated as a separator when parsing paths.
    *
-   * <p>As much as possible, this implementation follows the information provided in
-   * <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx">
-   * this article</a>. Paths with drive-letter roots (e.g. "C:\") and paths with UNC roots (e.g.
+   * <p>As much as possible, this implementation follows the information provided in <a
+   * href="http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx">this
+   * article</a>. Paths with drive-letter roots (e.g. "C:\") and paths with UNC roots (e.g.
    * "\\host\share\") are supported.
    *
    * <p>Two Windows path features are not currently supported as they are too Windows-specific:
    *
    * <ul>
    *   <li>Relative paths containing a drive-letter root, for example "C:" or "C:foo\bar". Such
-   *   paths have a root component and optionally have names, but are <i>relative</i> paths,
-   *   relative to the working directory of the drive identified by the root.</li>
-   *   <li>Absolute paths with no root, for example "\foo\bar". Such paths are absolute paths on
-   *   the current drive.</li>
+   *       paths have a root component and optionally have names, but are <i>relative</i> paths,
+   *       relative to the working directory of the drive identified by the root.
+   *   <li>Absolute paths with no root, for example "\foo\bar". Such paths are absolute paths on the
+   *       current drive.
    * </ul>
    */
   public static PathType windows() {
@@ -117,9 +115,7 @@ public abstract class PathType {
     patternBuilder.append(separator);
   }
 
-  /**
-   * Returns whether or not this type of path allows multiple root directories.
-   */
+  /** Returns whether or not this type of path allows multiple root directories. */
   public final boolean allowsMultipleRoots() {
     return allowsMultipleRoots;
   }
@@ -140,23 +136,17 @@ public abstract class PathType {
     return otherSeparators;
   }
 
-  /**
-   * Returns the path joiner for this path type.
-   */
+  /** Returns the path joiner for this path type. */
   public final Joiner joiner() {
     return joiner;
   }
 
-  /**
-   * Returns the path splitter for this path type.
-   */
+  /** Returns the path splitter for this path type. */
   public final Splitter splitter() {
     return splitter;
   }
 
-  /**
-   * Returns an empty path.
-   */
+  /** Returns an empty path. */
   protected final ParseResult emptyPath() {
     return new ParseResult(null, ImmutableList.of(""));
   }
@@ -173,9 +163,7 @@ public abstract class PathType {
     return getClass().getSimpleName();
   }
 
-  /**
-   * Returns the string form of the given path.
-   */
+  /** Returns the string form of the given path. */
   public abstract String toString(@Nullable String root, Iterable<String> names);
 
   /**
@@ -215,16 +203,12 @@ public abstract class PathType {
     }
   }
 
-  /**
-   * Parses a path from the given URI.
-   */
+  /** Parses a path from the given URI. */
   public final ParseResult fromUri(URI uri) {
     return parseUriPath(uri.getPath());
   }
 
-  /**
-   * Simple result of parsing a path.
-   */
+  /** Simple result of parsing a path. */
   public static final class ParseResult {
 
     @Nullable private final String root;
@@ -235,31 +219,23 @@ public abstract class PathType {
       this.names = checkNotNull(names);
     }
 
-    /**
-     * Returns whether or not this result is an absolute path.
-     */
+    /** Returns whether or not this result is an absolute path. */
     public boolean isAbsolute() {
       return root != null;
     }
 
-    /**
-     * Returns whether or not this result represents a root path.
-     */
+    /** Returns whether or not this result represents a root path. */
     public boolean isRoot() {
       return root != null && Iterables.isEmpty(names);
     }
 
-    /**
-     * Returns the parsed root element, or null if there was no root.
-     */
+    /** Returns the parsed root element, or null if there was no root. */
     @Nullable
     public String root() {
       return root;
     }
 
-    /**
-     * Returns the parsed name elements.
-     */
+    /** Returns the parsed name elements. */
     public Iterable<String> names() {
       return names;
     }

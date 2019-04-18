@@ -30,11 +30,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
@@ -42,7 +37,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.util.concurrent.TimeUnit;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link Configuration}, {@link Configuration.Builder} and file systems created from
@@ -244,8 +241,7 @@ public class ConfigurationTest {
   @Test
   public void testToBuilder() {
     Configuration config =
-        Configuration.unix()
-            .toBuilder()
+        Configuration.unix().toBuilder()
             .setWorkingDirectory("/hello/world")
             .setAttributeViews("basic", "posix")
             .build();
@@ -331,8 +327,7 @@ public class ConfigurationTest {
   public void testCreateFileSystemFromConfigurationWithWorkingDirectoryNotUnderConfiguredRoot() {
     try {
       Jimfs.newFileSystem(
-          Configuration.windows()
-              .toBuilder()
+          Configuration.windows().toBuilder()
               .setRoots("C:\\", "D:\\")
               .setWorkingDirectory("E:\\foo")
               .build());
@@ -355,9 +350,11 @@ public class ConfigurationTest {
 
   @Test
   public void testFileSystemWithCustomWatchServicePollingInterval() throws IOException {
-    FileSystem fs = Jimfs.newFileSystem(Configuration.unix().toBuilder()
-        .setWatchServiceConfiguration(polling(10, MILLISECONDS))
-        .build());
+    FileSystem fs =
+        Jimfs.newFileSystem(
+            Configuration.unix().toBuilder()
+                .setWatchServiceConfiguration(polling(10, MILLISECONDS))
+                .build());
 
     WatchService watchService = fs.newWatchService();
     assertThat(watchService).isInstanceOf(PollingWatchService.class);

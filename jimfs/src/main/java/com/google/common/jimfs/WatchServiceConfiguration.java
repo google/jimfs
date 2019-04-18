@@ -31,9 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class WatchServiceConfiguration {
 
-  /**
-   * The default configuration that's used if the user doesn't provide anything more specific.
-   */
+  /** The default configuration that's used if the user doesn't provide anything more specific. */
   static final WatchServiceConfiguration DEFAULT = polling(5, SECONDS);
 
   /**
@@ -48,16 +46,12 @@ public abstract class WatchServiceConfiguration {
 
   WatchServiceConfiguration() {}
 
-  /**
-   * Creates a new {@link AbstractWatchService} implementation.
-   */
+  /** Creates a new {@link AbstractWatchService} implementation. */
   // return type and parameters of this method subject to change if needed for any future
   // implementations
   abstract AbstractWatchService newWatchService(FileSystemView view, PathService pathService);
 
-  /**
-   * Implementation for {@link #polling}.
-   */
+  /** Implementation for {@link #polling}. */
   private static final class PollingConfig extends WatchServiceConfiguration {
 
     private final long interval;

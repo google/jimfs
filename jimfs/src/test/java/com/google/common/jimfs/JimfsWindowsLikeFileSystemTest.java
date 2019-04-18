@@ -23,11 +23,6 @@ import static org.junit.Assert.fail;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -37,6 +32,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.regex.PatternSyntaxException;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests a Windows-like file system through the public methods in {@link Files}.
@@ -50,8 +48,7 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
   protected FileSystem createFileSystem() {
     return Jimfs.newFileSystem(
         "win",
-        Configuration.windows()
-            .toBuilder()
+        Configuration.windows().toBuilder()
             .setRoots("C:\\", "E:\\")
             .setAttributeViews("basic", "owner", "dos", "acl", "user")
             .build());
@@ -72,16 +69,15 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testPaths() {
-    assertThatPath("C:\\").isAbsolute()
-        .and().hasRootComponent("C:\\")
-        .and().hasNoNameComponents();
-    assertThatPath("foo").isRelative()
-        .and().hasNameComponents("foo");
-    assertThatPath("foo\\bar").isRelative()
-        .and().hasNameComponents("foo", "bar");
-    assertThatPath("C:\\foo\\bar\\baz").isAbsolute()
-        .and().hasRootComponent("C:\\")
-        .and().hasNameComponents("foo", "bar", "baz");
+    assertThatPath("C:\\").isAbsolute().and().hasRootComponent("C:\\").and().hasNoNameComponents();
+    assertThatPath("foo").isRelative().and().hasNameComponents("foo");
+    assertThatPath("foo\\bar").isRelative().and().hasNameComponents("foo", "bar");
+    assertThatPath("C:\\foo\\bar\\baz")
+        .isAbsolute()
+        .and()
+        .hasRootComponent("C:\\")
+        .and()
+        .hasNameComponents("foo", "bar", "baz");
   }
 
   @Test
@@ -105,57 +101,90 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testPaths_withSlash() {
-    assertThatPath("foo/bar").isRelative()
-        .and().hasNameComponents("foo", "bar")
-        .and().isEqualTo(path("foo\\bar"));
-    assertThatPath("C:/foo/bar/baz").isAbsolute()
-        .and().hasRootComponent("C:\\")
-        .and().hasNameComponents("foo", "bar", "baz")
-        .and().isEqualTo(path("C:\\foo\\bar\\baz"));
-    assertThatPath("C:/foo\\bar/baz").isAbsolute()
-        .and().hasRootComponent("C:\\")
-        .and().hasNameComponents("foo", "bar", "baz")
-        .and().isEqualTo(path("C:\\foo\\bar\\baz"));
+    assertThatPath("foo/bar")
+        .isRelative()
+        .and()
+        .hasNameComponents("foo", "bar")
+        .and()
+        .isEqualTo(path("foo\\bar"));
+    assertThatPath("C:/foo/bar/baz")
+        .isAbsolute()
+        .and()
+        .hasRootComponent("C:\\")
+        .and()
+        .hasNameComponents("foo", "bar", "baz")
+        .and()
+        .isEqualTo(path("C:\\foo\\bar\\baz"));
+    assertThatPath("C:/foo\\bar/baz")
+        .isAbsolute()
+        .and()
+        .hasRootComponent("C:\\")
+        .and()
+        .hasNameComponents("foo", "bar", "baz")
+        .and()
+        .isEqualTo(path("C:\\foo\\bar\\baz"));
   }
 
   @Test
   public void testPaths_resolve() {
-    assertThatPath(path("C:\\").resolve("foo\\bar")).isAbsolute()
-        .and().hasRootComponent("C:\\")
-        .and().hasNameComponents("foo", "bar");
-    assertThatPath(path("foo\\bar").resolveSibling("baz")).isRelative()
-        .and().hasNameComponents("foo", "baz");
-    assertThatPath(path("foo\\bar").resolve("C:\\one\\two")).isAbsolute()
-        .and().hasRootComponent("C:\\")
-        .and().hasNameComponents("one", "two");
+    assertThatPath(path("C:\\").resolve("foo\\bar"))
+        .isAbsolute()
+        .and()
+        .hasRootComponent("C:\\")
+        .and()
+        .hasNameComponents("foo", "bar");
+    assertThatPath(path("foo\\bar").resolveSibling("baz"))
+        .isRelative()
+        .and()
+        .hasNameComponents("foo", "baz");
+    assertThatPath(path("foo\\bar").resolve("C:\\one\\two"))
+        .isAbsolute()
+        .and()
+        .hasRootComponent("C:\\")
+        .and()
+        .hasNameComponents("one", "two");
   }
 
   @Test
   public void testPaths_normalize() {
-    assertThatPath(path("foo\\bar\\..").normalize()).isRelative()
-        .and().hasNameComponents("foo");
-    assertThatPath(path("foo\\.\\bar\\..\\baz\\test\\.\\..\\stuff").normalize()).isRelative()
-        .and().hasNameComponents("foo", "baz", "stuff");
-    assertThatPath(path("..\\..\\foo\\.\\bar").normalize()).isRelative()
-        .and().hasNameComponents("..", "..", "foo", "bar");
-    assertThatPath(path("foo\\..\\..\\bar").normalize()).isRelative()
-        .and().hasNameComponents("..", "bar");
-    assertThatPath(path("..\\.\\..").normalize()).isRelative()
-        .and().hasNameComponents("..", "..");
+    assertThatPath(path("foo\\bar\\..").normalize()).isRelative().and().hasNameComponents("foo");
+    assertThatPath(path("foo\\.\\bar\\..\\baz\\test\\.\\..\\stuff").normalize())
+        .isRelative()
+        .and()
+        .hasNameComponents("foo", "baz", "stuff");
+    assertThatPath(path("..\\..\\foo\\.\\bar").normalize())
+        .isRelative()
+        .and()
+        .hasNameComponents("..", "..", "foo", "bar");
+    assertThatPath(path("foo\\..\\..\\bar").normalize())
+        .isRelative()
+        .and()
+        .hasNameComponents("..", "bar");
+    assertThatPath(path("..\\.\\..").normalize()).isRelative().and().hasNameComponents("..", "..");
   }
 
   @Test
   public void testPaths_relativize() {
-    assertThatPath(path("C:\\foo\\bar").relativize(path("C:\\foo\\bar\\baz"))).isRelative()
-        .and().hasNameComponents("baz");
-    assertThatPath(path("C:\\foo\\bar\\baz").relativize(path("C:\\foo\\bar"))).isRelative()
-        .and().hasNameComponents("..");
-    assertThatPath(path("C:\\foo\\bar\\baz").relativize(path("C:\\foo\\baz\\bar"))).isRelative()
-        .and().hasNameComponents("..", "..", "baz", "bar");
-    assertThatPath(path("foo\\bar").relativize(path("foo"))).isRelative()
-        .and().hasNameComponents("..");
-    assertThatPath(path("foo").relativize(path("foo\\bar"))).isRelative()
-        .and().hasNameComponents("bar");
+    assertThatPath(path("C:\\foo\\bar").relativize(path("C:\\foo\\bar\\baz")))
+        .isRelative()
+        .and()
+        .hasNameComponents("baz");
+    assertThatPath(path("C:\\foo\\bar\\baz").relativize(path("C:\\foo\\bar")))
+        .isRelative()
+        .and()
+        .hasNameComponents("..");
+    assertThatPath(path("C:\\foo\\bar\\baz").relativize(path("C:\\foo\\baz\\bar")))
+        .isRelative()
+        .and()
+        .hasNameComponents("..", "..", "baz", "bar");
+    assertThatPath(path("foo\\bar").relativize(path("foo")))
+        .isRelative()
+        .and()
+        .hasNameComponents("..");
+    assertThatPath(path("foo").relativize(path("foo\\bar")))
+        .isRelative()
+        .and()
+        .hasNameComponents("bar");
 
     try {
       Path unused = path("C:\\foo\\bar").relativize(path("bar"));
@@ -184,15 +213,23 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
 
   @Test
   public void testPaths_toAbsolutePath() {
-    assertThatPath(path("C:\\foo\\bar").toAbsolutePath()).isAbsolute()
-        .and().hasRootComponent("C:\\")
-        .and().hasNameComponents("foo", "bar")
-        .and().isEqualTo(path("C:\\foo\\bar"));
+    assertThatPath(path("C:\\foo\\bar").toAbsolutePath())
+        .isAbsolute()
+        .and()
+        .hasRootComponent("C:\\")
+        .and()
+        .hasNameComponents("foo", "bar")
+        .and()
+        .isEqualTo(path("C:\\foo\\bar"));
 
-    assertThatPath(path("foo\\bar").toAbsolutePath()).isAbsolute()
-        .and().hasRootComponent("C:\\")
-        .and().hasNameComponents("work", "foo", "bar")
-        .and().isEqualTo(path("C:\\work\\foo\\bar"));
+    assertThatPath(path("foo\\bar").toAbsolutePath())
+        .isAbsolute()
+        .and()
+        .hasRootComponent("C:\\")
+        .and()
+        .hasNameComponents("work", "foo", "bar")
+        .and()
+        .isEqualTo(path("C:\\work\\foo\\bar"));
   }
 
   @Test

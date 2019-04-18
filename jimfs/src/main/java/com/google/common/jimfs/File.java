@@ -54,9 +54,7 @@ public abstract class File {
     this.lastModifiedTime = now;
   }
 
-  /**
-   * Returns the ID of this file.
-   */
+  /** Returns the ID of this file. */
   public int id() {
     return id;
   }
@@ -69,23 +67,17 @@ public abstract class File {
     return 0;
   }
 
-  /**
-   * Returns whether or not this file is a directory.
-   */
+  /** Returns whether or not this file is a directory. */
   public final boolean isDirectory() {
     return this instanceof Directory;
   }
 
-  /**
-   * Returns whether or not this file is a regular file.
-   */
+  /** Returns whether or not this file is a regular file. */
   public final boolean isRegularFile() {
     return this instanceof RegularFile;
   }
 
-  /**
-   * Returns whether or not this file is a symbolic link.
-   */
+  /** Returns whether or not this file is a symbolic link. */
   public final boolean isSymbolicLink() {
     return this instanceof SymbolicLink;
   }
@@ -98,8 +90,8 @@ public abstract class File {
   abstract File copyWithoutContent(int id);
 
   /**
-   * Copies the content of this file to the given file. The given file must be the same type of
-   * file as this file and should have no content.
+   * Copies the content of this file to the given file. The given file must be the same type of file
+   * as this file and should have no content.
    *
    * <p>This method is used for copying the content of a file after copying the file itself. Does
    * nothing by default.
@@ -115,9 +107,7 @@ public abstract class File {
     return null;
   }
 
-  /**
-   * Called when a stream or channel to this file is opened.
-   */
+  /** Called when a stream or channel to this file is opened. */
   void opened() {}
 
   /**
@@ -127,23 +117,19 @@ public abstract class File {
   void closed() {}
 
   /**
-   * Called when (a single link to) this file is deleted. There may be links remaining. Does
-   * nothing by default.
+   * Called when (a single link to) this file is deleted. There may be links remaining. Does nothing
+   * by default.
    */
   void deleted() {}
 
-  /**
-   * Returns whether or not this file is a root directory of the file system.
-   */
+  /** Returns whether or not this file is a root directory of the file system. */
   final boolean isRootDirectory() {
     // only root directories have their parent link pointing to themselves
     return isDirectory() && equals(((Directory) this).parent());
   }
 
-  /**
-   * Returns the current count of links to this file.
-   */
-  public synchronized final int links() {
+  /** Returns the current count of links to this file. */
+  public final synchronized int links() {
     return links;
   }
 
@@ -155,74 +141,58 @@ public abstract class File {
     checkNotNull(entry);
   }
 
-  /**
-   * Called when this file has been unlinked from a directory, either for a move or delete.
-   */
+  /** Called when this file has been unlinked from a directory, either for a move or delete. */
   void unlinked() {}
 
-  /**
-   * Increments the link count for this file.
-   */
-  synchronized final void incrementLinkCount() {
+  /** Increments the link count for this file. */
+  final synchronized void incrementLinkCount() {
     links++;
   }
 
-  /**
-   * Decrements the link count for this file.
-   */
-  synchronized final void decrementLinkCount() {
+  /** Decrements the link count for this file. */
+  final synchronized void decrementLinkCount() {
     links--;
   }
 
   /** Gets the creation time of the file. */
   @SuppressWarnings("GoodTime") // should return a java.time.Instant
-  public synchronized final long getCreationTime() {
+  public final synchronized long getCreationTime() {
     return creationTime;
   }
 
   /** Gets the last access time of the file. */
   @SuppressWarnings("GoodTime") // should return a java.time.Instant
-  public synchronized final long getLastAccessTime() {
+  public final synchronized long getLastAccessTime() {
     return lastAccessTime;
   }
 
   /** Gets the last modified time of the file. */
   @SuppressWarnings("GoodTime") // should return a java.time.Instant
-  public synchronized final long getLastModifiedTime() {
+  public final synchronized long getLastModifiedTime() {
     return lastModifiedTime;
   }
 
-  /**
-   * Sets the creation time of the file.
-   */
-  synchronized final void setCreationTime(long creationTime) {
+  /** Sets the creation time of the file. */
+  final synchronized void setCreationTime(long creationTime) {
     this.creationTime = creationTime;
   }
 
-  /**
-   * Sets the last access time of the file.
-   */
-  synchronized final void setLastAccessTime(long lastAccessTime) {
+  /** Sets the last access time of the file. */
+  final synchronized void setLastAccessTime(long lastAccessTime) {
     this.lastAccessTime = lastAccessTime;
   }
 
-  /**
-   * Sets the last modified time of the file.
-   */
-  synchronized final void setLastModifiedTime(long lastModifiedTime) {
+  /** Sets the last modified time of the file. */
+  final synchronized void setLastModifiedTime(long lastModifiedTime) {
     this.lastModifiedTime = lastModifiedTime;
   }
 
-  /**
-   * Sets the last access time of the file to the current time.
-   */
+  /** Sets the last access time of the file to the current time. */
   final void updateAccessTime() {
     setLastAccessTime(System.currentTimeMillis());
   }
 
-  /**
-   * Sets the last modified time of the file to the current time.
-   */
+  /** Sets the last modified time of the file to the current time. */
   final void updateModifiedTime() {
     setLastModifiedTime(System.currentTimeMillis());
   }
@@ -231,18 +201,16 @@ public abstract class File {
    * Returns the names of the attributes contained in the given attribute view in the file's
    * attributes table.
    */
-  public synchronized final ImmutableSet<String> getAttributeNames(String view) {
+  public final synchronized ImmutableSet<String> getAttributeNames(String view) {
     if (attributes == null) {
       return ImmutableSet.of();
     }
     return ImmutableSet.copyOf(attributes.row(view).keySet());
   }
 
-  /**
-   * Returns the attribute keys contained in the attributes map for the file.
-   */
+  /** Returns the attribute keys contained in the attributes map for the file. */
   @VisibleForTesting
-  synchronized final ImmutableSet<String> getAttributeKeys() {
+  final synchronized ImmutableSet<String> getAttributeKeys() {
     if (attributes == null) {
       return ImmutableSet.of();
     }
@@ -254,40 +222,32 @@ public abstract class File {
     return builder.build();
   }
 
-  /**
-   * Gets the value of the given attribute in the given view.
-   */
+  /** Gets the value of the given attribute in the given view. */
   @Nullable
-  public synchronized final Object getAttribute(String view, String attribute) {
+  public final synchronized Object getAttribute(String view, String attribute) {
     if (attributes == null) {
       return null;
     }
     return attributes.get(view, attribute);
   }
 
-  /**
-   * Sets the given attribute in the given view to the given value.
-   */
-  public synchronized final void setAttribute(String view, String attribute, Object value) {
+  /** Sets the given attribute in the given view to the given value. */
+  public final synchronized void setAttribute(String view, String attribute, Object value) {
     if (attributes == null) {
       attributes = HashBasedTable.create();
     }
     attributes.put(view, attribute, value);
   }
 
-  /**
-   * Deletes the given attribute from the given view.
-   */
-  public synchronized final void deleteAttribute(String view, String attribute) {
+  /** Deletes the given attribute from the given view. */
+  public final synchronized void deleteAttribute(String view, String attribute) {
     if (attributes != null) {
       attributes.remove(view, attribute);
     }
   }
 
-  /**
-   * Copies basic attributes (file times) from this file to the given file.
-   */
-  synchronized final void copyBasicAttributes(File target) {
+  /** Copies basic attributes (file times) from this file to the given file. */
+  final synchronized void copyBasicAttributes(File target) {
     target.setFileTimes(creationTime, lastModifiedTime, lastAccessTime);
   }
 
@@ -298,10 +258,8 @@ public abstract class File {
     this.lastAccessTime = lastAccessTime;
   }
 
-  /**
-   * Copies the attributes from this file to the given file.
-   */
-  synchronized final void copyAttributes(File target) {
+  /** Copies the attributes from this file to the given file. */
+  final synchronized void copyAttributes(File target) {
     copyBasicAttributes(target);
     target.putAll(attributes);
   }
@@ -317,8 +275,6 @@ public abstract class File {
 
   @Override
   public final String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("id", id())
-        .toString();
+    return MoreObjects.toStringHelper(this).add("id", id()).toString();
   }
 }

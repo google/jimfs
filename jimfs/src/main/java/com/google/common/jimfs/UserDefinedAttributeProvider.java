@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.attribute.FileAttributeView;
@@ -110,9 +109,7 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
     return new View(lookup);
   }
 
-  /**
-   * Implementation of {@link UserDefinedFileAttributeView}.
-   */
+  /** Implementation of {@link UserDefinedFileAttributeView}. */
   private static class View extends AbstractAttributeView implements UserDefinedFileAttributeView {
 
     public View(FileLookup lookup) {

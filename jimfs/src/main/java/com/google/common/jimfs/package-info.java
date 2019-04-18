@@ -16,8 +16,8 @@
 
 /**
  * Package containing the Jimfs file system API and implementation. Most users should only need to
- * use the {@link com.google.common.jimfs.Jimfs Jimfs} and
- * {@link com.google.common.jimfs.Configuration Configuration} classes.
+ * use the {@link com.google.common.jimfs.Jimfs Jimfs} and {@link
+ * com.google.common.jimfs.Configuration Configuration} classes.
  */
 @ParametersAreNonnullByDefault
 package com.google.common.jimfs;

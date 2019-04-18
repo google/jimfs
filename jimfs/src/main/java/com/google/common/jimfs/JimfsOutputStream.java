@@ -20,10 +20,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
 
 import com.google.common.annotations.VisibleForTesting;
-
 import java.io.IOException;
 import java.io.OutputStream;
-
 import javax.annotation.concurrent.GuardedBy;
 
 /**

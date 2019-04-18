@@ -18,9 +18,7 @@ package com.google.common.jimfs;
 
 import java.nio.file.attribute.BasicFileAttributes;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public interface TestAttributes extends BasicFileAttributes {
 
   String foo();

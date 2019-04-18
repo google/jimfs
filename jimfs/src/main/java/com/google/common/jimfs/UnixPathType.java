@@ -19,7 +19,6 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.nio.file.InvalidPathException;
-
 import javax.annotation.Nullable;
 
 /**
@@ -29,9 +28,7 @@ import javax.annotation.Nullable;
  */
 final class UnixPathType extends PathType {
 
-  /**
-   * Unix path type.
-   */
+  /** Unix path type. */
   static final PathType INSTANCE = new UnixPathType();
 
   private UnixPathType() {

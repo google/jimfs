@@ -20,16 +20,15 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.math.LongMath;
-
 import java.io.IOException;
 import java.math.RoundingMode;
 
 /**
  * A resizable pseudo-disk acting as a shared space for storing file data. A disk allocates fixed
  * size blocks of bytes to files as needed and may cache blocks that have been freed for reuse. A
- * memory disk has a fixed maximum number of blocks it will allocate at a time (which sets the
- * total "size" of the disk) and a maximum number of unused blocks it will cache for reuse at a
- * time (which sets the minimum amount of space the disk will use once
+ * memory disk has a fixed maximum number of blocks it will allocate at a time (which sets the total
+ * "size" of the disk) and a maximum number of unused blocks it will cache for reuse at a time
+ * (which sets the minimum amount of space the disk will use once
  *
  * @author Colin Decker
  */
@@ -53,9 +52,7 @@ final class HeapDisk {
   /** The current total number of blocks that are currently allocated to files. */
   private int allocatedBlockCount;
 
-  /**
-   * Creates a new disk using settings from the given configuration.
-   */
+  /** Creates a new disk using settings from the given configuration. */
   public HeapDisk(Configuration config) {
     this.blockSize = config.blockSize;
     this.maxBlockCount = toBlockCount(config.maxSize, blockSize);
@@ -64,14 +61,14 @@ final class HeapDisk {
     this.blockCache = createBlockCache(maxCachedBlockCount);
   }
 
-  /**  Returns the nearest multiple of {@code blockSize} that is <= {@code size}. */
+  /** Returns the nearest multiple of {@code blockSize} that is <= {@code size}. */
   private static int toBlockCount(long size, int blockSize) {
     return (int) LongMath.divide(size, blockSize, RoundingMode.FLOOR);
   }
 
   /**
-   * Creates a new disk with the given {@code blockSize}, {@code maxBlockCount} and
-   * {@code maxCachedBlockCount}.
+   * Creates a new disk with the given {@code blockSize}, {@code maxBlockCount} and {@code
+   * maxCachedBlockCount}.
    */
   public HeapDisk(int blockSize, int maxBlockCount, int maxCachedBlockCount) {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
@@ -88,9 +85,7 @@ final class HeapDisk {
     return new RegularFile(-1, this, new byte[Math.min(maxCachedBlockCount, 8192)][], 0, 0);
   }
 
-  /**
-   * Returns the size of blocks created by this disk.
-   */
+  /** Returns the size of blocks created by this disk. */
   public int blockSize() {
     return blockSize;
   }
@@ -112,9 +107,7 @@ final class HeapDisk {
     return (maxBlockCount - allocatedBlockCount) * (long) blockSize;
   }
 
-  /**
-   * Allocates the given number of blocks and adds them to the given file.
-   */
+  /** Allocates the given number of blocks and adds them to the given file. */
   public synchronized void allocate(RegularFile file, int count) throws IOException {
     int newAllocatedBlockCount = allocatedBlockCount + count;
     if (newAllocatedBlockCount > maxBlockCount) {
@@ -134,16 +127,12 @@ final class HeapDisk {
     allocatedBlockCount = newAllocatedBlockCount;
   }
 
-  /**
-   * Frees all blocks in the given file.
-   */
+  /** Frees all blocks in the given file. */
   public void free(RegularFile file) {
     free(file, file.blockCount());
   }
 
-  /**
-   * Frees the last {@code count} blocks from the given file.
-   */
+  /** Frees the last {@code count} blocks from the given file. */
   public synchronized void free(RegularFile file, int count) {
     int remainingCacheSpace = maxCachedBlockCount - blockCache.blockCount();
     if (remainingCacheSpace > 0) {

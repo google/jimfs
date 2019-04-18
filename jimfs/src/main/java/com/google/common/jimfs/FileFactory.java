@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
-
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -35,9 +34,7 @@ final class FileFactory {
 
   private final HeapDisk disk;
 
-  /**
-   * Creates a new file factory using the given disk for regular files.
-   */
+  /** Creates a new file factory using the given disk for regular files. */
   public FileFactory(HeapDisk disk) {
     this.disk = checkNotNull(disk);
   }
@@ -46,39 +43,29 @@ final class FileFactory {
     return idGenerator.getAndIncrement();
   }
 
-  /**
-   * Creates a new directory.
-   */
+  /** Creates a new directory. */
   public Directory createDirectory() {
     return Directory.create(nextFileId());
   }
 
-  /**
-   * Creates a new root directory with the given name.
-   */
+  /** Creates a new root directory with the given name. */
   public Directory createRootDirectory(Name name) {
     return Directory.createRoot(nextFileId(), name);
   }
 
-  /**
-   * Creates a new regular file.
-   */
+  /** Creates a new regular file. */
   @VisibleForTesting
   RegularFile createRegularFile() {
     return RegularFile.create(nextFileId(), disk);
   }
 
-  /**
-   * Creates a new symbolic link referencing the given target path.
-   */
+  /** Creates a new symbolic link referencing the given target path. */
   @VisibleForTesting
   SymbolicLink createSymbolicLink(JimfsPath target) {
     return SymbolicLink.create(nextFileId(), target);
   }
 
-  /**
-   * Creates and returns a copy of the given file.
-   */
+  /** Creates and returns a copy of the given file. */
   public File copyWithoutContent(File file) throws IOException {
     return file.copyWithoutContent(nextFileId());
   }
@@ -89,23 +76,17 @@ final class FileFactory {
 
   private final Supplier<RegularFile> regularFileSupplier = new RegularFileSupplier();
 
-  /**
-   * Returns a supplier that creates directories.
-   */
+  /** Returns a supplier that creates directories. */
   public Supplier<Directory> directoryCreator() {
     return directorySupplier;
   }
 
-  /**
-   * Returns a supplier that creates regular files.
-   */
+  /** Returns a supplier that creates regular files. */
   public Supplier<RegularFile> regularFileCreator() {
     return regularFileSupplier;
   }
 
-  /**
-   * Returns a supplier that creates a symbolic links to the given path.
-   */
+  /** Returns a supplier that creates a symbolic links to the given path. */
   public Supplier<SymbolicLink> symbolicLinkCreator(JimfsPath target) {
     return new SymbolicLinkSupplier(target);
   }

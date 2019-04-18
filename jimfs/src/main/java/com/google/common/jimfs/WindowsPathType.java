@@ -20,7 +20,6 @@ import java.nio.file.InvalidPathException;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
 
 /**
@@ -30,15 +29,13 @@ import javax.annotation.Nullable;
  */
 final class WindowsPathType extends PathType {
 
-  /**
-   * Windows path type.
-   */
+  /** Windows path type. */
   static final WindowsPathType INSTANCE = new WindowsPathType();
 
   /**
-   * Matches the C:foo\bar path format, which has a root (C:) and names (foo\bar) and matches
-   * a path relative to the working directory on that drive. Currently can't support that format
-   * as it requires behavior that differs completely from Unix.
+   * Matches the C:foo\bar path format, which has a root (C:) and names (foo\bar) and matches a path
+   * relative to the working directory on that drive. Currently can't support that format as it
+   * requires behavior that differs completely from Unix.
    */
   // TODO(cgdecker): Can probably support this at some point
   // It would require:
@@ -51,9 +48,7 @@ final class WindowsPathType extends PathType {
   //   working directory. For every other root, the root itself is the working directory.
   private static final Pattern WORKING_DIR_WITH_DRIVE = Pattern.compile("^[a-zA-Z]:([^\\\\].*)?$");
 
-  /**
-   * Pattern for matching trailing spaces in file names.
-   */
+  /** Pattern for matching trailing spaces in file names. */
   private static final Pattern TRAILING_SPACES = Pattern.compile("[ ]+(\\\\|$)");
 
   private WindowsPathType() {
@@ -109,14 +104,12 @@ final class WindowsPathType extends PathType {
     return new ParseResult(root, splitter().split(path));
   }
 
-  /**
-   * Pattern for matching UNC \\host\share root syntax.
-   */
+  /** Pattern for matching UNC \\host\share root syntax. */
   private static final Pattern UNC_ROOT = Pattern.compile("^(\\\\\\\\)([^\\\\]+)?(\\\\[^\\\\]+)?");
 
   /**
-   * Parse the root of a UNC-style path, throwing an exception if the path does not start with
-   * a valid UNC root.
+   * Parse the root of a UNC-style path, throwing an exception if the path does not start with a
+   * valid UNC root.
    */
   private String parseUncRoot(String path, String original) {
     Matcher uncMatcher = UNC_ROOT.matcher(path);
@@ -137,14 +130,10 @@ final class WindowsPathType extends PathType {
     }
   }
 
-  /**
-   * Pattern for matching normal C:\ drive letter root syntax.
-   */
+  /** Pattern for matching normal C:\ drive letter root syntax. */
   private static final Pattern DRIVE_LETTER_ROOT = Pattern.compile("^[a-zA-Z]:\\\\");
 
-  /**
-   * Parses a normal drive-letter root, e.g. "C:\".
-   */
+  /** Parses a normal drive-letter root, e.g. "C:\". */
   @Nullable
   private String parseDriveRoot(String path) {
     Matcher drivePathMatcher = DRIVE_LETTER_ROOT.matcher(path);
@@ -154,9 +143,7 @@ final class WindowsPathType extends PathType {
     return null;
   }
 
-  /**
-   * Checks if c is one of the reserved characters that aren't allowed in Windows file names.
-   */
+  /** Checks if c is one of the reserved characters that aren't allowed in Windows file names. */
   private static boolean isReserved(char c) {
     switch (c) {
       case '<':

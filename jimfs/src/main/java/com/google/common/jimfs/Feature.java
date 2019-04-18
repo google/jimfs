@@ -42,11 +42,11 @@ public enum Feature {
    * <p>Affected method:
    *
    * <ul>
-   *   <li>{@link Files#createLink(Path, Path)}</li>
+   *   <li>{@link Files#createLink(Path, Path)}
    * </ul>
    *
-   * <p>If this feature is not enabled, this method will throw
-   * {@link UnsupportedOperationException}.
+   * <p>If this feature is not enabled, this method will throw {@link
+   * UnsupportedOperationException}.
    */
   LINKS,
 
@@ -56,12 +56,12 @@ public enum Feature {
    * <p>Affected methods:
    *
    * <ul>
-   *   <li>{@link Files#createSymbolicLink(Path, Path, FileAttribute...)}</li>
-   *   <li>{@link Files#readSymbolicLink(Path)}</li>
+   *   <li>{@link Files#createSymbolicLink(Path, Path, FileAttribute...)}
+   *   <li>{@link Files#readSymbolicLink(Path)}
    * </ul>
    *
-   * <p>If this feature is not enabled, these methods will throw
-   * {@link UnsupportedOperationException}.
+   * <p>If this feature is not enabled, these methods will throw {@link
+   * UnsupportedOperationException}.
    */
   SYMBOLIC_LINKS,
 
@@ -71,9 +71,9 @@ public enum Feature {
    * <p>Affected methods:
    *
    * <ul>
-   *   <li>{@link Files#newDirectoryStream(Path)}</li>
-   *   <li>{@link Files#newDirectoryStream(Path, DirectoryStream.Filter)}</li>
-   *   <li>{@link Files#newDirectoryStream(Path, String)}</li>
+   *   <li>{@link Files#newDirectoryStream(Path)}
+   *   <li>{@link Files#newDirectoryStream(Path, DirectoryStream.Filter)}
+   *   <li>{@link Files#newDirectoryStream(Path, String)}
    * </ul>
    *
    * <p>If this feature is enabled, the {@link DirectoryStream} instances returned by these methods
@@ -87,18 +87,18 @@ public enum Feature {
    * <p>Affected methods:
    *
    * <ul>
-   *   <li>{@link Files#newByteChannel(Path, OpenOption...)}</li>
-   *   <li>{@link Files#newByteChannel(Path, Set, FileAttribute...)}</li>
-   *   <li>{@link FileChannel#open(Path, OpenOption...)}</li>
-   *   <li>{@link FileChannel#open(Path, Set, FileAttribute...)}</li>
-   *   <li>{@link AsynchronousFileChannel#open(Path, OpenOption...)}</li>
-   *   <li>{@link AsynchronousFileChannel#open(Path, Set, ExecutorService, FileAttribute...)}</li>
+   *   <li>{@link Files#newByteChannel(Path, OpenOption...)}
+   *   <li>{@link Files#newByteChannel(Path, Set, FileAttribute...)}
+   *   <li>{@link FileChannel#open(Path, OpenOption...)}
+   *   <li>{@link FileChannel#open(Path, Set, FileAttribute...)}
+   *   <li>{@link AsynchronousFileChannel#open(Path, OpenOption...)}
+   *   <li>{@link AsynchronousFileChannel#open(Path, Set, ExecutorService, FileAttribute...)}
    * </ul>
    *
    * <p>If this feature is not enabled, the {@link SeekableByteChannel} instances returned by the
-   * {@code Files} methods will not be {@code FileChannel} instances and the
-   * {@code FileChannel.open} and {@code AsynchronousFileChannel.open} methods will throw
-   * {@link UnsupportedOperationException}.
+   * {@code Files} methods will not be {@code FileChannel} instances and the {@code
+   * FileChannel.open} and {@code AsynchronousFileChannel.open} methods will throw {@link
+   * UnsupportedOperationException}.
    */
   // TODO(cgdecker): Should support for AsynchronousFileChannel be a separate feature?
   FILE_CHANNEL

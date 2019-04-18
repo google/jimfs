@@ -26,7 +26,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
@@ -62,19 +61,15 @@ final class PollingWatchService extends AbstractWatchService {
   private final ScheduledExecutorService pollingService =
       Executors.newSingleThreadScheduledExecutor(THREAD_FACTORY);
 
-  /**
-   * Map of keys to the most recent directory snapshot for each key.
-   */
+  /** Map of keys to the most recent directory snapshot for each key. */
   private final ConcurrentMap<Key, Snapshot> snapshots = new ConcurrentHashMap<>();
 
   private final FileSystemView view;
   private final PathService pathService;
   private final FileSystemState fileSystemState;
 
-  @VisibleForTesting
-  final long interval;
-  @VisibleForTesting
-  final TimeUnit timeUnit;
+  @VisibleForTesting final long interval;
+  @VisibleForTesting final TimeUnit timeUnit;
 
   private ScheduledFuture<?> pollingFuture;
 
@@ -160,8 +155,7 @@ final class PollingWatchService extends AbstractWatchService {
   }
 
   private void startPolling() {
-    pollingFuture =
-        pollingService.scheduleAtFixedRate(pollingTask, interval, interval, timeUnit);
+    pollingFuture = pollingService.scheduleAtFixedRate(pollingTask, interval, interval, timeUnit);
   }
 
   private void stopPolling() {
@@ -200,14 +194,10 @@ final class PollingWatchService extends AbstractWatchService {
     return new Snapshot(view.snapshotModifiedTimes(path));
   }
 
-  /**
-   * Snapshot of the state of a directory at a particular moment.
-   */
+  /** Snapshot of the state of a directory at a particular moment. */
   private final class Snapshot {
 
-    /**
-     * Maps directory entry names to last modified times.
-     */
+    /** Maps directory entry names to last modified times. */
     private final ImmutableMap<Name, Long> modifiedTimes;
 
     Snapshot(Map<Name, Long> modifiedTimes) {

@@ -20,19 +20,15 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
-/**
- * @author Colin Decker
- */
+/** @author Colin Decker */
 public final class TestAttributeProvider extends AttributeProvider {
 
   private static final ImmutableSet<String> ATTRIBUTES = ImmutableSet.of("foo", "bar", "baz");

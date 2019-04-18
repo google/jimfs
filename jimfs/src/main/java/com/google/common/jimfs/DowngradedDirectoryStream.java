@@ -25,8 +25,8 @@ import java.nio.file.SecureDirectoryStream;
 import java.util.Iterator;
 
 /**
- * A thin wrapper around a {@link SecureDirectoryStream} that exists only to implement
- * {@link DirectoryStream} and NOT implement {@link SecureDirectoryStream}.
+ * A thin wrapper around a {@link SecureDirectoryStream} that exists only to implement {@link
+ * DirectoryStream} and NOT implement {@link SecureDirectoryStream}.
  *
  * @author Colin Decker
  */

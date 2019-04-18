@@ -27,9 +27,7 @@ final class SymbolicLink extends File {
 
   private final JimfsPath target;
 
-  /**
-   * Creates a new symbolic link with the given ID and target.
-   */
+  /** Creates a new symbolic link with the given ID and target. */
   public static SymbolicLink create(int id, JimfsPath target) {
     return new SymbolicLink(id, target);
   }
@@ -39,9 +37,7 @@ final class SymbolicLink extends File {
     this.target = checkNotNull(target);
   }
 
-  /**
-   * Returns the target path of this symbolic link.
-   */
+  /** Returns the target path of this symbolic link. */
   JimfsPath target() {
     return target;
   }

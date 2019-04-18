@@ -20,13 +20,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableMap;
-
-import org.junit.Before;
-
 import java.io.IOException;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.Map;
 import java.util.Set;
+import org.junit.Before;
 
 /**
  * Abstract base class for tests of individual {@link AttributeProvider} implementations.
@@ -41,14 +39,10 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
   protected P provider;
   protected File file;
 
-  /**
-   * Create the provider being tested.
-   */
+  /** Create the provider being tested. */
   protected abstract P createProvider();
 
-  /**
-   * Creates the set of providers the provider being tested depends on.
-   */
+  /** Creates the set of providers the provider being tested depends on. */
   protected abstract Set<? extends AttributeProvider> createInheritedProviders();
 
   protected FileLookup fileLookup() {

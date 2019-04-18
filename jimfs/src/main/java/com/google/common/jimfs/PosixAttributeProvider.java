@@ -22,7 +22,6 @@ import static com.google.common.jimfs.UserLookupService.createGroupPrincipal;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileAttributeView;
@@ -36,7 +35,6 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.Nullable;
 
 /**
@@ -81,9 +79,12 @@ final class PosixAttributeProvider extends AttributeProvider {
         group = createGroupPrincipal((String) userProvidedGroup);
       } else {
         throw new IllegalArgumentException(
-            "invalid type " + userProvidedGroup.getClass().getName()
+            "invalid type "
+                + userProvidedGroup.getClass().getName()
                 + " for attribute 'posix:group': should be one of "
-                + String.class + " or " + GroupPrincipal.class);
+                + String.class
+                + " or "
+                + GroupPrincipal.class);
       }
     }
 
@@ -99,9 +100,12 @@ final class PosixAttributeProvider extends AttributeProvider {
         permissions = toPermissions((Set<?>) userProvidedPermissions);
       } else {
         throw new IllegalArgumentException(
-            "invalid type " + userProvidedPermissions.getClass().getName()
+            "invalid type "
+                + userProvidedPermissions.getClass().getName()
                 + " for attribute 'posix:permissions': should be one of "
-                + String.class + " or " + Set.class);
+                + String.class
+                + " or "
+                + Set.class);
       }
     }
 
@@ -182,9 +186,7 @@ final class PosixAttributeProvider extends AttributeProvider {
     return new Attributes(file);
   }
 
-  /**
-   * Implementation of {@link PosixFileAttributeView}.
-   */
+  /** Implementation of {@link PosixFileAttributeView}. */
   private static class View extends AbstractAttributeView implements PosixFileAttributeView {
 
     private final BasicFileAttributeView basicView;
@@ -234,9 +236,7 @@ final class PosixAttributeProvider extends AttributeProvider {
     }
   }
 
-  /**
-   * Implementation of {@link PosixFileAttributes}.
-   */
+  /** Implementation of {@link PosixFileAttributes}. */
   static class Attributes extends BasicAttributeProvider.Attributes implements PosixFileAttributes {
 
     private final UserPrincipal owner;

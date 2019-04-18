@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
-
 import javax.annotation.Nullable;
 
 /**
@@ -49,9 +48,7 @@ final class Name {
   /** The name to use for a link from a directory to its parent directory. */
   public static final Name PARENT = new Name("..", "..");
 
-  /**
-   * Creates a new name with no normalization done on the given string.
-   */
+  /** Creates a new name with no normalization done on the given string. */
   @VisibleForTesting
   static Name simple(String name) {
     switch (name) {
@@ -98,16 +95,12 @@ final class Name {
     return display;
   }
 
-  /**
-   * Returns an ordering that orders names by their display representation.
-   */
+  /** Returns an ordering that orders names by their display representation. */
   public static Ordering<Name> displayOrdering() {
     return DISPLAY_ORDERING;
   }
 
-  /**
-   * Returns an ordering that orders names by their canonical representation.
-   */
+  /** Returns an ordering that orders names by their canonical representation. */
   public static Ordering<Name> canonicalOrdering() {
     return CANONICAL_ORDERING;
   }

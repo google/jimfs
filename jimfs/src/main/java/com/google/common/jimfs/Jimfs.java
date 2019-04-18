@@ -21,7 +21,6 @@ import static com.google.common.jimfs.SystemJimfsFileSystemProvider.FILE_SYSTEM_
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,15 +33,14 @@ import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.annotation.Nullable;
 
 /**
  * Static factory methods for creating new Jimfs file systems. File systems may either be created
  * with a basic configuration matching the current operating system or by providing a specific
- * {@link Configuration}. Basic {@linkplain Configuration#unix() UNIX},
- * {@linkplain Configuration#osX() Mac OS X} and {@linkplain Configuration#windows() Windows}
- * configurations are provided.
+ * {@link Configuration}. Basic {@linkplain Configuration#unix() UNIX}, {@linkplain
+ * Configuration#osX() Mac OS X} and {@linkplain Configuration#windows() Windows} configurations are
+ * provided.
  *
  * <p>Examples:
  *
@@ -80,9 +78,7 @@ import javax.annotation.Nullable;
  */
 public final class Jimfs {
 
-  /**
-   * The URI scheme for the Jimfs file system ("jimfs").
-   */
+  /** The URI scheme for the Jimfs file system ("jimfs"). */
   public static final String URI_SCHEME = "jimfs";
 
   private static final Logger LOGGER = Logger.getLogger(Jimfs.class.getName());
@@ -90,9 +86,8 @@ public final class Jimfs {
   private Jimfs() {}
 
   /**
-   * Creates a new in-memory file system with a
-   * {@linkplain Configuration#forCurrentPlatform() default configuration} appropriate to the
-   * current operating system.
+   * Creates a new in-memory file system with a {@linkplain Configuration#forCurrentPlatform()
+   * default configuration} appropriate to the current operating system.
    *
    * <p>More specifically, if the operating system is Windows, {@link Configuration#windows()} is
    * used; if the operating system is Mac OS X, {@link Configuration#osX()} is used; otherwise,
@@ -103,26 +98,23 @@ public final class Jimfs {
   }
 
   /**
-   * Creates a new in-memory file system with a
-   * {@linkplain Configuration#forCurrentPlatform() default configuration} appropriate to the
-   * current operating system.
+   * Creates a new in-memory file system with a {@linkplain Configuration#forCurrentPlatform()
+   * default configuration} appropriate to the current operating system.
    *
    * <p>More specifically, if the operating system is Windows, {@link Configuration#windows()} is
    * used; if the operating system is Mac OS X, {@link Configuration#osX()} is used; otherwise,
    * {@link Configuration#unix()} is used.
    *
    * <p>The returned file system uses the given name as the host part of its URI and the URIs of
-   * paths in the file system. For example, given the name {@code my-file-system}, the file
-   * system's URI will be {@code jimfs://my-file-system} and the URI of the path {@code /foo/bar}
-   * will be {@code jimfs://my-file-system/foo/bar}.
+   * paths in the file system. For example, given the name {@code my-file-system}, the file system's
+   * URI will be {@code jimfs://my-file-system} and the URI of the path {@code /foo/bar} will be
+   * {@code jimfs://my-file-system/foo/bar}.
    */
   public static FileSystem newFileSystem(String name) {
     return newFileSystem(name, Configuration.forCurrentPlatform());
   }
 
-  /**
-   * Creates a new in-memory file system with the given configuration.
-   */
+  /** Creates a new in-memory file system with the given configuration. */
   public static FileSystem newFileSystem(Configuration configuration) {
     return newFileSystem(newRandomFileSystemName(), configuration);
   }
@@ -131,9 +123,9 @@ public final class Jimfs {
    * Creates a new in-memory file system with the given configuration.
    *
    * <p>The returned file system uses the given name as the host part of its URI and the URIs of
-   * paths in the file system. For example, given the name {@code my-file-system}, the file
-   * system's URI will be {@code jimfs://my-file-system} and the URI of the path {@code /foo/bar}
-   * will be {@code jimfs://my-file-system/foo/bar}.
+   * paths in the file system. For example, given the name {@code my-file-system}, the file system's
+   * URI will be {@code jimfs://my-file-system} and the URI of the path {@code /foo/bar} will be
+   * {@code jimfs://my-file-system/foo/bar}.
    */
   public static FileSystem newFileSystem(String name, Configuration configuration) {
     try {
@@ -179,23 +171,22 @@ public final class Jimfs {
   }
 
   /**
-   * The system-loaded instance of {@code SystemJimfsFileSystemProvider}, or {@code null}
-   * if it could not be found or loaded.
+   * The system-loaded instance of {@code SystemJimfsFileSystemProvider}, or {@code null} if it
+   * could not be found or loaded.
    */
-  @Nullable
-  static final FileSystemProvider systemProvider = getSystemJimfsProvider();
+  @Nullable static final FileSystemProvider systemProvider = getSystemJimfsProvider();
 
   /**
-   * Returns the system-loaded instance of {@code SystemJimfsFileSystemProvider} or {@code null}
-   * if it could not be found or loaded.
+   * Returns the system-loaded instance of {@code SystemJimfsFileSystemProvider} or {@code null} if
+   * it could not be found or loaded.
    *
    * <p>Like {@link FileSystems#newFileSystem(URI, Map, ClassLoader)}, this method first looks in
-   * the list of {@linkplain FileSystemProvider#installedProviders() installed providers} and if
-   * not found there, attempts to load it from the {@code ClassLoader} with {@link ServiceLoader}.
+   * the list of {@linkplain FileSystemProvider#installedProviders() installed providers} and if not
+   * found there, attempts to load it from the {@code ClassLoader} with {@link ServiceLoader}.
    *
-   * <p>The idea is that this method should return an instance of the same class (i.e. loaded by
-   * the same class loader) as the class whose static cache a {@code JimfsFileSystem} instance will
-   * be placed in when {@code FileSystems.newFileSystem} is called in {@code Jimfs.newFileSystem}.
+   * <p>The idea is that this method should return an instance of the same class (i.e. loaded by the
+   * same class loader) as the class whose static cache a {@code JimfsFileSystem} instance will be
+   * placed in when {@code FileSystems.newFileSystem} is called in {@code Jimfs.newFileSystem}.
    */
   @Nullable
   private static FileSystemProvider getSystemJimfsProvider() {

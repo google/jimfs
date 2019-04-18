@@ -19,9 +19,7 @@ package com.google.common.jimfs;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSortedSet;
-
 import java.util.Iterator;
-
 import javax.annotation.Nullable;
 
 /**
@@ -34,16 +32,12 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   /** The entry linking to this directory in its parent directory. */
   private DirectoryEntry entryInParent;
 
-  /**
-   * Creates a new normal directory with the given ID.
-   */
+  /** Creates a new normal directory with the given ID. */
   public static Directory create(int id) {
     return new Directory(id);
   }
 
-  /**
-   * Creates a new root directory with the given ID and name.
-   */
+  /** Creates a new root directory with the given ID and name. */
   public static Directory createRoot(int id, Name name) {
     return new Directory(id, name);
   }
@@ -97,24 +91,18 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
     parent().decrementLinkCount();
   }
 
-  /**
-   * Returns the number of entries in this directory.
-   */
+  /** Returns the number of entries in this directory. */
   @VisibleForTesting
   int entryCount() {
     return entryCount;
   }
 
-  /**
-   * Returns true if this directory has no entries other than those to itself and its parent.
-   */
+  /** Returns true if this directory has no entries other than those to itself and its parent. */
   public boolean isEmpty() {
     return entryCount() == 2;
   }
 
-  /**
-   * Returns the entry for the given name in this table or null if no such entry exists.
-   */
+  /** Returns the entry for the given name in this table or null if no such entry exists. */
   @Nullable
   public DirectoryEntry get(Name name) {
     int index = bucketIndex(name, table.length);
@@ -133,8 +121,8 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   /**
    * Links the given name to the given file in this directory.
    *
-   * @throws IllegalArgumentException if {@code name} is a reserved name such as "." or if an
-   *     entry already exists for the name
+   * @throws IllegalArgumentException if {@code name} is a reserved name such as "." or if an entry
+   *     already exists for the name
    */
   public void link(Name name, File file) {
     DirectoryEntry entry = new DirectoryEntry(this, checkNotReserved(name, "link"), file);
@@ -170,9 +158,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
     return builder.build();
   }
 
-  /**
-   * Checks that the given name is not "." or "..". Those names cannot be set/removed by users.
-   */
+  /** Checks that the given name is not "." or "..". Those names cannot be set/removed by users. */
   private static Name checkNotReserved(Name name, String action) {
     if (isReserved(name)) {
       throw new IllegalArgumentException("cannot " + action + ": " + name);
@@ -180,9 +166,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
     return name;
   }
 
-  /**
-   * Returns true if the given name is "." or "..".
-   */
+  /** Returns true if the given name is "." or "..". */
   private static boolean isReserved(Name name) {
     // all "." and ".." names are canonicalized to the same objects, so we can use identity
     return name == Name.SELF || name == Name.PARENT;
@@ -199,9 +183,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
 
   private int entryCount;
 
-  /**
-   * Returns the index of the bucket in the array where an entry for the given name should go.
-   */
+  /** Returns the index of the bucket in the array where an entry for the given name should go. */
   private static int bucketIndex(Name name, int tableLength) {
     return name.hashCode() & (tableLength - 1);
   }
@@ -218,8 +200,8 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   }
 
   /**
-   * Adds the given entry to the directory, overwriting an existing entry with the same name if
-   * such an entry exists.
+   * Adds the given entry to the directory, overwriting an existing entry with the same name if such
+   * an entry exists.
    */
   private void forcePut(DirectoryEntry entry) {
     put(entry, true);

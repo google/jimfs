@@ -25,20 +25,17 @@ import static org.junit.Assert.fail;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-
 import javax.annotation.Nullable;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link FileTree}.
@@ -71,10 +68,10 @@ public class FileTreeTest {
 
   /**
    * This path service is for unix-like paths, with the exception that it recognizes $ and ! as
-   * roots in addition to /, allowing for up to three roots. When creating a
-   * {@linkplain PathType#toUriPath URI path}, we prefix the path with / to differentiate between
-   * a path like "$foo/bar" and one like "/$foo/bar". They would become "/$foo/bar" and
-   * "//$foo/bar" respectively.
+   * roots in addition to /, allowing for up to three roots. When creating a {@linkplain
+   * PathType#toUriPath URI path}, we prefix the path with / to differentiate between a path like
+   * "$foo/bar" and one like "/$foo/bar". They would become "/$foo/bar" and "//$foo/bar"
+   * respectively.
    */
   private final PathService pathService =
       PathServiceTest.fakePathService(

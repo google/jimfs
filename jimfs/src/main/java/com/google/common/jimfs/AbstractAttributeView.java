@@ -34,9 +34,7 @@ abstract class AbstractAttributeView implements FileAttributeView {
     this.lookup = checkNotNull(lookup);
   }
 
-  /**
-   * Looks up the file to get or set attributes on.
-   */
+  /** Looks up the file to get or set attributes on. */
   protected final File lookupFile() throws IOException {
     return lookup.lookup();
   }

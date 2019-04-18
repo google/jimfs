@@ -17,7 +17,6 @@
 package com.google.common.jimfs;
 
 import com.google.common.collect.ImmutableMap;
-
 import javax.annotation.Nullable;
 
 /**
@@ -41,8 +40,8 @@ final class StandardAttributeProviders {
           .build();
 
   /**
-   * Returns the attribute provider for the given view, or {@code null} if the given view is not
-   * one of the attribute views this supports.
+   * Returns the attribute provider for the given view, or {@code null} if the given view is not one
+   * of the attribute views this supports.
    */
   @Nullable
   public static AttributeProvider get(String view) {

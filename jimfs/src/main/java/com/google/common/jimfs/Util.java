@@ -31,9 +31,7 @@ final class Util {
 
   private Util() {}
 
-  /**
-   * Returns the next power of 2 >= n.
-   */
+  /** Returns the next power of 2 >= n. */
   public static int nextPowerOf2(int n) {
     if (n == 0) {
       return 1;
@@ -50,9 +48,7 @@ final class Util {
     checkArgument(n >= 0, "%s must not be negative: %s", description, n);
   }
 
-  /**
-   * Checks that no element in the given iterable is null, throwing NPE if any is.
-   */
+  /** Checks that no element in the given iterable is null, throwing NPE if any is. */
   static void checkNoneNull(Iterable<?> objects) {
     if (!(objects instanceof ImmutableCollection)) {
       for (Object o : objects) {
@@ -80,9 +76,7 @@ final class Util {
   private static final byte[] ZERO_ARRAY = new byte[ARRAY_LEN];
   private static final byte[][] NULL_ARRAY = new byte[ARRAY_LEN][];
 
-  /**
-   * Zeroes all bytes between off (inclusive) and off + len (exclusive) in the given array.
-   */
+  /** Zeroes all bytes between off (inclusive) and off + len (exclusive) in the given array. */
   static void zero(byte[] bytes, int off, int len) {
     // this is significantly faster than looping or Arrays.fill (which loops), particularly when
     // the length of the slice to be zeroed is <= to ARRAY_LEN (in that case, it's faster by a
@@ -98,8 +92,8 @@ final class Util {
   }
 
   /**
-   * Clears (sets to null) all blocks between off (inclusive) and off + len (exclusive) in the
-   * given array.
+   * Clears (sets to null) all blocks between off (inclusive) and off + len (exclusive) in the given
+   * array.
    */
   static void clear(byte[][] blocks, int off, int len) {
     // this is significantly faster than looping or Arrays.fill (which loops), particularly when

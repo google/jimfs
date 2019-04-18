@@ -19,14 +19,13 @@ package com.google.common.jimfs;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Tests for {@link HeapDisk}.
@@ -57,8 +56,7 @@ public class HeapDiskTest {
   @Test
   public void testInitialSettings_fromConfiguration() {
     Configuration config =
-        Configuration.unix()
-            .toBuilder()
+        Configuration.unix().toBuilder()
             .setBlockSize(4)
             .setMaxSize(99) // not a multiple of 4
             .setMaxCacheSize(25)

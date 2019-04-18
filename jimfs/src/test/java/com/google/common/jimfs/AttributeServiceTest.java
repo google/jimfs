@@ -21,12 +21,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -34,6 +28,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 /**
  * Tests for {@link AttributeService}.
@@ -274,12 +272,7 @@ public class AttributeServiceTest {
     service.setInitialAttributes(file);
 
     ImmutableMap<String, Object> map = service.readAttributes(file, "test:foo,bar,baz");
-    assertThat(map)
-        .isEqualTo(
-            ImmutableMap.of(
-                "foo", "hello",
-                "bar", 0L,
-                "baz", 1));
+    assertThat(map).isEqualTo(ImmutableMap.of("foo", "hello", "bar", 0L, "baz", 1));
 
     FileTime time = (FileTime) service.getAttribute(file, "basic:creationTime");
 

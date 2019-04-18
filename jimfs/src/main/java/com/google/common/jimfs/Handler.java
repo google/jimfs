@@ -24,12 +24,12 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 
 /**
- * {@link URLStreamHandler} implementation for jimfs. Named {@code Handler} so that the class can
- * be found by Java as described in the documentation for
- * {@link URL#URL(String, String, int, String) URL}.
+ * {@link URLStreamHandler} implementation for jimfs. Named {@code Handler} so that the class can be
+ * found by Java as described in the documentation for {@link URL#URL(String, String, int, String)
+ * URL}.
  *
- * <p>This class is only public because it is necessary for Java to find it. It is not intended
- * to be used directly.
+ * <p>This class is only public because it is necessary for Java to find it. It is not intended to
+ * be used directly.
  *
  * @author Colin Decker
  * @since 1.1
@@ -50,9 +50,7 @@ public final class Handler extends URLStreamHandler {
     register(Handler.class);
   }
 
-  /**
-   * Generic method that would allow registration of any properly placed {@code Handler} class.
-   */
+  /** Generic method that would allow registration of any properly placed {@code Handler} class. */
   static void register(Class<? extends URLStreamHandler> handlerClass) {
     checkArgument("Handler".equals(handlerClass.getSimpleName()));
 
@@ -71,9 +69,7 @@ public final class Handler extends URLStreamHandler {
     System.setProperty(JAVA_PROTOCOL_HANDLER_PACKAGES, packages);
   }
 
-  /**
-   * @deprecated Not intended to be called directly; this class is only for use by Java itself.
-   */
+  /** @deprecated Not intended to be called directly; this class is only for use by Java itself. */
   @Deprecated
   public Handler() {} // a public, no-arg constructor is required
 

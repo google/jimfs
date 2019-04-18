@@ -24,13 +24,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
-
+import java.net.URI;
+import java.nio.file.InvalidPathException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import java.net.URI;
-import java.nio.file.InvalidPathException;
 
 /**
  * Tests for {@link WindowsPathType}.

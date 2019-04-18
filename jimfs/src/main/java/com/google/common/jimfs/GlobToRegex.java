@@ -82,44 +82,32 @@ final class GlobToRegex {
     return builder.toString();
   }
 
-  /**
-   * Enters the given state. The current state becomes the previous state.
-   */
+  /** Enters the given state. The current state becomes the previous state. */
   private void pushState(State state) {
     states.push(state);
   }
 
-  /**
-   * Returns to the previous state.
-   */
+  /** Returns to the previous state. */
   private void popState() {
     states.pop();
   }
 
-  /**
-   * Returns the current state.
-   */
+  /** Returns the current state. */
   private State currentState() {
     return states.peek();
   }
 
-  /**
-   * Throws a {@link PatternSyntaxException}.
-   */
+  /** Throws a {@link PatternSyntaxException}. */
   private PatternSyntaxException syntaxError(String desc) {
     throw new PatternSyntaxException(desc, glob, index);
   }
 
-  /**
-   * Appends the given character as-is to the regex.
-   */
+  /** Appends the given character as-is to the regex. */
   private void appendExact(char c) {
     builder.append(c);
   }
 
-  /**
-   * Appends the regex form of the given normal character or separator from the glob.
-   */
+  /** Appends the regex form of the given normal character or separator from the glob. */
   private void append(char c) {
     if (separatorMatcher.matches(c)) {
       appendSeparator();
@@ -128,9 +116,7 @@ final class GlobToRegex {
     }
   }
 
-  /**
-   * Appends the regex form of the given normal character from the glob.
-   */
+  /** Appends the regex form of the given normal character from the glob. */
   private void appendNormal(char c) {
     if (REGEX_RESERVED.matches(c)) {
       builder.append('\\');
@@ -138,9 +124,7 @@ final class GlobToRegex {
     builder.append(c);
   }
 
-  /**
-   * Appends the regex form matching the separators for the path type.
-   */
+  /** Appends the regex form matching the separators for the path type. */
   private void appendSeparator() {
     if (separators.length() == 1) {
       appendNormal(separators.charAt(0));
@@ -153,9 +137,7 @@ final class GlobToRegex {
     }
   }
 
-  /**
-   * Appends the regex form that matches anything except the separators for the path type.
-   */
+  /** Appends the regex form that matches anything except the separators for the path type. */
   private void appendNonSeparator() {
     builder.append("[^");
     for (int i = 0; i < separators.length(); i++) {
@@ -164,47 +146,35 @@ final class GlobToRegex {
     builder.append(']');
   }
 
-  /**
-   * Appends the regex form of the glob ? character.
-   */
+  /** Appends the regex form of the glob ? character. */
   private void appendQuestionMark() {
     appendNonSeparator();
   }
 
-  /**
-   * Appends the regex form of the glob * character.
-   */
+  /** Appends the regex form of the glob * character. */
   private void appendStar() {
     appendNonSeparator();
     builder.append('*');
   }
 
-  /**
-   * Appends the regex form of the glob ** pattern.
-   */
+  /** Appends the regex form of the glob ** pattern. */
   private void appendStarStar() {
     builder.append(".*");
   }
 
-  /**
-   * Appends the regex form of the start of a glob [] section.
-   */
+  /** Appends the regex form of the start of a glob [] section. */
   private void appendBracketStart() {
     builder.append('[');
     appendNonSeparator();
     builder.append("&&[");
   }
 
-  /**
-   * Appends the regex form of the end of a glob [] section.
-   */
+  /** Appends the regex form of the end of a glob [] section. */
   private void appendBracketEnd() {
     builder.append("]]");
   }
 
-  /**
-   * Appends the regex form of the given character within a glob [] section.
-   */
+  /** Appends the regex form of the given character within a glob [] section. */
   private void appendInBracket(char c) {
     // escape \ in regex character class
     if (c == '\\') {
@@ -214,46 +184,34 @@ final class GlobToRegex {
     builder.append(c);
   }
 
-  /**
-   * Appends the regex form of the start of a glob {} section.
-   */
+  /** Appends the regex form of the start of a glob {} section. */
   private void appendCurlyBraceStart() {
     builder.append('(');
   }
 
-  /**
-   * Appends the regex form of the separator (,) within a glob {} section.
-   */
+  /** Appends the regex form of the separator (,) within a glob {} section. */
   private void appendSubpatternSeparator() {
     builder.append('|');
   }
 
-  /**
-   * Appends the regex form of the end of a glob {} section.
-   */
+  /** Appends the regex form of the end of a glob {} section. */
   private void appendCurlyBraceEnd() {
     builder.append(')');
   }
 
-  /**
-   * Converter state.
-   */
+  /** Converter state. */
   private abstract static class State {
     /**
-     * Process the next character with the current state, transitioning the converter to a new
-     * state if necessary.
+     * Process the next character with the current state, transitioning the converter to a new state
+     * if necessary.
      */
     abstract void process(GlobToRegex converter, char c);
 
-    /**
-     * Called after all characters have been read.
-     */
+    /** Called after all characters have been read. */
     void finish(GlobToRegex converter) {}
   }
 
-  /**
-   * Normal state.
-   */
+  /** Normal state. */
   private static final State NORMAL =
       new State() {
         @Override
@@ -287,9 +245,7 @@ final class GlobToRegex {
         }
       };
 
-  /**
-   * State following the reading of a single \.
-   */
+  /** State following the reading of a single \. */
   private static final State ESCAPE =
       new State() {
         @Override
@@ -309,9 +265,7 @@ final class GlobToRegex {
         }
       };
 
-  /**
-   * State following the reading of a single *.
-   */
+  /** State following the reading of a single *. */
   private static final State STAR =
       new State() {
         @Override
@@ -337,17 +291,15 @@ final class GlobToRegex {
         }
       };
 
-  /**
-   * State immediately following the reading of a [.
-   */
+  /** State immediately following the reading of a [. */
   private static final State BRACKET_FIRST_CHAR =
       new State() {
         @Override
         void process(GlobToRegex converter, char c) {
           if (c == ']') {
-            // A glob like "[]]" or "[]q]" is apparently fine in Unix (when used with ls for example)
-            // but doesn't work for the default java.nio.file implementations. In the cases of "[]]" it
-            // produces:
+            // A glob like "[]]" or "[]q]" is apparently fine in Unix (when used with ls for
+            // example) but doesn't work for the default java.nio.file implementations. In the cases
+            // of "[]]" it produces:
             // java.util.regex.PatternSyntaxException: Unclosed character class near index 13
             // ^[[^/]&&[]]\]$
             //              ^
@@ -378,9 +330,7 @@ final class GlobToRegex {
         }
       };
 
-  /**
-   * State inside [brackets], but not at the first character inside the brackets.
-   */
+  /** State inside [brackets], but not at the first character inside the brackets. */
   private static final State BRACKET =
       new State() {
         @Override
@@ -404,9 +354,7 @@ final class GlobToRegex {
         }
       };
 
-  /**
-   * State inside {curly braces}.
-   */
+  /** State inside {curly braces}. */
   private static final State CURLY_BRACE =
       new State() {
         @Override

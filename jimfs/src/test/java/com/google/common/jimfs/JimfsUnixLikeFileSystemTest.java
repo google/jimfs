@@ -109,8 +109,7 @@ import org.junit.runners.JUnit4;
 public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   private static final Configuration UNIX_CONFIGURATION =
-      Configuration.unix()
-          .toBuilder()
+      Configuration.unix().toBuilder()
           .setAttributeViews("basic", "owner", "posix", "unix")
           .setMaxSize(1024 * 1024 * 1024) // 1 GB
           .setMaxCacheSize(256 * 1024 * 1024) // 256 MB
@@ -166,16 +165,15 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testPaths() {
-    assertThatPath("/").isAbsolute()
-        .and().hasRootComponent("/")
-        .and().hasNoNameComponents();
-    assertThatPath("foo").isRelative()
-        .and().hasNameComponents("foo");
-    assertThatPath("foo/bar").isRelative()
-        .and().hasNameComponents("foo", "bar");
-    assertThatPath("/foo/bar/baz").isAbsolute()
-        .and().hasRootComponent("/")
-        .and().hasNameComponents("foo", "bar", "baz");
+    assertThatPath("/").isAbsolute().and().hasRootComponent("/").and().hasNoNameComponents();
+    assertThatPath("foo").isRelative().and().hasNameComponents("foo");
+    assertThatPath("foo/bar").isRelative().and().hasNameComponents("foo", "bar");
+    assertThatPath("/foo/bar/baz")
+        .isAbsolute()
+        .and()
+        .hasRootComponent("/")
+        .and()
+        .hasNameComponents("foo", "bar", "baz");
   }
 
   @Test
@@ -198,42 +196,64 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testPaths_resolve() {
-    assertThatPath(path("/").resolve("foo/bar")).isAbsolute()
-        .and().hasRootComponent("/")
-        .and().hasNameComponents("foo", "bar");
-    assertThatPath(path("foo/bar").resolveSibling("baz")).isRelative()
-        .and().hasNameComponents("foo", "baz");
-    assertThatPath(path("foo/bar").resolve("/one/two")).isAbsolute()
-        .and().hasRootComponent("/")
-        .and().hasNameComponents("one", "two");
+    assertThatPath(path("/").resolve("foo/bar"))
+        .isAbsolute()
+        .and()
+        .hasRootComponent("/")
+        .and()
+        .hasNameComponents("foo", "bar");
+    assertThatPath(path("foo/bar").resolveSibling("baz"))
+        .isRelative()
+        .and()
+        .hasNameComponents("foo", "baz");
+    assertThatPath(path("foo/bar").resolve("/one/two"))
+        .isAbsolute()
+        .and()
+        .hasRootComponent("/")
+        .and()
+        .hasNameComponents("one", "two");
   }
 
   @Test
   public void testPaths_normalize() {
-    assertThatPath(path("foo/bar/..").normalize()).isRelative()
-        .and().hasNameComponents("foo");
-    assertThatPath(path("foo/./bar/../baz/test/./../stuff").normalize()).isRelative()
-        .and().hasNameComponents("foo", "baz", "stuff");
-    assertThatPath(path("../../foo/./bar").normalize()).isRelative()
-        .and().hasNameComponents("..", "..", "foo", "bar");
-    assertThatPath(path("foo/../../bar").normalize()).isRelative()
-        .and().hasNameComponents("..", "bar");
-    assertThatPath(path(".././..").normalize()).isRelative()
-        .and().hasNameComponents("..", "..");
+    assertThatPath(path("foo/bar/..").normalize()).isRelative().and().hasNameComponents("foo");
+    assertThatPath(path("foo/./bar/../baz/test/./../stuff").normalize())
+        .isRelative()
+        .and()
+        .hasNameComponents("foo", "baz", "stuff");
+    assertThatPath(path("../../foo/./bar").normalize())
+        .isRelative()
+        .and()
+        .hasNameComponents("..", "..", "foo", "bar");
+    assertThatPath(path("foo/../../bar").normalize())
+        .isRelative()
+        .and()
+        .hasNameComponents("..", "bar");
+    assertThatPath(path(".././..").normalize()).isRelative().and().hasNameComponents("..", "..");
   }
 
   @Test
   public void testPaths_relativize() {
-    assertThatPath(path("/foo/bar").relativize(path("/foo/bar/baz"))).isRelative()
-        .and().hasNameComponents("baz");
-    assertThatPath(path("/foo/bar/baz").relativize(path("/foo/bar"))).isRelative()
-        .and().hasNameComponents("..");
-    assertThatPath(path("/foo/bar/baz").relativize(path("/foo/baz/bar"))).isRelative()
-        .and().hasNameComponents("..", "..", "baz", "bar");
-    assertThatPath(path("foo/bar").relativize(path("foo"))).isRelative()
-        .and().hasNameComponents("..");
-    assertThatPath(path("foo").relativize(path("foo/bar"))).isRelative()
-        .and().hasNameComponents("bar");
+    assertThatPath(path("/foo/bar").relativize(path("/foo/bar/baz")))
+        .isRelative()
+        .and()
+        .hasNameComponents("baz");
+    assertThatPath(path("/foo/bar/baz").relativize(path("/foo/bar")))
+        .isRelative()
+        .and()
+        .hasNameComponents("..");
+    assertThatPath(path("/foo/bar/baz").relativize(path("/foo/baz/bar")))
+        .isRelative()
+        .and()
+        .hasNameComponents("..", "..", "baz", "bar");
+    assertThatPath(path("foo/bar").relativize(path("foo")))
+        .isRelative()
+        .and()
+        .hasNameComponents("..");
+    assertThatPath(path("foo").relativize(path("foo/bar")))
+        .isRelative()
+        .and()
+        .hasNameComponents("bar");
 
     try {
       Path unused = path("/foo/bar").relativize(path("bar"));
@@ -262,15 +282,23 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testPaths_toAbsolutePath() {
-    assertThatPath(path("/foo/bar").toAbsolutePath()).isAbsolute()
-        .and().hasRootComponent("/")
-        .and().hasNameComponents("foo", "bar")
-        .and().isEqualTo(path("/foo/bar"));
+    assertThatPath(path("/foo/bar").toAbsolutePath())
+        .isAbsolute()
+        .and()
+        .hasRootComponent("/")
+        .and()
+        .hasNameComponents("foo", "bar")
+        .and()
+        .isEqualTo(path("/foo/bar"));
 
-    assertThatPath(path("foo/bar").toAbsolutePath()).isAbsolute()
-        .and().hasRootComponent("/")
-        .and().hasNameComponents("work", "foo", "bar")
-        .and().isEqualTo(path("/work/foo/bar"));
+    assertThatPath(path("foo/bar").toAbsolutePath())
+        .isAbsolute()
+        .and()
+        .hasRootComponent("/")
+        .and()
+        .hasNameComponents("work", "foo", "bar")
+        .and()
+        .isEqualTo(path("/work/foo/bar"));
   }
 
   @Test
@@ -402,10 +430,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectory(path("/foo"));
     Files.createSymbolicLink(path("/foo/link.txt"), path("test.txt"));
 
-    assertThatPath("/foo/link.txt")
-        .noFollowLinks()
-        .isSymbolicLink()
-        .withTarget("test.txt");
+    assertThatPath("/foo/link.txt").noFollowLinks().isSymbolicLink().withTarget("test.txt");
     assertThatPath("/foo").hasChildren("link.txt");
   }
 
@@ -684,8 +709,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx"));
     Files.newByteChannel(path("/foo"), ImmutableSet.of(WRITE, CREATE), permissions).close();
 
-    assertThatPath("/foo").isRegularFile()
-        .and().attribute("posix:permissions").is(permissions.value());
+    assertThatPath("/foo")
+        .isRegularFile()
+        .and()
+        .attribute("posix:permissions")
+        .is(permissions.value());
   }
 
   @Test
@@ -696,8 +724,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrwx"));
     Files.newByteChannel(path("/foo"), ImmutableSet.of(WRITE, CREATE), permissions).close();
 
-    assertThatPath("/foo").isRegularFile()
-        .and().attribute("posix:permissions").isNot(permissions.value());
+    assertThatPath("/foo")
+        .isRegularFile()
+        .and()
+        .attribute("posix:permissions")
+        .isNot(permissions.value());
   }
 
   @Test
@@ -707,13 +738,19 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Files.createDirectory(path("/foo"), permissions);
 
-    assertThatPath("/foo").isDirectory()
-        .and().attribute("posix:permissions").is(permissions.value());
+    assertThatPath("/foo")
+        .isDirectory()
+        .and()
+        .attribute("posix:permissions")
+        .is(permissions.value());
 
     Files.createDirectory(path("/normal"));
 
-    assertThatPath("/normal").isDirectory()
-        .and().attribute("posix:permissions").isNot(permissions.value());
+    assertThatPath("/normal")
+        .isDirectory()
+        .and()
+        .attribute("posix:permissions")
+        .isNot(permissions.value());
   }
 
   @Test
@@ -723,13 +760,19 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Files.createSymbolicLink(path("/foo"), path("bar"), permissions);
 
-    assertThatPath("/foo", NOFOLLOW_LINKS).isSymbolicLink()
-        .and().attribute("posix:permissions").is(permissions.value());
+    assertThatPath("/foo", NOFOLLOW_LINKS)
+        .isSymbolicLink()
+        .and()
+        .attribute("posix:permissions")
+        .is(permissions.value());
 
     Files.createSymbolicLink(path("/normal"), path("bar"));
 
-    assertThatPath("/normal", NOFOLLOW_LINKS).isSymbolicLink()
-        .and().attribute("posix:permissions").isNot(permissions.value());
+    assertThatPath("/normal", NOFOLLOW_LINKS)
+        .isSymbolicLink()
+        .and()
+        .attribute("posix:permissions")
+        .isNot(permissions.value());
   }
 
   @Test
@@ -1294,9 +1337,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Files.createLink(path("/link"), path("/symlink"));
 
-    assertThatPath("/link").isRegularFile()
-        .and().hasLinkCount(2)
-        .and().attribute("fileKey").is(key);
+    assertThatPath("/link")
+        .isRegularFile()
+        .and()
+        .hasLinkCount(2)
+        .and()
+        .attribute("fileKey")
+        .is(key);
   }
 
   @Test
@@ -1711,8 +1758,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.copy(foo, foo2);
 
       assertThatPath(foo).exists();
-      assertThatPath(foo2).exists()
-          .and().containsBytes(bytes);
+      assertThatPath(foo2).exists().and().containsBytes(bytes);
     }
   }
 
@@ -1737,14 +1783,25 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
       // when copying with COPY_ATTRIBUTES to a different FileSystem, only basic attributes (that
       // is, file times) can actually be copied
-      assertThatPath(foo2).exists()
-          .and().attribute("lastModifiedTime").is(FileTime.fromMillis(0))
-          .and().attribute("lastAccessTime").is(FileTime.fromMillis(1))
-          .and().attribute("creationTime").is(FileTime.fromMillis(2))
-          .and().attribute("owner:owner").isNot(owner)
-          .and().attribute("owner:owner")
-              .isNot(fs2.getUserPrincipalLookupService().lookupPrincipalByName("foobar"))
-          .and().containsBytes(bytes); // do this last; it updates the access time
+      assertThatPath(foo2)
+          .exists()
+          .and()
+          .attribute("lastModifiedTime")
+          .is(FileTime.fromMillis(0))
+          .and()
+          .attribute("lastAccessTime")
+          .is(FileTime.fromMillis(1))
+          .and()
+          .attribute("creationTime")
+          .is(FileTime.fromMillis(2))
+          .and()
+          .attribute("owner:owner")
+          .isNot(owner)
+          .and()
+          .attribute("owner:owner")
+          .isNot(fs2.getUserPrincipalLookupService().lookupPrincipalByName("foobar"))
+          .and()
+          .containsBytes(bytes); // do this last; it updates the access time
     }
   }
 
@@ -1756,20 +1813,26 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Object fooKey = getFileKey("/foo");
 
     Files.move(path("/foo"), path("/bar"));
-    assertThatPath("/foo").doesNotExist()
-        .andThat("/bar").containsBytes(bytes)
-        .and().attribute("fileKey").is(fooKey);
+    assertThatPath("/foo")
+        .doesNotExist()
+        .andThat("/bar")
+        .containsBytes(bytes)
+        .and()
+        .attribute("fileKey")
+        .is(fooKey);
 
     Files.createDirectory(path("/foo"));
     Files.move(path("/bar"), path("/foo/bar"));
 
-    assertThatPath("/bar").doesNotExist()
-        .andThat("/foo/bar").isRegularFile();
+    assertThatPath("/bar").doesNotExist().andThat("/foo/bar").isRegularFile();
 
     Files.move(path("/foo"), path("/baz"));
-    assertThatPath("/foo").doesNotExist()
-        .andThat("/baz").isDirectory()
-        .andThat("/baz/bar").isRegularFile();
+    assertThatPath("/foo")
+        .doesNotExist()
+        .andThat("/baz")
+        .isDirectory()
+        .andThat("/baz/bar")
+        .isRegularFile();
   }
 
   @Test
@@ -1781,15 +1844,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Files.move(path("/link"), path("/link.txt"));
 
-    assertThatPath("/foo.txt").noFollowLinks().isRegularFile()
-        .and().containsBytes(bytes);
+    assertThatPath("/foo.txt").noFollowLinks().isRegularFile().and().containsBytes(bytes);
 
     assertThatPath(path("/link")).doesNotExist();
 
     assertThatPath(path("/link.txt")).noFollowLinks().isSymbolicLink();
 
-    assertThatPath(path("/link.txt")).isRegularFile()
-        .and().containsBytes(bytes);
+    assertThatPath(path("/link.txt")).isRegularFile().and().containsBytes(bytes);
   }
 
   @Test
@@ -1831,8 +1892,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       assertEquals("/bar", expected.getMessage());
     }
 
-    assertThatPath("/test").containsBytes(bytes)
-        .and().attribute("fileKey").is(testKey);
+    assertThatPath("/test").containsBytes(bytes).and().attribute("fileKey").is(testKey);
 
     Files.delete(path("/bar"));
     Files.createDirectory(path("/bar"));
@@ -1844,8 +1904,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       assertEquals("/bar", expected.getMessage());
     }
 
-    assertThatPath("/test").containsBytes(bytes)
-        .and().attribute("fileKey").is(testKey);
+    assertThatPath("/test").containsBytes(bytes).and().attribute("fileKey").is(testKey);
   }
 
   @Test
@@ -1861,11 +1920,19 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       Files.move(foo, foo2);
 
       assertThatPath(foo).doesNotExist();
-      assertThatPath(foo2).exists()
-          .and().attribute("lastModifiedTime").is(FileTime.fromMillis(0))
-          .and().attribute("lastAccessTime").is(FileTime.fromMillis(1))
-          .and().attribute("creationTime").is(FileTime.fromMillis(2))
-          .and().containsBytes(bytes); // do this last; it updates the access time
+      assertThatPath(foo2)
+          .exists()
+          .and()
+          .attribute("lastModifiedTime")
+          .is(FileTime.fromMillis(0))
+          .and()
+          .attribute("lastAccessTime")
+          .is(FileTime.fromMillis(1))
+          .and()
+          .attribute("creationTime")
+          .is(FileTime.fromMillis(2))
+          .and()
+          .containsBytes(bytes); // do this last; it updates the access time
     }
   }
 
@@ -1891,11 +1958,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testIsSameFile_forPathFromDifferentFileSystemProvider() throws IOException {
-    Path defaultFileSystemRoot =
-        FileSystems.getDefault()
-            .getRootDirectories()
-            .iterator()
-            .next();
+    Path defaultFileSystemRoot = FileSystems.getDefault().getRootDirectories().iterator().next();
 
     assertThat(Files.isSameFile(path("/"), defaultFileSystemRoot)).isFalse();
   }
@@ -2294,8 +2357,7 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   public void testUnsupportedFeatures() throws IOException {
     FileSystem fileSystem =
         Jimfs.newFileSystem(
-            Configuration.unix()
-                .toBuilder()
+            Configuration.unix().toBuilder()
                 .setSupportedFeatures() // none
                 .build());
 

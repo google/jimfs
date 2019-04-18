@@ -20,12 +20,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.Arrays;
 import java.util.Map;
-
 import javax.annotation.Nullable;
 
 /**
@@ -35,21 +33,15 @@ import javax.annotation.Nullable;
  */
 public abstract class AttributeProvider {
 
-  /**
-   * Returns the view name that's used to get attributes from this provider.
-   */
+  /** Returns the view name that's used to get attributes from this provider. */
   public abstract String name();
 
-  /**
-   * Returns the names of other providers that this provider inherits attributes from.
-   */
+  /** Returns the names of other providers that this provider inherits attributes from. */
   public ImmutableSet<String> inherits() {
     return ImmutableSet.of();
   }
 
-  /**
-   * Returns the type of the view interface that this provider supports.
-   */
+  /** Returns the type of the view interface that this provider supports. */
   public abstract Class<? extends FileAttributeView> viewType();
 
   /**
@@ -64,25 +56,21 @@ public abstract class AttributeProvider {
    * are attribute identifier strings (in "view:attribute" form) and the value for each is the
    * default value that should be set for that attribute when creating a new file.
    *
-   * <p>The given map should be in the same format and contains user-provided default values. If
-   * the user provided any default values for attributes handled by this provider, those values
-   * should be checked to ensure they are of the correct type. Additionally, if any changes to a
-   * user-provided attribute are necessary (for example, creating an immutable defensive copy),
-   * that should be done. The resulting values should be included in the result map along with
-   * default values for any attributes the user did not provide a value for.
+   * <p>The given map should be in the same format and contains user-provided default values. If the
+   * user provided any default values for attributes handled by this provider, those values should
+   * be checked to ensure they are of the correct type. Additionally, if any changes to a
+   * user-provided attribute are necessary (for example, creating an immutable defensive copy), that
+   * should be done. The resulting values should be included in the result map along with default
+   * values for any attributes the user did not provide a value for.
    */
   public ImmutableMap<String, ?> defaultValues(Map<String, ?> userDefaults) {
     return ImmutableMap.of();
   }
 
-  /**
-   * Returns the set of attributes that are always available from this provider.
-   */
+  /** Returns the set of attributes that are always available from this provider. */
   public abstract ImmutableSet<String> fixedAttributes();
 
-  /**
-   * Returns whether or not this provider supports the given attribute directly.
-   */
+  /** Returns whether or not this provider supports the given attribute directly. */
   public boolean supports(String attribute) {
     return fixedAttributes().contains(attribute);
   }
@@ -103,9 +91,9 @@ public abstract class AttributeProvider {
   public abstract Object get(File file, String attribute);
 
   /**
-   * Sets the value of the given attribute in the given file object. The {@code create}
-   * parameter indicates whether or not the value is being set upon creation of a new file via a
-   * user-provided {@code FileAttribute}.
+   * Sets the value of the given attribute in the given file object. The {@code create} parameter
+   * indicates whether or not the value is being set upon creation of a new file via a user-provided
+   * {@code FileAttribute}.
    *
    * @throws IllegalArgumentException if the given attribute is one supported by this provider but
    *     it is not allowed to be set by the user
@@ -137,9 +125,7 @@ public abstract class AttributeProvider {
 
   // exception helpers
 
-  /**
-   * Throws a runtime exception indicating that the given attribute cannot be set.
-   */
+  /** Throws a runtime exception indicating that the given attribute cannot be set. */
   protected static RuntimeException unsettable(String view, String attribute, boolean create) {
     // This matches the behavior of the real file system implementations: if the attempt to set the
     // attribute is being made during file creation, throw UOE even though the attribute is one
@@ -173,16 +159,21 @@ public abstract class AttributeProvider {
   }
 
   /**
-   * Throws an illegal argument exception indicating that the given value is not one of the
-   * expected types for the given attribute.
+   * Throws an illegal argument exception indicating that the given value is not one of the expected
+   * types for the given attribute.
    */
   protected static IllegalArgumentException invalidType(
       String view, String attribute, Object value, Class<?>... expectedTypes) {
     Object expected =
         expectedTypes.length == 1 ? expectedTypes[0] : "one of " + Arrays.toString(expectedTypes);
     throw new IllegalArgumentException(
-        "invalid type " + value.getClass()
-            + " for attribute '" + view + ":" + attribute
-            + "': expected " + expected);
+        "invalid type "
+            + value.getClass()
+            + " for attribute '"
+            + view
+            + ":"
+            + attribute
+            + "': expected "
+            + expected);
   }
 }

@@ -22,7 +22,6 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.LinkOption;
@@ -35,7 +34,6 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import javax.annotation.Nullable;
 
 /**
@@ -82,47 +80,35 @@ final class JimfsFileStore extends FileStore {
 
   // internal use methods
 
-  /**
-   * Returns the file system state object.
-   */
+  /** Returns the file system state object. */
   FileSystemState state() {
     return state;
   }
 
-  /**
-   * Returns the read lock for this store.
-   */
+  /** Returns the read lock for this store. */
   Lock readLock() {
     return readLock;
   }
 
-  /**
-   * Returns the write lock for this store.
-   */
+  /** Returns the write lock for this store. */
   Lock writeLock() {
     return writeLock;
   }
 
-  /**
-   * Returns the names of the root directories in this store.
-   */
+  /** Returns the names of the root directories in this store. */
   ImmutableSortedSet<Name> getRootDirectoryNames() {
     state.checkOpen();
     return tree.getRootDirectoryNames();
   }
 
-  /**
-   * Returns the root directory with the given name or {@code null} if no such directory exists.
-   */
+  /** Returns the root directory with the given name or {@code null} if no such directory exists. */
   @Nullable
   Directory getRoot(Name name) {
     DirectoryEntry entry = tree.getRoot(name);
     return entry == null ? null : (Directory) entry.file();
   }
 
-  /**
-   * Returns whether or not the given feature is supported by this file store.
-   */
+  /** Returns whether or not the given feature is supported by this file store. */
   boolean supportsFeature(Feature feature) {
     return supportedFeatures.contains(feature);
   }
@@ -134,7 +120,7 @@ final class JimfsFileStore extends FileStore {
    * @throws NoSuchFileException if an element of the path other than the final element does not
    *     resolve to a directory or symbolic link (e.g. it doesn't exist or is a regular file)
    * @throws IOException if a symbolic link cycle is detected or the depth of symbolic link
-   *    recursion otherwise exceeds a threshold
+   *     recursion otherwise exceeds a threshold
    */
   DirectoryEntry lookUp(File workingDirectory, JimfsPath path, Set<? super LinkOption> options)
       throws IOException {
@@ -142,33 +128,27 @@ final class JimfsFileStore extends FileStore {
     return tree.lookUp(workingDirectory, path, options);
   }
 
-  /**
-   * Returns a supplier that creates a new regular file.
-   */
+  /** Returns a supplier that creates a new regular file. */
   Supplier<RegularFile> regularFileCreator() {
     state.checkOpen();
     return factory.regularFileCreator();
   }
 
-  /**
-   * Returns a supplier that creates a new directory.
-   */
+  /** Returns a supplier that creates a new directory. */
   Supplier<Directory> directoryCreator() {
     state.checkOpen();
     return factory.directoryCreator();
   }
 
-  /**
-   * Returns a supplier that creates a new symbolic link with the given target.
-   */
+  /** Returns a supplier that creates a new symbolic link with the given target. */
   Supplier<SymbolicLink> symbolicLinkCreator(JimfsPath target) {
     state.checkOpen();
     return factory.symbolicLinkCreator(target);
   }
 
   /**
-   * Creates a copy of the given file, copying its attributes as well according to the given
-   * {@code attributeCopyOption}.
+   * Creates a copy of the given file, copying its attributes as well according to the given {@code
+   * attributeCopyOption}.
    */
   File copyWithoutContent(File file, AttributeCopyOption attributeCopyOption) throws IOException {
     File copy = factory.copyWithoutContent(file);
@@ -187,8 +167,8 @@ final class JimfsFileStore extends FileStore {
   }
 
   /**
-   * Returns an attribute view of the given type for the given file lookup callback, or
-   * {@code null} if the view type is not supported.
+   * Returns an attribute view of the given type for the given file lookup callback, or {@code null}
+   * if the view type is not supported.
    */
   @Nullable
   <V extends FileAttributeView> V getFileAttributeView(FileLookup lookup, Class<V> type) {
@@ -214,18 +194,14 @@ final class JimfsFileStore extends FileStore {
     return attributes.readAttributes(file, type);
   }
 
-  /**
-   * Sets the given attribute to the given value for the given file.
-   */
+  /** Sets the given attribute to the given value for the given file. */
   void setAttribute(File file, String attribute, Object value) {
     state.checkOpen();
     // TODO(cgdecker): Change attribute stuff to avoid the sad boolean parameter
     attributes.setAttribute(file, attribute, value, false);
   }
 
-  /**
-   * Returns the file attribute views supported by this store.
-   */
+  /** Returns the file attribute views supported by this store. */
   ImmutableSet<String> supportedFileAttributeViews() {
     state.checkOpen();
     return attributes.supportedFileAttributeViews();

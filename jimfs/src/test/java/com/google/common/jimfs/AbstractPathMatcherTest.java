@@ -33,7 +33,6 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.Iterator;
 import java.util.regex.PatternSyntaxException;
-
 import javax.annotation.Nullable;
 
 /**
@@ -48,9 +47,7 @@ public abstract class AbstractPathMatcherTest {
    */
   protected abstract PathMatcher matcher(String pattern);
 
-  /**
-   * Override to return a real matcher for the given pattern.
-   */
+  /** Override to return a real matcher for the given pattern. */
   @Nullable
   protected PathMatcher realMatcher(String pattern) {
     return null;
@@ -117,9 +114,7 @@ public abstract class AbstractPathMatcherTest {
     }
   }
 
-  /**
-   * Path that only provides toString().
-   */
+  /** Path that only provides toString(). */
   private static Path fake(final String path) {
     return new Path() {
       @Override
