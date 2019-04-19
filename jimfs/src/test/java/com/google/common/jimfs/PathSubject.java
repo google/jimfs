@@ -123,9 +123,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
 
   /** Asserts that the path has no name components. */
   public PathSubject hasNoNameComponents() {
-    if (actual().getNameCount() != 0) {
-      fail("has no name components");
-    }
+    check("getNameCount()").that(actual().getNameCount()).isEqualTo(0);
     return this;
   }
 
