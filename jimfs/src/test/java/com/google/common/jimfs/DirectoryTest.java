@@ -258,7 +258,7 @@ public class DirectoryTest {
     dir.put(entry("bar"));
 
     assertThat(dir.entryCount()).isEqualTo(4);
-    assertThat(ImmutableSet.copyOf(dir)).containsAllOf(entry("foo"), entry("bar"));
+    assertThat(ImmutableSet.copyOf(dir)).containsAtLeast(entry("foo"), entry("bar"));
     assertThat(dir.get(Name.simple("foo"))).isEqualTo(entry("foo"));
     assertThat(dir.get(Name.simple("bar"))).isEqualTo(entry("bar"));
   }
