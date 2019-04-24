@@ -20,7 +20,7 @@ import static com.google.common.jimfs.TestUtils.assertNotEquals;
 import static com.google.common.jimfs.TestUtils.buffer;
 import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.jimfs.TestUtils.regularFile;
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
@@ -695,8 +695,8 @@ public class JimfsFileChannelTest {
         future.get();
         fail();
       } catch (ExecutionException expected) {
-        assertThat(expected.getCause())
-            .named("blocking thread exception")
+        assertWithMessage("blocking thread exception")
+            .that(expected.getCause())
             .isInstanceOf(AsynchronousCloseException.class);
       }
     }
@@ -754,8 +754,8 @@ public class JimfsFileChannelTest {
     thread.interrupt();
 
     // get the exception that caused the interrupted operation to terminate
-    assertThat(interruptException.get(200, MILLISECONDS))
-        .named("interrupted thread exception")
+    assertWithMessage("interrupted thread exception")
+        .that(interruptException.get(200, MILLISECONDS))
         .isInstanceOf(ClosedByInterruptException.class);
 
     // check that each other thread got AsynchronousCloseException (since the interrupt, on a
@@ -765,8 +765,8 @@ public class JimfsFileChannelTest {
         future.get();
         fail();
       } catch (ExecutionException expected) {
-        assertThat(expected.getCause())
-            .named("blocking thread exception")
+        assertWithMessage("blocking thread exception")
+            .that(expected.getCause())
             .isInstanceOf(AsynchronousCloseException.class);
       }
     }
