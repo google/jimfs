@@ -17,6 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.truth.Fact.simpleFact;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.collect.ImmutableList;
@@ -97,7 +98,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /** Asserts that the path is absolute (it has a root component). */
   public PathSubject isAbsolute() {
     if (!actual().isAbsolute()) {
-      fail("is absolute");
+      failWithActual(simpleFact("expected to be absolute"));
     }
     return this;
   }
@@ -105,7 +106,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /** Asserts that the path is relative (it has no root component). */
   public PathSubject isRelative() {
     if (actual().isAbsolute()) {
-      fail("is relative");
+      failWithActual(simpleFact("expected to be relative"));
     }
     return this;
   }
@@ -114,9 +115,9 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   public PathSubject hasRootComponent(@Nullable String root) {
     Path rootComponent = actual().getRoot();
     if (root == null && rootComponent != null) {
-      fail("has root component", root);
+      failWithActual("expected to have root component", root);
     } else if (root != null && !root.equals(rootComponent.toString())) {
-      fail("has root component", root);
+      failWithActual("expected to have root component", root);
     }
     return this;
   }
@@ -144,7 +145,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   public PathSubject matches(String syntaxAndPattern) {
     PathMatcher matcher = actual().getFileSystem().getPathMatcher(syntaxAndPattern);
     if (!matcher.matches(actual())) {
-      fail("matches", syntaxAndPattern);
+      failWithActual("expected to match ", syntaxAndPattern);
     }
     return this;
   }
@@ -153,7 +154,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   public PathSubject doesNotMatch(String syntaxAndPattern) {
     PathMatcher matcher = actual().getFileSystem().getPathMatcher(syntaxAndPattern);
     if (matcher.matches(actual())) {
-      fail("does not match", syntaxAndPattern);
+      failWithActual("expected not to match", syntaxAndPattern);
     }
     return this;
   }
@@ -172,10 +173,10 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /** Asserts that the path does not exist. */
   public PathSubject doesNotExist() {
     if (!Files.notExists(actual(), linkOptions)) {
-      fail("does not exist");
+      failWithActual(simpleFact("expected not to exist"));
     }
     if (Files.exists(actual(), linkOptions)) {
-      fail("does not exist");
+      failWithActual(simpleFact("expected not to exist"));
     }
     return this;
   }
@@ -185,7 +186,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     exists(); // check for directoryness should imply check for existence
 
     if (!Files.isDirectory(actual(), linkOptions)) {
-      fail("is directory");
+      failWithActual(simpleFact("expected to be directory"));
     }
     return this;
   }
@@ -195,7 +196,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     exists(); // check for regular fileness should imply check for existence
 
     if (!Files.isRegularFile(actual(), linkOptions)) {
-      fail("is regular file");
+      failWithActual(simpleFact("expected to be regular file"));
     }
     return this;
   }
@@ -205,7 +206,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     exists(); // check for symbolic linkness should imply check for existence
 
     if (!Files.isSymbolicLink(actual())) {
-      fail("is symbolic link");
+      failWithActual(simpleFact("expected to be symbolic link"));
     }
     return this;
   }
@@ -227,7 +228,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
 
     int linkCount = (int) Files.getAttribute(actual(), "unix:nlink", linkOptions);
     if (linkCount != count) {
-      fail("has link count", count);
+      failWithActual("expected to have link count", count);
     }
     return this;
   }
@@ -240,7 +241,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /** Asserts that the path resolves to the same file as the given path. */
   public PathSubject isSameFileAs(Path path) throws IOException {
     if (!Files.isSameFile(actual(), path)) {
-      fail("is same file as", path);
+      failWithActual("expected to be same file as", path);
     }
     return this;
   }
@@ -248,7 +249,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /** Asserts that the path does not resolve to the same file as the given path. */
   public PathSubject isNotSameFileAs(String path) throws IOException {
     if (Files.isSameFile(actual(), toPath(path))) {
-      fail("is not same file as", path);
+      failWithActual("expected not to be same file as", path);
     }
     return this;
   }
@@ -259,7 +260,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
 
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(actual())) {
       if (stream.iterator().hasNext()) {
-        fail("has no children");
+        failWithActual(simpleFact("expected to have no children"));
       }
     }
     return this;
@@ -290,7 +291,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /** Asserts that the file has the given size. */
   public PathSubject hasSize(long size) throws IOException {
     if (Files.size(actual()) != size) {
-      fail("has size", size);
+      failWithActual("expected to have size", size);
     }
     return this;
   }
@@ -320,7 +321,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     if (!Arrays.equals(bytes, actual)) {
       System.out.println(BaseEncoding.base16().encode(actual));
       System.out.println(BaseEncoding.base16().encode(bytes));
-      fail("contains bytes", BaseEncoding.base16().encode(bytes));
+      failWithActual("expected to contain bytes", BaseEncoding.base16().encode(bytes));
     }
     return this;
   }
@@ -334,7 +335,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
 
     byte[] expectedBytes = Files.readAllBytes(toPath(path));
     if (!Arrays.equals(expectedBytes, Files.readAllBytes(actual()))) {
-      fail("contains same bytes as", path);
+      failWithActual("expected to contain same bytes as", path);
     }
     return this;
   }
