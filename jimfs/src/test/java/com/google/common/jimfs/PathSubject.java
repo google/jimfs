@@ -73,7 +73,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
    */
   // TODO(cgruber): Talk to cdecker about removing this as an anti-pattern.
   public PathSubject andThat(String path, LinkOption... linkOptions) {
-    PathSubject newSubject = check().about(paths()).that(toPath(path));
+    PathSubject newSubject = check("path(%s", path).about(paths()).that(toPath(path));
     if (linkOptions.length != 0) {
       newSubject = newSubject.noFollowLinks();
     }
