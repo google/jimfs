@@ -68,18 +68,6 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     return this;
   }
 
-  /**
-   * Returns a new subject for asserting against a different path or with different link options.
-   */
-  // TODO(cgruber): Talk to cdecker about removing this as an anti-pattern.
-  public PathSubject andThat(String path, LinkOption... linkOptions) {
-    PathSubject newSubject = check("path(%s", path).about(paths()).that(toPath(path));
-    if (linkOptions.length != 0) {
-      newSubject = newSubject.noFollowLinks();
-    }
-    return newSubject;
-  }
-
   /** Do not follow links when looking up the path. */
   public PathSubject noFollowLinks() {
     this.linkOptions = NOFOLLOW_LINKS;

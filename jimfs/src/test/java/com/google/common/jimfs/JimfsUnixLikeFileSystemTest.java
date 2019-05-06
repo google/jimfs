@@ -1813,26 +1813,19 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Object fooKey = getFileKey("/foo");
 
     Files.move(path("/foo"), path("/bar"));
-    assertThatPath("/foo")
-        .doesNotExist()
-        .andThat("/bar")
-        .containsBytes(bytes)
-        .and()
-        .attribute("fileKey")
-        .is(fooKey);
+    assertThatPath("/foo").doesNotExist();
+    assertThatPath("/bar").containsBytes(bytes).and().attribute("fileKey").is(fooKey);
 
     Files.createDirectory(path("/foo"));
     Files.move(path("/bar"), path("/foo/bar"));
 
-    assertThatPath("/bar").doesNotExist().andThat("/foo/bar").isRegularFile();
+    assertThatPath("/bar").doesNotExist();
+    assertThatPath("/foo/bar").isRegularFile();
 
     Files.move(path("/foo"), path("/baz"));
-    assertThatPath("/foo")
-        .doesNotExist()
-        .andThat("/baz")
-        .isDirectory()
-        .andThat("/baz/bar")
-        .isRegularFile();
+    assertThatPath("/foo").doesNotExist();
+    assertThatPath("/baz").isDirectory();
+    assertThatPath("/baz/bar").isRegularFile();
   }
 
   @Test
