@@ -17,8 +17,10 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.truth.Fact.fact;
 import static com.google.common.truth.Fact.simpleFact;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
@@ -34,7 +36,6 @@ import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -126,7 +127,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
     }
 
     if (!builder.build().equals(ImmutableList.copyOf(names))) {
-      fail("has name components", (Object[]) names);
+      failWithActual("expected components", asList(names));
     }
     return this;
   }
@@ -152,10 +153,10 @@ public final class PathSubject extends Subject<PathSubject, Path> {
   /** Asserts that the path exists. */
   public PathSubject exists() {
     if (!Files.exists(actual, linkOptions)) {
-      fail("exist");
+      failWithActual(simpleFact("expected to exist"));
     }
     if (Files.notExists(actual, linkOptions)) {
-      fail("exist");
+      failWithActual(simpleFact("expected to exist"));
     }
     return this;
   }
@@ -203,8 +204,12 @@ public final class PathSubject extends Subject<PathSubject, Path> {
 
   /** Asserts that the path, which is a symbolic link, has the given path as a target. */
   public PathSubject withTarget(String targetPath) throws IOException {
-    if (!Files.readSymbolicLink(actual).equals(toPath(targetPath))) {
-      fail("symbolic link target is", targetPath);
+    Path actualTarget = Files.readSymbolicLink(actual);
+    if (!actualTarget.equals(toPath(targetPath))) {
+      failWithoutActual(
+          fact("expected link target", targetPath),
+          fact("but target was", actualTarget),
+          fact("for path", actual));
     }
     return this;
   }
@@ -272,7 +277,10 @@ public final class PathSubject extends Subject<PathSubject, Path> {
       }
 
       if (!actualNames.equals(expectedNames)) {
-        fail("has children", (Object[]) children);
+        failWithoutActual(
+            fact("expected to have children", expectedNames),
+            fact("but had children", actualNames),
+            fact("for path", actual));
       }
     }
     return this;
@@ -347,9 +355,7 @@ public final class PathSubject extends Subject<PathSubject, Path> {
 
     List<String> expected = ImmutableList.copyOf(lines);
     List<String> actual = Files.readAllLines(this.actual, charset);
-    if (!expected.equals(actual)) {
-      failWithBadResults("contains lines", expected, "contains", actual);
-    }
+    check("lines()").that(actual).isEqualTo(expected);
     return this;
   }
 
@@ -359,18 +365,14 @@ public final class PathSubject extends Subject<PathSubject, Path> {
       @Override
       public Attribute is(Object value) throws IOException {
         Object actualValue = Files.getAttribute(actual, attribute, linkOptions);
-        if (!Objects.equals(value, actualValue)) {
-          fail("attribute '" + attribute + "' is", value);
-        }
+        check("attribute(%s)", attribute).that(actualValue).isEqualTo(value);
         return this;
       }
 
       @Override
       public Attribute isNot(Object value) throws IOException {
         Object actualValue = Files.getAttribute(actual, attribute, linkOptions);
-        if (Objects.equals(value, actualValue)) {
-          fail("attribute '" + attribute + "' is not", value);
-        }
+        check("attribute(%s)", attribute).that(actualValue).isNotEqualTo(value);
         return this;
       }
 
