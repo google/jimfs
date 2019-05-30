@@ -215,8 +215,15 @@ public class DirectoryTest {
     root.link(Name.simple("bar"), regularFile(10));
     root.link(Name.simple("abc"), regularFile(10));
 
+    /*
+     * If we inline this into the assertThat call below, javac resolves it to assertThat(SortedSet),
+     * which isn't available publicly. Our @GoogleInternal checks consider that to be an error, even
+     * though the code will compile fine externally by resolving to assertThat(Iterable) instead. So
+     * we avoid that by assigning to a non-SortedSet type here.
+     */
+    ImmutableSet<Name> snapshot = root.snapshot();
     // does not include . or .. and is sorted by the name
-    assertThat(root.snapshot())
+    assertThat(snapshot)
         .containsExactly(Name.simple("abc"), Name.simple("bar"), Name.simple("foo"));
   }
 
