@@ -224,7 +224,8 @@ public class DirectoryTest {
     ImmutableSet<Name> snapshot = root.snapshot();
     // does not include . or .. and is sorted by the name
     assertThat(snapshot)
-        .containsExactly(Name.simple("abc"), Name.simple("bar"), Name.simple("foo"));
+        .containsExactly(Name.simple("abc"), Name.simple("bar"), Name.simple("foo"))
+        .inOrder();
   }
 
   @Test
