@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
  *
  * @author Colin Decker
  */
-public final class PathSubject extends Subject<PathSubject, Path> {
+public final class PathSubject extends Subject {
 
   /** Returns the subject factory for doing assertions on paths. */
   public static Subject.Factory<PathSubject, Path> paths() {
