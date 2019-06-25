@@ -36,12 +36,6 @@
   </description>
 
   <dependencies>
-    <!-- Required runtime dependencies -->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
-
     <!-- Optional runtime dependencies -->
     <dependency>
       <groupId>com.ibm.icu</groupId>
