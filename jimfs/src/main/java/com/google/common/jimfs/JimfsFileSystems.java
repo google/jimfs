@@ -60,7 +60,7 @@ final class JimfsFileSystems {
           "Unable to get Runnable for removing the FileSystem from the cache when it is closed", e);
     }
   }
-
+  
   /**
    * Initialize and configure a new file system with the given provider and URI, using the given
    * configuration.
@@ -70,7 +70,27 @@ final class JimfsFileSystems {
     PathService pathService = new PathService(config);
     FileSystemState state = new FileSystemState(removeFileSystemRunnable(uri));
 
-    JimfsFileStore fileStore = createFileStore(config, pathService, state);
+    JimfsFileStore fileStore = createFileStore(config, pathService, state, new HashMap<Name, Directory>());
+    FileSystemView defaultView = createDefaultView(config, fileStore, pathService);
+    WatchServiceConfiguration watchServiceConfig = config.watchServiceConfig;
+
+    JimfsFileSystem fileSystem =
+        new JimfsFileSystem(provider, uri, fileStore, pathService, defaultView, watchServiceConfig);
+
+    pathService.setFileSystem(fileSystem);
+    return fileSystem;
+  }
+
+  /**
+   * Initialize and configure a new file system with the given provider and URI, using the given
+   * configuration.
+   */
+  public static JimfsFileSystem newFileSystem(
+      JimfsFileSystemProvider provider, URI uri, Configuration config, Map<Name, Directory> roots) throws IOException {
+    PathService pathService = new PathService(config);
+    FileSystemState state = new FileSystemState(removeFileSystemRunnable(uri));
+
+    JimfsFileStore fileStore = createFileStore(config, pathService, state, roots);
     FileSystemView defaultView = createDefaultView(config, fileStore, pathService);
     WatchServiceConfiguration watchServiceConfig = config.watchServiceConfig;
 
@@ -83,14 +103,12 @@ final class JimfsFileSystems {
 
   /** Creates the file store for the file system. */
   private static JimfsFileStore createFileStore(
-      Configuration config, PathService pathService, FileSystemState state) {
+      Configuration config, PathService pathService, FileSystemState state, Map<Name, Directory> roots) {
     AttributeService attributeService = new AttributeService(config);
 
     // TODO(cgdecker): Make disk values configurable
     HeapDisk disk = new HeapDisk(config);
     FileFactory fileFactory = new FileFactory(disk);
-
-    Map<Name, Directory> roots = new HashMap<>();
 
     // create roots
     for (String root : config.roots) {
