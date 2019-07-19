@@ -18,6 +18,8 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.Serializable;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.collect.Ordering;
