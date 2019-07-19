@@ -19,9 +19,9 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.base.MoreObjects;
-
 import java.io.Serializable;
+
+import com.google.common.base.MoreObjects;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
@@ -31,146 +31,141 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Entry in a directory, containing references to the directory itself, the file
- * the entry links to and the name of the entry.
+ * Entry in a directory, containing references to the directory itself, the file the entry links to
+ * and the name of the entry.
  *
- * <p>
- * May also represent a non-existent entry if the name does not link to any file
- * in the directory.
+ * <p>May also represent a non-existent entry if the name does not link to any file in the
+ * directory.
  */
 final class DirectoryEntry implements Serializable {
 
-    private static final long serialVersionUID = -3258824108590984645L;
-    private final Directory directory;
-    private final Name name;
+  private static final long serialVersionUID = -3258824108590984645L;
 
-    @Nullable
-    private final File file;
+  private final Directory directory;
+  private final Name name;
 
-    @Nullable
-    DirectoryEntry next; // for use in Directory
+  @Nullable private final File file;
 
-    DirectoryEntry(Directory directory, Name name, @Nullable File file) {
-        this.directory = checkNotNull(directory);
-        this.name = checkNotNull(name);
-        this.file = file;
+  @Nullable DirectoryEntry next; // for use in Directory
+
+  DirectoryEntry(Directory directory, Name name, @Nullable File file) {
+    this.directory = checkNotNull(directory);
+    this.name = checkNotNull(name);
+    this.file = file;
+  }
+
+  /** Returns {@code true} if and only if this entry represents an existing file. */
+  public boolean exists() {
+    return file != null;
+  }
+
+  /**
+   * Checks that this entry exists, throwing an exception if not.
+   *
+   * @return this
+   * @throws NoSuchFileException if this entry does not exist
+   */
+  public DirectoryEntry requireExists(Path pathForException) throws NoSuchFileException {
+    if (!exists()) {
+      throw new NoSuchFileException(pathForException.toString());
     }
+    return this;
+  }
 
-    /**
-     * Returns {@code true} if and only if this entry represents an existing file.
-     */
-    public boolean exists() {
-        return file != null;
+  /**
+   * Checks that this entry does not exist, throwing an exception if it does.
+   *
+   * @return this
+   * @throws FileAlreadyExistsException if this entry does not exist
+   */
+  public DirectoryEntry requireDoesNotExist(Path pathForException)
+      throws FileAlreadyExistsException {
+    if (exists()) {
+      throw new FileAlreadyExistsException(pathForException.toString());
     }
+    return this;
+  }
 
-    /**
-     * Checks that this entry exists, throwing an exception if not.
-     *
-     * @return this
-     * @throws NoSuchFileException if this entry does not exist
-     */
-    public DirectoryEntry requireExists(Path pathForException) throws NoSuchFileException {
-        if (!exists()) {
-            throw new NoSuchFileException(pathForException.toString());
-        }
-        return this;
+  /**
+   * Checks that this entry exists and links to a directory, throwing an exception if not.
+   *
+   * @return this
+   * @throws NoSuchFileException if this entry does not exist
+   * @throws NotDirectoryException if this entry does not link to a directory
+   */
+  public DirectoryEntry requireDirectory(Path pathForException)
+      throws NoSuchFileException, NotDirectoryException {
+    requireExists(pathForException);
+    if (!file().isDirectory()) {
+      throw new NotDirectoryException(pathForException.toString());
     }
+    return this;
+  }
 
-    /**
-     * Checks that this entry does not exist, throwing an exception if it does.
-     *
-     * @return this
-     * @throws FileAlreadyExistsException if this entry does not exist
-     */
-    public DirectoryEntry requireDoesNotExist(Path pathForException)
-            throws FileAlreadyExistsException {
-        if (exists()) {
-            throw new FileAlreadyExistsException(pathForException.toString());
-        }
-        return this;
+  /**
+   * Checks that this entry exists and links to a symbolic link, throwing an exception if not.
+   *
+   * @return this
+   * @throws NoSuchFileException if this entry does not exist
+   * @throws NotLinkException if this entry does not link to a symbolic link
+   */
+  public DirectoryEntry requireSymbolicLink(Path pathForException)
+      throws NoSuchFileException, NotLinkException {
+    requireExists(pathForException);
+    if (!file().isSymbolicLink()) {
+      throw new NotLinkException(pathForException.toString());
     }
+    return this;
+  }
 
-    /**
-     * Checks that this entry exists and links to a directory, throwing an exception
-     * if not.
-     *
-     * @return this
-     * @throws NoSuchFileException   if this entry does not exist
-     * @throws NotDirectoryException if this entry does not link to a directory
-     */
-    public DirectoryEntry requireDirectory(Path pathForException)
-            throws NoSuchFileException, NotDirectoryException {
-        requireExists(pathForException);
-        if (!file().isDirectory()) {
-            throw new NotDirectoryException(pathForException.toString());
-        }
-        return this;
-    }
+  /** Returns the directory containing this entry. */
+  public Directory directory() {
+    return directory;
+  }
 
-    /**
-     * Checks that this entry exists and links to a symbolic link, throwing an
-     * exception if not.
-     *
-     * @return this
-     * @throws NoSuchFileException if this entry does not exist
-     * @throws NotLinkException    if this entry does not link to a symbolic link
-     */
-    public DirectoryEntry requireSymbolicLink(Path pathForException)
-            throws NoSuchFileException, NotLinkException {
-        requireExists(pathForException);
-        if (!file().isSymbolicLink()) {
-            throw new NotLinkException(pathForException.toString());
-        }
-        return this;
-    }
+  /** Returns the name of this entry. */
+  public Name name() {
+    return name;
+  }
 
-    /** Returns the directory containing this entry. */
-    public Directory directory() {
-        return directory;
-    }
+  /**
+   * Returns the file this entry links to.
+   *
+   * @throws IllegalStateException if the file does not exist
+   */
+  public File file() {
+    checkState(exists());
+    return file;
+  }
 
-    /** Returns the name of this entry. */
-    public Name name() {
-        return name;
-    }
+  /** Returns the file this entry links to or {@code null} if the file does not exist */
+  @Nullable
+  public File fileOrNull() {
+    return file;
+  }
 
-    /**
-     * Returns the file this entry links to.
-     *
-     * @throws IllegalStateException if the file does not exist
-     */
-    public File file() {
-        checkState(exists());
-        return file;
+  @Override
+  public boolean equals(Object obj) {
+    if (obj instanceof DirectoryEntry) {
+      DirectoryEntry other = (DirectoryEntry) obj;
+      return directory.equals(other.directory)
+          && name.equals(other.name)
+          && Objects.equals(file, other.file);
     }
+    return false;
+  }
 
-    /**
-     * Returns the file this entry links to or {@code null} if the file does not
-     * exist
-     */
-    @Nullable
-    public File fileOrNull() {
-        return file;
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(directory, name, file);
+  }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof DirectoryEntry) {
-            DirectoryEntry other = (DirectoryEntry) obj;
-            return directory.equals(other.directory) && name.equals(other.name)
-                    && Objects.equals(file, other.file);
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(directory, name, file);
-    }
-
-    @Override
-    public String toString() {
-        return MoreObjects.toStringHelper(this).add("directory", directory).add("name", name)
-                .add("file", file).toString();
-    }
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("directory", directory)
+        .add("name", name)
+        .add("file", file)
+        .toString();
+  }
 }
