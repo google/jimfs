@@ -3,7 +3,7 @@ sudo: false
 language: java
 
 jdk:
-  - oraclejdk8
+  - oraclejdk11
 
 install: mvn install -U -DskipTests=true
 
