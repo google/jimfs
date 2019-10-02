@@ -64,7 +64,7 @@ final class WindowsPathType extends PathType {
       throw new InvalidPathException(
           original,
           "Jimfs does not currently support the Windows syntax for a relative path "
-              + "on a specific drive (e.g. \"C:foo\\bar\"");
+              + "on a specific drive (e.g. \"C:foo\\bar\")");
     }
 
     String root;
@@ -74,7 +74,7 @@ final class WindowsPathType extends PathType {
       throw new InvalidPathException(
           original,
           "Jimfs does not currently support the Windows syntax for an absolute path "
-              + "on the current drive (e.g. \"\\foo\\bar\"");
+              + "on the current drive (e.g. \"\\foo\\bar\")");
     } else {
       root = parseDriveRoot(path);
     }
