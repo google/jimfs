@@ -34,7 +34,7 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * {@link FileStore} implementation which provides methods for file creation, lookup and attribute
@@ -102,7 +102,7 @@ final class JimfsFileStore extends FileStore {
   }
 
   /** Returns the root directory with the given name or {@code null} if no such directory exists. */
-  @Nullable
+  @NullableDecl
   Directory getRoot(Name name) {
     DirectoryEntry entry = tree.getRoot(name);
     return entry == null ? null : (Directory) entry.file();
@@ -170,7 +170,7 @@ final class JimfsFileStore extends FileStore {
    * Returns an attribute view of the given type for the given file lookup callback, or {@code null}
    * if the view type is not supported.
    */
-  @Nullable
+  @NullableDecl
   <V extends FileAttributeView> V getFileAttributeView(FileLookup lookup, Class<V> type) {
     state.checkOpen();
     return attributes.getFileAttributeView(lookup, type);

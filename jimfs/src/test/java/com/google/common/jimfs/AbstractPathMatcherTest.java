@@ -33,7 +33,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.Iterator;
 import java.util.regex.PatternSyntaxException;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Abstract base class for tests of {@link PathMatcher} implementations.
@@ -48,7 +48,7 @@ public abstract class AbstractPathMatcherTest {
   protected abstract PathMatcher matcher(String pattern);
 
   /** Override to return a real matcher for the given pattern. */
-  @Nullable
+  @NullableDecl
   protected PathMatcher realMatcher(String pattern) {
     return null;
   }
@@ -77,7 +77,7 @@ public abstract class AbstractPathMatcherTest {
 
     private final PathMatcher matcher;
 
-    @Nullable private final PathMatcher realMatcher;
+    @NullableDecl private final PathMatcher realMatcher;
 
     PatternAsserter(String pattern) {
       this.matcher = matcher(pattern);

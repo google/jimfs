@@ -35,7 +35,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.Iterator;
 import java.util.Set;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Secure directory stream implementation that uses a {@link FileSystemView} with the stream's
@@ -87,7 +87,7 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
 
   private final class DirectoryIterator extends AbstractIterator<Path> {
 
-    @Nullable private Iterator<Name> fileNames;
+    @NullableDecl private Iterator<Name> fileNames;
 
     @Override
     protected synchronized Path computeNext() {

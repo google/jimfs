@@ -26,7 +26,7 @@ import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /** @author Colin Decker */
 public final class TestAttributeProvider extends AttributeProvider {
@@ -133,9 +133,9 @@ public final class TestAttributeProvider extends AttributeProvider {
 
     @Override
     public void setTimes(
-        @Nullable FileTime lastModifiedTime,
-        @Nullable FileTime lastAccessTime,
-        @Nullable FileTime createTime)
+        @NullableDecl FileTime lastModifiedTime,
+        @NullableDecl FileTime lastAccessTime,
+        @NullableDecl FileTime createTime)
         throws IOException {
       basicView.setTimes(lastModifiedTime, lastAccessTime, createTime);
     }

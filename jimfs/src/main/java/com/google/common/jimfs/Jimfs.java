@@ -33,7 +33,7 @@ import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Static factory methods for creating new Jimfs file systems. File systems may either be created
@@ -174,7 +174,7 @@ public final class Jimfs {
    * The system-loaded instance of {@code SystemJimfsFileSystemProvider}, or {@code null} if it
    * could not be found or loaded.
    */
-  @Nullable static final FileSystemProvider systemProvider = getSystemJimfsProvider();
+  @NullableDecl static final FileSystemProvider systemProvider = getSystemJimfsProvider();
 
   /**
    * Returns the system-loaded instance of {@code SystemJimfsFileSystemProvider} or {@code null} if
@@ -188,7 +188,7 @@ public final class Jimfs {
    * same class loader) as the class whose static cache a {@code JimfsFileSystem} instance will be
    * placed in when {@code FileSystems.newFileSystem} is called in {@code Jimfs.newFileSystem}.
    */
-  @Nullable
+  @NullableDecl
   private static FileSystemProvider getSystemJimfsProvider() {
     try {
       for (FileSystemProvider provider : FileSystemProvider.installedProviders()) {

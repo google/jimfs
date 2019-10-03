@@ -32,7 +32,7 @@ import java.nio.channels.FileLock;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * {@link AsynchronousFileChannel} implementation that delegates to a {@link JimfsFileChannel}.
@@ -55,7 +55,9 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   }
 
   private <R, A> void addCallback(
-      ListenableFuture<R> future, CompletionHandler<R, ? super A> handler, @Nullable A attachment) {
+      ListenableFuture<R> future,
+      CompletionHandler<R, ? super A> handler,
+      @NullableDecl A attachment) {
     future.addListener(new CompletionHandlerCallback<>(future, handler, attachment), executor);
   }
 
@@ -75,7 +77,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
       long position,
       long size,
       boolean shared,
-      @Nullable A attachment,
+      @NullableDecl A attachment,
       CompletionHandler<FileLock, ? super A> handler) {
     checkNotNull(handler);
     addCallback(lock(position, size, shared), handler, attachment);
@@ -120,7 +122,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   public <A> void read(
       ByteBuffer dst,
       long position,
-      @Nullable A attachment,
+      @NullableDecl A attachment,
       CompletionHandler<Integer, ? super A> handler) {
     addCallback(read(dst, position), handler, attachment);
   }
@@ -146,7 +148,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   public <A> void write(
       ByteBuffer src,
       long position,
-      @Nullable A attachment,
+      @NullableDecl A attachment,
       CompletionHandler<Integer, ? super A> handler) {
     addCallback(write(src, position), handler, attachment);
   }
@@ -189,12 +191,12 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
 
     private final ListenableFuture<R> future;
     private final CompletionHandler<R, ? super A> completionHandler;
-    @Nullable private final A attachment;
+    @NullableDecl private final A attachment;
 
     private CompletionHandlerCallback(
         ListenableFuture<R> future,
         CompletionHandler<R, ? super A> completionHandler,
-        @Nullable A attachment) {
+        @NullableDecl A attachment) {
       this.future = checkNotNull(future);
       this.completionHandler = checkNotNull(completionHandler);
       this.attachment = attachment;
