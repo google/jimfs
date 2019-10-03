@@ -26,7 +26,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.InvalidPathException;
 import java.util.Arrays;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * An object defining a specific type of path. Knows how to parse strings to a path and how to
@@ -164,7 +164,7 @@ public abstract class PathType {
   }
 
   /** Returns the string form of the given path. */
-  public abstract String toString(@Nullable String root, Iterable<String> names);
+  public abstract String toString(@NullableDecl String root, Iterable<String> names);
 
   /**
    * Returns the string form of the given path for use in the path part of a URI. The root element
@@ -211,10 +211,10 @@ public abstract class PathType {
   /** Simple result of parsing a path. */
   public static final class ParseResult {
 
-    @Nullable private final String root;
+    @NullableDecl private final String root;
     private final Iterable<String> names;
 
-    public ParseResult(@Nullable String root, Iterable<String> names) {
+    public ParseResult(@NullableDecl String root, Iterable<String> names) {
       this.root = root;
       this.names = checkNotNull(names);
     }
@@ -230,7 +230,7 @@ public abstract class PathType {
     }
 
     /** Returns the parsed root element, or null if there was no root. */
-    @Nullable
+    @NullableDecl
     public String root() {
       return root;
     }

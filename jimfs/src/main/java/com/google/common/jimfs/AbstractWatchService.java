@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Abstract implementation of {@link WatchService}. Provides the means for registering and managing
@@ -90,14 +90,14 @@ abstract class AbstractWatchService implements WatchService {
     return ImmutableList.copyOf(queue);
   }
 
-  @Nullable
+  @NullableDecl
   @Override
   public WatchKey poll() {
     checkOpen();
     return check(queue.poll());
   }
 
-  @Nullable
+  @NullableDecl
   @Override
   public WatchKey poll(long timeout, TimeUnit unit) throws InterruptedException {
     checkOpen();
@@ -111,8 +111,8 @@ abstract class AbstractWatchService implements WatchService {
   }
 
   /** Returns the given key, throwing an exception if it's the poison. */
-  @Nullable
-  private WatchKey check(@Nullable WatchKey key) {
+  @NullableDecl
+  private WatchKey check(@NullableDecl WatchKey key) {
     if (key == poison) {
       // ensure other blocking threads get the poison
       queue.offer(poison);
@@ -142,9 +142,9 @@ abstract class AbstractWatchService implements WatchService {
     private final Kind<T> kind;
     private final int count;
 
-    @Nullable private final T context;
+    @NullableDecl private final T context;
 
-    public Event(Kind<T> kind, int count, @Nullable T context) {
+    public Event(Kind<T> kind, int count, @NullableDecl T context) {
       this.kind = checkNotNull(kind);
       checkArgument(count >= 0, "count (%s) must be non-negative", count);
       this.count = count;
@@ -161,7 +161,7 @@ abstract class AbstractWatchService implements WatchService {
       return count;
     }
 
-    @Nullable
+    @NullableDecl
     @Override
     public T context() {
       return context;
@@ -214,7 +214,7 @@ abstract class AbstractWatchService implements WatchService {
 
     public Key(
         AbstractWatchService watcher,
-        @Nullable Watchable watchable,
+        @NullableDecl Watchable watchable,
         Iterable<? extends WatchEvent.Kind<?>> subscribedTypes) {
       this.watcher = checkNotNull(watcher);
       this.watchable = watchable; // nullable for Watcher poison

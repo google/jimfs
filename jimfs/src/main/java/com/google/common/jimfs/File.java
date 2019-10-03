@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Table;
 import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * A file object, containing both the file's metadata and content.
@@ -42,7 +42,7 @@ public abstract class File {
   private long lastAccessTime;
   private long lastModifiedTime;
 
-  @Nullable // null when only the basic view is used (default)
+  @NullableDecl // null when only the basic view is used (default)
   private Table<String, String, Object> attributes;
 
   File(int id) {
@@ -102,7 +102,7 @@ public abstract class File {
    * Returns the read-write lock for this file's content, or {@code null} if there is no content
    * lock.
    */
-  @Nullable
+  @NullableDecl
   ReadWriteLock contentLock() {
     return null;
   }
@@ -223,7 +223,7 @@ public abstract class File {
   }
 
   /** Gets the value of the given attribute in the given view. */
-  @Nullable
+  @NullableDecl
   public final synchronized Object getAttribute(String view, String attribute) {
     if (attributes == null) {
       return null;
@@ -264,7 +264,7 @@ public abstract class File {
     target.putAll(attributes);
   }
 
-  private synchronized void putAll(@Nullable Table<String, String, Object> attributes) {
+  private synchronized void putAll(@NullableDecl Table<String, String, Object> attributes) {
     if (attributes != null && this.attributes != attributes) {
       if (this.attributes == null) {
         this.attributes = HashBasedTable.create();

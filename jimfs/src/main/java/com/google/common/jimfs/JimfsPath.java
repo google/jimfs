@@ -41,7 +41,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Jimfs implementation of {@link Path}. Creation of new {@code Path} objects is delegated to the
@@ -51,18 +51,18 @@ import javax.annotation.Nullable;
  */
 final class JimfsPath implements Path {
 
-  @Nullable private final Name root;
+  @NullableDecl private final Name root;
   private final ImmutableList<Name> names;
   private final PathService pathService;
 
-  public JimfsPath(PathService pathService, @Nullable Name root, Iterable<Name> names) {
+  public JimfsPath(PathService pathService, @NullableDecl Name root, Iterable<Name> names) {
     this.pathService = checkNotNull(pathService);
     this.root = root;
     this.names = ImmutableList.copyOf(names);
   }
 
   /** Returns the root name, or null if there is no root. */
-  @Nullable
+  @NullableDecl
   public Name root() {
     return root;
   }
@@ -76,7 +76,7 @@ final class JimfsPath implements Path {
    * Returns the file name of this path. Unlike {@link #getFileName()}, this may return the name of
    * the root if this is a root path.
    */
-  @Nullable
+  @NullableDecl
   public Name name() {
     if (!names.isEmpty()) {
       return Iterables.getLast(names);
@@ -421,7 +421,7 @@ final class JimfsPath implements Path {
   }
 
   @Override
-  public boolean equals(@Nullable Object obj) {
+  public boolean equals(@NullableDecl Object obj) {
     return obj instanceof JimfsPath && compareTo((JimfsPath) obj) == 0;
   }
 
@@ -435,7 +435,7 @@ final class JimfsPath implements Path {
     return pathService.toString(this);
   }
 
-  @Nullable
+  @NullableDecl
   private JimfsPath checkPath(Path other) {
     if (checkNotNull(other) instanceof JimfsPath && other.getFileSystem().equals(getFileSystem())) {
       return (JimfsPath) other;

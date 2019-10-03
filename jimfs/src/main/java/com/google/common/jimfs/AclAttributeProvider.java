@@ -29,7 +29,7 @@ import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Attribute provider that provides the {@link AclFileAttributeView} ("acl").
@@ -71,7 +71,7 @@ final class AclAttributeProvider extends AttributeProvider {
     return ImmutableMap.of("acl:acl", acl);
   }
 
-  @Nullable
+  @NullableDecl
   @Override
   public Object get(File file, String attribute) {
     if (attribute.equals("acl")) {

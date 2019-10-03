@@ -27,7 +27,7 @@ import java.nio.file.NoSuchFileException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * The tree of directories and files for the file system. Contains the file system root directories
@@ -63,7 +63,7 @@ final class FileTree {
    * Gets the directory entry for the root with the given name or {@code null} if no such root
    * exists.
    */
-  @Nullable
+  @NullableDecl
   public DirectoryEntry getRoot(Name name) {
     Directory dir = roots.get(name);
     return dir == null ? null : dir.entryInParent();
@@ -83,7 +83,7 @@ final class FileTree {
     return result;
   }
 
-  @Nullable
+  @NullableDecl
   private DirectoryEntry lookUp(
       File dir, JimfsPath path, Set<? super LinkOption> options, int linkDepth) throws IOException {
     ImmutableList<Name> names = path.names();
@@ -114,7 +114,7 @@ final class FileTree {
    * Looks up the given names against the given base file. If the file is not a directory, the
    * lookup fails.
    */
-  @Nullable
+  @NullableDecl
   private DirectoryEntry lookUp(
       File dir, Iterable<Name> names, Set<? super LinkOption> options, int linkDepth)
       throws IOException {
@@ -151,9 +151,9 @@ final class FileTree {
   }
 
   /** Looks up the last element of a path. */
-  @Nullable
+  @NullableDecl
   private DirectoryEntry lookUpLast(
-      @Nullable File dir, Name name, Set<? super LinkOption> options, int linkDepth)
+      @NullableDecl File dir, Name name, Set<? super LinkOption> options, int linkDepth)
       throws IOException {
     Directory directory = toDirectory(dir);
     if (directory == null) {
@@ -177,7 +177,7 @@ final class FileTree {
    * Returns the directory entry located by the target path of the given symbolic link, resolved
    * relative to the given directory.
    */
-  @Nullable
+  @NullableDecl
   private DirectoryEntry followSymbolicLink(File dir, SymbolicLink link, int linkDepth)
       throws IOException {
     if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
@@ -196,7 +196,7 @@ final class FileTree {
    * we find an entry [bar -> "." -> bar], we instead return the entry for bar in its parent, [foo
    * -> "bar" -> bar].
    */
-  @Nullable
+  @NullableDecl
   private DirectoryEntry getRealEntry(DirectoryEntry entry) {
     Name name = entry.name();
 
@@ -209,8 +209,8 @@ final class FileTree {
     }
   }
 
-  @Nullable
-  private Directory toDirectory(@Nullable File file) {
+  @NullableDecl
+  private Directory toDirectory(@NullableDecl File file) {
     return file == null || !file.isDirectory() ? null : (Directory) file;
   }
 

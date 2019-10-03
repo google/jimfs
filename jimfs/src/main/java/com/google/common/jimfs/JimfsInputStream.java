@@ -23,7 +23,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
 import java.io.IOException;
 import java.io.InputStream;
-import javax.annotation.concurrent.GuardedBy;
 
 /**
  * {@link InputStream} for reading from a file's {@link RegularFile}.

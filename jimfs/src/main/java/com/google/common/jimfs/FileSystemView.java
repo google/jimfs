@@ -48,7 +48,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * View of a file system with a specific working directory. As all file system operations need to
@@ -305,7 +305,7 @@ final class FileSystemView {
    * Looks up the regular file at the given path, throwing an exception if the file isn't a regular
    * file. Returns null if the file did not exist.
    */
-  @Nullable
+  @NullableDecl
   private RegularFile lookUpRegularFile(JimfsPath path, Set<OpenOption> options)
       throws IOException {
     store.readLock().lock();
@@ -692,13 +692,13 @@ final class FileSystemView {
   }
 
   /** Returns a file attribute view using the given lookup callback. */
-  @Nullable
+  @NullableDecl
   public <V extends FileAttributeView> V getFileAttributeView(FileLookup lookup, Class<V> type) {
     return store.getFileAttributeView(lookup, type);
   }
 
   /** Returns a file attribute view for the given path in this view. */
-  @Nullable
+  @NullableDecl
   public <V extends FileAttributeView> V getFileAttributeView(
       final JimfsPath path, Class<V> type, final Set<? super LinkOption> options) {
     return store.getFileAttributeView(

@@ -20,7 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSortedSet;
 import java.util.Iterator;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * A table of {@linkplain DirectoryEntry directory entries}.
@@ -103,7 +103,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   }
 
   /** Returns the entry for the given name in this table or null if no such entry exists. */
-  @Nullable
+  @NullableDecl
   public DirectoryEntry get(Name name) {
     int index = bucketIndex(name, table.length);
 
@@ -334,7 +334,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   public Iterator<DirectoryEntry> iterator() {
     return new AbstractIterator<DirectoryEntry>() {
       int index;
-      @Nullable DirectoryEntry entry;
+      @NullableDecl DirectoryEntry entry;
 
       @Override
       protected DirectoryEntry computeNext() {

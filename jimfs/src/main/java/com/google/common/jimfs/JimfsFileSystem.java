@@ -33,7 +33,7 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * {@link FileSystem} implementation for Jimfs. Most behavior for the file system is implemented by
@@ -285,7 +285,7 @@ final class JimfsFileSystem extends FileSystem {
     return watchServiceConfig.newWatchService(defaultView, pathService);
   }
 
-  @Nullable private ExecutorService defaultThreadPool;
+  @NullableDecl private ExecutorService defaultThreadPool;
 
   /**
    * Returns a default thread pool to use for asynchronous file channels when users do not provide

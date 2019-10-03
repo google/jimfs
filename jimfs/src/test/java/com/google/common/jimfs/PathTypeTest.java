@@ -22,7 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import java.net.URI;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -94,7 +94,7 @@ public class PathTypeTest {
     assertUriRoundTripsCorrectly(type, "$foo/bar baz");
   }
 
-  static void assertParseResult(ParseResult result, @Nullable String root, String... names) {
+  static void assertParseResult(ParseResult result, @NullableDecl String root, String... names) {
     assertThat(result.root()).isEqualTo(root);
     assertThat(result.names()).containsExactly((Object[]) names).inOrder();
   }
@@ -126,7 +126,7 @@ public class PathTypeTest {
     }
 
     @Override
-    public String toString(@Nullable String root, Iterable<String> names) {
+    public String toString(@NullableDecl String root, Iterable<String> names) {
       StringBuilder builder = new StringBuilder();
       if (root != null) {
         builder.append(root);

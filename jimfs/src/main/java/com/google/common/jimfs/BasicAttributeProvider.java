@@ -23,7 +23,7 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Attribute provider that provides attributes common to all file systems, the {@link
@@ -148,9 +148,9 @@ final class BasicAttributeProvider extends AttributeProvider {
 
     @Override
     public void setTimes(
-        @Nullable FileTime lastModifiedTime,
-        @Nullable FileTime lastAccessTime,
-        @Nullable FileTime createTime)
+        @NullableDecl FileTime lastModifiedTime,
+        @NullableDecl FileTime lastAccessTime,
+        @NullableDecl FileTime createTime)
         throws IOException {
       File file = lookupFile();
 

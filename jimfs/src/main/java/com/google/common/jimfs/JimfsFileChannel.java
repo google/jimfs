@@ -43,7 +43,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.annotation.concurrent.GuardedBy;
 
 /**
  * A {@link FileChannel} implementation that reads and writes to a {@link RegularFile} object. The
