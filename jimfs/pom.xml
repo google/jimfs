@@ -52,7 +52,7 @@
     <!-- Compile-time dependencies -->
     <dependency>
       <groupId>com.google.auto.service</groupId>
-      <artifactId>auto-service</artifactId>
+      <artifactId>auto-service-annotations</artifactId>
       <optional>true</optional>
     </dependency>
     <dependency>
