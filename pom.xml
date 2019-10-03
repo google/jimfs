@@ -103,7 +103,7 @@
       <dependency>
         <groupId>com.ibm.icu</groupId>
         <artifactId>icu4j</artifactId>
-        <version>61.1</version>
+        <version>65.1</version>
       </dependency>
 
       <!-- Compile-time dependencies -->
@@ -150,7 +150,7 @@
       <plugins>
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.7.0</version>
+          <version>3.8.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
@@ -163,6 +163,10 @@
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
           <version>1.6</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.0.0-M3</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
