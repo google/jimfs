@@ -89,6 +89,14 @@
     <auto-service.version>1.0-rc6</auto-service.version>
     <java.version>1.7</java.version>
     <guava.version>27.0.1-android</guava.version>
+    <!--
+      NOTE: When updating errorprone.version, also update javac.version to the
+      version used by the new error-prone version. You should be able to find
+      it in the properties section of
+      https://github.com/google/error-prone/blob/v${errorprone.version}/pom.xml
+      -->
+    <errorprone.version>2.3.3</errorprone.version>
+    <javac.version>9+181-r4173-1</javac.version>
   </properties>
 
   <dependencyManagement>
@@ -183,9 +191,16 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
-          <compilerId>javac-with-errorprone</compilerId>
-          <forceJavacCompilerUse>true</forceJavacCompilerUse>
+          <compilerArgs>
+            <arg>-XDcompilePolicy=simple</arg>
+            <arg>-Xplugin:ErrorProne</arg>
+          </compilerArgs>
           <annotationProcessorPaths>
+            <path>
+              <groupId>com.google.errorprone</groupId>
+              <artifactId>error_prone_core</artifactId>
+              <version>${errorprone.version}</version>
+            </path>
             <path>
               <groupId>com.google.guava</groupId>
               <artifactId>guava-beta-checker</artifactId>
@@ -207,34 +222,23 @@
             </goals>
             <configuration>
               <compilerArgs>
-                <arg>-Xep:BetaApi:OFF</arg> <!-- Disable Beta Checker for tests -->
+                <arg>-XDcompilePolicy=simple</arg>
+                <arg>-Xplugin:ErrorProne -Xep:BetaApi:OFF</arg> <!-- Disable Beta Checker for tests -->
               </compilerArgs>
             </configuration>
           </execution>
         </executions>
-        <dependencies>
-          <dependency>
-            <groupId>com.google.errorprone</groupId>
-            <artifactId>error_prone_core</artifactId>
-            <version>2.2.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-compiler-javac-errorprone</artifactId>
-            <version>2.8.3</version>
-          </dependency>
-        </dependencies>
       </plugin>
     </plugins>
   </build>
 
   <profiles>
     <profile>
-      <id>jdk8</id>
+      <id>jdk8plus</id>
       <activation>
         <jdk>[1.8,)</jdk>
       </activation>
-      <!-- Disable HTML checking in doclint under JDK 8 -->
+      <!-- Disable HTML checking in doclint under JDK 8 and higher -->
       <reporting>
         <plugins>
           <plugin>
@@ -257,6 +261,29 @@
               <additionalOptions>
                 <additionalOption>-Xdoclint:none</additionalOption>
               </additionalOptions>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- https://errorprone.info/docs/installation#maven -->
+    <!-- using github.com/google/error-prone-javac is required when running on JDK 8 -->
+    <profile>
+      <id>jdk8exactly</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <fork>true</fork>
+              <compilerArgs combine.children="append">
+                <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
+              </compilerArgs>
             </configuration>
           </plugin>
         </plugins>
