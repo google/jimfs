@@ -199,6 +199,9 @@ final class PathService implements Comparator<JimfsPath> {
 
   /** Creates a hash code for the given path. */
   public int hash(JimfsPath path) {
+    // Note: JimfsPath.equals() is implemented using the compare() method below;
+    // equalityUsesCanonicalForm is taken into account there via the namesOrdering, which is set
+    // at construction time.
     int hash = 31;
     hash = 31 * hash + getFileSystem().hashCode();
 
@@ -251,7 +254,9 @@ final class PathService implements Comparator<JimfsPath> {
    */
   public PathMatcher createPathMatcher(String syntaxAndPattern) {
     return PathMatchers.getPathMatcher(
-        syntaxAndPattern, type.getSeparator() + type.getOtherSeparators(), displayNormalizations);
+        syntaxAndPattern,
+        type.getSeparator() + type.getOtherSeparators(),
+        equalityUsesCanonicalForm ? canonicalNormalizations : displayNormalizations);
   }
 
   private static final Predicate<Object> NOT_EMPTY =

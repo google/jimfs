@@ -16,6 +16,7 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.jimfs.PathNormalization.CASE_FOLD_ASCII;
 import static com.google.common.jimfs.PathSubject.paths;
 import static com.google.common.truth.Truth.assertAbout;
 import static com.google.common.truth.Truth.assertThat;
@@ -25,6 +26,7 @@ import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.PathMatcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -179,6 +181,56 @@ public class PathServiceTest {
         .isInstanceOf(PathMatchers.RegexPathMatcher.class);
   }
 
+  @Test
+  public void testPathMatcher_usingCanonicalForm_usesCanonicalNormalizations() {
+    // https://github.com/google/jimfs/issues/91
+    // This matches the behavior of Windows (the only built-in configuration that uses canonical
+    // form for equality). There, PathMatchers should do case-insensitive matching despite Windows
+    // not normalizing case for display.
+    assertCaseInsensitiveMatches(
+        new PathService(
+            PathType.unix(), NO_NORMALIZATIONS, ImmutableSet.of(CASE_FOLD_ASCII), true));
+    assertCaseSensitiveMatches(
+        new PathService(
+            PathType.unix(), ImmutableSet.of(CASE_FOLD_ASCII), NO_NORMALIZATIONS, true));
+  }
+
+  @Test
+  public void testPathMatcher_usingDisplayForm_usesDisplayNormalizations() {
+    assertCaseInsensitiveMatches(
+        new PathService(
+            PathType.unix(), ImmutableSet.of(CASE_FOLD_ASCII), NO_NORMALIZATIONS, false));
+    assertCaseSensitiveMatches(
+        new PathService(
+            PathType.unix(), NO_NORMALIZATIONS, ImmutableSet.of(CASE_FOLD_ASCII), false));
+  }
+
+  private static void assertCaseInsensitiveMatches(PathService service) {
+    ImmutableList<PathMatcher> matchers =
+        ImmutableList.of(
+            service.createPathMatcher("glob:foo"), service.createPathMatcher("glob:FOO"));
+
+    JimfsPath lowerCasePath = singleNamePath(service, "foo");
+    JimfsPath upperCasePath = singleNamePath(service, "FOO");
+    JimfsPath nonMatchingPath = singleNamePath(service, "bar");
+
+    for (PathMatcher matcher : matchers) {
+      assertThat(matcher.matches(lowerCasePath)).isTrue();
+      assertThat(matcher.matches(upperCasePath)).isTrue();
+      assertThat(matcher.matches(nonMatchingPath)).isFalse();
+    }
+  }
+
+  private static void assertCaseSensitiveMatches(PathService service) {
+    PathMatcher matcher = service.createPathMatcher("glob:foo");
+
+    JimfsPath lowerCasePath = singleNamePath(service, "foo");
+    JimfsPath upperCasePath = singleNamePath(service, "FOO");
+
+    assertThat(matcher.matches(lowerCasePath)).isTrue();
+    assertThat(matcher.matches(upperCasePath)).isFalse();
+  }
+
   public static PathService fakeUnixPathService() {
     return fakePathService(PathType.unix(), false);
   }
@@ -192,6 +244,10 @@ public class PathServiceTest {
         new PathService(type, NO_NORMALIZATIONS, NO_NORMALIZATIONS, equalityUsesCanonicalForm);
     service.setFileSystem(FILE_SYSTEM);
     return service;
+  }
+
+  private static JimfsPath singleNamePath(PathService service, String name) {
+    return new JimfsPath(service, null, ImmutableList.of(Name.create(name, name)));
   }
 
   private static final FileSystem FILE_SYSTEM;

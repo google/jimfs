@@ -306,7 +306,9 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     assertThatPath("C:\\foo\\bar\\baz\\stuff").matches("glob:C:\\\\foo\\\\**");
     assertThatPath("C:\\foo\\bar\\baz\\stuff").matches("glob:C:\\\\**\\\\stuff");
     assertThatPath("C:\\foo").matches("glob:C:\\\\[a-z]*");
-    assertThatPath("C:\\Foo").doesNotMatch("glob:C:\\\\[a-z]*");
+    assertThatPath("C:\\Foo").matches("glob:C:\\\\[a-z]*");
+    assertThatPath("C:\\foo").matches("glob:C:\\\\[A-Z]*");
+    assertThatPath("C:\\Foo").matches("glob:C:\\\\[A-Z]*");
     assertThatPath("C:\\foo\\bar\\baz\\Stuff.java").matches("glob:**\\\\*.java");
     assertThatPath("C:\\foo\\bar\\baz\\Stuff.java").matches("glob:**\\\\*.{java,class}");
     assertThatPath("C:\\foo\\bar\\baz\\Stuff.class").matches("glob:**\\\\*.{java,class}");
@@ -331,7 +333,9 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     assertThatPath("C:\\foo\\bar\\baz\\stuff").matches("glob:C:/foo/**");
     assertThatPath("C:\\foo\\bar\\baz\\stuff").matches("glob:C:/**/stuff");
     assertThatPath("C:\\foo").matches("glob:C:/[a-z]*");
-    assertThatPath("C:\\Foo").doesNotMatch("glob:C:/[a-z]*");
+    assertThatPath("C:\\Foo").matches("glob:C:/[a-z]*");
+    assertThatPath("C:\\foo").matches("glob:C:/[A-Z]*");
+    assertThatPath("C:\\Foo").matches("glob:C:/[A-Z]*");
     assertThatPath("C:\\foo\\bar\\baz\\Stuff.java").matches("glob:**/*.java");
     assertThatPath("C:\\foo\\bar\\baz\\Stuff.java").matches("glob:**/*.{java,class}");
     assertThatPath("C:\\foo\\bar\\baz\\Stuff.class").matches("glob:**/*.{java,class}");
