@@ -167,7 +167,21 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.0.0</version>
+          <version>3.1.1</version>
+          <configuration>
+            <debug>true</debug>
+            <encoding>UTF-8</encoding>
+            <docencoding>UTF-8</docencoding>
+            <charset>UTF-8</charset>
+            <detectJavaApiLink>false</detectJavaApiLink>
+            <links>
+              <link>https://checkerframework.org/api/</link>
+              <link>https://guava.dev/releases/${guava.version}/api/docs/</link>
+              <link>https://unicode-org.github.io/icu-docs/apidoc/released/icu4j</link>
+              <!-- When building against Java 8, the Java 11 link below is overridden to point to an older version (Java 9, the newest one that works). -->
+              <link>https://docs.oracle.com/en/java/javase/11/docs/api/</link>
+            </links>
+          </configuration>
         </plugin>
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
@@ -242,7 +256,6 @@
       <reporting>
         <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
               <additionalOptions>
@@ -255,7 +268,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
             <configuration>
               <additionalOptions>
@@ -274,8 +286,25 @@
       <activation>
         <jdk>1.8</jdk>
       </activation>
+      <reporting>
+        <plugins>
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <links>
+                <link>https://checkerframework.org/api/</link>
+                <link>https://guava.dev/releases/${guava.version}/api/docs/</link>
+                <link>https://unicode-org.github.io/icu-docs/apidoc/released/icu4j</link>
+                <link>https://docs.oracle.com/javase/9/docs/api/</link>
+              </links>
+            </configuration>
+          </plugin>
+        </plugins>
+      </reporting>
       <build>
         <plugins>
+          <!-- https://errorprone.info/docs/installation#maven -->
+          <!-- using github.com/google/error-prone-javac is required when running on JDK 8 -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
@@ -284,6 +313,18 @@
               <compilerArgs combine.children="append">
                 <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
               </compilerArgs>
+            </configuration>
+          </plugin>
+
+          <plugin>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <links>
+                <link>https://checkerframework.org/api/</link>
+                <link>https://guava.dev/releases/${guava.version}/api/docs/</link>
+                <link>https://unicode-org.github.io/icu-docs/apidoc/released/icu4j</link>
+                <link>https://docs.oracle.com/javase/9/docs/api/</link>
+              </links>
             </configuration>
           </plugin>
         </plugins>
