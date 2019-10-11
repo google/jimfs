@@ -270,6 +270,15 @@ final class AttributeService {
     return null;
   }
 
+  private FileAttributeView getFileAttributeView(
+      FileLookup lookup,
+      Class<? extends FileAttributeView> viewType,
+      Map<String, FileAttributeView> inheritedViews) {
+    AttributeProvider provider = providersByViewType.get(viewType);
+    createInheritedViews(lookup, provider, inheritedViews);
+    return provider.view(lookup, ImmutableMap.copyOf(inheritedViews));
+  }
+
   private ImmutableMap<String, FileAttributeView> createInheritedViews(
       FileLookup lookup, AttributeProvider provider) {
     if (provider.inherits().isEmpty()) {
@@ -295,15 +304,6 @@ final class AttributeService {
         inheritedViews.put(inherited, inheritedView);
       }
     }
-  }
-
-  private FileAttributeView getFileAttributeView(
-      FileLookup lookup,
-      Class<? extends FileAttributeView> viewType,
-      Map<String, FileAttributeView> inheritedViews) {
-    AttributeProvider provider = providersByViewType.get(viewType);
-    createInheritedViews(lookup, provider, inheritedViews);
-    return provider.view(lookup, ImmutableMap.copyOf(inheritedViews));
   }
 
   /** Implements {@link Files#readAttributes(Path, String, LinkOption...)}. */
@@ -336,18 +336,6 @@ final class AttributeService {
     return ImmutableMap.copyOf(result);
   }
 
-  private static void readAll(File file, AttributeProvider provider, Map<String, Object> map) {
-    for (String attribute : provider.attributes(file)) {
-      Object value = provider.get(file, attribute);
-
-      // check for null to protect against race condition when an attribute present when
-      // attributes(file) was called is deleted before get() is called for that attribute
-      if (value != null) {
-        map.put(attribute, value);
-      }
-    }
-  }
-
   /**
    * Returns attributes of the given file as an object of the given type.
    *
@@ -361,6 +349,18 @@ final class AttributeService {
     }
 
     throw new UnsupportedOperationException("unsupported attributes type: " + type);
+  }
+
+  private static void readAll(File file, AttributeProvider provider, Map<String, Object> map) {
+    for (String attribute : provider.attributes(file)) {
+      Object value = provider.get(file, attribute);
+
+      // check for null to protect against race condition when an attribute present when
+      // attributes(file) was called is deleted before get() is called for that attribute
+      if (value != null) {
+        map.put(attribute, value);
+      }
+    }
   }
 
   private static String getViewName(String attribute) {
