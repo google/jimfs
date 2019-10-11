@@ -216,6 +216,6 @@ final class FileTree {
 
   private static boolean isEmpty(ImmutableList<Name> names) {
     // the empty path (created by FileSystem.getPath("")), has no root and a single name, ""
-    return names.isEmpty() || names.size() == 1 && names.get(0).toString().isEmpty();
+    return names.isEmpty() || (names.size() == 1 && names.get(0).toString().isEmpty());
   }
 }

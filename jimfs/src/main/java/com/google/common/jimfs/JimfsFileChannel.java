@@ -211,6 +211,38 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
+  public int read(ByteBuffer dst, long position) throws IOException {
+    checkNotNull(dst);
+    Util.checkNotNegative(position, "position");
+    checkOpen();
+    checkReadable();
+
+    int read = 0; // will definitely either be assigned or an exception will be thrown
+
+    // no need to synchronize here; this method does not make use of the channel's position
+    boolean completed = false;
+    try {
+      if (!beginBlocking()) {
+        return 0; // AsynchronousCloseException will be thrown
+      }
+      file.readLock().lockInterruptibly();
+      try {
+        read = file.read(position, dst);
+        file.updateAccessTime();
+        completed = true;
+      } finally {
+        file.readLock().unlock();
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } finally {
+      endBlocking(completed);
+    }
+
+    return read;
+  }
+
+  @Override
   public int write(ByteBuffer src) throws IOException {
     checkNotNull(src);
     checkOpen();
@@ -269,6 +301,65 @@ final class JimfsFileChannel extends FileChannel {
           }
           written = file.write(position, buffers);
           position += written;
+          file.updateModifiedTime();
+          completed = true;
+        } finally {
+          file.writeLock().unlock();
+        }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } finally {
+        endBlocking(completed);
+      }
+    }
+
+    return written;
+  }
+
+  @Override
+  public int write(ByteBuffer src, long position) throws IOException {
+    checkNotNull(src);
+    Util.checkNotNegative(position, "position");
+    checkOpen();
+    checkWritable();
+
+    int written = 0; // will definitely either be assigned or an exception will be thrown
+
+    if (append) {
+      // synchronize because appending does update the channel's position
+      synchronized (this) {
+        boolean completed = false;
+        try {
+          if (!beginBlocking()) {
+            return 0; // AsynchronousCloseException will be thrown
+          }
+
+          file.writeLock().lockInterruptibly();
+          try {
+            position = file.sizeWithoutLocking();
+            written = file.write(position, src);
+            this.position = position + written;
+            file.updateModifiedTime();
+            completed = true;
+          } finally {
+            file.writeLock().unlock();
+          }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        } finally {
+          endBlocking(completed);
+        }
+      }
+    } else {
+      // don't synchronize because the channel's position is not involved
+      boolean completed = false;
+      try {
+        if (!beginBlocking()) {
+          return 0; // AsynchronousCloseException will be thrown
+        }
+        file.writeLock().lockInterruptibly();
+        try {
+          written = file.write(position, src);
           file.updateModifiedTime();
           completed = true;
         } finally {
@@ -495,97 +586,6 @@ final class JimfsFileChannel extends FileChannel {
     }
 
     return transferred;
-  }
-
-  @Override
-  public int read(ByteBuffer dst, long position) throws IOException {
-    checkNotNull(dst);
-    Util.checkNotNegative(position, "position");
-    checkOpen();
-    checkReadable();
-
-    int read = 0; // will definitely either be assigned or an exception will be thrown
-
-    // no need to synchronize here; this method does not make use of the channel's position
-    boolean completed = false;
-    try {
-      if (!beginBlocking()) {
-        return 0; // AsynchronousCloseException will be thrown
-      }
-      file.readLock().lockInterruptibly();
-      try {
-        read = file.read(position, dst);
-        file.updateAccessTime();
-        completed = true;
-      } finally {
-        file.readLock().unlock();
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } finally {
-      endBlocking(completed);
-    }
-
-    return read;
-  }
-
-  @Override
-  public int write(ByteBuffer src, long position) throws IOException {
-    checkNotNull(src);
-    Util.checkNotNegative(position, "position");
-    checkOpen();
-    checkWritable();
-
-    int written = 0; // will definitely either be assigned or an exception will be thrown
-
-    if (append) {
-      // synchronize because appending does update the channel's position
-      synchronized (this) {
-        boolean completed = false;
-        try {
-          if (!beginBlocking()) {
-            return 0; // AsynchronousCloseException will be thrown
-          }
-
-          file.writeLock().lockInterruptibly();
-          try {
-            position = file.sizeWithoutLocking();
-            written = file.write(position, src);
-            this.position = position + written;
-            file.updateModifiedTime();
-            completed = true;
-          } finally {
-            file.writeLock().unlock();
-          }
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        } finally {
-          endBlocking(completed);
-        }
-      }
-    } else {
-      // don't synchronize because the channel's position is not involved
-      boolean completed = false;
-      try {
-        if (!beginBlocking()) {
-          return 0; // AsynchronousCloseException will be thrown
-        }
-        file.writeLock().lockInterruptibly();
-        try {
-          written = file.write(position, src);
-          file.updateModifiedTime();
-          completed = true;
-        } finally {
-          file.writeLock().unlock();
-        }
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      } finally {
-        endBlocking(completed);
-      }
-    }
-
-    return written;
   }
 
   @Override

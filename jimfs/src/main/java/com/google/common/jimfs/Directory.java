@@ -200,14 +200,6 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   }
 
   /**
-   * Adds the given entry to the directory, overwriting an existing entry with the same name if such
-   * an entry exists.
-   */
-  private void forcePut(DirectoryEntry entry) {
-    put(entry, true);
-  }
-
-  /**
    * Adds the given entry to the directory. {@code overwriteExisting} determines whether an existing
    * entry with the same name should be overwritten or an exception should be thrown.
    */
@@ -256,6 +248,14 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
     }
 
     entry.file().incrementLinkCount();
+  }
+
+  /**
+   * Adds the given entry to the directory, overwriting an existing entry with the same name if such
+   * an entry exists.
+   */
+  private void forcePut(DirectoryEntry entry) {
+    put(entry, true);
   }
 
   private boolean expandIfNeeded() {

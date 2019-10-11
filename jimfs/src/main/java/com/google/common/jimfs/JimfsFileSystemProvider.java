@@ -89,13 +89,6 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
-  public FileSystem getFileSystem(URI uri) {
-    throw new UnsupportedOperationException(
-        "This method should not be called directly; "
-            + "use FileSystems.getFileSystem(URI) instead.");
-  }
-
-  @Override
   public FileSystem newFileSystem(Path path, Map<String, ?> env) throws IOException {
     JimfsPath checkedPath = checkPath(path);
     checkNotNull(env);
@@ -114,6 +107,18 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   }
 
   @Override
+  public FileSystem getFileSystem(URI uri) {
+    throw new UnsupportedOperationException(
+        "This method should not be called directly; "
+            + "use FileSystems.getFileSystem(URI) instead.");
+  }
+
+  /** Gets the file system for the given path. */
+  private static JimfsFileSystem getFileSystem(Path path) {
+    return (JimfsFileSystem) checkPath(path).getFileSystem();
+  }
+
+  @Override
   public Path getPath(URI uri) {
     throw new UnsupportedOperationException(
         "This method should not be called directly; " + "use Paths.get(URI) instead.");
@@ -125,11 +130,6 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     }
     throw new ProviderMismatchException(
         "path " + path + " is not associated with a Jimfs file system");
-  }
-
-  /** Gets the file system for the given path. */
-  private static JimfsFileSystem getFileSystem(Path path) {
-    return (JimfsFileSystem) checkPath(path).getFileSystem();
   }
 
   /** Returns the default file system view for the given path. */
@@ -258,11 +258,6 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     copy(source, target, Options.getCopyOptions(options), false);
   }
 
-  @Override
-  public void move(Path source, Path target, CopyOption... options) throws IOException {
-    copy(source, target, Options.getMoveOptions(options), true);
-  }
-
   private void copy(Path source, Path target, ImmutableSet<CopyOption> options, boolean move)
       throws IOException {
     JimfsPath sourcePath = checkPath(source);
@@ -271,6 +266,11 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     FileSystemView sourceView = getDefaultView(sourcePath);
     FileSystemView targetView = getDefaultView(targetPath);
     sourceView.copy(sourcePath, targetView, targetPath, options, move);
+  }
+
+  @Override
+  public void move(Path source, Path target, CopyOption... options) throws IOException {
+    copy(source, target, Options.getMoveOptions(options), true);
   }
 
   @Override

@@ -61,11 +61,6 @@ final class HeapDisk {
     this.blockCache = createBlockCache(maxCachedBlockCount);
   }
 
-  /** Returns the nearest multiple of {@code blockSize} that is <= {@code size}. */
-  private static int toBlockCount(long size, int blockSize) {
-    return (int) LongMath.divide(size, blockSize, RoundingMode.FLOOR);
-  }
-
   /**
    * Creates a new disk with the given {@code blockSize}, {@code maxBlockCount} and {@code
    * maxCachedBlockCount}.
@@ -79,6 +74,11 @@ final class HeapDisk {
     this.maxBlockCount = maxBlockCount;
     this.maxCachedBlockCount = maxCachedBlockCount;
     this.blockCache = createBlockCache(maxCachedBlockCount);
+  }
+
+  /** Returns the nearest multiple of {@code blockSize} that is <= {@code size}. */
+  private static int toBlockCount(long size, int blockSize) {
+    return (int) LongMath.divide(size, blockSize, RoundingMode.FLOOR);
   }
 
   private RegularFile createBlockCache(int maxCachedBlockCount) {
