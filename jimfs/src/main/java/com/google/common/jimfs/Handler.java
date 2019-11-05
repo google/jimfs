@@ -19,6 +19,7 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -76,5 +77,16 @@ public final class Handler extends URLStreamHandler {
   @Override
   protected URLConnection openConnection(URL url) throws IOException {
     return new PathURLConnection(url);
+  }
+
+  @Override
+  @SuppressWarnings("UnsynchronizedOverridesSynchronized") // no need to synchronize to return null
+  protected InetAddress getHostAddress(URL url) {
+    // jimfs uses the URI host to specify the name of the file system being used.
+    // In the default implementation of getHostAddress(URL), a non-null host would cause an attempt
+    // to look up the IP address, causing a slowdown on calling equals/hashCode methods on the URL
+    // object. By returning null, we speed up equality checks on URL's (since there isn't an IP to
+    // connect to).
+    return null;
   }
 }
