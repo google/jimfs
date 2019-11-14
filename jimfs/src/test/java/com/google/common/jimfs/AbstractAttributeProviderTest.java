@@ -104,13 +104,13 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
     assertSetAndGetSucceeds(attribute, value, false);
   }
 
-  protected void assertSetAndGetSucceedsOnCreate(String attribute, Object value) {
-    assertSetAndGetSucceeds(attribute, value, true);
-  }
-
   protected void assertSetAndGetSucceeds(String attribute, Object value, boolean create) {
     provider.set(file, provider.name(), attribute, value, create);
     assertThat(provider.get(file, attribute)).isEqualTo(value);
+  }
+
+  protected void assertSetAndGetSucceedsOnCreate(String attribute, Object value) {
+    assertSetAndGetSucceeds(attribute, value, true);
   }
 
   @SuppressWarnings("EmptyCatchBlock")
