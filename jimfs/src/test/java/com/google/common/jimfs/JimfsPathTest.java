@@ -219,6 +219,17 @@ public class JimfsPathTest {
   }
 
   @Test
+  public void testResolveName_againstEmptyPath() {
+    // resolve(Name) is only used in the DirectoryStream implementation, so it's only used to
+    // resolve the names of real existing files against some base directory's path. The base
+    // directory path could be the working directory path (i.e. just an empty string), in which case
+    // we need to be sure to return a path that is just the name of the file as opposed a path with
+    // two names, one being the empty string and the other the file name).
+    // See https://github.com/google/jimfs/issues/105
+    assertPathEquals("foo", pathService.emptyPath().resolve(Name.simple("foo")));
+  }
+
+  @Test
   public void testResolveSibling_givenEmptyPath() {
     Path path = pathService.parsePath("foo/bar");
     Path resolved = path.resolveSibling("");

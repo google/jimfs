@@ -251,11 +251,7 @@ final class JimfsPath implements Path {
 
   /** Resolves the given name against this path. The name is assumed not to be a root name. */
   JimfsPath resolve(Name name) {
-    if (name.toString().isEmpty()) {
-      return this;
-    }
-    return pathService.createPathInternal(
-        root, ImmutableList.<Name>builder().addAll(names).add(name).build());
+    return resolve(pathService.createFileName(name));
   }
 
   @Override
