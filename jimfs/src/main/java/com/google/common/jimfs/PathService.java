@@ -19,7 +19,6 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.jimfs.PathType.ParseResult;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -31,6 +30,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
+import com.google.common.jimfs.PathType.ParseResult;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
