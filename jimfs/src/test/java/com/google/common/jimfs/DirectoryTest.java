@@ -217,7 +217,7 @@ public class DirectoryTest {
 
     /*
      * If we inline this into the assertThat call below, javac resolves it to assertThat(SortedSet),
-     * which isn't available publicly. Our @GoogleInternal checks consider that to be an error, even
+     * which isn't available publicly. Our internal build system considers that to be an error, even
      * though the code will compile fine externally by resolving to assertThat(Iterable) instead. So
      * we avoid that by assigning to a non-SortedSet type here.
      */
