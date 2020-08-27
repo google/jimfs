@@ -86,9 +86,9 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <auto-service.version>1.0-rc6</auto-service.version>
+    <auto-service.version>1.0-rc7</auto-service.version>
     <java.version>1.7</java.version>
-    <guava.version>27.0.1-android</guava.version>
+    <guava.version>29.0-android</guava.version>
     <surefire.version>3.0.0-M3</surefire.version>
     <!--
       NOTE: When updating errorprone.version, also update javac.version to the
@@ -96,7 +96,7 @@
       it in the properties section of
       https://github.com/google/error-prone/blob/v${errorprone.version}/pom.xml
       -->
-    <errorprone.version>2.3.3</errorprone.version>
+    <errorprone.version>2.4.0</errorprone.version>
     <javac.version>9+181-r4173-1</javac.version>
   </properties>
 
@@ -149,7 +149,7 @@
       <dependency>
         <groupId>com.google.truth</groupId>
         <artifactId>truth</artifactId>
-        <version>0.45</version>
+        <version>1.0.1</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
