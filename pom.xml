@@ -89,7 +89,6 @@
     <auto-service.version>1.0-rc7</auto-service.version>
     <java.version>1.7</java.version>
     <guava.version>29.0-android</guava.version>
-    <surefire.version>3.0.0-M3</surefire.version>
     <!--
       NOTE: When updating errorprone.version, also update javac.version to the
       version used by the new error-prone version. You should be able to find
@@ -164,11 +163,11 @@
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.0.1</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.2.0</version>
           <configuration>
             <debug>true</debug>
             <encoding>UTF-8</encoding>
@@ -190,20 +189,12 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>${surefire.version}</version>
-          <!-- For some reason, we need this for our internal tests that run in offline mode: -->
-          <dependencies>
-            <dependency>
-              <groupId>org.apache.maven.surefire</groupId>
-              <artifactId>surefire-junit4</artifactId>
-              <version>${surefire.version}</version>
-            </dependency>
-          </dependencies>
+          <version>3.0.0-M5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>5.1.1</version>
         </plugin>
       </plugins>
     </pluginManagement>
