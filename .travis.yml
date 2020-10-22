@@ -6,6 +6,15 @@ jdk:
   - openjdk8
   - openjdk11
 
+matrix:
+  include:
+    - arch: ppc64le
+      addons: [ apt: [ packages: maven ]]
+      jdk: openjdk8
+    - arch: ppc64le
+      addons: [ apt: [ packages: maven ]]
+      jdk: openjdk11
+
 install: mvn install -U -DskipTests=true
 
 script: mvn verify -U -Dmaven.javadoc.skip=true
