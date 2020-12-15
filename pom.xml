@@ -88,7 +88,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <auto-service.version>1.0-rc7</auto-service.version>
     <java.version>1.7</java.version>
-    <guava.version>30.0-android</guava.version>
+    <guava.version>30.1-android</guava.version>
     <!--
       NOTE: When updating errorprone.version, also update javac.version to the
       version used by the new error-prone version. You should be able to find
