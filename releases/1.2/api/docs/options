@@ -1,0 +1,31 @@
+-classpath
+'/usr/local/google/home/cgdecker/.m2/repository/com/google/guava/guava/30.1-android/guava-30.1-android.jar:/usr/local/google/home/cgdecker/.m2/repository/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar:/usr/local/google/home/cgdecker/.m2/repository/com/google/guava/listenablefuture/9999.0-empty-to-avoid-conflict-with-guava/listenablefuture-9999.0-empty-to-avoid-conflict-with-guava.jar:/usr/local/google/home/cgdecker/.m2/repository/com/google/errorprone/error_prone_annotations/2.3.4/error_prone_annotations-2.3.4.jar:/usr/local/google/home/cgdecker/.m2/repository/com/google/j2objc/j2objc-annotations/1.3/j2objc-annotations-1.3.jar:/usr/local/google/home/cgdecker/.m2/repository/com/ibm/icu/icu4j/68.2/icu4j-68.2.jar:/usr/local/google/home/cgdecker/.m2/repository/com/google/auto/service/auto-service-annotations/1.0-rc7/auto-service-annotations-1.0-rc7.jar:/usr/local/google/home/cgdecker/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar:/usr/local/google/home/cgdecker/.m2/repository/org/checkerframework/checker-compat-qual/2.5.5/checker-compat-qual-2.5.5.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'/usr/local/google/home/cgdecker/Projects/jimfs/jimfs/src/main/java:/usr/local/google/home/cgdecker/Projects/jimfs/jimfs/target/generated-sources/annotations'
+-Xdoclint:none
+-author
+-bottom
+'Copyright &#169; 2013&#x2013;2021 <a href="http://www.google.com/">Google Inc.</a>. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'/usr/local/google/home/cgdecker/Projects/jimfs/jimfs/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Jimfs 1.2 API'
+-link
+'https://checkerframework.org/api'
+-link
+'https://guava.dev/releases/30.1-android/api/docs'
+-link
+'https://unicode-org.github.io/icu-docs/apidoc/released/icu4j'
+-link
+'https://docs.oracle.com/en/java/javase/11/docs/api'
+-use
+-version
+-windowtitle
+'Jimfs 1.2 API'
