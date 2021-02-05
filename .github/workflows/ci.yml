@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest ]
-        java: [ 15, 11, 7 ]
+        java: [ 15, 11, 8 ]
         # Only test on macos and windows with a single recent JDK to avoid a
         # combinatorial explosion of test configurations.
         # Most OS-specific issues are not specific to a particular JDK version.
