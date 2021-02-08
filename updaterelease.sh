@@ -90,6 +90,7 @@ cp -r $MODULE/src/main/java $tempdir/src
 
 echo -n "Compiling and generating Javadoc..."
 mvn \
+    -B \
     clean \
     compile \
     javadoc:javadoc \
