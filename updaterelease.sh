@@ -60,7 +60,11 @@ function cleanup {
   else
     # Put a newline in case we're in the middle of a "Do something... Done." line
     echo ""
-    echo "Update failed: see log at '$logfile' for more details." >&2
+    echo "Update failed: see full log below." >&2
+    echo "" >&2
+    cat $logfile >&2
+    echo "" >&2
+    
     # If we failed while not on the original branch/ref, switch back to it.
     currentref=$(current_git_ref)
     if [[ "$currentref" != "$initialref" ]]; then
