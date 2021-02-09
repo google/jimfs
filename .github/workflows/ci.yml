@@ -38,10 +38,10 @@ jobs:
           java-version: ${{ matrix.java }}
       - name: 'Install'
         shell: bash
-        run: mvn install -U -DskipTests=true
+        run: mvn -B install -U -DskipTests=true
       - name: 'Test'
         shell: bash
-        run: mvn verify -U -Dmaven.javadoc.skip=true
+        run: mvn -B verify -U -Dmaven.javadoc.skip=true
 
   publish_snapshot:
     name: 'Publish snapshot'
@@ -69,7 +69,7 @@ jobs:
         env:
           CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
           CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
-        run: mvn clean source:jar javadoc:jar deploy -DskipTests=true
+        run: mvn -B clean source:jar javadoc:jar deploy -DskipTests=true
 
   generate_docs:
     name: 'Generate latest docs'
