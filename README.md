@@ -5,7 +5,7 @@ Jimfs is an in-memory file system for Java 7 and above, implementing the
 [java.nio.file](http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html)
 abstract file system APIs.
 
-[![Build Status](https://travis-ci.org/google/jimfs.svg?branch=master)](https://travis-ci.org/google/jimfs)
+[![Build Status](https://github.com/google/jimfs/workflows/CI/badge.svg?branch=master)](https://github.com/google/jimfs/actions)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.jimfs/jimfs/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.jimfs/jimfs)
 
 Getting started
