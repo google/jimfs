@@ -17,7 +17,7 @@ jobs:
     # because the only change in that commit should be to the message and
     # because the change will be merged to master (and tested there) immediately
     # after.
-    if: github.event_name == 'push' || contains(github.event.head_commit.message, 'PRESUBMIT=true')
+    if: ${{ github.event_name == 'push' || contains(github.event.head_commit.message, 'PRESUBMIT=true') }}
     strategy:
       matrix:
         os: [ ubuntu-latest ]
