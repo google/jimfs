@@ -5,10 +5,19 @@ on:
     branches:
       - master
   pull_request:
+    branches:
+      - master
 
 jobs:
   test:
     name: "JDK ${{ matrix.java }} on ${{ matrix.os }}"
+    # Only run this for pull_requests when the commit message contains
+    # PRESUBMIT=true. PRESUBMIT=true should be removed from the message in the
+    # last commit pushed to the PR before merge, which we don't want to test
+    # because the only change in that commit should be to the message and
+    # because the change will be merged to master (and tested there) immediately
+    # after.
+    if: github.event_name == 'push' || contains(github.event.head_commit.message, 'PRESUBMIT=true')
     strategy:
       matrix:
         os: [ ubuntu-latest ]
