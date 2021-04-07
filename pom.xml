@@ -94,7 +94,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <auto-service.version>1.0-rc7</auto-service.version>
+    <auto-service.version>1.0</auto-service.version>
     <java.version>1.7</java.version>
     <guava.version>30.1.1-android</guava.version>
     <!--
