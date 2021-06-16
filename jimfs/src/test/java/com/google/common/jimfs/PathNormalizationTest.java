@@ -229,22 +229,12 @@ public class PathNormalizationTest {
 
   @Test
   public void testNormalizeNfc_pattern() {
-    normalizations = ImmutableSet.of(NFC);
-    assertNormalizedPatternMatches("foo", "foo");
-    assertNormalizedPatternDoesNotMatch("foo", "FOO");
-    assertNormalizedPatternDoesNotMatch("FOO", "foo");
-    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
-    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AME\u0301LIE");
+    this.pathNormalizationTestTestNormalizeTemplate(NFC);
   }
 
   @Test
   public void testNormalizeNfd_pattern() {
-    normalizations = ImmutableSet.of(NFD);
-    assertNormalizedPatternMatches("foo", "foo");
-    assertNormalizedPatternDoesNotMatch("foo", "FOO");
-    assertNormalizedPatternDoesNotMatch("FOO", "foo");
-    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
-    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AME\u0301LIE");
+    this.pathNormalizationTestTestNormalizeTemplate(NFD);
   }
 
   @Test
@@ -275,32 +265,12 @@ public class PathNormalizationTest {
 
   @Test
   public void testNormalizeNfcCaseFoldAscii_pattern() {
-    normalizations = ImmutableSet.of(NFC, CASE_FOLD_ASCII);
-    assertNormalizedPatternMatches("foo", "foo");
-    assertNormalizedPatternMatches("foo", "FOO");
-    assertNormalizedPatternMatches("FOO", "foo");
-
-    // these are all a bit fuzzy as when CASE_INSENSITIVE is present but not UNICODE_CASE, ASCII
-    // only strings are expected
-    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
-    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AM\u00c9LIE");
-    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
-    assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
+    this.pathNormalizationTestTestNormalizeCaseFoldAscii_patternTemplate(NFC);
   }
 
   @Test
   public void testNormalizeNfdCaseFoldAscii_pattern() {
-    normalizations = ImmutableSet.of(NFD, CASE_FOLD_ASCII);
-    assertNormalizedPatternMatches("foo", "foo");
-    assertNormalizedPatternMatches("foo", "FOO");
-    assertNormalizedPatternMatches("FOO", "foo");
-
-    // these are all a bit fuzzy as when CASE_INSENSITIVE is present but not UNICODE_CASE, ASCII
-    // only strings are expected
-    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
-    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AM\u00c9LIE");
-    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
-    assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
+    this.pathNormalizationTestTestNormalizeCaseFoldAscii_patternTemplate(NFD);
   }
 
   /** Asserts that the given strings normalize to the same string using the current normalizer. */
@@ -347,5 +317,25 @@ public class PathNormalizationTest {
     assertFalse(
         "pattern '" + pattern + "' should not match '" + first + "'",
         pattern.matcher(first).matches());
+  }
+
+  public void pathNormalizationTestTestNormalizeCaseFoldAscii_patternTemplate(PathNormalization pathNormalization1) {
+    normalizations = ImmutableSet.of(pathNormalization1, CASE_FOLD_ASCII);
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternMatches("foo", "FOO");
+    assertNormalizedPatternMatches("FOO", "foo");
+    assertNormalizedPatternMatches("Ame\u0301lie", "AME\u0301LIE");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AM\u00c9LIE");
+    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternMatches("AM\u00c9LIE", "AME\u0301LIE");
+  }
+
+  public void pathNormalizationTestTestNormalizeTemplate(PathNormalization pathNormalization1) {
+    normalizations = ImmutableSet.of(pathNormalization1);
+    assertNormalizedPatternMatches("foo", "foo");
+    assertNormalizedPatternDoesNotMatch("foo", "FOO");
+    assertNormalizedPatternDoesNotMatch("FOO", "foo");
+    assertNormalizedPatternMatches("Am\u00e9lie", "Ame\u0301lie");
+    assertNormalizedPatternDoesNotMatch("Am\u00e9lie", "AME\u0301LIE");
   }
 }

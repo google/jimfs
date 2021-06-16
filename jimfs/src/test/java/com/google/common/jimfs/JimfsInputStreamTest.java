@@ -75,21 +75,13 @@ public class JimfsInputStreamTest {
   }
 
   @Test
-  public void testRead_partialArray() throws IOException {
-    JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
-    byte[] bytes = new byte[12];
-    assertThat(in.read(bytes, 0, 8)).isEqualTo(8);
-    assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0), bytes);
-    assertEmpty(in);
+  public void testRead_partialArray() throws Exception {
+    this.jimfsInputStreamTestTestRead_partialTemplate(8);
   }
 
   @Test
-  public void testRead_partialArray_sliceLarger() throws IOException {
-    JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
-    byte[] bytes = new byte[12];
-    assertThat(in.read(bytes, 0, 10)).isEqualTo(8);
-    assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0), bytes);
-    assertEmpty(in);
+  public void testRead_partialArray_sliceLarger() throws Exception {
+    this.jimfsInputStreamTestTestRead_partialTemplate(10);
   }
 
   @Test
@@ -236,5 +228,13 @@ public class JimfsInputStreamTest {
     assertThat(in.read(new byte[3])).isEqualTo(-1);
     assertThat(in.read(new byte[10], 1, 5)).isEqualTo(-1);
     assertThat(in.available()).isEqualTo(0);
+  }
+
+  public void jimfsInputStreamTestTestRead_partialTemplate(int i1) throws Exception {
+    JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
+    byte[] bytes = new byte[12];
+    assertThat(in.read(bytes, 0, i1)).isEqualTo(8);
+    assertArrayEquals(bytes(1, 2, 3, 4, 5, 6, 7, 8, 0, 0, 0, 0), bytes);
+    assertEmpty(in);
   }
 }
