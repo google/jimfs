@@ -27,6 +27,7 @@ import com.google.common.collect.Iterables;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -60,6 +61,7 @@ final class PathURLConnection extends URLConnection {
   private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
   private InputStream stream;
+  private OutputStream outStream;
   private ImmutableListMultimap<String, String> headers = ImmutableListMultimap.of();
 
   PathURLConnection(URL url) {
@@ -120,6 +122,16 @@ final class PathURLConnection extends URLConnection {
   public InputStream getInputStream() throws IOException {
     connect();
     return stream;
+  }
+
+  @Override
+  public OutputStream getOutputStream() throws IOException {
+    if (outStream == null) {
+      Path path = Paths.get(toUri(url));
+      Files.createDirectories(path.getParent());
+      outStream = Files.newOutputStream(path);
+    }
+    return outStream;
   }
 
   @SuppressWarnings("unchecked") // safe by specification of ListMultimap.asMap()

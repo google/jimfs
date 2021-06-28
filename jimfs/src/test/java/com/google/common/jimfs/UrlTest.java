@@ -19,11 +19,13 @@ package com.google.common.jimfs;
 import static com.google.common.base.StandardSystemProperty.LINE_SEPARATOR;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Range;
 import com.google.common.io.Resources;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -59,6 +61,33 @@ public class UrlTest {
     URL url = path.toUri().toURL();
     assertThat(Resources.asCharSource(url, UTF_8).read())
         .isEqualTo("Hello World" + LINE_SEPARATOR.value());
+  }
+
+  @Test
+  public void writeToUrl() throws IOException {
+    String content = "Hello World" + LINE_SEPARATOR.value();
+    URL url = path.toUri().toURL();
+    URLConnection connection = url.openConnection();
+    try (OutputStream os = connection.getOutputStream()) {
+        os.write(content.getBytes(UTF_8));
+    }
+    assertThat(Resources.asCharSource(url, UTF_8).read())
+        .isEqualTo("Hello World" + LINE_SEPARATOR.value());
+  }
+
+  @Test
+  public void writeToUrlSameOutputStream() throws IOException {
+    //similar to sockets, expect same OutputStream (see AbstractPlainSocketImpl)
+    URL url = path.toUri().toURL();
+    URLConnection connection = url.openConnection();
+    OutputStream os = connection.getOutputStream();
+    os.write("ABC".getBytes(UTF_8));
+    OutputStream os2 = connection.getOutputStream();
+    os2.write("DEF".getBytes(UTF_8));
+    os2.close();
+    assertEquals(os, os2);
+    assertThat(Resources.asCharSource(url, UTF_8).read())
+        .isEqualTo("ABCDEF");
   }
 
   @Test
