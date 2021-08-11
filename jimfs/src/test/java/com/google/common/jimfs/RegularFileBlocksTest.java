@@ -19,6 +19,9 @@ package com.google.common.jimfs;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.primitives.Bytes;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.channels.Channels;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +35,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class RegularFileBlocksTest {
 
+  private static final int BLOCK_SIZE = 2;
+
   private RegularFile file;
 
   @Before
@@ -40,7 +45,7 @@ public class RegularFileBlocksTest {
   }
 
   private static RegularFile createFile() {
-    return RegularFile.create(-1, new HeapDisk(2, 2, 2));
+    return RegularFile.create(-1, new HeapDisk(BLOCK_SIZE, 2, 2));
   }
 
   @Test
@@ -141,5 +146,34 @@ public class RegularFileBlocksTest {
     assertThat(other.getBlock(2)).isNull();
     assertThat(Bytes.asList(file.getBlock(0))).isEqualTo(Bytes.asList(new byte[] {1, 2, 3}));
     assertThat(file.getBlock(1)).isNull();
+  }
+
+  @Test
+  public void testTransferFrom() throws IOException {
+    // Test that when a transferFrom ends on a block boundary because the input has no further bytes
+    // and not because count bytes have been transferred, we don't leave an extra empty block
+    // allocated on the end of the file.
+    // https://github.com/google/jimfs/issues/163
+    byte[] bytes = new byte[BLOCK_SIZE];
+    RegularFile file = createFile();
+
+    long transferred =
+        file.transferFrom(Channels.newChannel(new ByteArrayInputStream(bytes)), 0, Long.MAX_VALUE);
+    assertThat(transferred).isEqualTo(bytes.length);
+    assertThat(file.blockCount()).isEqualTo(1);
+  }
+
+  @Test
+  public void testTransferFrom_noBytesNoAllocation() throws IOException {
+    // Similar to the previous test but ensures that if no bytes are transferred at all, no new
+    // blocks remain allocated.
+    // https://github.com/google/jimfs/issues/163
+    byte[] bytes = new byte[0];
+    RegularFile file = createFile();
+
+    long transferred =
+        file.transferFrom(Channels.newChannel(new ByteArrayInputStream(bytes)), 0, Long.MAX_VALUE);
+    assertThat(transferred).isEqualTo(0);
+    assertThat(file.blockCount()).isEqualTo(0);
   }
 }

@@ -385,70 +385,66 @@ final class RegularFile extends File {
   /**
    * Transfers up to {@code count} bytes from the given channel to this file starting at position
    * {@code pos}. Returns the number of bytes transferred. If {@code pos} is greater than the
-   * current size of this file, the file is truncated up to size {@code pos} before writing.
+   * current size of this file, then no bytes are transferred.
    *
    * @throws IOException if the file needs more blocks but the disk is full or if reading from src
    *     throws an exception
    */
-  public long transferFrom(ReadableByteChannel src, long pos, long count) throws IOException {
-    prepareForWrite(pos, 0); // don't assume the full count bytes will be written
-
-    if (count == 0) {
+  public long transferFrom(ReadableByteChannel src, long startPos, long count) throws IOException {
+    if (count == 0
+        // Unlike the write() methods, attempting to transfer to a position that is greater than the
+        // current file size simply does nothing.
+        || startPos > size) {
       return 0;
     }
 
     long remaining = count;
+    long currentPos = startPos;
 
-    int blockIndex = blockIndex(pos);
-    byte[] block = blockForWrite(blockIndex);
-    int off = offsetInBlock(pos);
+    int blockIndex = blockIndex(startPos);
+    int off = offsetInBlock(startPos);
 
-    ByteBuffer buf = ByteBuffer.wrap(block, off, length(off, remaining));
+    outer:
+    while (remaining > 0) {
+      byte[] block = blockForWrite(blockIndex);
 
-    long currentPos = pos;
-    int read = 0;
-    while (buf.hasRemaining()) {
-      read = src.read(buf);
-      if (read == -1) {
-        break;
-      }
-
-      currentPos += read;
-      remaining -= read;
-    }
-
-    // update size before trying to get next block in case the disk is out of space
-    if (currentPos > size) {
-      size = currentPos;
-    }
-
-    if (read != -1) {
-      outer:
-      while (remaining > 0) {
-        block = blockForWrite(++blockIndex);
-
-        buf = ByteBuffer.wrap(block, 0, length(remaining));
-        while (buf.hasRemaining()) {
-          read = src.read(buf);
-          if (read == -1) {
-            break outer;
+      ByteBuffer buf = ByteBuffer.wrap(block, off, length(off, remaining));
+      while (buf.hasRemaining()) {
+        int read = src.read(buf);
+        // Note: we stop if we read 0 bytes from the src; even though the src is not at EOF, the
+        // spec of transferFrom is to stop immediately when reading from a non-blocking channel that
+        // has no bytes available rather than continuing until it reaches EOF. This makes sense
+        // because we'd otherwise just spin attempting to read bytes from the src repeatedly.
+        if (read < 1) {
+          if (currentPos >= size && buf.position() == 0) {
+            // The current position is at or beyond the end of file (prior to transfer start) and
+            // the current buffer position is 0. This means that a new block must have just been
+            // allocated to hold any potential transferred bytes, but no bytes were transferred to
+            // it because the src had no remaining bytes. So we need to de-allocate that block.
+            // It's possible that it would be preferable to always transfer to a temporary block
+            // first and then copy that block to a newly allocated block when it's full or src
+            // doesn't have any further bytes. Then if we hadn't read anything into the temporary
+            // block, we could simply discard it. But I think this scenario is likely rare enough
+            // that it's fine to temporarily allocate a block that _might_ not get used.
+            disk.free(this, 1);
           }
-
-          currentPos += read;
-          remaining -= read;
+          break outer;
         }
 
-        if (currentPos > size) {
-          size = currentPos;
-        }
+        currentPos += read;
+        remaining -= read;
       }
+
+      // Current write block is full
+      blockIndex++;
+      off = 0;
     }
 
     if (currentPos > size) {
       size = currentPos;
     }
 
-    return currentPos - pos;
+    return currentPos - startPos;
   }
 
   /**

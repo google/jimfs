@@ -334,23 +334,31 @@ public class RegularFileTest {
       assertContentEquals("111111", file);
     }
 
-    public void testEmpty_transferFrom_fromBeyondStart_countEqualsSrcSize() throws IOException {
+    public void testEmpty_transferFrom_positionGreaterThanSize() throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("111111")), 4, 6);
-      assertEquals(6, transferred);
-      assertContentEquals("0000111111", file);
+      assertEquals(0, transferred);
+      assertContentEquals(bytes(), file);
     }
 
-    public void testEmpty_transferFrom_fromBeyondStart_countLessThanSrcSize() throws IOException {
+    public void testEmpty_transferFrom_positionGreaterThanSize_countEqualsSrcSize()
+        throws IOException {
+      long transferred = file.transferFrom(new ByteBufferChannel(buffer("111111")), 4, 6);
+      assertEquals(0, transferred);
+      assertContentEquals(bytes(), file);
+    }
+
+    public void testEmpty_transferFrom_positionGreaterThanSize_countLessThanSrcSize()
+        throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("111111")), 4, 3);
-      assertEquals(3, transferred);
-      assertContentEquals("0000111", file);
+      assertEquals(0, transferred);
+      assertContentEquals(bytes(), file);
     }
 
-    public void testEmpty_transferFrom_fromBeyondStart_countGreaterThanSrcSize()
+    public void testEmpty_transferFrom_positionGreaterThanSize_countGreaterThanSrcSize()
         throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("111111")), 4, 12);
-      assertEquals(6, transferred);
-      assertContentEquals("0000111111", file);
+      assertEquals(0, transferred);
+      assertContentEquals(bytes(), file);
     }
 
     public void testEmpty_transferFrom_fromStart_noBytes_countEqualsSrcSize() throws IOException {
@@ -366,18 +374,18 @@ public class RegularFileTest {
       assertContentEquals(bytes(), file);
     }
 
-    public void testEmpty_transferFrom_fromBeyondStart_noBytes_countEqualsSrcSize()
+    public void testEmpty_transferFrom_postionGreaterThanSrcSize_noBytes_countEqualsSrcSize()
         throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("")), 5, 0);
       assertEquals(0, transferred);
-      assertContentEquals(bytes("00000"), file);
+      assertContentEquals(bytes(), file);
     }
 
-    public void testEmpty_transferFrom_fromBeyondStart_noBytes_countGreaterThanSrcSize()
+    public void testEmpty_transferFrom_postionGreaterThanSrcSize_noBytes_countGreaterThanSrcSize()
         throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("")), 5, 10);
       assertEquals(0, transferred);
-      assertContentEquals(bytes("00000"), file);
+      assertContentEquals(bytes(), file);
     }
 
     public void testEmpty_transferTo() throws IOException {
@@ -793,11 +801,11 @@ public class RegularFileTest {
       assertContentEquals("222222111111", file);
     }
 
-    public void testNonEmpty_transferFrom_toPastEnd() throws IOException {
+    public void testNonEmpty_transferFrom_positionGreaterThanSize() throws IOException {
       fillContent("222222");
       ByteBufferChannel channel = new ByteBufferChannel(buffer("111111"));
-      assertEquals(6, file.transferFrom(channel, 10, 6));
-      assertContentEquals("2222220000111111", file);
+      assertEquals(0, file.transferFrom(channel, 10, 6));
+      assertContentEquals("222222", file);
     }
 
     public void testNonEmpty_transferFrom_hugeOverestimateCount() throws IOException {
