@@ -19,6 +19,7 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -206,13 +207,11 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     public void run() {
       R result;
       try {
-        result = future.get();
+        result = Futures.getDone(future);
       } catch (ExecutionException e) {
         onFailure(e.getCause());
         return;
-      } catch (InterruptedException | RuntimeException | Error e) {
-        // get() shouldn't be interrupted since this should only be called when the result is
-        // ready, but just handle it anyway to be sure and to satisfy the compiler
+      } catch (RuntimeException | Error e) {
         onFailure(e);
         return;
       }
