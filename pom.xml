@@ -94,7 +94,8 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <auto-service.version>1.0</auto-service.version>
+    <auto-service.version>1.0.1</auto-service.version>
+    <auto-common.version>1.2</auto-common.version>
     <java.version>1.7</java.version>
     <guava.version>31.0.1-android</guava.version>
     <!--
@@ -232,6 +233,11 @@
               <groupId>com.google.auto.service</groupId>
               <artifactId>auto-service</artifactId>
               <version>${auto-service.version}</version>
+            </path>
+            <path>
+              <groupId>com.google.auto</groupId>
+              <artifactId>auto-common</artifactId>
+              <version>${auto-common.version}</version>
             </path>
           </annotationProcessorPaths>
         </configuration>
