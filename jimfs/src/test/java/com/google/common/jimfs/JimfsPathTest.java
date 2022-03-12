@@ -22,10 +22,16 @@ import static org.junit.Assert.fail;
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.ProviderMismatchException;
+import org.junit.Assert;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -158,6 +164,46 @@ public class JimfsPathTest {
         .root("/")
         .names("foo", "bar", "baz", "test")
         .test("/foo/bar/baz/test");
+  }
+
+  @Test
+  public void testResolve_fromRelativeDefaultPath() {
+    Path root = pathService.parsePath("/");
+
+    assertResolvedPathEquals("/foo", root, Paths.get("foo"));
+    assertResolvedPathEquals("/foo/bar", root, Paths.get("foo", "bar"));
+    assertResolvedPathEquals("/foo/bar/baz/test", root, Paths.get("foo", "bar", "baz", "test"));
+    assertResolvedPathEquals("/foo/baz/test", root, Paths.get("foo", "bar", "..", "baz", "test"));
+  }
+
+  @Test
+  public void testResolve_fromAbsoluteDefaultPathFails() {
+    final Path root = pathService.parsePath("/");
+    final Path other = Paths.get("/var", "log");
+
+    Assert.assertThrows(ProviderMismatchException.class, new ThrowingRunnable() {
+      @Override
+      public void run() {
+        root.resolve(other);
+      }
+    });
+  }
+
+  @Test
+  public void testResolve_fromOtherProviderFails() throws IOException {
+    final Path root = pathService.parsePath("/");
+
+    FileSystem otherFileSystem = JimfsFileSystems.newFileSystem(
+        new JimfsFileSystemProvider(), URI.create("jimfs://foo"), Configuration.unix());
+
+    final Path otherProviderPath = otherFileSystem.getPath("foo", "bar");
+
+    Assert.assertThrows(ProviderMismatchException.class, new ThrowingRunnable() {
+      @Override
+      public void run() {
+        root.resolve(otherProviderPath);
+      }
+    });
   }
 
   @Test
@@ -356,6 +402,15 @@ public class JimfsPathTest {
     tester.testAllPublicInstanceMethods(pathService.parsePath("foo/bar/baz"));
     tester.testAllPublicInstanceMethods(pathService.parsePath("."));
     tester.testAllPublicInstanceMethods(pathService.parsePath(".."));
+  }
+
+  private void assertResolvedPathEquals(
+      String expected, Path path, Path firstResolvePath, Path... moreResolvePaths) {
+    Path resolved = path.resolve(firstResolvePath);
+    for (Path additionalPath : moreResolvePaths) {
+      resolved = resolved.resolve(additionalPath);
+    }
+    assertPathEquals(expected, resolved);
   }
 
   private void assertResolvedPathEquals(

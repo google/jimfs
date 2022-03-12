@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.ProviderMismatchException;
@@ -436,6 +437,19 @@ final class JimfsPath implements Path {
     if (checkNotNull(other) instanceof JimfsPath && other.getFileSystem().equals(getFileSystem())) {
       return (JimfsPath) other;
     }
+
+    // If we have a path from the default file system, then it may be because we have a Path made
+    // from `Path.of` or similar, so attempt to parse it if it is relative.
+    if (!other.isAbsolute() && other.getFileSystem().equals(FileSystems.getDefault())) {
+      other = other.normalize();
+      List<Name> names = new ArrayList<>(other.getNameCount());
+      for (int i = 0; i < other.getNameCount(); ++i) {
+        String nextName = other.getName(i).toString();
+        names.add(Name.create(nextName, nextName));
+      }
+      return pathService.createPath(null, names);
+    }
+
     return null;
   }
 }
