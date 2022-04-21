@@ -176,7 +176,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.3.2</version>
+          <version>3.4.0</version>
           <configuration>
             <debug>true</debug>
             <encoding>UTF-8</encoding>
