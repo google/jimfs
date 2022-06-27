@@ -1,1 +1,1 @@
-/opt/hostedtoolcache/Java_Zulu_jdk/11.0.13-8/x64/bin/javadoc @options @packages
+/opt/hostedtoolcache/Java_Zulu_jdk/11.0.15-10/x64/bin/javadoc @options @packages
