@@ -101,7 +101,8 @@ public class FileTreeTest {
             @Override
             public ParseResult parseUriPath(String uriPath) {
               checkArgument(
-                  uriPath.matches("^/[/$!].*"), "uriPath (%s) must start with // or /$ or /!");
+                  uriPath.matches("^/[/$!].*"), "uriPath (%s) must start with // or /$ or /!",
+                  uriPath);
               return parsePath(uriPath.substring(1)); // skip leading /
             }
           },

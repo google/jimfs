@@ -69,7 +69,8 @@ final class HeapDisk {
     checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
     checkArgument(maxBlockCount > 0, "maxBlockCount (%s) must be positive", maxBlockCount);
     checkArgument(
-        maxCachedBlockCount >= 0, "maxCachedBlockCount must be non-negative", maxCachedBlockCount);
+        maxCachedBlockCount >= 0, "maxCachedBlockCount (%s) must be non-negative",
+        maxCachedBlockCount);
     this.blockSize = blockSize;
     this.maxBlockCount = maxBlockCount;
     this.maxCachedBlockCount = maxCachedBlockCount;
