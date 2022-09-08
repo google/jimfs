@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * Attribute provider that provides the "unix" attribute view.
@@ -94,6 +95,7 @@ final class UnixAttributeProvider extends AttributeProvider {
     return id;
   }
 
+  @NullableDecl
   @SuppressWarnings("unchecked")
   @Override
   public Object get(File file, String attribute) {

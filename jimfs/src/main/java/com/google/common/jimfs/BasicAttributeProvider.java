@@ -56,6 +56,7 @@ final class BasicAttributeProvider extends AttributeProvider {
     return ATTRIBUTES;
   }
 
+  @NullableDecl
   @Override
   public Object get(File file, String attribute) {
     switch (attribute) {

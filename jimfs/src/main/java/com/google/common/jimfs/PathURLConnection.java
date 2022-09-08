@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * {@code URLConnection} implementation.
@@ -133,6 +134,7 @@ final class PathURLConnection extends URLConnection {
     return (ImmutableMap<String, List<String>>) (ImmutableMap<String, ?>) headers.asMap();
   }
 
+  @NullableDecl
   @Override
   public String getHeaderField(String name) {
     try {

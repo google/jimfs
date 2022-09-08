@@ -23,6 +23,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
 /**
  * {@link URLStreamHandler} implementation for jimfs. Named {@code Handler} so that the class can be
@@ -79,6 +80,7 @@ public final class Handler extends URLStreamHandler {
     return new PathURLConnection(url);
   }
 
+  @NullableDecl
   @Override
   @SuppressWarnings("UnsynchronizedOverridesSynchronized") // no need to synchronize to return null
   protected InetAddress getHostAddress(URL url) {
