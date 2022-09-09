@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.channels.FileChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.InvalidPathException;
@@ -233,6 +234,7 @@ public final class Configuration {
   final ImmutableSet<String> attributeViews;
   final ImmutableSet<AttributeProvider> attributeProviders;
   final ImmutableMap<String, Object> defaultAttributeValues;
+  final FileTimeSource fileTimeSource;
 
   // Watch service
   final WatchServiceConfiguration watchServiceConfig;
@@ -261,6 +263,7 @@ public final class Configuration {
         builder.defaultAttributeValues == null
             ? ImmutableMap.<String, Object>of()
             : ImmutableMap.copyOf(builder.defaultAttributeValues);
+    this.fileTimeSource = builder.fileTimeSource;
     this.watchServiceConfig = builder.watchServiceConfig;
     this.roots = builder.roots;
     this.workingDirectory = builder.workingDirectory;
@@ -301,6 +304,7 @@ public final class Configuration {
     if (!defaultAttributeValues.isEmpty()) {
       helper.add("defaultAttributeValues", defaultAttributeValues);
     }
+    helper.add("fileTimeSource", fileTimeSource);
     if (watchServiceConfig != WatchServiceConfiguration.DEFAULT) {
       helper.add("watchServiceConfig", watchServiceConfig);
     }
@@ -341,6 +345,7 @@ public final class Configuration {
     private ImmutableSet<String> attributeViews = ImmutableSet.of();
     private Set<AttributeProvider> attributeProviders = null;
     private Map<String, Object> defaultAttributeValues;
+    private FileTimeSource fileTimeSource = SystemFileTimeSource.INSTANCE;
 
     // Watch service
     private WatchServiceConfiguration watchServiceConfig = WatchServiceConfiguration.DEFAULT;
@@ -372,6 +377,7 @@ public final class Configuration {
           configuration.defaultAttributeValues.isEmpty()
               ? null
               : new HashMap<>(configuration.defaultAttributeValues);
+      this.fileTimeSource = configuration.fileTimeSource;
       this.watchServiceConfig = configuration.watchServiceConfig;
       this.roots = configuration.roots;
       this.workingDirectory = configuration.workingDirectory;
@@ -383,6 +389,7 @@ public final class Configuration {
      * Sets the normalizations that will be applied to the display form of filenames. The display
      * form is used in the {@code toString()} of {@code Path} objects.
      */
+    @CanIgnoreReturnValue
     public Builder setNameDisplayNormalization(PathNormalization first, PathNormalization... more) {
       this.nameDisplayNormalization = checkNormalizations(Lists.asList(first, more));
       return this;
@@ -393,6 +400,7 @@ public final class Configuration {
      * file system. The canonical form is used to determine the equality of two filenames when
      * performing a file lookup.
      */
+    @CanIgnoreReturnValue
     public Builder setNameCanonicalNormalization(
         PathNormalization first, PathNormalization... more) {
       this.nameCanonicalNormalization = checkNormalizations(Lists.asList(first, more));
@@ -447,6 +455,7 @@ public final class Configuration {
      *
      * <p>The default is false.
      */
+    @CanIgnoreReturnValue
     public Builder setPathEqualityUsesCanonicalForm(boolean useCanonicalForm) {
       this.pathEqualityUsesCanonicalForm = useCanonicalForm;
       return this;
@@ -458,6 +467,7 @@ public final class Configuration {
      *
      * <p>The default is 8192 bytes (8 KB).
      */
+    @CanIgnoreReturnValue
     public Builder setBlockSize(int blockSize) {
       checkArgument(blockSize > 0, "blockSize (%s) must be positive", blockSize);
       this.blockSize = blockSize;
@@ -478,6 +488,7 @@ public final class Configuration {
      *
      * <p>The default is 4 GB.
      */
+    @CanIgnoreReturnValue
     public Builder setMaxSize(long maxSize) {
       checkArgument(maxSize > 0, "maxSize (%s) must be positive", maxSize);
       this.maxSize = maxSize;
@@ -497,6 +508,7 @@ public final class Configuration {
      * <p>Like the maximum size, the actual value will be the closest multiple of the block size
      * that is less than or equal to the given size.
      */
+    @CanIgnoreReturnValue
     public Builder setMaxCacheSize(long maxCacheSize) {
       checkArgument(maxCacheSize >= 0, "maxCacheSize (%s) may not be negative", maxCacheSize);
       this.maxCacheSize = maxCacheSize;
@@ -553,12 +565,14 @@ public final class Configuration {
      * <p>If any other views should be supported, attribute providers for those views must be
      * {@linkplain #addAttributeProvider(AttributeProvider) added}.
      */
+    @CanIgnoreReturnValue
     public Builder setAttributeViews(String first, String... more) {
       this.attributeViews = ImmutableSet.copyOf(Lists.asList(first, more));
       return this;
     }
 
     /** Adds an attribute provider for a custom view for the file system to support. */
+    @CanIgnoreReturnValue
     public Builder addAttributeProvider(AttributeProvider provider) {
       checkNotNull(provider);
       if (attributeProviders == null) {
@@ -614,6 +628,7 @@ public final class Configuration {
      *   </tr>
      * </table>
      */
+    @CanIgnoreReturnValue
     public Builder setDefaultAttributeValue(String attribute, Object value) {
       checkArgument(
           ATTRIBUTE_PATTERN.matcher(attribute).matches(),
@@ -632,6 +647,17 @@ public final class Configuration {
     private static final Pattern ATTRIBUTE_PATTERN = Pattern.compile("[^:]+:[^:]+");
 
     /**
+     * Sets the {@link FileTimeSource} that will supply the current time for this file system.
+     *
+     * @since 1.3
+     */
+    @CanIgnoreReturnValue
+    public Builder setFileTimeSource(FileTimeSource source) {
+      this.fileTimeSource = checkNotNull(source);
+      return this;
+    }
+
+    /**
      * Sets the roots for the file system.
      *
      * @throws InvalidPathException if any of the given roots is not a valid path for this builder's
@@ -639,6 +665,7 @@ public final class Configuration {
      * @throws IllegalArgumentException if any of the given roots is a valid path for this builder's
      *     path type but is not a root path with no name elements
      */
+    @CanIgnoreReturnValue
     public Builder setRoots(String first, String... more) {
       List<String> roots = Lists.asList(first, more);
       for (String root : roots) {
@@ -657,6 +684,7 @@ public final class Configuration {
      * @throws IllegalArgumentException if the given path is valid for this builder's path type but
      *     is not an absolute path
      */
+    @CanIgnoreReturnValue
     public Builder setWorkingDirectory(String workingDirectory) {
       PathType.ParseResult parseResult = pathType.parsePath(workingDirectory);
       checkArgument(
@@ -671,6 +699,7 @@ public final class Configuration {
      * Sets the given features to be supported by the file system. Any features not provided here
      * will not be supported.
      */
+    @CanIgnoreReturnValue
     public Builder setSupportedFeatures(Feature... features) {
       supportedFeatures = Sets.immutableEnumSet(Arrays.asList(features));
       return this;
@@ -682,6 +711,7 @@ public final class Configuration {
      *
      * @since 1.1
      */
+    @CanIgnoreReturnValue
     public Builder setWatchServiceConfiguration(WatchServiceConfiguration config) {
       this.watchServiceConfig = checkNotNull(config);
       return this;

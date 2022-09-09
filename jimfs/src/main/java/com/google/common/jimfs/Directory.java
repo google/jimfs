@@ -19,6 +19,7 @@ package com.google.common.jimfs;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSortedSet;
+import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
@@ -32,23 +33,23 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   /** The entry linking to this directory in its parent directory. */
   private DirectoryEntry entryInParent;
 
-  /** Creates a new normal directory with the given ID. */
-  public static Directory create(int id) {
-    return new Directory(id);
+  /** Creates a new normal directory with the given ID and creation time. */
+  public static Directory create(int id, FileTime creationTime) {
+    return new Directory(id, creationTime);
   }
 
-  /** Creates a new root directory with the given ID and name. */
-  public static Directory createRoot(int id, Name name) {
-    return new Directory(id, name);
+  /** Creates a new root directory with the given ID, creation time, and name. */
+  public static Directory createRoot(int id, FileTime creationTime, Name name) {
+    return new Directory(id, creationTime, name);
   }
 
-  private Directory(int id) {
-    super(id);
+  private Directory(int id, FileTime creationTime) {
+    super(id, creationTime);
     put(new DirectoryEntry(this, Name.SELF, this));
   }
 
-  private Directory(int id, Name rootName) {
-    this(id);
+  private Directory(int id, FileTime creationTime, Name rootName) {
+    this(id, creationTime);
     linked(new DirectoryEntry(this, rootName, this));
   }
 
@@ -57,8 +58,8 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
    * this directory.
    */
   @Override
-  Directory copyWithoutContent(int id) {
-    return Directory.create(id);
+  Directory copyWithoutContent(int id, FileTime creationTime) {
+    return Directory.create(id, creationTime);
   }
 
   /**

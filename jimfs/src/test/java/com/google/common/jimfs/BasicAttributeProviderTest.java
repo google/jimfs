@@ -64,10 +64,10 @@ public class BasicAttributeProviderTest
 
   @Test
   public void testInitialAttributes() {
-    long time = file.getCreationTime();
-    assertThat(time).isNotEqualTo(0L);
-    assertThat(time).isEqualTo(file.getLastAccessTime());
-    assertThat(time).isEqualTo(file.getLastModifiedTime());
+    FileTime expected = fileTimeSource.now();
+    assertThat(file.getCreationTime()).isEqualTo(expected);
+    assertThat(file.getLastAccessTime()).isEqualTo(expected);
+    assertThat(file.getLastModifiedTime()).isEqualTo(expected);
 
     assertContainsAll(
         file,
@@ -121,22 +121,22 @@ public class BasicAttributeProviderTest
     BasicFileAttributes attrs = view.readAttributes();
     assertThat(attrs.fileKey()).isEqualTo(0);
 
-    FileTime time = attrs.creationTime();
-    assertThat(attrs.lastAccessTime()).isEqualTo(time);
-    assertThat(attrs.lastModifiedTime()).isEqualTo(time);
+    FileTime initial = fileTimeSource.now();
+    assertThat(attrs.creationTime()).isEqualTo(initial);
+    assertThat(attrs.lastAccessTime()).isEqualTo(initial);
+    assertThat(attrs.lastModifiedTime()).isEqualTo(initial);
 
     view.setTimes(null, null, null);
 
-    attrs = view.readAttributes();
-    assertThat(attrs.creationTime()).isEqualTo(time);
-    assertThat(attrs.lastAccessTime()).isEqualTo(time);
-    assertThat(attrs.lastModifiedTime()).isEqualTo(time);
+    assertThat(attrs.creationTime()).isEqualTo(initial);
+    assertThat(attrs.lastAccessTime()).isEqualTo(initial);
+    assertThat(attrs.lastModifiedTime()).isEqualTo(initial);
 
     view.setTimes(FileTime.fromMillis(0L), null, null);
 
     attrs = view.readAttributes();
-    assertThat(attrs.creationTime()).isEqualTo(time);
-    assertThat(attrs.lastAccessTime()).isEqualTo(time);
+    assertThat(attrs.creationTime()).isEqualTo(initial);
+    assertThat(attrs.lastAccessTime()).isEqualTo(initial);
     assertThat(attrs.lastModifiedTime()).isEqualTo(FileTime.fromMillis(0L));
   }
 

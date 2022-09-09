@@ -24,6 +24,7 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Table;
 import java.io.IOException;
+import java.nio.file.attribute.FileTime;
 import java.util.concurrent.locks.ReadWriteLock;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 
@@ -38,20 +39,19 @@ public abstract class File {
 
   private int links;
 
-  private long creationTime;
-  private long lastAccessTime;
-  private long lastModifiedTime;
+  private FileTime creationTime;
+  private FileTime lastAccessTime;
+  private FileTime lastModifiedTime;
 
   @NullableDecl // null when only the basic view is used (default)
   private Table<String, String, Object> attributes;
 
-  File(int id) {
+  File(int id, FileTime creationTime) {
     this.id = id;
 
-    long now = System.currentTimeMillis(); // TODO(cgdecker): Use a Clock
-    this.creationTime = now;
-    this.lastAccessTime = now;
-    this.lastModifiedTime = now;
+    this.creationTime = creationTime;
+    this.lastAccessTime = creationTime;
+    this.lastModifiedTime = creationTime;
   }
 
   /** Returns the ID of this file. */
@@ -83,11 +83,11 @@ public abstract class File {
   }
 
   /**
-   * Creates a new file of the same type as this file with the given ID. Does not copy the content
-   * of this file unless the cost of copying the content is minimal. This is because this method is
-   * called with a hold on the file system's lock.
+   * Creates a new file of the same type as this file with the given ID and creation time. Does not
+   * copy the content of this file unless the cost of copying the content is minimal. This is
+   * because this method is called with a hold on the file system's lock.
    */
-  abstract File copyWithoutContent(int id);
+  abstract File copyWithoutContent(int id, FileTime creationTime);
 
   /**
    * Copies the content of this file to the given file. The given file must be the same type of file
@@ -155,46 +155,33 @@ public abstract class File {
   }
 
   /** Gets the creation time of the file. */
-  @SuppressWarnings("GoodTime") // should return a java.time.Instant
-  public final synchronized long getCreationTime() {
+  public final synchronized FileTime getCreationTime() {
     return creationTime;
   }
 
   /** Gets the last access time of the file. */
-  @SuppressWarnings("GoodTime") // should return a java.time.Instant
-  public final synchronized long getLastAccessTime() {
+  public final synchronized FileTime getLastAccessTime() {
     return lastAccessTime;
   }
 
   /** Gets the last modified time of the file. */
-  @SuppressWarnings("GoodTime") // should return a java.time.Instant
-  public final synchronized long getLastModifiedTime() {
+  public final synchronized FileTime getLastModifiedTime() {
     return lastModifiedTime;
   }
 
   /** Sets the creation time of the file. */
-  final synchronized void setCreationTime(long creationTime) {
+  final synchronized void setCreationTime(FileTime creationTime) {
     this.creationTime = creationTime;
   }
 
   /** Sets the last access time of the file. */
-  final synchronized void setLastAccessTime(long lastAccessTime) {
+  final synchronized void setLastAccessTime(FileTime lastAccessTime) {
     this.lastAccessTime = lastAccessTime;
   }
 
   /** Sets the last modified time of the file. */
-  final synchronized void setLastModifiedTime(long lastModifiedTime) {
+  final synchronized void setLastModifiedTime(FileTime lastModifiedTime) {
     this.lastModifiedTime = lastModifiedTime;
-  }
-
-  /** Sets the last access time of the file to the current time. */
-  final void updateAccessTime() {
-    setLastAccessTime(System.currentTimeMillis());
-  }
-
-  /** Sets the last modified time of the file to the current time. */
-  final void updateModifiedTime() {
-    setLastModifiedTime(System.currentTimeMillis());
   }
 
   /**
@@ -252,7 +239,7 @@ public abstract class File {
   }
 
   private synchronized void setFileTimes(
-      long creationTime, long lastModifiedTime, long lastAccessTime) {
+      FileTime creationTime, FileTime lastModifiedTime, FileTime lastAccessTime) {
     this.creationTime = creationTime;
     this.lastModifiedTime = lastModifiedTime;
     this.lastAccessTime = lastAccessTime;

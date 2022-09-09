@@ -58,7 +58,7 @@ final class JimfsOutputStream extends OutputStream {
       }
       file.write(pos++, (byte) b);
 
-      file.updateModifiedTime();
+      file.setLastModifiedTime(fileSystemState.now());
     } finally {
       file.writeLock().unlock();
     }
@@ -85,7 +85,7 @@ final class JimfsOutputStream extends OutputStream {
       }
       pos += file.write(pos, b, off, len);
 
-      file.updateModifiedTime();
+      file.setLastModifiedTime(fileSystemState.now());
     } finally {
       file.writeLock().unlock();
     }

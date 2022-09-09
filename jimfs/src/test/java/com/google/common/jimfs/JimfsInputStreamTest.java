@@ -228,7 +228,8 @@ public class JimfsInputStreamTest {
 
     RegularFile file = regularFile(0);
     file.write(0, b, 0, b.length);
-    return new JimfsInputStream(file, new FileSystemState(Runnables.doNothing()));
+    return new JimfsInputStream(
+        file, new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()));
   }
 
   private static void assertEmpty(JimfsInputStream in) throws IOException {

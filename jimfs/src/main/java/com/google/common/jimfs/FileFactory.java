@@ -33,10 +33,14 @@ final class FileFactory {
   private final AtomicInteger idGenerator = new AtomicInteger();
 
   private final HeapDisk disk;
+  private final FileTimeSource fileTimeSource;
 
-  /** Creates a new file factory using the given disk for regular files. */
-  public FileFactory(HeapDisk disk) {
+  /**
+   * Creates a new file factory using the given disk for regular files and the given time source.
+   */
+  public FileFactory(HeapDisk disk, FileTimeSource fileTimeSource) {
     this.disk = checkNotNull(disk);
+    this.fileTimeSource = checkNotNull(fileTimeSource);
   }
 
   private int nextFileId() {
@@ -45,29 +49,29 @@ final class FileFactory {
 
   /** Creates a new directory. */
   public Directory createDirectory() {
-    return Directory.create(nextFileId());
+    return Directory.create(nextFileId(), fileTimeSource.now());
   }
 
   /** Creates a new root directory with the given name. */
   public Directory createRootDirectory(Name name) {
-    return Directory.createRoot(nextFileId(), name);
+    return Directory.createRoot(nextFileId(), fileTimeSource.now(), name);
   }
 
   /** Creates a new regular file. */
   @VisibleForTesting
   RegularFile createRegularFile() {
-    return RegularFile.create(nextFileId(), disk);
+    return RegularFile.create(nextFileId(), fileTimeSource.now(), disk);
   }
 
   /** Creates a new symbolic link referencing the given target path. */
   @VisibleForTesting
   SymbolicLink createSymbolicLink(JimfsPath target) {
-    return SymbolicLink.create(nextFileId(), target);
+    return SymbolicLink.create(nextFileId(), fileTimeSource.now(), target);
   }
 
   /** Creates and returns a copy of the given file. */
   public File copyWithoutContent(File file) throws IOException {
-    return file.copyWithoutContent(nextFileId());
+    return file.copyWithoutContent(nextFileId(), fileTimeSource.now());
   }
 
   // suppliers to act as file creation callbacks

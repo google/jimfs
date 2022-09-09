@@ -16,6 +16,8 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.truth.Truth.assertThat;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -40,7 +42,8 @@ import org.junit.runners.JUnit4;
 public class FileSystemStateTest {
 
   private final TestRunnable onClose = new TestRunnable();
-  private final FileSystemState state = new FileSystemState(onClose);
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+  private final FileSystemState state = new FileSystemState(fileTimeSource, onClose);
 
   @Test
   public void testIsOpen() throws IOException {
@@ -58,6 +61,13 @@ public class FileSystemStateTest {
       fail();
     } catch (ClosedFileSystemException expected) {
     }
+  }
+
+  @Test
+  public void testNow() {
+    assertThat(state.now()).isEqualTo(fileTimeSource.now());
+    fileTimeSource.advance(1, SECONDS);
+    assertThat(state.now()).isEqualTo(fileTimeSource.now());
   }
 
   @Test

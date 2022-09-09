@@ -32,12 +32,14 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class FileTest {
 
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
   @Test
   public void testAttributes() {
     // these methods are basically just thin wrappers around a map, so no need to test too
     // thoroughly
 
-    File file = RegularFile.create(0, new HeapDisk(10, 10, 10));
+    File file = RegularFile.create(0, fileTimeSource.now(), new HeapDisk(10, 10, 10));
 
     assertThat(file.getAttributeKeys()).isEmpty();
     assertThat(file.getAttribute("foo", "foo")).isNull();
@@ -65,7 +67,7 @@ public class FileTest {
 
   @Test
   public void testDirectory() {
-    File file = Directory.create(0);
+    File file = Directory.create(0, fileTimeSource.now());
     assertThat(file.isDirectory()).isTrue();
     assertThat(file.isRegularFile()).isFalse();
     assertThat(file.isSymbolicLink()).isFalse();
@@ -81,7 +83,7 @@ public class FileTest {
 
   @Test
   public void testSymbolicLink() {
-    File file = SymbolicLink.create(0, fakePath());
+    File file = SymbolicLink.create(0, fileTimeSource.now(), fakePath());
     assertThat(file.isDirectory()).isFalse();
     assertThat(file.isRegularFile()).isFalse();
     assertThat(file.isSymbolicLink()).isTrue();
@@ -89,10 +91,10 @@ public class FileTest {
 
   @Test
   public void testRootDirectory() {
-    Directory file = Directory.createRoot(0, Name.simple("/"));
+    Directory file = Directory.createRoot(0, fileTimeSource.now(), Name.simple("/"));
     assertThat(file.isRootDirectory()).isTrue();
 
-    Directory otherFile = Directory.createRoot(1, Name.simple("$"));
+    Directory otherFile = Directory.createRoot(1, fileTimeSource.now(), Name.simple("$"));
     assertThat(otherFile.isRootDirectory()).isTrue();
   }
 

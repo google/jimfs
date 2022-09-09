@@ -108,16 +108,18 @@ public class FileTreeTest {
           },
           false);
 
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
   private FileTree fileTree;
   private File workingDirectory;
   private final Map<String, File> files = new HashMap<>();
 
   @Before
   public void setUp() {
-    Directory root = Directory.createRoot(0, Name.simple("/"));
+    Directory root = Directory.createRoot(0, fileTimeSource.now(), Name.simple("/"));
     files.put("/", root);
 
-    Directory otherRoot = Directory.createRoot(2, Name.simple("$"));
+    Directory otherRoot = Directory.createRoot(2, fileTimeSource.now(), Name.simple("$"));
     files.put("$", otherRoot);
 
     Map<Name, Directory> roots = new HashMap<>();
@@ -440,7 +442,7 @@ public class FileTreeTest {
 
   private File createDirectory(String parent, String name) {
     Directory dir = (Directory) files.get(parent);
-    Directory newFile = Directory.create(new Random().nextInt());
+    Directory newFile = Directory.create(new Random().nextInt(), fileTimeSource.now());
     dir.link(Name.simple(name), newFile);
     files.put(name, newFile);
     return newFile;
@@ -456,7 +458,9 @@ public class FileTreeTest {
 
   private File createSymbolicLink(String parent, String name, String target) {
     Directory dir = (Directory) files.get(parent);
-    File newFile = SymbolicLink.create(new Random().nextInt(), pathService.parsePath(target));
+    File newFile =
+        SymbolicLink.create(
+            new Random().nextInt(), fileTimeSource.now(), pathService.parsePath(target));
     dir.link(Name.simple(name), newFile);
     files.put(name, newFile);
     return newFile;

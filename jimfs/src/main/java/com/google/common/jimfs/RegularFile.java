@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -53,12 +54,18 @@ final class RegularFile extends File {
   private long size;
 
   /** Creates a new regular file with the given ID and using the given disk. */
-  public static RegularFile create(int id, HeapDisk disk) {
-    return new RegularFile(id, disk, new byte[32][], 0, 0);
+  public static RegularFile create(int id, FileTime creationTime, HeapDisk disk) {
+    return new RegularFile(id, creationTime, disk, new byte[32][], 0, 0);
   }
 
-  RegularFile(int id, HeapDisk disk, byte[][] blocks, int blockCount, long size) {
-    super(id);
+  RegularFile(
+      int id,
+      FileTime creationTime,
+      HeapDisk disk,
+      byte[][] blocks,
+      int blockCount,
+      long size) {
+    super(id, creationTime);
     this.disk = checkNotNull(disk);
     this.blocks = checkNotNull(blocks);
     this.blockCount = blockCount;
@@ -150,9 +157,9 @@ final class RegularFile extends File {
   }
 
   @Override
-  RegularFile copyWithoutContent(int id) {
+  RegularFile copyWithoutContent(int id, FileTime creationTime) {
     byte[][] copyBlocks = new byte[Math.max(blockCount * 2, 32)][];
-    return new RegularFile(id, disk, copyBlocks, 0, size);
+    return new RegularFile(id, creationTime, disk, copyBlocks, 0, size);
   }
 
   @Override

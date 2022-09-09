@@ -42,6 +42,7 @@ import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -84,6 +85,10 @@ final class FileSystemView {
   /** Returns the file system state. */
   public FileSystemState state() {
     return store.state();
+  }
+
+  private FileTime now() {
+    return state().now();
   }
 
   /**
@@ -135,7 +140,7 @@ final class FileSystemView {
     store.readLock().lock();
     try {
       ImmutableSortedSet<Name> names = workingDirectory.snapshot();
-      workingDirectory.updateAccessTime();
+      workingDirectory.setLastAccessTime(now());
       return names;
     } finally {
       store.readLock().unlock();
@@ -146,8 +151,8 @@ final class FileSystemView {
    * Returns a snapshot mapping the names of each file in the directory at the given path to the
    * last modified time of that file.
    */
-  public ImmutableMap<Name, Long> snapshotModifiedTimes(JimfsPath path) throws IOException {
-    ImmutableMap.Builder<Name, Long> modifiedTimes = ImmutableMap.builder();
+  public ImmutableMap<Name, FileTime> snapshotModifiedTimes(JimfsPath path) throws IOException {
+    ImmutableMap.Builder<Name, FileTime> modifiedTimes = ImmutableMap.builder();
 
     store.readLock().lock();
     try {
@@ -271,7 +276,7 @@ final class FileSystemView {
       File newFile = fileCreator.get();
       store.setInitialAttributes(newFile, attrs);
       parent.link(path.name(), newFile);
-      parent.updateModifiedTime();
+      parent.setLastModifiedTime(now());
       return newFile;
     } finally {
       store.writeLock().unlock();
@@ -423,7 +428,7 @@ final class FileSystemView {
           lookUp(link, Options.NOFOLLOW_LINKS).requireDoesNotExist(link).directory();
 
       linkParent.link(linkName, existingFile);
-      linkParent.updateModifiedTime();
+      linkParent.setLastModifiedTime(now());
     } finally {
       store.writeLock().unlock();
     }
@@ -448,7 +453,7 @@ final class FileSystemView {
 
     checkDeletable(file, deleteMode, pathForException);
     parent.unlink(entry.name());
-    parent.updateModifiedTime();
+    parent.setLastModifiedTime(now());
 
     file.deleted();
   }
@@ -545,10 +550,10 @@ final class FileSystemView {
       if (move && sameFileSystem) {
         // Real move on the same file system.
         sourceParent.unlink(source.name());
-        sourceParent.updateModifiedTime();
+        sourceParent.setLastModifiedTime(now());
 
         destParent.link(dest.name(), sourceFile);
-        destParent.updateModifiedTime();
+        destParent.setLastModifiedTime(now());
       } else {
         // Doing a copy OR a move to a different file system, which must be implemented by copy and
         // delete.
@@ -571,7 +576,7 @@ final class FileSystemView {
         // Copy the file, but don't copy its content while we're holding the file store locks.
         copyFile = destView.store.copyWithoutContent(sourceFile, attributeCopyOption);
         destParent.link(dest.name(), copyFile);
-        destParent.updateModifiedTime();
+        destParent.setLastModifiedTime(now());
 
         // In order for the copy to be atomic (not strictly necessary, but seems preferable since
         // we can) lock both source and copy files before leaving the file store locks. This

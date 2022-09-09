@@ -31,11 +31,13 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class FileFactoryTest {
 
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
   private FileFactory factory;
 
   @Before
   public void setUp() {
-    factory = new FileFactory(new HeapDisk(2, 2, 0));
+    factory = new FileFactory(new HeapDisk(2, 2, 0), fileTimeSource);
   }
 
   @Test
@@ -43,14 +45,19 @@ public class FileFactoryTest {
     File file = factory.createDirectory();
     assertThat(file.id()).isEqualTo(0L);
     assertThat(file.isDirectory()).isTrue();
+    assertThat(file.getCreationTime()).isEqualTo(fileTimeSource.now());
 
+    fileTimeSource.randomize();
     file = factory.createRegularFile();
     assertThat(file.id()).isEqualTo(1L);
     assertThat(file.isRegularFile()).isTrue();
+    assertThat(file.getCreationTime()).isEqualTo(fileTimeSource.now());
 
+    fileTimeSource.randomize();
     file = factory.createSymbolicLink(fakePath());
     assertThat(file.id()).isEqualTo(2L);
     assertThat(file.isSymbolicLink()).isTrue();
+    assertThat(file.getCreationTime()).isEqualTo(fileTimeSource.now());
   }
 
   @Test
@@ -58,14 +65,19 @@ public class FileFactoryTest {
     File file = factory.directoryCreator().get();
     assertThat(file.id()).isEqualTo(0L);
     assertThat(file.isDirectory()).isTrue();
+    assertThat(file.getCreationTime()).isEqualTo(fileTimeSource.now());
 
+    fileTimeSource.randomize();
     file = factory.regularFileCreator().get();
     assertThat(file.id()).isEqualTo(1L);
     assertThat(file.isRegularFile()).isTrue();
+    assertThat(file.getCreationTime()).isEqualTo(fileTimeSource.now());
 
+    fileTimeSource.randomize();
     file = factory.symbolicLinkCreator(fakePath()).get();
     assertThat(file.id()).isEqualTo(2L);
     assertThat(file.isSymbolicLink()).isTrue();
+    assertThat(file.getCreationTime()).isEqualTo(fileTimeSource.now());
   }
 
   static JimfsPath fakePath() {

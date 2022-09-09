@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.attribute.FileAttributeView;
-import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
@@ -111,7 +110,7 @@ final class UnixAttributeProvider extends AttributeProvider {
             (Set<PosixFilePermission>) file.getAttribute("posix", "permissions");
         return toMode(permissions);
       case "ctime":
-        return FileTime.fromMillis(file.getCreationTime());
+        return file.getCreationTime();
       case "rdev":
         return 0L;
       case "dev":

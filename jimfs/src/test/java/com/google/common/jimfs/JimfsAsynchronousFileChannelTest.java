@@ -63,7 +63,7 @@ public class JimfsAsynchronousFileChannelTest {
         new JimfsFileChannel(
             file,
             Options.getOptionsForChannel(ImmutableSet.copyOf(options)),
-            new FileSystemState(Runnables.doNothing()));
+            new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()));
     return new JimfsAsynchronousFileChannel(channel, executor);
   }
 

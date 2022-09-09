@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchService;
 import java.nio.file.Watchable;
+import java.nio.file.attribute.FileTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -198,9 +199,9 @@ final class PollingWatchService extends AbstractWatchService {
   private final class Snapshot {
 
     /** Maps directory entry names to last modified times. */
-    private final ImmutableMap<Name, Long> modifiedTimes;
+    private final ImmutableMap<Name, FileTime> modifiedTimes;
 
-    Snapshot(Map<Name, Long> modifiedTimes) {
+    Snapshot(Map<Name, FileTime> modifiedTimes) {
       this.modifiedTimes = ImmutableMap.copyOf(modifiedTimes);
     }
 
@@ -232,11 +233,11 @@ final class PollingWatchService extends AbstractWatchService {
       }
 
       if (key.subscribesTo(ENTRY_MODIFY)) {
-        for (Map.Entry<Name, Long> entry : modifiedTimes.entrySet()) {
+        for (Map.Entry<Name, FileTime> entry : modifiedTimes.entrySet()) {
           Name name = entry.getKey();
-          Long modifiedTime = entry.getValue();
+          FileTime modifiedTime = entry.getValue();
 
-          Long newModifiedTime = newState.modifiedTimes.get(name);
+          FileTime newModifiedTime = newState.modifiedTimes.get(name);
           if (newModifiedTime != null && !modifiedTime.equals(newModifiedTime)) {
             key.post(new Event<>(ENTRY_MODIFY, 1, pathService.createFileName(name)));
             changesPosted = true;

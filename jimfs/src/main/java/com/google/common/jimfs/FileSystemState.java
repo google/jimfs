@@ -23,6 +23,7 @@ import com.google.common.collect.Sets;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.ClosedFileSystemException;
+import java.nio.file.attribute.FileTime;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -37,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 final class FileSystemState implements Closeable {
 
   private final Set<Closeable> resources = Sets.newConcurrentHashSet();
+  private final FileTimeSource fileTimeSource;
   private final Runnable onClose;
 
   private final AtomicBoolean open = new AtomicBoolean(true);
@@ -44,7 +46,8 @@ final class FileSystemState implements Closeable {
   /** Count of resources currently in the process of being registered. */
   private final AtomicInteger registering = new AtomicInteger();
 
-  FileSystemState(Runnable onClose) {
+  FileSystemState(FileTimeSource fileTimeSource, Runnable onClose) {
+    this.fileTimeSource = checkNotNull(fileTimeSource);
     this.onClose = checkNotNull(onClose);
   }
 
@@ -88,6 +91,11 @@ final class FileSystemState implements Closeable {
   /** Unregisters the given resource. Should be called when the resource is closed. */
   public void unregister(Closeable resource) {
     resources.remove(resource);
+  }
+
+  /** Returns the current {@link FileTime}. */
+  public FileTime now() {
+    return fileTimeSource.now();
   }
 
   /**

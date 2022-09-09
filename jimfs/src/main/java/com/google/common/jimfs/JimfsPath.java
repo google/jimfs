@@ -49,6 +49,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
  *
  * @author Colin Decker
  */
+@SuppressWarnings("ShouldNotSubclass") // I know what I'm doing I promise
 final class JimfsPath implements Path {
 
   @NullableDecl private final Name root;

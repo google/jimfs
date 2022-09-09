@@ -35,12 +35,14 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class HeapDiskTest {
 
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
   private RegularFile blocks;
 
   @Before
   public void setUp() {
     // the HeapDisk of this file is unused; it's passed to other HeapDisks to test operations
-    blocks = RegularFile.create(-1, new HeapDisk(2, 2, 2));
+    blocks = RegularFile.create(-1, fileTimeSource.now(), new HeapDisk(2, 2, 2));
   }
 
   @Test
@@ -216,7 +218,7 @@ public class HeapDiskTest {
     HeapDisk disk = new HeapDisk(4, 10, 4);
     disk.allocate(blocks, 6);
 
-    RegularFile blocks2 = RegularFile.create(-2, disk);
+    RegularFile blocks2 = RegularFile.create(-2, fileTimeSource.now(), disk);
 
     try {
       disk.allocate(blocks2, 5);

@@ -70,6 +70,7 @@ public class ConfigurationTest {
     assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
+    assertThat(config.fileTimeSource).isEqualTo(SystemFileTimeSource.INSTANCE);
   }
 
   @Test
@@ -104,6 +105,7 @@ public class ConfigurationTest {
     assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
+    assertThat(config.fileTimeSource).isEqualTo(SystemFileTimeSource.INSTANCE);
   }
 
   @Test
@@ -143,6 +145,7 @@ public class ConfigurationTest {
     assertThat(config.attributeViews).containsExactly("basic");
     assertThat(config.attributeProviders).isEmpty();
     assertThat(config.defaultAttributeValues).isEmpty();
+    assertThat(config.fileTimeSource).isEqualTo(SystemFileTimeSource.INSTANCE);
   }
 
   @Test
@@ -170,6 +173,7 @@ public class ConfigurationTest {
   public void testBuilder() {
     AttributeProvider unixProvider = StandardAttributeProviders.get("unix");
 
+    FileTimeSource fileTimeSource = new FakeFileTimeSource();
     Configuration config =
         Configuration.builder(PathType.unix())
             .setRoots("/")
@@ -184,6 +188,7 @@ public class ConfigurationTest {
             .addAttributeProvider(unixProvider)
             .setDefaultAttributeValue(
                 "posix:permissions", PosixFilePermissions.fromString("---------"))
+            .setFileTimeSource(fileTimeSource)
             .build();
 
     assertThat(config.pathType).isEqualTo(PathType.unix());
@@ -199,10 +204,12 @@ public class ConfigurationTest {
     assertThat(config.attributeProviders).containsExactly(unixProvider);
     assertThat(config.defaultAttributeValues)
         .containsEntry("posix:permissions", PosixFilePermissions.fromString("---------"));
+    assertThat(config.fileTimeSource).isEqualTo(fileTimeSource);
   }
 
   @Test
   public void testFileSystemForCustomConfiguration() throws IOException {
+    FileTimeSource fileTimeSource = new FakeFileTimeSource();
     Configuration config =
         Configuration.builder(PathType.unix())
             .setRoots("/")
@@ -216,6 +223,7 @@ public class ConfigurationTest {
             .setAttributeViews("unix")
             .setDefaultAttributeValue(
                 "posix:permissions", PosixFilePermissions.fromString("---------"))
+            .setFileTimeSource(fileTimeSource)
             .build();
 
     FileSystem fs = Jimfs.newFileSystem(config);
@@ -230,6 +238,8 @@ public class ConfigurationTest {
     Files.createFile(fs.getPath("/foo"));
     assertThat(Files.getAttribute(fs.getPath("/foo"), "posix:permissions"))
         .isEqualTo(PosixFilePermissions.fromString("---------"));
+    assertThat(Files.getAttribute(fs.getPath("/foo"), "creationTime"))
+        .isEqualTo(fileTimeSource.now());
 
     try {
       Files.createFile(fs.getPath("/FOO"));

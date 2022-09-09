@@ -42,15 +42,21 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class DirectoryTest {
 
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
   private Directory root;
   private Directory dir;
 
   @Before
   public void setUp() {
-    root = Directory.createRoot(0, Name.simple("/"));
+    root = Directory.createRoot(0, fileTimeSource.now(), Name.simple("/"));
 
-    dir = Directory.create(1);
+    dir = createDirectory(1);
     root.link(Name.simple("foo"), dir);
+  }
+
+  private Directory createDirectory(int id) {
+    return Directory.create(id, fileTimeSource.now());
   }
 
   @Test
@@ -82,7 +88,7 @@ public class DirectoryTest {
   public void testLink() {
     assertThat(dir.get(Name.simple("bar"))).isNull();
 
-    File bar = Directory.create(2);
+    File bar = createDirectory(2);
     dir.link(Name.simple("bar"), bar);
 
     assertThat(dir.get(Name.simple("bar"))).isEqualTo(entry(dir, "bar", bar));
@@ -91,7 +97,7 @@ public class DirectoryTest {
   @Test
   public void testLink_existingNameFails() {
     try {
-      root.link(Name.simple("foo"), Directory.create(2));
+      root.link(Name.simple("foo"), createDirectory(2));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -100,13 +106,13 @@ public class DirectoryTest {
   @Test
   public void testLink_parentAndSelfNameFails() {
     try {
-      dir.link(Name.simple("."), Directory.create(2));
+      dir.link(Name.simple("."), createDirectory(2));
       fail();
     } catch (IllegalArgumentException expected) {
     }
 
     try {
-      dir.link(Name.simple(".."), Directory.create(2));
+      dir.link(Name.simple(".."), createDirectory(2));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -114,7 +120,7 @@ public class DirectoryTest {
 
   @Test
   public void testGet_normalizingCaseInsensitive() {
-    File bar = Directory.create(2);
+    File bar = createDirectory(2);
     Name barName = caseInsensitive("bar");
 
     dir.link(barName, bar);
@@ -161,7 +167,7 @@ public class DirectoryTest {
 
   @Test
   public void testUnlink_normalizingCaseInsensitive() {
-    dir.link(caseInsensitive("bar"), Directory.create(2));
+    dir.link(caseInsensitive("bar"), createDirectory(2));
 
     assertThat(dir.get(caseInsensitive("bar"))).isNotNull();
 
@@ -172,7 +178,7 @@ public class DirectoryTest {
 
   @Test
   public void testLinkDirectory() {
-    Directory newDir = Directory.create(10);
+    Directory newDir = createDirectory(10);
 
     assertThat(newDir.entryInParent()).isNull();
     assertThat(newDir.get(Name.SELF).file()).isEqualTo(newDir);
@@ -191,7 +197,7 @@ public class DirectoryTest {
 
   @Test
   public void testUnlinkDirectory() {
-    Directory newDir = Directory.create(10);
+    Directory newDir = createDirectory(10);
 
     dir.link(Name.simple("foo"), newDir);
 
@@ -244,7 +250,7 @@ public class DirectoryTest {
 
   // Tests for internal hash table implementation
 
-  private static final Directory A = Directory.create(0);
+  private final Directory a = createDirectory(0);
 
   @Test
   public void testInitialState() {
@@ -361,15 +367,15 @@ public class DirectoryTest {
     }
   }
 
-  private static DirectoryEntry entry(String name) {
-    return new DirectoryEntry(A, Name.simple(name), A);
+  private DirectoryEntry entry(String name) {
+    return new DirectoryEntry(a, Name.simple(name), a);
   }
 
-  private static DirectoryEntry entry(Directory dir, String name, @NullableDecl File file) {
+  private DirectoryEntry entry(Directory dir, String name, @NullableDecl File file) {
     return new DirectoryEntry(dir, Name.simple(name), file);
   }
 
-  private static void assertParentAndSelf(Directory dir, File parent, File self) {
+  private void assertParentAndSelf(Directory dir, File parent, File self) {
     assertThat(dir).isEqualTo(self);
     assertThat(dir.parent()).isEqualTo(parent);
 

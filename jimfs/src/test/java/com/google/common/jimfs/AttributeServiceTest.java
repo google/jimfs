@@ -43,6 +43,8 @@ public class AttributeServiceTest {
 
   private AttributeService service;
 
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
   @Before
   public void setUp() {
     ImmutableSet<AttributeProvider> providers =
@@ -51,6 +53,10 @@ public class AttributeServiceTest {
             StandardAttributeProviders.get("owner"),
             new TestAttributeProvider());
     service = new AttributeService(providers, ImmutableMap.<String, Object>of());
+  }
+
+  private File createFile() {
+    return Directory.create(0, fileTimeSource.now());
   }
 
   @Test
@@ -68,7 +74,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetInitialAttributes() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setInitialAttributes(file);
 
     assertThat(file.getAttributeNames("test")).containsExactly("bar", "baz");
@@ -81,7 +87,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetAttribute() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setInitialAttributes(file);
 
     assertThat(service.getAttribute(file, "test:foo")).isEqualTo("hello");
@@ -93,7 +99,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetAttribute_fromInheritedProvider() {
-    File file = Directory.create(0);
+    File file = createFile();
     assertThat(service.getAttribute(file, "test:isRegularFile")).isEqualTo(false);
     assertThat(service.getAttribute(file, "test:isDirectory")).isEqualTo(true);
     assertThat(service.getAttribute(file, "test", "fileKey")).isEqualTo(0);
@@ -101,7 +107,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetAttribute_failsForAttributesNotDefinedByProvider() {
-    File file = Directory.create(0);
+    File file = createFile();
     try {
       service.getAttribute(file, "test:blah");
       fail();
@@ -118,7 +124,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setAttribute(file, "test:bar", 10L, false);
     assertThat(file.getAttribute("test", "bar")).isEqualTo(10L);
 
@@ -128,7 +134,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_forInheritedProvider() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setAttribute(file, "test:lastModifiedTime", FileTime.fromMillis(0), false);
     assertThat(file.getAttribute("test", "lastModifiedTime")).isNull();
     assertThat(service.getAttribute(file, "basic:lastModifiedTime"))
@@ -137,7 +143,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_withAlternateAcceptedType() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setAttribute(file, "test:bar", 10F, false);
     assertThat(file.getAttribute("test", "bar")).isEqualTo(10L);
 
@@ -147,14 +153,14 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_onCreate() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setInitialAttributes(file, new BasicFileAttribute<>("test:baz", 123));
     assertThat(file.getAttribute("test", "baz")).isEqualTo(123);
   }
 
   @Test
   public void testSetAttribute_failsForAttributesNotDefinedByProvider() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setInitialAttributes(file);
 
     try {
@@ -175,7 +181,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForArgumentThatIsNotOfCorrectType() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setInitialAttributes(file);
     try {
       service.setAttribute(file, "test:bar", "wrong", false);
@@ -188,7 +194,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForNullArgument() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setInitialAttributes(file);
     try {
       service.setAttribute(file, "test:bar", null, false);
@@ -201,7 +207,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_failsForAttributeThatIsNotSettable() {
-    File file = Directory.create(0);
+    File file = createFile();
     try {
       service.setAttribute(file, "test:foo", "world", false);
       fail();
@@ -213,7 +219,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testSetAttribute_onCreate_failsForAttributeThatIsNotSettableOnCreate() {
-    File file = Directory.create(0);
+    File file = createFile();
     try {
       service.setInitialAttributes(file, new BasicFileAttribute<>("test:foo", "world"));
       fail();
@@ -232,7 +238,7 @@ public class AttributeServiceTest {
   @SuppressWarnings("ConstantConditions")
   @Test
   public void testGetFileAttributeView() throws IOException {
-    final File file = Directory.create(0);
+    final File file = createFile();
     service.setInitialAttributes(file);
 
     FileLookup fileLookup =
@@ -255,7 +261,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testGetFileAttributeView_isNullForUnsupportedView() {
-    final File file = Directory.create(0);
+    final File file = createFile();
     FileLookup fileLookup =
         new FileLookup() {
           @Override
@@ -268,13 +274,13 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asMap() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setInitialAttributes(file);
 
     ImmutableMap<String, Object> map = service.readAttributes(file, "test:foo,bar,baz");
     assertThat(map).isEqualTo(ImmutableMap.of("foo", "hello", "bar", 0L, "baz", 1));
 
-    FileTime time = (FileTime) service.getAttribute(file, "basic:creationTime");
+    FileTime time = fileTimeSource.now();
 
     map = service.readAttributes(file, "test:*");
     assertThat(map)
@@ -312,7 +318,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asMap_failsForInvalidAttributes() {
-    File file = Directory.create(0);
+    File file = createFile();
     try {
       service.readAttributes(file, "basic:fileKey,isOther,*,creationTime");
       fail();
@@ -330,7 +336,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_asObject() {
-    File file = Directory.create(0);
+    File file = createFile();
     service.setInitialAttributes(file);
 
     BasicFileAttributes basicAttrs = service.readAttributes(file, BasicFileAttributes.class);
@@ -349,7 +355,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testReadAttributes_failsForUnsupportedAttributesType() {
-    File file = Directory.create(0);
+    File file = createFile();
     try {
       service.readAttributes(file, PosixFileAttributes.class);
       fail();
@@ -359,7 +365,7 @@ public class AttributeServiceTest {
 
   @Test
   public void testIllegalAttributeFormats() {
-    File file = Directory.create(0);
+    File file = createFile();
     try {
       service.getAttribute(file, ":bar");
       fail();

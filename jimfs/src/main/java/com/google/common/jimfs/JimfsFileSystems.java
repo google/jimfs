@@ -68,7 +68,8 @@ final class JimfsFileSystems {
   public static JimfsFileSystem newFileSystem(
       JimfsFileSystemProvider provider, URI uri, Configuration config) throws IOException {
     PathService pathService = new PathService(config);
-    FileSystemState state = new FileSystemState(removeFileSystemRunnable(uri));
+    FileSystemState state =
+        new FileSystemState(config.fileTimeSource, removeFileSystemRunnable(uri));
 
     JimfsFileStore fileStore = createFileStore(config, pathService, state);
     FileSystemView defaultView = createDefaultView(config, fileStore, pathService);
@@ -87,7 +88,7 @@ final class JimfsFileSystems {
     AttributeService attributeService = new AttributeService(config);
 
     HeapDisk disk = new HeapDisk(config);
-    FileFactory fileFactory = new FileFactory(disk);
+    FileFactory fileFactory = new FileFactory(disk, config.fileTimeSource);
 
     Map<Name, Directory> roots = new HashMap<>();
 

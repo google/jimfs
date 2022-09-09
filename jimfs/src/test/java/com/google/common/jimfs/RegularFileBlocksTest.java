@@ -37,6 +37,8 @@ public class RegularFileBlocksTest {
 
   private static final int BLOCK_SIZE = 2;
 
+  private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
   private RegularFile file;
 
   @Before
@@ -44,8 +46,8 @@ public class RegularFileBlocksTest {
     file = createFile();
   }
 
-  private static RegularFile createFile() {
-    return RegularFile.create(-1, new HeapDisk(BLOCK_SIZE, 2, 2));
+  private RegularFile createFile() {
+    return RegularFile.create(-1, fileTimeSource.now(), new HeapDisk(BLOCK_SIZE, 2, 2));
   }
 
   @Test

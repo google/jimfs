@@ -36,6 +36,8 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
   protected static final ImmutableMap<String, FileAttributeView> NO_INHERITED_VIEWS =
       ImmutableMap.of();
 
+  protected final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
+
   protected P provider;
   protected File file;
 
@@ -57,7 +59,7 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
   @Before
   public void setUp() {
     this.provider = createProvider();
-    this.file = Directory.create(0);
+    this.file = Directory.create(0, fileTimeSource.now());
 
     Map<String, ?> defaultValues = createDefaultValues();
     setDefaultValues(file, provider, defaultValues);

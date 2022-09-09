@@ -18,6 +18,8 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.nio.file.attribute.FileTime;
+
 /**
  * A symbolic link file, containing a {@linkplain JimfsPath path}.
  *
@@ -28,12 +30,12 @@ final class SymbolicLink extends File {
   private final JimfsPath target;
 
   /** Creates a new symbolic link with the given ID and target. */
-  public static SymbolicLink create(int id, JimfsPath target) {
-    return new SymbolicLink(id, target);
+  public static SymbolicLink create(int id, FileTime creationTime, JimfsPath target) {
+    return new SymbolicLink(id, creationTime, target);
   }
 
-  private SymbolicLink(int id, JimfsPath target) {
-    super(id);
+  private SymbolicLink(int id, FileTime creationTime, JimfsPath target) {
+    super(id, creationTime);
     this.target = checkNotNull(target);
   }
 
@@ -43,7 +45,7 @@ final class SymbolicLink extends File {
   }
 
   @Override
-  File copyWithoutContent(int id) {
-    return SymbolicLink.create(id, target);
+  File copyWithoutContent(int id, FileTime creationTime) {
+    return SymbolicLink.create(id, creationTime, target);
   }
 }

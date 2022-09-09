@@ -63,7 +63,7 @@ final class JimfsInputStream extends InputStream {
       if (b == -1) {
         finished = true;
       } else {
-        file.updateAccessTime();
+        file.setLastAccessTime(fileSystemState.now());
       }
       return b;
     } finally {
@@ -97,7 +97,7 @@ final class JimfsInputStream extends InputStream {
         pos += read;
       }
 
-      file.updateAccessTime();
+      file.setLastAccessTime(fileSystemState.now());
       return read;
     } finally {
       file.readLock().unlock();

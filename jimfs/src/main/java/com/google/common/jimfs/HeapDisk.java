@@ -83,7 +83,14 @@ final class HeapDisk {
   }
 
   private RegularFile createBlockCache(int maxCachedBlockCount) {
-    return new RegularFile(-1, this, new byte[Math.min(maxCachedBlockCount, 8192)][], 0, 0);
+    // This file is just for holding blocks so things like the creation time don't matter
+    return new RegularFile(
+        -1,
+        SystemFileTimeSource.INSTANCE.now(),
+        this,
+        new byte[Math.min(maxCachedBlockCount, 8192)][],
+        0,
+        0);
   }
 
   /** Returns the size of blocks created by this disk. */

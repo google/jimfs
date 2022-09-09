@@ -62,7 +62,7 @@ public class PollingWatchServiceTest {
         new PollingWatchService(
             fs.getDefaultView(),
             fs.getPathService(),
-            new FileSystemState(Runnables.doNothing()),
+            new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()),
             4,
             MILLISECONDS);
   }

@@ -73,11 +73,11 @@ final class BasicAttributeProvider extends AttributeProvider {
       case "isOther":
         return !file.isDirectory() && !file.isRegularFile() && !file.isSymbolicLink();
       case "creationTime":
-        return FileTime.fromMillis(file.getCreationTime());
+        return file.getCreationTime();
       case "lastAccessTime":
-        return FileTime.fromMillis(file.getLastAccessTime());
+        return file.getLastAccessTime();
       case "lastModifiedTime":
-        return FileTime.fromMillis(file.getLastModifiedTime());
+        return file.getLastModifiedTime();
       default:
         return null;
     }
@@ -88,15 +88,15 @@ final class BasicAttributeProvider extends AttributeProvider {
     switch (attribute) {
       case "creationTime":
         checkNotCreate(view, attribute, create);
-        file.setCreationTime(checkType(view, attribute, value, FileTime.class).toMillis());
+        file.setCreationTime(checkType(view, attribute, value, FileTime.class));
         break;
       case "lastAccessTime":
         checkNotCreate(view, attribute, create);
-        file.setLastAccessTime(checkType(view, attribute, value, FileTime.class).toMillis());
+        file.setLastAccessTime(checkType(view, attribute, value, FileTime.class));
         break;
       case "lastModifiedTime":
         checkNotCreate(view, attribute, create);
-        file.setLastModifiedTime(checkType(view, attribute, value, FileTime.class).toMillis());
+        file.setLastModifiedTime(checkType(view, attribute, value, FileTime.class));
         break;
       case "size":
       case "fileKey":
@@ -156,15 +156,15 @@ final class BasicAttributeProvider extends AttributeProvider {
       File file = lookupFile();
 
       if (lastModifiedTime != null) {
-        file.setLastModifiedTime(lastModifiedTime.toMillis());
+        file.setLastModifiedTime(lastModifiedTime);
       }
 
       if (lastAccessTime != null) {
-        file.setLastAccessTime(lastAccessTime.toMillis());
+        file.setLastAccessTime(lastAccessTime);
       }
 
       if (createTime != null) {
-        file.setCreationTime(createTime.toMillis());
+        file.setCreationTime(createTime);
       }
     }
   }
@@ -182,9 +182,9 @@ final class BasicAttributeProvider extends AttributeProvider {
     private final Object fileKey;
 
     protected Attributes(File file) {
-      this.lastModifiedTime = FileTime.fromMillis(file.getLastModifiedTime());
-      this.lastAccessTime = FileTime.fromMillis(file.getLastAccessTime());
-      this.creationTime = FileTime.fromMillis(file.getCreationTime());
+      this.lastModifiedTime = file.getLastModifiedTime();
+      this.lastAccessTime = file.getLastAccessTime();
+      this.creationTime = file.getCreationTime();
       this.regularFile = file.isRegularFile();
       this.directory = file.isDirectory();
       this.symbolicLink = file.isSymbolicLink();

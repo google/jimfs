@@ -133,7 +133,8 @@ public final class TestUtils {
   }
 
   static RegularFile regularFile(int size) {
-    RegularFile file = RegularFile.create(0, new HeapDisk(8096, 1000, 1000));
+    RegularFile file =
+        RegularFile.create(0, new FakeFileTimeSource().now(), new HeapDisk(8096, 1000, 1000));
     try {
       file.write(0, new byte[size], 0, size);
       return file;

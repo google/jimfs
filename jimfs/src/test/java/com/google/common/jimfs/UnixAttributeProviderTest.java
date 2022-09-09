@@ -21,7 +21,6 @@ import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
-import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
 import org.junit.Test;
@@ -67,7 +66,7 @@ public class UnixAttributeProviderTest
 
     // these have logical origins in attributes from other views
     assertThat(provider.get(file, "mode")).isEqualTo(0644); // rw-r--r--
-    assertThat(provider.get(file, "ctime")).isEqualTo(FileTime.fromMillis(file.getCreationTime()));
+    assertThat(provider.get(file, "ctime")).isEqualTo(file.getCreationTime());
 
     // this is based on a property this file system does actually have
     assertThat(provider.get(file, "nlink")).isEqualTo(1);

@@ -184,7 +184,8 @@ public class JimfsOutputStreamTest {
 
   private static JimfsOutputStream newOutputStream(boolean append) {
     RegularFile file = regularFile(0);
-    return new JimfsOutputStream(file, append, new FileSystemState(Runnables.doNothing()));
+    return new JimfsOutputStream(
+        file, append, new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()));
   }
 
   @SuppressWarnings("GuardedByChecker")
