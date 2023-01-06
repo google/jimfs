@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.MoreObjects;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
@@ -61,6 +62,7 @@ final class DirectoryEntry {
    * @return this
    * @throws NoSuchFileException if this entry does not exist
    */
+  @CanIgnoreReturnValue
   public DirectoryEntry requireExists(Path pathForException) throws NoSuchFileException {
     if (!exists()) {
       throw new NoSuchFileException(pathForException.toString());
@@ -74,6 +76,7 @@ final class DirectoryEntry {
    * @return this
    * @throws FileAlreadyExistsException if this entry does not exist
    */
+  @CanIgnoreReturnValue
   public DirectoryEntry requireDoesNotExist(Path pathForException)
       throws FileAlreadyExistsException {
     if (exists()) {
@@ -89,6 +92,7 @@ final class DirectoryEntry {
    * @throws NoSuchFileException if this entry does not exist
    * @throws NotDirectoryException if this entry does not link to a directory
    */
+  @CanIgnoreReturnValue
   public DirectoryEntry requireDirectory(Path pathForException)
       throws NoSuchFileException, NotDirectoryException {
     requireExists(pathForException);
@@ -105,6 +109,7 @@ final class DirectoryEntry {
    * @throws NoSuchFileException if this entry does not exist
    * @throws NotLinkException if this entry does not link to a symbolic link
    */
+  @CanIgnoreReturnValue
   public DirectoryEntry requireSymbolicLink(Path pathForException)
       throws NoSuchFileException, NotLinkException {
     requireExists(pathForException);

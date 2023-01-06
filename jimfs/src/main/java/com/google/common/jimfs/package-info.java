@@ -19,7 +19,9 @@
  * use the {@link com.google.common.jimfs.Jimfs Jimfs} and {@link
  * com.google.common.jimfs.Configuration Configuration} classes.
  */
+@CheckReturnValue
 @ParametersAreNonnullByDefault
 package com.google.common.jimfs;
 
+import com.google.errorprone.annotations.CheckReturnValue;
 import javax.annotation.ParametersAreNonnullByDefault;

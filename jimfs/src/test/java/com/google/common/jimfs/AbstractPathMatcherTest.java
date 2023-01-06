@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -84,6 +85,7 @@ public abstract class AbstractPathMatcherTest {
       this.realMatcher = realMatcher(pattern);
     }
 
+    @CanIgnoreReturnValue
     PatternAsserter matches(String... paths) {
       for (String path : paths) {
         assertTrue(
@@ -98,6 +100,7 @@ public abstract class AbstractPathMatcherTest {
       return this;
     }
 
+    @CanIgnoreReturnValue
     PatternAsserter doesNotMatch(String... paths) {
       for (String path : paths) {
         assertFalse(

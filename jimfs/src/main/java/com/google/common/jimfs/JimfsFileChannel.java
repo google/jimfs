@@ -22,6 +22,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -399,6 +400,7 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public FileChannel position(long newPosition) throws IOException {
     Util.checkNotNegative(newPosition, "newPosition");
     checkOpen();
@@ -448,6 +450,7 @@ final class JimfsFileChannel extends FileChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public FileChannel truncate(long size) throws IOException {
     Util.checkNotNegative(size, "size");
     checkOpen();

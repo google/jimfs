@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
@@ -63,6 +64,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public AsynchronousFileChannel truncate(long size) throws IOException {
     channel.truncate(size);
     return this;

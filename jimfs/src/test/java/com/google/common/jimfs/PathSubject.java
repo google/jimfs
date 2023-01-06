@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.common.truth.FailureMetadata;
 import com.google.common.truth.Subject;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.DirectoryStream;
@@ -67,11 +68,13 @@ public final class PathSubject extends Subject {
   }
 
   /** Returns this, for readability of chained assertions. */
+  @CanIgnoreReturnValue
   public PathSubject and() {
     return this;
   }
 
   /** Do not follow links when looking up the path. */
+  @CanIgnoreReturnValue
   public PathSubject noFollowLinks() {
     this.linkOptions = NOFOLLOW_LINKS;
     return this;
@@ -81,12 +84,14 @@ public final class PathSubject extends Subject {
    * Set the given charset to be used when reading the file at this path as text. Default charset if
    * not set is UTF-8.
    */
+  @CanIgnoreReturnValue
   public PathSubject withCharset(Charset charset) {
     this.charset = checkNotNull(charset);
     return this;
   }
 
   /** Asserts that the path is absolute (it has a root component). */
+  @CanIgnoreReturnValue
   public PathSubject isAbsolute() {
     if (!actual.isAbsolute()) {
       failWithActual(simpleFact("expected to be absolute"));
@@ -95,6 +100,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path is relative (it has no root component). */
+  @CanIgnoreReturnValue
   public PathSubject isRelative() {
     if (actual.isAbsolute()) {
       failWithActual(simpleFact("expected to be relative"));
@@ -103,6 +109,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path has the given root component. */
+  @CanIgnoreReturnValue
   public PathSubject hasRootComponent(@NullableDecl String root) {
     Path rootComponent = actual.getRoot();
     if (root == null && rootComponent != null) {
@@ -114,12 +121,14 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path has no name components. */
+  @CanIgnoreReturnValue
   public PathSubject hasNoNameComponents() {
     check("getNameCount()").that(actual.getNameCount()).isEqualTo(0);
     return this;
   }
 
   /** Asserts that the path has the given name components. */
+  @CanIgnoreReturnValue
   public PathSubject hasNameComponents(String... names) {
     ImmutableList.Builder<String> builder = ImmutableList.builder();
     for (Path name : actual) {
@@ -133,6 +142,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path matches the given syntax and pattern. */
+  @CanIgnoreReturnValue
   public PathSubject matches(String syntaxAndPattern) {
     PathMatcher matcher = actual.getFileSystem().getPathMatcher(syntaxAndPattern);
     if (!matcher.matches(actual)) {
@@ -142,6 +152,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path does not match the given syntax and pattern. */
+  @CanIgnoreReturnValue
   public PathSubject doesNotMatch(String syntaxAndPattern) {
     PathMatcher matcher = actual.getFileSystem().getPathMatcher(syntaxAndPattern);
     if (matcher.matches(actual)) {
@@ -151,6 +162,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path exists. */
+  @CanIgnoreReturnValue
   public PathSubject exists() {
     if (!Files.exists(actual, linkOptions)) {
       failWithActual(simpleFact("expected to exist"));
@@ -162,6 +174,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path does not exist. */
+  @CanIgnoreReturnValue
   public PathSubject doesNotExist() {
     if (!Files.notExists(actual, linkOptions)) {
       failWithActual(simpleFact("expected not to exist"));
@@ -173,6 +186,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path is a directory. */
+  @CanIgnoreReturnValue
   public PathSubject isDirectory() {
     exists(); // check for directoryness should imply check for existence
 
@@ -183,6 +197,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path is a regular file. */
+  @CanIgnoreReturnValue
   public PathSubject isRegularFile() {
     exists(); // check for regular fileness should imply check for existence
 
@@ -193,6 +208,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path is a symbolic link. */
+  @CanIgnoreReturnValue
   public PathSubject isSymbolicLink() {
     exists(); // check for symbolic linkness should imply check for existence
 
@@ -203,6 +219,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path, which is a symbolic link, has the given path as a target. */
+  @CanIgnoreReturnValue
   public PathSubject withTarget(String targetPath) throws IOException {
     Path actualTarget = Files.readSymbolicLink(actual);
     if (!actualTarget.equals(toPath(targetPath))) {
@@ -218,6 +235,7 @@ public final class PathSubject extends Subject {
    * Asserts that the file the path points to exists and has the given number of links to it. Fails
    * on a file system that does not support the "unix" view.
    */
+  @CanIgnoreReturnValue
   public PathSubject hasLinkCount(int count) throws IOException {
     exists();
 
@@ -229,11 +247,13 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path resolves to the same file as the given path. */
+  @CanIgnoreReturnValue
   public PathSubject isSameFileAs(String path) throws IOException {
     return isSameFileAs(toPath(path));
   }
 
   /** Asserts that the path resolves to the same file as the given path. */
+  @CanIgnoreReturnValue
   public PathSubject isSameFileAs(Path path) throws IOException {
     if (!Files.isSameFile(actual, path)) {
       failWithActual("expected to be same file as", path);
@@ -242,6 +262,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the path does not resolve to the same file as the given path. */
+  @CanIgnoreReturnValue
   public PathSubject isNotSameFileAs(String path) throws IOException {
     if (Files.isSameFile(actual, toPath(path))) {
       failWithActual("expected not to be same file as", path);
@@ -250,6 +271,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the directory has no children. */
+  @CanIgnoreReturnValue
   public PathSubject hasNoChildren() throws IOException {
     isDirectory();
 
@@ -262,6 +284,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the directory has children with the given names, in the given order. */
+  @CanIgnoreReturnValue
   public PathSubject hasChildren(String... children) throws IOException {
     isDirectory();
 
@@ -287,6 +310,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the file has the given size. */
+  @CanIgnoreReturnValue
   public PathSubject hasSize(long size) throws IOException {
     if (Files.size(actual) != size) {
       failWithActual("expected to have size", size);
@@ -295,6 +319,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the file is a regular file containing no bytes. */
+  @CanIgnoreReturnValue
   public PathSubject containsNoBytes() throws IOException {
     return containsBytes(new byte[0]);
   }
@@ -302,6 +327,7 @@ public final class PathSubject extends Subject {
   /**
    * Asserts that the file is a regular file containing exactly the byte values of the given ints.
    */
+  @CanIgnoreReturnValue
   public PathSubject containsBytes(int... bytes) throws IOException {
     byte[] realBytes = new byte[bytes.length];
     for (int i = 0; i < bytes.length; i++) {
@@ -311,6 +337,7 @@ public final class PathSubject extends Subject {
   }
 
   /** Asserts that the file is a regular file containing exactly the given bytes. */
+  @CanIgnoreReturnValue
   public PathSubject containsBytes(byte[] bytes) throws IOException {
     isRegularFile();
     hasSize(bytes.length);
@@ -328,6 +355,7 @@ public final class PathSubject extends Subject {
    * Asserts that the file is a regular file containing the same bytes as the regular file at the
    * given path.
    */
+  @CanIgnoreReturnValue
   public PathSubject containsSameBytesAs(String path) throws IOException {
     isRegularFile();
 
@@ -342,6 +370,7 @@ public final class PathSubject extends Subject {
    * Asserts that the file is a regular file containing the given lines of text. By default, the
    * bytes are decoded as UTF-8; for a different charset, use {@link #withCharset(Charset)}.
    */
+  @CanIgnoreReturnValue
   public PathSubject containsLines(String... lines) throws IOException {
     return containsLines(Arrays.asList(lines));
   }
@@ -350,6 +379,7 @@ public final class PathSubject extends Subject {
    * Asserts that the file is a regular file containing the given lines of text. By default, the
    * bytes are decoded as UTF-8; for a different charset, use {@link #withCharset(Charset)}.
    */
+  @CanIgnoreReturnValue
   public PathSubject containsLines(Iterable<String> lines) throws IOException {
     isRegularFile();
 

@@ -16,6 +16,7 @@
 
 package com.google.common.jimfs;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -72,6 +73,7 @@ public class ByteBufferChannel implements SeekableByteChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public SeekableByteChannel position(long newPosition) throws IOException {
     buffer.position((int) newPosition);
     return this;
@@ -83,6 +85,7 @@ public class ByteBufferChannel implements SeekableByteChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public SeekableByteChannel truncate(long size) throws IOException {
     buffer.limit((int) size);
     return this;

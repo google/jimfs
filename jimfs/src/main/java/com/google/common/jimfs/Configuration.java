@@ -717,6 +717,7 @@ public final class Configuration {
       return this;
     }
 
+    @CanIgnoreReturnValue
     private Builder setDisplayName(String displayName) {
       this.displayName = checkNotNull(displayName);
       return this;

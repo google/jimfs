@@ -18,6 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -53,6 +54,7 @@ final class DowngradedSeekableByteChannel implements SeekableByteChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public SeekableByteChannel position(long newPosition) throws IOException {
     channel.position(newPosition);
     return this;
@@ -64,6 +66,7 @@ final class DowngradedSeekableByteChannel implements SeekableByteChannel {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public SeekableByteChannel truncate(long size) throws IOException {
     channel.truncate(size);
     return this;
