@@ -19,6 +19,7 @@ package com.google.common.jimfs;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
@@ -304,6 +305,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
    *
    * @throws IllegalArgumentException if there is no entry with the given name in the directory
    */
+  @CanIgnoreReturnValue
   @VisibleForTesting
   DirectoryEntry remove(Name name) {
     int index = bucketIndex(name, table.length);

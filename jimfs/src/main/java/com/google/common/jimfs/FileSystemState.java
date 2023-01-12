@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.ClosedFileSystemException;
@@ -69,6 +70,7 @@ final class FileSystemState implements Closeable {
    * Registers the given resource to be closed when the file system is closed. Should be called when
    * the resource is opened.
    */
+  @CanIgnoreReturnValue
   public <C extends Closeable> C register(C resource) {
     // Initial open check to avoid incrementing registering if we already know it's closed.
     // This is to prevent any possibility of a weird pathalogical situation where the do/while

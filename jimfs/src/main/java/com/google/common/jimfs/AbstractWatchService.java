@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.WatchEvent;
@@ -271,6 +272,7 @@ abstract class AbstractWatchService implements WatchService {
       return Collections.unmodifiableList(result);
     }
 
+    @CanIgnoreReturnValue
     @Override
     public boolean reset() {
       // calling reset() multiple times without polling events would cause key to be placed in

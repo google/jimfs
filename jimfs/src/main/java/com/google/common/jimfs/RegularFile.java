@@ -23,6 +23,7 @@ import static com.google.common.jimfs.Util.nextPowerOf2;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.UnsignedBytes;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -224,6 +225,7 @@ final class RegularFile extends File {
    * nothing. Returns {@code true} if this file was modified by the call (its size changed) and
    * {@code false} otherwise.
    */
+  @CanIgnoreReturnValue
   public boolean truncate(long size) {
     if (size >= this.size) {
       return false;
@@ -281,6 +283,7 @@ final class RegularFile extends File {
    *
    * @throws IOException if the file needs more blocks but the disk is full
    */
+  @CanIgnoreReturnValue
   public int write(long pos, byte b) throws IOException {
     prepareForWrite(pos, 1);
 
@@ -303,6 +306,7 @@ final class RegularFile extends File {
    *
    * @throws IOException if the file needs more blocks but the disk is full
    */
+  @CanIgnoreReturnValue
   public int write(long pos, byte[] b, int off, int len) throws IOException {
     prepareForWrite(pos, len);
 
@@ -344,6 +348,7 @@ final class RegularFile extends File {
    *
    * @throws IOException if the file needs more blocks but the disk is full
    */
+  @CanIgnoreReturnValue
   public int write(long pos, ByteBuffer buf) throws IOException {
     int len = buf.remaining();
 
@@ -381,6 +386,7 @@ final class RegularFile extends File {
    *
    * @throws IOException if the file needs more blocks but the disk is full
    */
+  @CanIgnoreReturnValue
   public long write(long pos, Iterable<ByteBuffer> bufs) throws IOException {
     long start = pos;
     for (ByteBuffer buf : bufs) {
@@ -641,10 +647,9 @@ final class RegularFile extends File {
   }
 
   /** Puts the contents of the given byte buffer at the given offset in the given block. */
-  private static int put(byte[] block, int offset, ByteBuffer buf) {
+  private static void put(byte[] block, int offset, ByteBuffer buf) {
     int len = Math.min(block.length - offset, buf.remaining());
     buf.get(block, offset, len);
-    return len;
   }
 
   /**

@@ -28,6 +28,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
@@ -226,6 +227,7 @@ final class FileSystemView {
    * Creates a new directory at the given path. The given attributes will be set on the new file if
    * possible.
    */
+  @CanIgnoreReturnValue
   public Directory createDirectory(JimfsPath path, FileAttribute<?>... attrs) throws IOException {
     return (Directory) createFile(path, store.directoryCreator(), true, attrs);
   }
@@ -234,6 +236,7 @@ final class FileSystemView {
    * Creates a new symbolic link at the given path with the given target. The given attributes will
    * be set on the new file if possible.
    */
+  @CanIgnoreReturnValue
   public SymbolicLink createSymbolicLink(
       JimfsPath path, JimfsPath target, FileAttribute<?>... attrs) throws IOException {
     if (!store.supportsFeature(Feature.SYMBOLIC_LINKS)) {

@@ -576,7 +576,7 @@ public class RegularFileTest {
     public void testNonEmpty_read_fromPastEnd_singleBuffer() throws IOException {
       fillContent("123");
       ByteBuffer buffer = ByteBuffer.allocate(3);
-      file.read(3, buffer);
+      assertEquals(-1, file.read(3, buffer));
       assertBufferEquals("000", 3, buffer);
     }
 
@@ -896,7 +896,7 @@ public class RegularFileTest {
     protected static void assertContentEquals(byte[] expected, RegularFile actual) {
       assertEquals(expected.length, actual.sizeWithoutLocking());
       byte[] actualBytes = new byte[(int) actual.sizeWithoutLocking()];
-      actual.read(0, ByteBuffer.wrap(actualBytes));
+      int unused = actual.read(0, ByteBuffer.wrap(actualBytes));
       assertArrayEquals(expected, actualBytes);
     }
   }

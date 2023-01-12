@@ -57,6 +57,7 @@ public final class PathTester {
     return this;
   }
 
+  @CanIgnoreReturnValue
   public PathTester names(String... names) {
     return names(Arrays.asList(names));
   }

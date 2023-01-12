@@ -425,9 +425,11 @@ public final class PathSubject extends Subject {
   public interface Attribute {
 
     /** Asserts that the value of this attribute is equal to the given value. */
+    @CanIgnoreReturnValue
     Attribute is(Object value) throws IOException;
 
     /** Asserts that the value of this attribute is not equal to the given value. */
+    @CanIgnoreReturnValue
     Attribute isNot(Object value) throws IOException;
 
     /** Returns the path subject for further chaining. */

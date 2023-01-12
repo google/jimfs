@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -440,6 +441,7 @@ public class FileTreeTest {
     }
   }
 
+  @CanIgnoreReturnValue
   private File createDirectory(String parent, String name) {
     Directory dir = (Directory) files.get(parent);
     Directory newFile = Directory.create(new Random().nextInt(), fileTimeSource.now());
@@ -448,6 +450,7 @@ public class FileTreeTest {
     return newFile;
   }
 
+  @CanIgnoreReturnValue
   private File createFile(String parent, String name) {
     Directory dir = (Directory) files.get(parent);
     File newFile = regularFile(0);
@@ -456,6 +459,7 @@ public class FileTreeTest {
     return newFile;
   }
 
+  @CanIgnoreReturnValue
   private File createSymbolicLink(String parent, String name, String target) {
     Directory dir = (Directory) files.get(parent);
     File newFile =

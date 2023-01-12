@@ -26,6 +26,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
@@ -92,6 +93,7 @@ final class PollingWatchService extends AbstractWatchService {
   }
 
   @Override
+  @CanIgnoreReturnValue
   public Key register(Watchable watchable, Iterable<? extends WatchEvent.Kind<?>> eventTypes)
       throws IOException {
     JimfsPath path = checkWatchable(watchable);

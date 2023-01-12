@@ -200,7 +200,7 @@ public class JimfsOutputStreamTest {
   @SuppressWarnings("GuardedByChecker")
   private static void assertStoreContains(JimfsOutputStream out, int... bytes) {
     byte[] actualBytes = new byte[bytes.length];
-    out.file.read(0, actualBytes, 0, actualBytes.length);
+    int unused = out.file.read(0, actualBytes, 0, actualBytes.length);
     assertArrayEquals(bytes(bytes), actualBytes);
   }
 }
