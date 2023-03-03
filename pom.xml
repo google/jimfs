@@ -214,10 +214,6 @@
         <configuration>
           <source>${java.version}</source>
           <target>${java.version}</target>
-          <compilerArgs>
-            <arg>-XDcompilePolicy=simple</arg>
-            <arg>-Xplugin:ErrorProne</arg>
-          </compilerArgs>
           <annotationProcessorPaths>
             <path>
               <groupId>com.google.errorprone</groupId>
@@ -241,21 +237,6 @@
             </path>
           </annotationProcessorPaths>
         </configuration>
-        <executions>
-          <execution>
-            <id>default-testCompile</id>
-            <phase>test-compile</phase>
-            <goals>
-              <goal>testCompile</goal>
-            </goals>
-            <configuration>
-              <compilerArgs>
-                <arg>-XDcompilePolicy=simple</arg>
-                <arg>-Xplugin:ErrorProne -Xep:BetaApi:OFF</arg> <!-- Disable Beta Checker for tests -->
-              </compilerArgs>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>
@@ -293,57 +274,62 @@
       </build>
     </profile>
 
-    <!-- https://errorprone.info/docs/installation#maven -->
-    <!-- using github.com/google/error-prone-javac is required when running on JDK 8 -->
     <profile>
-      <id>jdk8exactly</id>
+      <id>run-error-prone</id>
       <activation>
-        <jdk>1.8</jdk>
+        <!--
+        Error Prone requires 11+: https://errorprone.info/docs/installation
+        We skip 12-15 because of https://github.com/google/error-prone/issues/3540.
+        -->
+        <jdk>[11,12),[16,)</jdk>
       </activation>
-      <reporting>
-        <plugins>
-          <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <links>
-                <link>https://checkerframework.org/api/</link>
-                <link>https://guava.dev/releases/${guava.version}/api/docs/</link>
-                <link>https://unicode-org.github.io/icu-docs/apidoc/released/icu4j</link>
-                <link>https://docs.oracle.com/javase/9/docs/api/</link>
-              </links>
-            </configuration>
-          </plugin>
-        </plugins>
-      </reporting>
       <build>
         <plugins>
-          <!-- https://errorprone.info/docs/installation#maven -->
-          <!-- using github.com/google/error-prone-javac is required when running on JDK 8 -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
-              <fork>true</fork>
-              <compilerArgs combine.children="append">
-                <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
+              <compilerArgs>
+                <!-- https://errorprone.info/docs/installation#maven -->
+                <arg>-XDcompilePolicy=simple</arg>
+                <arg>-Xplugin:ErrorProne</arg>
+                <!-- https://github.com/google/error-prone/blob/f8e33bc460be82ab22256a7ef8b979d7a2cacaba/docs/installation.md#jdk-16 -->
+                <!-- TODO(cpovirk): Use .mvn/jvm.config instead (per
+                     https://errorprone.info/docs/installation#maven) if it can
+                     be made not to interfere with JDK8 or if we stop building
+                     with JDK8. -->
+                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
+                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
+                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED</arg>
+                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
+                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED</arg>
+                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
+                <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
+                <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
+                <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
               </compilerArgs>
             </configuration>
-          </plugin>
-
-          <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <links>
-                <link>https://checkerframework.org/api/</link>
-                <link>https://guava.dev/releases/${guava.version}/api/docs/</link>
-                <link>https://unicode-org.github.io/icu-docs/apidoc/released/icu4j</link>
-                <link>https://docs.oracle.com/javase/9/docs/api/</link>
-              </links>
-            </configuration>
+            <executions>
+              <execution>
+                <id>default-testCompile</id>
+                <phase>test-compile</phase>
+                <goals>
+                  <goal>testCompile</goal>
+                </goals>
+                <configuration>
+                  <compilerArgs>
+                    <arg>-XDcompilePolicy=simple</arg>
+                    <arg>-Xplugin:ErrorProne -Xep:BetaApi:OFF</arg> <!-- Disable Beta Checker for tests -->
+                  </compilerArgs>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>
     </profile>
+
     <profile>
       <id>sonatype-oss-release</id>
       <build>
