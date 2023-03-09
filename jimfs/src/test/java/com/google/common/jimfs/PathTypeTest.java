@@ -17,10 +17,10 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.jimfs.PathType.ParseResult;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.jimfs.PathType.ParseResult;
 import java.net.URI;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Test;
