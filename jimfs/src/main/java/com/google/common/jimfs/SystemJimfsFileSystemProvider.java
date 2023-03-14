@@ -173,7 +173,7 @@ public final class SystemJimfsFileSystemProvider extends FileSystemProvider {
       Method toPath = fileSystem.getClass().getDeclaredMethod("toPath", URI.class);
       return (Path) toPath.invoke(fileSystem, uri);
     } catch (NoSuchMethodException e) {
-      throw new IllegalArgumentException("invalid file system: " + fileSystem);
+      throw new IllegalArgumentException("invalid file system: " + fileSystem, e);
     } catch (InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(e);
     }
