@@ -104,7 +104,7 @@
       it in the properties section of
       https://github.com/google/error-prone/blob/v${errorprone.version}/pom.xml
       -->
-    <errorprone.version>2.18.0</errorprone.version>
+    <errorprone.version>2.19.0</errorprone.version>
     <javac.version>9+181-r4173-1</javac.version>
   </properties>
 
