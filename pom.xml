@@ -96,7 +96,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <auto-service.version>1.0.1</auto-service.version>
     <auto-common.version>1.2.1</auto-common.version>
-    <java.version>1.7</java.version>
+    <java.version>1.8</java.version>
     <guava.version>31.1-android</guava.version>
     <!--
       NOTE: When updating errorprone.version, also update javac.version to the
@@ -182,6 +182,7 @@
             <encoding>UTF-8</encoding>
             <docencoding>UTF-8</docencoding>
             <charset>UTF-8</charset>
+            <source>${java.version}</source>
             <detectJavaApiLink>false</detectJavaApiLink>
             <links>
               <link>https://checkerframework.org/api/</link>
@@ -304,7 +305,7 @@
               <compilerArgs>
                 <!-- https://errorprone.info/docs/installation#maven -->
                 <arg>-XDcompilePolicy=simple</arg>
-                <arg>-Xplugin:ErrorProne</arg>
+                <arg>-Xplugin:ErrorProne -Xep:Java8ApiChecker:ERROR</arg>
                 <!-- https://github.com/google/error-prone/blob/f8e33bc460be82ab22256a7ef8b979d7a2cacaba/docs/installation.md#jdk-16 -->
                 <!-- TODO(cpovirk): Use .mvn/jvm.config instead (per
                      https://errorprone.info/docs/installation#maven) if it can

@@ -1,7 +1,7 @@
 Jimfs
 =====
 
-Jimfs is an in-memory file system for Java 7 and above, implementing the
+Jimfs is an in-memory file system for Java 8 and above, implementing the
 [java.nio.file](http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html)
 abstract file system APIs.
 

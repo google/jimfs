@@ -579,7 +579,7 @@ final class RegularFile extends File {
       while (buf.hasRemaining()) {
         remaining -= dest.write(buf);
       }
-      buf.clear();
+      Java8Compatibility.clear(buf);
 
       while (remaining > 0) {
         int index = ++blockIndex;
@@ -589,7 +589,7 @@ final class RegularFile extends File {
         while (buf.hasRemaining()) {
           remaining -= dest.write(buf);
         }
-        buf.clear();
+        Java8Compatibility.clear(buf);
       }
     }
 
