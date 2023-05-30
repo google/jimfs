@@ -3,6 +3,8 @@
 -encoding
 'UTF-8'
 -protected
+-source
+'1.8'
 -sourcepath
 '/home/runner/gh-pages/jimfs/src/main/java:/home/runner/gh-pages/jimfs/target/generated-sources/annotations'
 -Xdoclint:none
