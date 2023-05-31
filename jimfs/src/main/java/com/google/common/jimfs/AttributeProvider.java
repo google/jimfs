@@ -24,7 +24,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.Arrays;
 import java.util.Map;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Abstract provider for handling a specific file attribute view.
@@ -87,8 +87,7 @@ public abstract class AttributeProvider {
    * Returns the value of the given attribute in the given file or null if the attribute is not
    * supported by this provider.
    */
-  @NullableDecl
-  public abstract Object get(File file, String attribute);
+  public abstract @Nullable Object get(File file, String attribute);
 
   /**
    * Sets the value of the given attribute in the given file object. The {@code create} parameter
@@ -108,8 +107,7 @@ public abstract class AttributeProvider {
    * Returns the type of file attributes object this provider supports, or null if it doesn't
    * support reading its attributes as an object.
    */
-  @NullableDecl
-  public Class<? extends BasicFileAttributes> attributesType() {
+  public @Nullable Class<? extends BasicFileAttributes> attributesType() {
     return null;
   }
 

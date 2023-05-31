@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.List;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Attribute provider that provides the {@link UserDefinedFileAttributeView} ("user"). Unlike most
@@ -69,9 +69,8 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
     return builder.build();
   }
 
-  @NullableDecl
   @Override
-  public Object get(File file, String attribute) {
+  public @Nullable Object get(File file, String attribute) {
     Object value = file.getAttribute("user", attribute);
     if (value instanceof byte[]) {
       byte[] bytes = (byte[]) value;

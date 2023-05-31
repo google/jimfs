@@ -28,7 +28,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import java.util.HashSet;
 import java.util.Set;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -371,7 +371,7 @@ public class DirectoryTest {
     return new DirectoryEntry(a, Name.simple(name), a);
   }
 
-  private DirectoryEntry entry(Directory dir, String name, @NullableDecl File file) {
+  private DirectoryEntry entry(Directory dir, String name, @Nullable File file) {
     return new DirectoryEntry(dir, Name.simple(name), file);
   }
 

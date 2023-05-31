@@ -26,7 +26,7 @@ import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Map;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Attribute provider that provides the {@link FileOwnerAttributeView} ("owner").
@@ -65,9 +65,8 @@ final class OwnerAttributeProvider extends AttributeProvider {
     return ImmutableMap.of("owner:owner", owner);
   }
 
-  @NullableDecl
   @Override
-  public Object get(File file, String attribute) {
+  public @Nullable Object get(File file, String attribute) {
     if (attribute.equals("owner")) {
       return file.getAttribute("owner", "owner");
     }

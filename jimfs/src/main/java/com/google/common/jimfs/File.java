@@ -26,7 +26,7 @@ import com.google.common.collect.Table;
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
 import java.util.concurrent.locks.ReadWriteLock;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A file object, containing both the file's metadata and content.
@@ -43,8 +43,8 @@ public abstract class File {
   private FileTime lastAccessTime;
   private FileTime lastModifiedTime;
 
-  @NullableDecl // null when only the basic view is used (default)
-  private Table<String, String, Object> attributes;
+  // null when only the basic view is used (default)
+  private @Nullable Table<String, String, Object> attributes;
 
   File(int id, FileTime creationTime) {
     this.id = id;
@@ -102,8 +102,7 @@ public abstract class File {
    * Returns the read-write lock for this file's content, or {@code null} if there is no content
    * lock.
    */
-  @NullableDecl
-  ReadWriteLock contentLock() {
+  @Nullable ReadWriteLock contentLock() {
     return null;
   }
 
@@ -210,8 +209,7 @@ public abstract class File {
   }
 
   /** Gets the value of the given attribute in the given view. */
-  @NullableDecl
-  public final synchronized Object getAttribute(String view, String attribute) {
+  public final synchronized @Nullable Object getAttribute(String view, String attribute) {
     if (attributes == null) {
       return null;
     }
@@ -251,7 +249,7 @@ public abstract class File {
     target.putAll(attributes);
   }
 
-  private synchronized void putAll(@NullableDecl Table<String, String, Object> attributes) {
+  private synchronized void putAll(@Nullable Table<String, String, Object> attributes) {
     if (attributes != null && this.attributes != attributes) {
       if (this.attributes == null) {
         this.attributes = HashBasedTable.create();

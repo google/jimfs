@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Abstract implementation of {@link WatchService}. Provides the means for registering and managing
@@ -91,16 +91,14 @@ abstract class AbstractWatchService implements WatchService {
     return ImmutableList.copyOf(queue);
   }
 
-  @NullableDecl
   @Override
-  public WatchKey poll() {
+  public @Nullable WatchKey poll() {
     checkOpen();
     return check(queue.poll());
   }
 
-  @NullableDecl
   @Override
-  public WatchKey poll(long timeout, TimeUnit unit) throws InterruptedException {
+  public @Nullable WatchKey poll(long timeout, TimeUnit unit) throws InterruptedException {
     checkOpen();
     return check(queue.poll(timeout, unit));
   }
@@ -112,8 +110,7 @@ abstract class AbstractWatchService implements WatchService {
   }
 
   /** Returns the given key, throwing an exception if it's the poison. */
-  @NullableDecl
-  private WatchKey check(@NullableDecl WatchKey key) {
+  private @Nullable WatchKey check(@Nullable WatchKey key) {
     if (key == poison) {
       // ensure other blocking threads get the poison
       queue.offer(poison);
@@ -143,9 +140,9 @@ abstract class AbstractWatchService implements WatchService {
     private final Kind<T> kind;
     private final int count;
 
-    @NullableDecl private final T context;
+    private final @Nullable T context;
 
-    public Event(Kind<T> kind, int count, @NullableDecl T context) {
+    public Event(Kind<T> kind, int count, @Nullable T context) {
       this.kind = checkNotNull(kind);
       checkArgument(count >= 0, "count (%s) must be non-negative", count);
       this.count = count;
@@ -162,9 +159,8 @@ abstract class AbstractWatchService implements WatchService {
       return count;
     }
 
-    @NullableDecl
     @Override
-    public T context() {
+    public @Nullable T context() {
       return context;
     }
 
@@ -215,7 +211,7 @@ abstract class AbstractWatchService implements WatchService {
 
     public Key(
         AbstractWatchService watcher,
-        @NullableDecl Watchable watchable,
+        @Nullable Watchable watchable,
         Iterable<? extends WatchEvent.Kind<?>> subscribedTypes) {
       this.watcher = checkNotNull(watcher);
       this.watchable = watchable; // nullable for Watcher poison

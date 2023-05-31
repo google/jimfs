@@ -35,7 +35,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Map;
 import java.util.Set;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Attribute provider that provides the {@link PosixFileAttributeView} ("posix") and allows reading
@@ -114,9 +114,8 @@ final class PosixAttributeProvider extends AttributeProvider {
         "posix:permissions", permissions);
   }
 
-  @NullableDecl
   @Override
-  public Object get(File file, String attribute) {
+  public @Nullable Object get(File file, String attribute) {
     switch (attribute) {
       case "group":
         return file.getAttribute("posix", "group");

@@ -20,7 +20,7 @@ import java.nio.file.InvalidPathException;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Windows-style path type.
@@ -134,8 +134,7 @@ final class WindowsPathType extends PathType {
   private static final Pattern DRIVE_LETTER_ROOT = Pattern.compile("^[a-zA-Z]:\\\\");
 
   /** Parses a normal drive-letter root, e.g. "C:\". */
-  @NullableDecl
-  private String parseDriveRoot(String path) {
+  private @Nullable String parseDriveRoot(String path) {
     Matcher drivePathMatcher = DRIVE_LETTER_ROOT.matcher(path);
     if (drivePathMatcher.find()) {
       return path.substring(drivePathMatcher.start(), drivePathMatcher.end());
@@ -160,7 +159,7 @@ final class WindowsPathType extends PathType {
   }
 
   @Override
-  public String toString(@NullableDecl String root, Iterable<String> names) {
+  public String toString(@Nullable String root, Iterable<String> names) {
     StringBuilder builder = new StringBuilder();
     if (root != null) {
       builder.append(root);

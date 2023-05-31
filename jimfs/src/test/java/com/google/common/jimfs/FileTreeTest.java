@@ -32,7 +32,7 @@ import java.nio.file.NoSuchFileException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,7 +88,7 @@ public class FileTreeTest {
             }
 
             @Override
-            public String toString(@NullableDecl String root, Iterable<String> names) {
+            public String toString(@Nullable String root, Iterable<String> names) {
               root = Strings.nullToEmpty(root);
               return root + Joiner.on('/').join(names);
             }
@@ -102,7 +102,8 @@ public class FileTreeTest {
             @Override
             public ParseResult parseUriPath(String uriPath) {
               checkArgument(
-                  uriPath.matches("^/[/$!].*"), "uriPath (%s) must start with // or /$ or /!",
+                  uriPath.matches("^/[/$!].*"),
+                  "uriPath (%s) must start with // or /$ or /!",
                   uriPath);
               return parsePath(uriPath.substring(1)); // skip leading /
             }

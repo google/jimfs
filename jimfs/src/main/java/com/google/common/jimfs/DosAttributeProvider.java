@@ -27,7 +27,7 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.util.Map;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Attribute provider that provides the {@link DosFileAttributeView} ("dos") and allows the reading
@@ -75,9 +75,8 @@ final class DosAttributeProvider extends AttributeProvider {
     return false;
   }
 
-  @NullableDecl
   @Override
-  public Object get(File file, String attribute) {
+  public @Nullable Object get(File file, String attribute) {
     if (ATTRIBUTES.contains(attribute)) {
       return file.getAttribute("dos", attribute);
     }

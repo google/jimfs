@@ -27,7 +27,7 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
 import java.util.Objects;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Entry in a directory, containing references to the directory itself, the file the entry links to
@@ -41,11 +41,11 @@ final class DirectoryEntry {
   private final Directory directory;
   private final Name name;
 
-  @NullableDecl private final File file;
+  private final @Nullable File file;
 
-  @NullableDecl DirectoryEntry next; // for use in Directory
+  @Nullable DirectoryEntry next; // for use in Directory
 
-  DirectoryEntry(Directory directory, Name name, @NullableDecl File file) {
+  DirectoryEntry(Directory directory, Name name, @Nullable File file) {
     this.directory = checkNotNull(directory);
     this.name = checkNotNull(name);
     this.file = file;
@@ -140,8 +140,7 @@ final class DirectoryEntry {
   }
 
   /** Returns the file this entry links to or {@code null} if the file does not exist */
-  @NullableDecl
-  public File fileOrNull() {
+  public @Nullable File fileOrNull() {
     return file;
   }
 

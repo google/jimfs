@@ -23,7 +23,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * {@link URLStreamHandler} implementation for jimfs. Named {@code Handler} so that the class can be
@@ -80,10 +80,9 @@ public final class Handler extends URLStreamHandler {
     return new PathURLConnection(url);
   }
 
-  @NullableDecl
   @Override
   @SuppressWarnings("UnsynchronizedOverridesSynchronized") // no need to synchronize to return null
-  protected InetAddress getHostAddress(URL url) {
+  protected @Nullable InetAddress getHostAddress(URL url) {
     // jimfs uses the URI host to specify the name of the file system being used.
     // In the default implementation of getHostAddress(URL), a non-null host would cause an attempt
     // to look up the IP address, causing a slowdown on calling equals/hashCode methods on the URL

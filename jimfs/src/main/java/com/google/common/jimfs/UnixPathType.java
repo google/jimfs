@@ -19,7 +19,7 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.nio.file.InvalidPathException;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Unix-style path type.
@@ -55,7 +55,7 @@ final class UnixPathType extends PathType {
   }
 
   @Override
-  public String toString(@NullableDecl String root, Iterable<String> names) {
+  public String toString(@Nullable String root, Iterable<String> names) {
     StringBuilder builder = new StringBuilder();
     if (root != null) {
       builder.append(root);

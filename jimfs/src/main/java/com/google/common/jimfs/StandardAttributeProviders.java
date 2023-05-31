@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import com.google.common.collect.ImmutableMap;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Static registry of {@link AttributeProvider} implementations for the standard set of file
@@ -43,8 +43,7 @@ final class StandardAttributeProviders {
    * Returns the attribute provider for the given view, or {@code null} if the given view is not one
    * of the attribute views this supports.
    */
-  @NullableDecl
-  public static AttributeProvider get(String view) {
+  public static @Nullable AttributeProvider get(String view) {
     AttributeProvider provider = PROVIDERS.get(view);
 
     if (provider == null && view.equals("unix")) {

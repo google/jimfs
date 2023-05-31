@@ -41,7 +41,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Jimfs implementation of {@link Path}. Creation of new {@code Path} objects is delegated to the
@@ -52,19 +52,18 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 @SuppressWarnings("ShouldNotSubclass") // I know what I'm doing I promise
 final class JimfsPath implements Path {
 
-  @NullableDecl private final Name root;
+  private final @Nullable Name root;
   private final ImmutableList<Name> names;
   private final PathService pathService;
 
-  public JimfsPath(PathService pathService, @NullableDecl Name root, Iterable<Name> names) {
+  public JimfsPath(PathService pathService, @Nullable Name root, Iterable<Name> names) {
     this.pathService = checkNotNull(pathService);
     this.root = root;
     this.names = ImmutableList.copyOf(names);
   }
 
   /** Returns the root name, or null if there is no root. */
-  @NullableDecl
-  public Name root() {
+  public @Nullable Name root() {
     return root;
   }
 
@@ -77,8 +76,7 @@ final class JimfsPath implements Path {
    * Returns the file name of this path. Unlike {@link #getFileName()}, this may return the name of
    * the root if this is a root path.
    */
-  @NullableDecl
-  public Name name() {
+  public @Nullable Name name() {
     if (!names.isEmpty()) {
       return Iterables.getLast(names);
     }
@@ -112,24 +110,21 @@ final class JimfsPath implements Path {
     return root != null;
   }
 
-  @NullableDecl
   @Override
-  public JimfsPath getRoot() {
+  public @Nullable JimfsPath getRoot() {
     if (root == null) {
       return null;
     }
     return pathService.createRoot(root);
   }
 
-  @NullableDecl
   @Override
-  public JimfsPath getFileName() {
+  public @Nullable JimfsPath getFileName() {
     return names.isEmpty() ? null : getName(names.size() - 1);
   }
 
-  @NullableDecl
   @Override
-  public JimfsPath getParent() {
+  public @Nullable JimfsPath getParent() {
     if (names.isEmpty() || (names.size() == 1 && root == null)) {
       return null;
     }
@@ -421,7 +416,7 @@ final class JimfsPath implements Path {
   }
 
   @Override
-  public boolean equals(@NullableDecl Object obj) {
+  public boolean equals(@Nullable Object obj) {
     return obj instanceof JimfsPath && compareTo((JimfsPath) obj) == 0;
   }
 
@@ -435,8 +430,7 @@ final class JimfsPath implements Path {
     return pathService.toString(this);
   }
 
-  @NullableDecl
-  private JimfsPath checkPath(Path other) {
+  private @Nullable JimfsPath checkPath(Path other) {
     if (checkNotNull(other) instanceof JimfsPath && other.getFileSystem().equals(getFileSystem())) {
       return (JimfsPath) other;
     }

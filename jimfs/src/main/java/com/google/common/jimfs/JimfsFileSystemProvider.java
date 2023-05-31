@@ -48,7 +48,7 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * {@link FileSystemProvider} implementation for Jimfs. This provider implements the actual file
@@ -170,7 +170,7 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   public AsynchronousFileChannel newAsynchronousFileChannel(
       Path path,
       Set<? extends OpenOption> options,
-      @NullableDecl ExecutorService executor,
+      @Nullable ExecutorService executor,
       FileAttribute<?>... attrs)
       throws IOException {
     // call newFileChannel and cast so that FileChannel support is checked there
@@ -320,9 +320,8 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
     getDefaultView(checkedPath).checkAccess(checkedPath);
   }
 
-  @NullableDecl
   @Override
-  public <V extends FileAttributeView> V getFileAttributeView(
+  public <V extends FileAttributeView> @Nullable V getFileAttributeView(
       Path path, Class<V> type, LinkOption... options) {
     JimfsPath checkedPath = checkPath(path);
     return getDefaultView(checkedPath)

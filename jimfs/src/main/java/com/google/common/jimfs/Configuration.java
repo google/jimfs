@@ -45,7 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Immutable configuration for an in-memory file system. A {@code Configuration} is passed to a
@@ -442,7 +442,7 @@ public final class Configuration {
     }
 
     private static void checkNormalizationNotSet(
-        PathNormalization n, @NullableDecl PathNormalization set) {
+        PathNormalization n, @Nullable PathNormalization set) {
       if (set != null) {
         throw new IllegalArgumentException(
             "can't set normalization " + n + ": normalization " + set + " already set");

@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A table of {@linkplain DirectoryEntry directory entries}.
@@ -105,8 +105,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   }
 
   /** Returns the entry for the given name in this table or null if no such entry exists. */
-  @NullableDecl
-  public DirectoryEntry get(Name name) {
+  public @Nullable DirectoryEntry get(Name name) {
     int index = bucketIndex(name, table.length);
 
     DirectoryEntry entry = table[index];
@@ -337,7 +336,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   public Iterator<DirectoryEntry> iterator() {
     return new AbstractIterator<DirectoryEntry>() {
       int index;
-      @NullableDecl DirectoryEntry entry;
+      @Nullable DirectoryEntry entry;
 
       @Override
       protected DirectoryEntry computeNext() {

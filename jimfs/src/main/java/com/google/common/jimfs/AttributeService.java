@@ -36,7 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.checkerframework.checker.nullness.compatqual.NullableDecl;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Service providing all attribute related operations for a file store. One piece of the file store
@@ -204,8 +204,7 @@ final class AttributeService {
     return value;
   }
 
-  @NullableDecl
-  private Object getAttributeInternal(File file, String view, String attribute) {
+  private @Nullable Object getAttributeInternal(File file, String view, String attribute) {
     AttributeProvider provider = providersByName.get(view);
     if (provider == null) {
       return null;
@@ -259,8 +258,8 @@ final class AttributeService {
    * if the view type is not supported.
    */
   @SuppressWarnings("unchecked")
-  @NullableDecl
-  public <V extends FileAttributeView> V getFileAttributeView(FileLookup lookup, Class<V> type) {
+  public <V extends FileAttributeView> @Nullable V getFileAttributeView(
+      FileLookup lookup, Class<V> type) {
     AttributeProvider provider = providersByViewType.get(type);
 
     if (provider != null) {
