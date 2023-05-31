@@ -84,19 +84,6 @@
   <build>
     <plugins>
       <plugin>
-        <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
           <excludePackageNames>com.google.jimfs.internal</excludePackageNames>
