@@ -98,7 +98,7 @@
     <auto-common.version>1.2.2</auto-common.version>
     <java.version>1.8</java.version>
     <guava.version>32.1.2-jre</guava.version>
-    <errorprone.version>2.20.0</errorprone.version>
+    <errorprone.version>2.21.1</errorprone.version>
   </properties>
 
   <dependencyManagement>
