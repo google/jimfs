@@ -98,14 +98,7 @@
     <auto-common.version>1.2.2</auto-common.version>
     <java.version>1.8</java.version>
     <guava.version>32.1.2-jre</guava.version>
-    <!--
-      NOTE: When updating errorprone.version, also update javac.version to the
-      version used by the new error-prone version. You should be able to find
-      it in the properties section of
-      https://github.com/google/error-prone/blob/v${errorprone.version}/pom.xml
-      -->
     <errorprone.version>2.20.0</errorprone.version>
-    <javac.version>9+181-r4173-1</javac.version>
   </properties>
 
   <dependencyManagement>
