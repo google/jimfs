@@ -26,7 +26,7 @@ import java.util.Random;
 final class FakeFileTimeSource implements FileTimeSource {
 
   private final Random random = new Random(System.currentTimeMillis());
-  private FileTime now;
+  private Instant now;
 
   FakeFileTimeSource() {
     randomize();
@@ -34,25 +34,24 @@ final class FakeFileTimeSource implements FileTimeSource {
 
   @CanIgnoreReturnValue
   FakeFileTimeSource randomize() {
-    Instant randomNow =
+    now =
         Instant.ofEpochSecond(
             random
                 .longs(Instant.MIN.getEpochSecond(), Instant.MAX.getEpochSecond())
                 .findAny()
                 .getAsLong(),
             random.nextInt(1_000_000_000));
-    this.now = FileTime.from(randomNow);
     return this;
   }
 
   @CanIgnoreReturnValue
   FakeFileTimeSource advance(Duration duration) {
-    this.now = FileTime.from(now.toInstant().plus(duration));
+    this.now = now.plus(duration);
     return this;
   }
 
   @Override
   public FileTime now() {
-    return now;
+    return FileTime.from(now);
   }
 }
