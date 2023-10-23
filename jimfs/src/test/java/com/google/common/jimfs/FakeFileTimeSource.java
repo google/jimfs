@@ -16,13 +16,11 @@
 
 package com.google.common.jimfs;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.common.math.LongMath;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 /** Fake implementation of {@link FileTimeSource}. */
 final class FakeFileTimeSource implements FileTimeSource {
@@ -35,26 +33,22 @@ final class FakeFileTimeSource implements FileTimeSource {
   }
 
   @CanIgnoreReturnValue
-  FakeFileTimeSource setNow(FileTime now) {
-    this.now = checkNotNull(now);
+  FakeFileTimeSource randomize() {
+    Instant randomNow =
+        Instant.ofEpochSecond(
+            random
+                .longs(Instant.MIN.getEpochSecond(), Instant.MAX.getEpochSecond())
+                .findAny()
+                .getAsLong(),
+            random.nextInt(1_000_000_000));
+    this.now = FileTime.from(randomNow);
     return this;
   }
 
   @CanIgnoreReturnValue
-  private FakeFileTimeSource setNowMillis(long millis) {
-    return setNow(FileTime.fromMillis(millis));
-  }
-
-  @CanIgnoreReturnValue
-  FakeFileTimeSource randomize() {
-    // Use a random int rather than long as an easy way of ensuring we don't get something near
-    // Long.MAX_VALUE
-    return setNowMillis(random.nextInt());
-  }
-
-  @CanIgnoreReturnValue
-  FakeFileTimeSource advance(long duration, TimeUnit unit) {
-    return setNowMillis(LongMath.checkedAdd(now.toMillis(), unit.toMillis(duration)));
+  FakeFileTimeSource advance(Duration duration) {
+    this.now = FileTime.from(now.toInstant().plus(duration));
+    return this;
   }
 
   @Override

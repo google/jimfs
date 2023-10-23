@@ -49,6 +49,7 @@ import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.file.OpenOption;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -237,68 +238,68 @@ public class JimfsFileChannelTest {
 
     // accessedTime
     FileTime accessTime = file.getLastAccessTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.read(ByteBuffer.allocate(10));
     assertNotEquals(accessTime, file.getLastAccessTime());
 
     accessTime = file.getLastAccessTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.read(ByteBuffer.allocate(10), 0);
     assertNotEquals(accessTime, file.getLastAccessTime());
 
     accessTime = file.getLastAccessTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.read(new ByteBuffer[] {ByteBuffer.allocate(10)});
     assertNotEquals(accessTime, file.getLastAccessTime());
 
     accessTime = file.getLastAccessTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.read(new ByteBuffer[] {ByteBuffer.allocate(10)}, 0, 1);
     assertNotEquals(accessTime, file.getLastAccessTime());
 
     accessTime = file.getLastAccessTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.transferTo(0, 10, new ByteBufferChannel(10));
     assertNotEquals(accessTime, file.getLastAccessTime());
 
     // modified
     FileTime modifiedTime = file.getLastModifiedTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.write(ByteBuffer.allocate(10));
     assertNotEquals(modifiedTime, file.getLastModifiedTime());
 
     modifiedTime = file.getLastModifiedTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.write(ByteBuffer.allocate(10), 0);
     assertNotEquals(modifiedTime, file.getLastModifiedTime());
 
     modifiedTime = file.getLastModifiedTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.write(new ByteBuffer[] {ByteBuffer.allocate(10)});
     assertNotEquals(modifiedTime, file.getLastModifiedTime());
 
     modifiedTime = file.getLastModifiedTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.write(new ByteBuffer[] {ByteBuffer.allocate(10)}, 0, 1);
     assertNotEquals(modifiedTime, file.getLastModifiedTime());
 
     modifiedTime = file.getLastModifiedTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.truncate(0);
     assertNotEquals(modifiedTime, file.getLastModifiedTime());
 
     modifiedTime = file.getLastModifiedTime();
-    fileTimeSource.advance(2, MILLISECONDS);
+    fileTimeSource.advance(Duration.ofMillis(2));
 
     channel.transferFrom(new ByteBufferChannel(10), 0, 10);
     assertNotEquals(modifiedTime, file.getLastModifiedTime());

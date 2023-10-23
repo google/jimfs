@@ -17,7 +17,6 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -28,6 +27,7 @@ import com.google.common.collect.ImmutableSet;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.ClosedFileSystemException;
+import java.time.Duration;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,7 +66,7 @@ public class FileSystemStateTest {
   @Test
   public void testNow() {
     assertThat(state.now()).isEqualTo(fileTimeSource.now());
-    fileTimeSource.advance(1, SECONDS);
+    fileTimeSource.advance(Duration.ofSeconds(1));
     assertThat(state.now()).isEqualTo(fileTimeSource.now());
   }
 
