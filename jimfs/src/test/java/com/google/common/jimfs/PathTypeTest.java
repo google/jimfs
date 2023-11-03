@@ -18,6 +18,8 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.truth.Truth.assertThat;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.PathType.ParseResult;
@@ -37,6 +39,20 @@ public class PathTypeTest {
 
   private static final FakePathType type = new FakePathType();
   static final URI fileSystemUri = URI.create("jimfs://foo");
+
+  @Test
+  public void testURIThrowsException() {
+    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+      URI fileSystemUri = URI.create("incorrect URI");
+      URI fileUri = type.toUri(fileSystemUri, "$", ImmutableList.of("test1", "test2"), false);
+    });
+
+    String expectedMessage = "Illegal character in path at index";
+    String actualMessage = exception.getMessage();
+
+    assertTrue(actualMessage.contains(expectedMessage));
+  }
+
 
   @Test
   public void testBasicProperties() {

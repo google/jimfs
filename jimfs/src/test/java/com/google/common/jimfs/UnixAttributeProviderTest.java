@@ -49,6 +49,38 @@ public class UnixAttributeProviderTest
   }
 
   @Test
+  public void testDifferentPermissions() {
+    file.setAttribute(
+            "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("rw-r--r--")));
+
+    assertThat(provider.get(file, "mode")).isEqualTo(0644);
+
+    file.setAttribute(
+            "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("--x------")));
+    assertThat(provider.get(file, "mode")).isEqualTo(0100);
+
+    file.setAttribute(
+            "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("----w----")));
+    assertThat(provider.get(file, "mode")).isEqualTo(0020);
+
+    file.setAttribute(
+            "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("-----x---")));
+    assertThat(provider.get(file, "mode")).isEqualTo(0010);
+
+    file.setAttribute(
+            "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("-------w-")));
+    assertThat(provider.get(file, "mode")).isEqualTo(0002);
+
+    file.setAttribute(
+            "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("--------x")));
+    assertThat(provider.get(file, "mode")).isEqualTo(0001);
+
+    file.setAttribute(
+            "posix", "permissions", ImmutableSet.copyOf(PosixFilePermissions.fromString("r--r--rw-")));
+    assertThat(provider.get(file, "mode")).isEqualTo(0446);
+  }
+
+  @Test
   public void testInitialAttributes() {
     // unix provider relies on other providers to set their initial attributes
     file.setAttribute("owner", "owner", createUserPrincipal("foo"));
