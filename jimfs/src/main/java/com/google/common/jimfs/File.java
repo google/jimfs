@@ -136,9 +136,9 @@ public abstract class File {
    * Called when this file has been linked in a directory. The given entry is the new directory
    * entry that links to this file.
    */
-  void linked(DirectoryEntry entry) {
+  /* void linked(DirectoryEntry entry) {
     checkNotNull(entry);
-  }
+  } */
 
   /** Called when this file has been unlinked from a directory, either for a move or delete. */
   void unlinked() {}

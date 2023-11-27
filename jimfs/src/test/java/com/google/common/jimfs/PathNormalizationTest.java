@@ -127,7 +127,7 @@ public class PathNormalizationTest {
     }
   }
 
-  private static final String[][] NORMALIZE_CASE_FOLD_TEST_DATA = {
+  private static final String[][] NORM_CASE_FOLD_TEST_DATA = {
     {"\u00c5", "\u00e5", "\u212b"},
     {"Am\u00e9lie", "Am\u00c9lie", "Ame\u0301lie", "AME\u0301LIE"}
   };
@@ -136,7 +136,7 @@ public class PathNormalizationTest {
   public void testNormalizeNfcCaseFold() {
     normalizations = ImmutableSet.of(NFC, CASE_FOLD_UNICODE);
 
-    for (String[] row : NORMALIZE_CASE_FOLD_TEST_DATA) {
+    for (String[] row : NORM_CASE_FOLD_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
         for (int j = i; j < row.length; j++) {
           assertNormalizedEqual(row[i], row[j]);
@@ -149,7 +149,7 @@ public class PathNormalizationTest {
   public void testNormalizeNfdCaseFold() {
     normalizations = ImmutableSet.of(NFD, CASE_FOLD_UNICODE);
 
-    for (String[] row : NORMALIZE_CASE_FOLD_TEST_DATA) {
+    for (String[] row : NORM_CASE_FOLD_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
         for (int j = i; j < row.length; j++) {
           assertNormalizedEqual(row[i], row[j]);
@@ -158,7 +158,7 @@ public class PathNormalizationTest {
     }
   }
 
-  private static final String[][] NORMALIZED_CASE_INSENSITIVE_ASCII_TEST_DATA = {
+  private static final String[][] NORM_CASE_INSNSTV_ASCII_TEST_DATA = {
     {"\u00e5", "\u212b"},
     {"Am\u00e9lie", "AME\u0301LIE"}
   };
@@ -167,7 +167,7 @@ public class PathNormalizationTest {
   public void testNormalizeNfcCaseFoldAscii() {
     normalizations = ImmutableSet.of(NFC, CASE_FOLD_ASCII);
 
-    for (String[] row : NORMALIZED_CASE_INSENSITIVE_ASCII_TEST_DATA) {
+    for (String[] row : NORM_CASE_INSNSTV_ASCII_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
         for (int j = i + 1; j < row.length; j++) {
           assertNormalizedUnequal(row[i], row[j]);
@@ -180,7 +180,7 @@ public class PathNormalizationTest {
   public void testNormalizeNfdCaseFoldAscii() {
     normalizations = ImmutableSet.of(NFD, CASE_FOLD_ASCII);
 
-    for (String[] row : NORMALIZED_CASE_INSENSITIVE_ASCII_TEST_DATA) {
+    for (String[] row : NORM_CASE_INSNSTV_ASCII_TEST_DATA) {
       for (int i = 0; i < row.length; i++) {
         for (int j = i + 1; j < row.length; j++) {
           // since decomposition happens before case folding, the strings are equal when the

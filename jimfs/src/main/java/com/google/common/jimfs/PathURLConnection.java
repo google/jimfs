@@ -1,29 +1,11 @@
-/*
- * Copyright 2015 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.google.common.jimfs;
-
-import static com.google.common.base.Preconditions.checkNotNull;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Ascii;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,14 +18,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import org.checkerframework.checker.nullness.qual.Nullable;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * {@code URLConnection} implementation.
@@ -52,19 +31,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 final class PathURLConnection extends URLConnection {
 
-  /*
-   * This implementation should be able to work for any proper file system implementation... it
-   * might be useful to release it and make it usable by other file systems.
-   */
-
-  private static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss \'GMT\'";
   private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
   private InputStream stream;
   private ImmutableListMultimap<String, String> headers = ImmutableListMultimap.of();
 
   PathURLConnection(URL url) {
-    super(checkNotNull(url));
+    super(url);
   }
 
   @Override
@@ -95,18 +68,9 @@ final class PathURLConnection extends URLConnection {
 
     FileTime lastModified = Files.getLastModifiedTime(path);
     String contentType =
-        MoreObjects.firstNonNull(Files.probeContentType(path), DEFAULT_CONTENT_TYPE);
+            MoreObjects.firstNonNull(Files.probeContentType(path), DEFAULT_CONTENT_TYPE);
 
-    ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
-    builder.put("content-length", "" + length);
-    builder.put("content-type", contentType);
-    if (lastModified != null) {
-      DateFormat format = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
-      format.setTimeZone(TimeZone.getTimeZone("GMT"));
-      builder.put("last-modified", format.format(new Date(lastModified.toMillis())));
-    }
-
-    headers = builder.build();
+    headers = buildHeaders(length, lastModified, contentType);
   }
 
   private static URI toUri(URL url) throws IOException {
@@ -117,13 +81,25 @@ final class PathURLConnection extends URLConnection {
     }
   }
 
+  private static ImmutableListMultimap<String, String> buildHeaders(
+          long length, FileTime lastModified, String contentType) {
+    ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
+    builder.put("content-length", "" + length);
+    builder.put("content-type", contentType);
+    if (lastModified != null) {
+      String formattedDate = HeaderFormatter.formatLastModified(lastModified);
+      builder.put("last-modified", formattedDate);
+    }
+    return builder.build();
+  }
+
   @Override
   public InputStream getInputStream() throws IOException {
     connect();
     return stream;
   }
 
-  @SuppressWarnings("unchecked") // safe by specification of ListMultimap.asMap()
+  @SuppressWarnings("unchecked")
   @Override
   public Map<String, List<String>> getHeaderFields() {
     try {

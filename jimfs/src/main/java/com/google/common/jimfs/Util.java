@@ -76,19 +76,33 @@ final class Util {
   private static final byte[] ZERO_ARRAY = new byte[ARRAY_LEN];
   private static final byte[][] NULL_ARRAY = new byte[ARRAY_LEN][];
 
-  /** Zeroes all bytes between off (inclusive) and off + len (exclusive) in the given array. */
-  static void zero(byte[] bytes, int off, int len) {
+  /**
+   * Fills or clears all bytes between off (inclusive) and off + len (exclusive) in the given array.
+   *
+   * @param blocks    The array to be filled or cleared.
+   * @param off       The starting index (inclusive).
+   * @param len       The length of the slice to be filled or cleared.
+   * @param fillFlag  If true, fill with zero bytes; otherwise, clear the array elements.
+   */
+  static void fillOrClear(byte[][] blocks, int off, int len, boolean fillFlag) {
+    byte[] fillArray = fillFlag ? ZERO_ARRAY : NULL_ARRAY[0];
+
     // this is significantly faster than looping or Arrays.fill (which loops), particularly when
     // the length of the slice to be zeroed is <= to ARRAY_LEN (in that case, it's faster by a
     // factor of 2)
     int remaining = len;
     while (remaining > ARRAY_LEN) {
-      System.arraycopy(ZERO_ARRAY, 0, bytes, off, ARRAY_LEN);
+      System.arraycopy(fillArray, 0, blocks, off, ARRAY_LEN);
       off += ARRAY_LEN;
       remaining -= ARRAY_LEN;
     }
 
-    System.arraycopy(ZERO_ARRAY, 0, bytes, off, remaining);
+    System.arraycopy(fillArray, 0, blocks, off, remaining);
+  }
+
+  /** Zeroes all bytes between off (inclusive) and off + len (exclusive) in the given array. */
+  static void zero(byte[] bytes, int off, int len) {
+    fillOrClear(new byte[][]{bytes}, off, len, true);
   }
 
   /**
@@ -96,16 +110,6 @@ final class Util {
    * array.
    */
   static void clear(byte[][] blocks, int off, int len) {
-    // this is significantly faster than looping or Arrays.fill (which loops), particularly when
-    // the length of the slice to be cleared is <= to ARRAY_LEN (in that case, it's faster by a
-    // factor of 2)
-    int remaining = len;
-    while (remaining > ARRAY_LEN) {
-      System.arraycopy(NULL_ARRAY, 0, blocks, off, ARRAY_LEN);
-      off += ARRAY_LEN;
-      remaining -= ARRAY_LEN;
-    }
-
-    System.arraycopy(NULL_ARRAY, 0, blocks, off, remaining);
+    fillOrClear(blocks, off, len, false);
   }
 }
