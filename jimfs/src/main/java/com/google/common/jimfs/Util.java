@@ -57,6 +57,22 @@ final class Util {
     }
   }
 
+  static void fillOrClear(byte[][] blocks, int off, int len, boolean fillFlag) {
+    byte[] fillArray = fillFlag ? ZERO_ARRAY : NULL_ARRAY[0];
+
+    // this is significantly faster than looping or Arrays.fill (which loops), particularly when
+    // the length of the slice to be zeroed is <= to ARRAY_LEN (in that case, it's faster by a
+    // factor of 2)
+    int remaining = len;
+    while (remaining > ARRAY_LEN) {
+      System.arraycopy(fillArray, 0, blocks, off, ARRAY_LEN);
+      off += ARRAY_LEN;
+      remaining -= ARRAY_LEN;
+    }
+
+    System.arraycopy(ZERO_ARRAY, 0, blocks, off, remaining);
+  }
+
   private static final int C1 = 0xcc9e2d51;
   private static final int C2 = 0x1b873593;
 
@@ -78,17 +94,7 @@ final class Util {
 
   /** Zeroes all bytes between off (inclusive) and off + len (exclusive) in the given array. */
   static void zero(byte[] bytes, int off, int len) {
-    // this is significantly faster than looping or Arrays.fill (which loops), particularly when
-    // the length of the slice to be zeroed is <= to ARRAY_LEN (in that case, it's faster by a
-    // factor of 2)
-    int remaining = len;
-    while (remaining > ARRAY_LEN) {
-      System.arraycopy(ZERO_ARRAY, 0, bytes, off, ARRAY_LEN);
-      off += ARRAY_LEN;
-      remaining -= ARRAY_LEN;
-    }
-
-    System.arraycopy(ZERO_ARRAY, 0, bytes, off, remaining);
+    fillOrClear(new byte[][]{bytes}, off, len, true);
   }
 
   /**
@@ -96,16 +102,6 @@ final class Util {
    * array.
    */
   static void clear(byte[][] blocks, int off, int len) {
-    // this is significantly faster than looping or Arrays.fill (which loops), particularly when
-    // the length of the slice to be cleared is <= to ARRAY_LEN (in that case, it's faster by a
-    // factor of 2)
-    int remaining = len;
-    while (remaining > ARRAY_LEN) {
-      System.arraycopy(NULL_ARRAY, 0, blocks, off, ARRAY_LEN);
-      off += ARRAY_LEN;
-      remaining -= ARRAY_LEN;
-    }
-
-    System.arraycopy(NULL_ARRAY, 0, blocks, off, remaining);
+    fillOrClear(blocks, off, len, false);
   }
 }
