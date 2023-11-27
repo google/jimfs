@@ -79,7 +79,10 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
     return entryInParent.directory();
   }
 
-  @Override
+  /**
+   * Called when this file has been linked in a directory. The given entry is the new directory
+   * entry that links to this file.
+   */
   void linked(DirectoryEntry entry) {
     File parent = entry.directory(); // handles null check
     this.entryInParent = entry;
@@ -128,7 +131,8 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
   public void link(Name name, File file) {
     DirectoryEntry entry = new DirectoryEntry(this, checkNotReserved(name, "link"), file);
     put(entry);
-    file.linked(entry);
+//    file.linked(entry);
+    linked(entry);
   }
 
   /**

@@ -57,7 +57,6 @@ final class PathURLConnection extends URLConnection {
    * might be useful to release it and make it usable by other file systems.
    */
 
-  private static final String HTTP_DATE_FORMAT = "EEE, dd MMM yyyy HH:mm:ss \'GMT\'";
   private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
   private InputStream stream;
@@ -97,16 +96,7 @@ final class PathURLConnection extends URLConnection {
     String contentType =
         MoreObjects.firstNonNull(Files.probeContentType(path), DEFAULT_CONTENT_TYPE);
 
-    ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
-    builder.put("content-length", "" + length);
-    builder.put("content-type", contentType);
-    if (lastModified != null) {
-      DateFormat format = new SimpleDateFormat(HTTP_DATE_FORMAT, Locale.US);
-      format.setTimeZone(TimeZone.getTimeZone("GMT"));
-      builder.put("last-modified", format.format(new Date(lastModified.toMillis())));
-    }
-
-    headers = builder.build();
+    headers = buildHeaders(length, lastModified, contentType);
   }
 
   private static URI toUri(URL url) throws IOException {
@@ -115,6 +105,18 @@ final class PathURLConnection extends URLConnection {
     } catch (URISyntaxException e) {
       throw new IOException("URL " + url + " cannot be converted to a URI", e);
     }
+  }
+
+  private static ImmutableListMultimap<String, String> buildHeaders(
+          long length, FileTime lastModified, String contentType) {
+    ImmutableListMultimap.Builder<String, String> builder = ImmutableListMultimap.builder();
+    builder.put("content-length", "" + length);
+    builder.put("content-type", contentType);
+    if (lastModified != null) {
+      String formattedDate = HeaderFormatter.formatLastModified(lastModified);
+      builder.put("last-modified", formattedDate);
+    }
+    return builder.build();
   }
 
   @Override

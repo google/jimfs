@@ -170,15 +170,11 @@ final class AttributeService {
 
   /** Copies the attributes of the given file to the given copy file. */
   public void copyAttributes(File file, File copy, AttributeCopyOption copyOption) {
-    switch (copyOption) {
-      case ALL:
-        file.copyAttributes(copy);
-        break;
-      case BASIC:
-        file.copyBasicAttributes(copy);
-        break;
-      default:
-        // don't copy
+    FileCopyOptions fileCopyOptions = CopyFactory.getCopyOption(copyOption);
+
+    // default: don't copy
+    if (fileCopyOptions != null) {
+      fileCopyOptions.copy(file, copy);
     }
   }
 
@@ -370,9 +366,11 @@ final class AttributeService {
     }
 
     // separator must not be at the start or end of the string or appear more than once
-    if (separatorIndex == 0
-        || separatorIndex == attribute.length() - 1
-        || attribute.indexOf(':', separatorIndex + 1) != -1) {
+    boolean separatorNotValid = separatorIndex == 0
+            || separatorIndex == attribute.length() - 1
+            || attribute.indexOf(':', separatorIndex + 1) != -1;
+
+    if (separatorNotValid) {
       throw new IllegalArgumentException("illegal attribute format: " + attribute);
     }
 
