@@ -178,7 +178,6 @@
             <source>${java.version}</source>
             <detectJavaApiLink>false</detectJavaApiLink>
             <links>
-              <link>https://checkerframework.org/api/</link>
               <link>https://guava.dev/releases/${guava.version}/api/docs/</link>
               <link>https://unicode-org.github.io/icu-docs/apidoc/released/icu4j</link>
               <!-- When building against Java 8, the Java 11 link below is overridden to point to an older version (Java 9, the newest one that works). -->
