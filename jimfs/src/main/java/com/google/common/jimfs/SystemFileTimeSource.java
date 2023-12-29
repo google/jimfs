@@ -24,6 +24,11 @@ enum SystemFileTimeSource implements FileTimeSource {
   INSTANCE;
 
   @Override
+  /*
+   * We don't really support usage from Android, but all configurations we're testing under support
+   * java.time.
+   */
+  @SuppressWarnings("AndroidJdkLibsChecker")
   public FileTime now() {
     return FileTime.from(Instant.now());
   }
