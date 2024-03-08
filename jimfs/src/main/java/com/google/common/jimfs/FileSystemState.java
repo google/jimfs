@@ -17,8 +17,9 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Throwables.throwIfInstanceOf;
+import static com.google.common.base.Throwables.throwIfUnchecked;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.Closeable;
@@ -133,7 +134,10 @@ final class FileSystemState implements Closeable {
         // In either case, we just need to repeat the loop until there are no more register calls
         // in progress (no new calls can start and no resources left to close.
       } while (registering.get() > 0 || !resources.isEmpty());
-      Throwables.propagateIfPossible(thrown, IOException.class);
+      if (thrown != null) {
+        throwIfInstanceOf(thrown, IOException.class);
+        throwIfUnchecked(thrown);
+      }
     }
   }
 }
