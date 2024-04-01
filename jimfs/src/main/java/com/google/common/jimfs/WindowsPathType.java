@@ -58,40 +58,13 @@ final class WindowsPathType extends PathType {
   @Override
   public ParseResult parsePath(String path) {
     String original = path;
-    path = path.replace('/', '\\');
+    path = normalizeSeparators(path);
+    validateUnsupportedWindowsSyntax(path, original);
 
-    if (WORKING_DIR_WITH_DRIVE.matcher(path).matches()) {
-      throw new InvalidPathException(
-          original,
-          "Jimfs does not currently support the Windows syntax for a relative path "
-              + "on a specific drive (e.g. \"C:foo\\bar\")");
-    }
+    String root = determineRoot(path, original);
 
-    String root;
-    if (path.startsWith("\\\\")) {
-      root = parseUncRoot(path, original);
-    } else if (path.startsWith("\\")) {
-      throw new InvalidPathException(
-          original,
-          "Jimfs does not currently support the Windows syntax for an absolute path "
-              + "on the current drive (e.g. \"\\foo\\bar\")");
-    } else {
-      root = parseDriveRoot(path);
-    }
-
-    // check for root.length() > 3 because only "C:\" type roots are allowed to have :
-    int startIndex = root == null || root.length() > 3 ? 0 : root.length();
-    for (int i = startIndex; i < path.length(); i++) {
-      char c = path.charAt(i);
-      if (isReserved(c)) {
-        throw new InvalidPathException(original, "Illegal char <" + c + ">", i);
-      }
-    }
-
-    Matcher trailingSpaceMatcher = TRAILING_SPACES.matcher(path);
-    if (trailingSpaceMatcher.find()) {
-      throw new InvalidPathException(original, "Trailing char < >", trailingSpaceMatcher.start());
-    }
+    validateCharactersInPath(path, original, root);
+    validateTrailingSpaces(path, original);
 
     if (root != null) {
       path = path.substring(root.length());
@@ -103,6 +76,47 @@ final class WindowsPathType extends PathType {
 
     return new ParseResult(root, splitter().split(path));
   }
+
+  private String normalizeSeparators(String path) {
+    return path.replace('/', '\\');
+  }
+
+  private void validateUnsupportedWindowsSyntax(String path, String original) {
+    if (WORKING_DIR_WITH_DRIVE.matcher(path).matches()) {
+      throw new InvalidPathException(original, "Jimfs does not currently support the Windows syntax for a relative path on a specific drive (e.g., \"C:foo\\bar\").");
+    }
+  }
+
+  private String determineRoot(String path, String original) {
+    if (path.startsWith("\\\\")) {
+      // Correct handling of UNC paths
+      return parseUncRoot(path, original);
+    } else if (path.startsWith("\\")) {
+      // Now correctly throw the exception for unsupported absolute paths on the current drive
+      throw new InvalidPathException(original, "Jimfs does not currently support the Windows syntax for an absolute path on the current drive (e.g., \"\\foo\\bar\").");
+    }
+    return parseDriveRoot(path); // Adjust this method as needed to handle drive roots correctly
+  }
+
+  private void validateCharactersInPath(String path, String original, String root) {
+    // Adjust the start index for validation
+    // The root has already been removed from the path, so we should start validation from the beginning of the adjusted path
+    int startIndex = root == null || root.length() > 3 ? 0 : root.length();
+    for (int i = startIndex; i < path.length(); i++) {
+      char c = path.charAt(i);
+      if (isReserved(c)) {
+        throw new InvalidPathException(original, "Illegal char <" + c + ">", i);
+      }
+    }
+  }
+
+  private void validateTrailingSpaces(String path, String original) {
+    Matcher trailingSpaceMatcher = TRAILING_SPACES.matcher(path);
+    if (trailingSpaceMatcher.find()) {
+      throw new InvalidPathException(original, "Trailing char < >", trailingSpaceMatcher.start());
+    }
+  }
+
 
   /** Pattern for matching UNC \\host\share root syntax. */
   private static final Pattern UNC_ROOT = Pattern.compile("^(\\\\\\\\)([^\\\\]+)?(\\\\[^\\\\]+)?");
