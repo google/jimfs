@@ -23,6 +23,9 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -56,31 +59,96 @@ final class BasicAttributeProvider extends AttributeProvider {
     return ATTRIBUTES;
   }
 
-  @Override
-  public @Nullable Object get(File file, String attribute) {
-    switch (attribute) {
-      case "size":
-        return file.size();
-      case "fileKey":
-        return file.id();
-      case "isDirectory":
-        return file.isDirectory();
-      case "isRegularFile":
-        return file.isRegularFile();
-      case "isSymbolicLink":
-        return file.isSymbolicLink();
-      case "isOther":
-        return !file.isDirectory() && !file.isRegularFile() && !file.isSymbolicLink();
-      case "creationTime":
-        return file.getCreationTime();
-      case "lastAccessTime":
-        return file.getLastAccessTime();
-      case "lastModifiedTime":
-        return file.getLastModifiedTime();
-      default:
-        return null;
+  public interface AttributeGetter {
+    Object getValue(File file);
+  }
+
+  public static class SizeAttributeGetter implements AttributeGetter {
+    @Override
+    public Object getValue(File file) {
+      return file.size();
     }
   }
+
+  public static class FileKeyAttributeGetter implements AttributeGetter {
+    @Override
+    public Object getValue(File file) {
+      return file.id();
+    }
+  }
+
+  public static class IsDirectoryGetter implements AttributeGetter{
+
+    @Override
+    public Object getValue(File file) {
+      return file.isDirectory ();
+    }
+  }
+
+  public static class IsRegularFileGetter implements AttributeGetter{
+    @Override
+    public Object getValue(File file){
+      return file.isRegularFile ();
+    }
+  }
+
+  public static class IsSymbolicLinkGetter implements AttributeGetter{
+    @Override
+    public Object getValue(File file){
+      return file.isSymbolicLink ();
+    }
+  }
+  public static class IsOtherGetter implements AttributeGetter{
+    @Override
+    public Object getValue(File file){
+      return !file.isDirectory () && !file.isRegularFile () && !file.isSymbolicLink ();
+    }
+  }
+
+  public static class CreationTimeAttributeGetter implements AttributeGetter {
+    @Override
+    public Object getValue(File file) {
+      return file.getCreationTime ();
+    }
+  }
+
+  public static class LastAccessTimeGetter implements AttributeGetter {
+    @Override
+    public Object getValue(File file) {
+      return file.getLastAccessTime ();
+    }
+  }
+
+  public static class LastModifiedTimeAttributeGetter implements AttributeGetter {
+    @Override
+    public Object getValue(File file) {
+      return file.getLastModifiedTime ();
+    }
+  }
+
+  private final Map<String, AttributeGetter> attributeGetters = new HashMap<> ();
+
+  public BasicAttributeProvider() {
+    attributeGetters.put("size", new SizeAttributeGetter ());
+    attributeGetters.put("fileKey", new FileKeyAttributeGetter ());
+    attributeGetters.put ("isDirectory", new IsDirectoryGetter ());
+    attributeGetters.put ("isRegularFile", new IsRegularFileGetter ());
+    attributeGetters.put ("isSymbolicLink", new IsSymbolicLinkGetter ());
+    attributeGetters.put ("isOther", new IsOtherGetter ());
+    attributeGetters.put ("creationTime", new CreationTimeAttributeGetter ());
+    attributeGetters.put ("lastAccessTime", new LastAccessTimeGetter ());
+    attributeGetters.put ("lastModifiedTime", new LastModifiedTimeAttributeGetter ());
+  }
+
+  public Object get(File file, String attribute) {
+    AttributeGetter getter = attributeGetters.get(attribute);
+    if (getter != null) {
+      return getter.getValue(file);
+    } else {
+      return null;
+    }
+  }
+
 
   @Override
   public void set(File file, String view, String attribute, Object value, boolean create) {
