@@ -46,6 +46,7 @@ final class RegularFile extends File {
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
   private final HeapDisk disk;
+  private final FileIOManager fileIOManager;
 
   /** Block list for the file. */
   private byte[][] blocks;
@@ -73,6 +74,7 @@ final class RegularFile extends File {
 
     checkArgument(size >= 0);
     this.size = size;
+    this.fileIOManager = new FileIOManager(this);
   }
 
   private int openCount = 0;
@@ -285,17 +287,7 @@ final class RegularFile extends File {
    */
   @CanIgnoreReturnValue
   public int write(long pos, byte b) throws IOException {
-    prepareForWrite(pos, 1);
-
-    byte[] block = blocks[blockIndex(pos)];
-    int off = offsetInBlock(pos);
-    block[off] = b;
-
-    if (pos >= size) {
-      size = pos + 1;
-    }
-
-    return 1;
+    return fileIOManager.write (pos,b);
   }
 
   /**
@@ -308,36 +300,7 @@ final class RegularFile extends File {
    */
   @CanIgnoreReturnValue
   public int write(long pos, byte[] b, int off, int len) throws IOException {
-    prepareForWrite(pos, len);
-
-    if (len == 0) {
-      return 0;
-    }
-
-    int remaining = len;
-
-    int blockIndex = blockIndex(pos);
-    byte[] block = blocks[blockIndex];
-    int offInBlock = offsetInBlock(pos);
-
-    int written = put(block, offInBlock, b, off, length(offInBlock, remaining));
-    remaining -= written;
-    off += written;
-
-    while (remaining > 0) {
-      block = blocks[++blockIndex];
-
-      written = put(block, 0, b, off, length(remaining));
-      remaining -= written;
-      off += written;
-    }
-
-    long endPos = pos + len;
-    if (endPos > size) {
-      size = endPos;
-    }
-
-    return len;
+    return fileIOManager.write (pos,b,off,len);
   }
 
   /**
@@ -350,32 +313,7 @@ final class RegularFile extends File {
    */
   @CanIgnoreReturnValue
   public int write(long pos, ByteBuffer buf) throws IOException {
-    int len = buf.remaining();
-
-    prepareForWrite(pos, len);
-
-    if (len == 0) {
-      return 0;
-    }
-
-    int blockIndex = blockIndex(pos);
-    byte[] block = blocks[blockIndex];
-    int off = offsetInBlock(pos);
-
-    put(block, off, buf);
-
-    while (buf.hasRemaining()) {
-      block = blocks[++blockIndex];
-
-      put(block, 0, buf);
-    }
-
-    long endPos = pos + len;
-    if (endPos > size) {
-      size = endPos;
-    }
-
-    return len;
+    return fileIOManager.write (pos,buf);
   }
 
   /**
@@ -388,11 +326,7 @@ final class RegularFile extends File {
    */
   @CanIgnoreReturnValue
   public long write(long pos, Iterable<ByteBuffer> bufs) throws IOException {
-    long start = pos;
-    for (ByteBuffer buf : bufs) {
-      pos += write(pos, buf);
-    }
-    return pos - start;
+    return fileIOManager.write (pos,bufs);
   }
 
   /**
@@ -404,60 +338,7 @@ final class RegularFile extends File {
    *     throws an exception
    */
   public long transferFrom(ReadableByteChannel src, long startPos, long count) throws IOException {
-    if (count == 0
-        // Unlike the write() methods, attempting to transfer to a position that is greater than the
-        // current file size simply does nothing.
-        || startPos > size) {
-      return 0;
-    }
-
-    long remaining = count;
-    long currentPos = startPos;
-
-    int blockIndex = blockIndex(startPos);
-    int off = offsetInBlock(startPos);
-
-    outer:
-    while (remaining > 0) {
-      byte[] block = blockForWrite(blockIndex);
-
-      ByteBuffer buf = ByteBuffer.wrap(block, off, length(off, remaining));
-      while (buf.hasRemaining()) {
-        int read = src.read(buf);
-        // Note: we stop if we read 0 bytes from the src; even though the src is not at EOF, the
-        // spec of transferFrom is to stop immediately when reading from a non-blocking channel that
-        // has no bytes available rather than continuing until it reaches EOF. This makes sense
-        // because we'd otherwise just spin attempting to read bytes from the src repeatedly.
-        if (read < 1) {
-          if (currentPos >= size && buf.position() == 0) {
-            // The current position is at or beyond the end of file (prior to transfer start) and
-            // the current buffer position is 0. This means that a new block must have just been
-            // allocated to hold any potential transferred bytes, but no bytes were transferred to
-            // it because the src had no remaining bytes. So we need to de-allocate that block.
-            // It's possible that it would be preferable to always transfer to a temporary block
-            // first and then copy that block to a newly allocated block when it's full or src
-            // doesn't have any further bytes. Then if we hadn't read anything into the temporary
-            // block, we could simply discard it. But I think this scenario is likely rare enough
-            // that it's fine to temporarily allocate a block that _might_ not get used.
-            disk.free(this, 1);
-          }
-          break outer;
-        }
-
-        currentPos += read;
-        remaining -= read;
-      }
-
-      // Current write block is full
-      blockIndex++;
-      off = 0;
-    }
-
-    if (currentPos > size) {
-      size = currentPos;
-    }
-
-    return currentPos - startPos;
+    return fileIOManager.transferFrom (src,startPos,count);
   }
 
   /**
@@ -465,13 +346,7 @@ final class RegularFile extends File {
    * If {@code pos} is greater than or equal to the size of this file, returns -1 instead.
    */
   public int read(long pos) {
-    if (pos >= size) {
-      return -1;
-    }
-
-    byte[] block = blocks[blockIndex(pos)];
-    int off = offsetInBlock(pos);
-    return UnsignedBytes.toInt(block[off]);
+    return fileIOManager.read (pos);
   }
 
   /**
@@ -480,31 +355,7 @@ final class RegularFile extends File {
    * pos} is greater than or equal to the size of this file.
    */
   public int read(long pos, byte[] b, int off, int len) {
-    // since max is len (an int), result is guaranteed to be an int
-    int bytesToRead = (int) bytesToRead(pos, len);
-
-    if (bytesToRead > 0) {
-      int remaining = bytesToRead;
-
-      int blockIndex = blockIndex(pos);
-      byte[] block = blocks[blockIndex];
-      int offsetInBlock = offsetInBlock(pos);
-
-      int read = get(block, offsetInBlock, b, off, length(offsetInBlock, remaining));
-      remaining -= read;
-      off += read;
-
-      while (remaining > 0) {
-        int index = ++blockIndex;
-        block = blocks[index];
-
-        read = get(block, 0, b, off, length(remaining));
-        remaining -= read;
-        off += read;
-      }
-    }
-
-    return bytesToRead;
+    return fileIOManager.read (pos,b,off,len);
   }
 
   /**
@@ -513,26 +364,7 @@ final class RegularFile extends File {
    * the size of this file.
    */
   public int read(long pos, ByteBuffer buf) {
-    // since max is buf.remaining() (an int), result is guaranteed to be an int
-    int bytesToRead = (int) bytesToRead(pos, buf.remaining());
-
-    if (bytesToRead > 0) {
-      int remaining = bytesToRead;
-
-      int blockIndex = blockIndex(pos);
-      byte[] block = blocks[blockIndex];
-      int off = offsetInBlock(pos);
-
-      remaining -= get(block, off, buf, length(off, remaining));
-
-      while (remaining > 0) {
-        int index = ++blockIndex;
-        block = blocks[index];
-        remaining -= get(block, 0, buf, length(remaining));
-      }
-    }
-
-    return bytesToRead;
+    return fileIOManager.read (pos,buf);
   }
 
   /**
@@ -541,21 +373,7 @@ final class RegularFile extends File {
    * read or -1 if {@code pos} is greater than or equal to the size of this file.
    */
   public long read(long pos, Iterable<ByteBuffer> bufs) {
-    if (pos >= size()) {
-      return -1;
-    }
-
-    long start = pos;
-    for (ByteBuffer buf : bufs) {
-      int read = read(pos, buf);
-      if (read == -1) {
-        break;
-      } else {
-        pos += read;
-      }
-    }
-
-    return pos - start;
+    return fileIOManager.read (pos,bufs);
   }
 
   /**
@@ -566,34 +384,7 @@ final class RegularFile extends File {
    * method is primarily intended as an implementation of.
    */
   public long transferTo(long pos, long count, WritableByteChannel dest) throws IOException {
-    long bytesToRead = bytesToRead(pos, count);
-
-    if (bytesToRead > 0) {
-      long remaining = bytesToRead;
-
-      int blockIndex = blockIndex(pos);
-      byte[] block = blocks[blockIndex];
-      int off = offsetInBlock(pos);
-
-      ByteBuffer buf = ByteBuffer.wrap(block, off, length(off, remaining));
-      while (buf.hasRemaining()) {
-        remaining -= dest.write(buf);
-      }
-      Java8Compatibility.clear(buf);
-
-      while (remaining > 0) {
-        int index = ++blockIndex;
-        block = blocks[index];
-
-        buf = ByteBuffer.wrap(block, 0, length(remaining));
-        while (buf.hasRemaining()) {
-          remaining -= dest.write(buf);
-        }
-        Java8Compatibility.clear(buf);
-      }
-    }
-
-    return Math.max(bytesToRead, 0); // don't return -1 for this method
+    return fileIOManager.transferTo (pos,count,dest);
   }
 
   /** Gets the block at the given index, expanding to create the block if necessary. */
@@ -666,4 +457,264 @@ final class RegularFile extends File {
     buf.put(block, offset, len);
     return len;
   }
+
+  class FileIOManager {
+    private final RegularFile regularFile;
+
+    public FileIOManager(RegularFile regularFile) {
+      this.regularFile = regularFile;
+    }
+
+    // File I/O methods
+    public int write(long pos, byte b) throws IOException {
+      prepareForWrite(pos, 1);
+      byte[] block = blocks[blockIndex(pos)];
+      int off = offsetInBlock(pos);
+      block[off] = b;
+
+      if (pos >= size) {
+        size = pos + 1;
+      }
+
+      return 1;
+    }
+
+    public int write(long pos, byte[] b, int off, int len) throws IOException {
+      prepareForWrite(pos, len);
+
+      if (len == 0) {
+        return 0;
+      }
+
+      int remaining = len;
+
+      int blockIndex = blockIndex(pos);
+      byte[] block = blocks[blockIndex];
+      int offInBlock = offsetInBlock(pos);
+
+      int written = put(block, offInBlock, b, off, length(offInBlock, remaining));
+      remaining -= written;
+      off += written;
+
+      while (remaining > 0) {
+        block = blocks[++blockIndex];
+
+        written = put(block, 0, b, off, length(remaining));
+        remaining -= written;
+        off += written;
+      }
+
+      long endPos = pos + len;
+      if (endPos > size) {
+        size = endPos;
+      }
+
+      return len;
+    }
+
+    public int write(long pos, ByteBuffer buf) throws IOException {
+      int len = buf.remaining();
+
+      prepareForWrite(pos, len);
+
+      if (len == 0) {
+        return 0;
+      }
+
+      int blockIndex = blockIndex(pos);
+      byte[] block = blocks[blockIndex];
+      int off = offsetInBlock(pos);
+
+      put(block, off, buf);
+
+      while (buf.hasRemaining()) {
+        block = blocks[++blockIndex];
+
+        put(block, 0, buf);
+      }
+
+      long endPos = pos + len;
+      if (endPos > size) {
+        size = endPos;
+      }
+
+      return len;
+    }
+
+    public long write(long pos, Iterable<ByteBuffer> bufs) throws IOException {
+      long start = pos;
+      for (ByteBuffer buf : bufs) {
+        pos += write(pos, buf);
+      }
+      return pos - start;
+    }
+
+    public long transferFrom(ReadableByteChannel src, long startPos, long count) throws IOException {
+      if (count == 0
+              // Unlike the write() methods, attempting to transfer to a position that is greater than the
+              // current file size simply does nothing.
+              || startPos > size) {
+        return 0;
+      }
+
+      long remaining = count;
+      long currentPos = startPos;
+
+      int blockIndex = blockIndex(startPos);
+      int off = offsetInBlock(startPos);
+
+      outer:
+      while (remaining > 0) {
+        byte[] block = blockForWrite(blockIndex);
+
+        ByteBuffer buf = ByteBuffer.wrap(block, off, length(off, remaining));
+        while (buf.hasRemaining()) {
+          int read = src.read(buf);
+          // Note: we stop if we read 0 bytes from the src; even though the src is not at EOF, the
+          // spec of transferFrom is to stop immediately when reading from a non-blocking channel that
+          // has no bytes available rather than continuing until it reaches EOF. This makes sense
+          // because we'd otherwise just spin attempting to read bytes from the src repeatedly.
+          if (read < 1) {
+            if (currentPos >= size && buf.position() == 0) {
+              // The current position is at or beyond the end of file (prior to transfer start) and
+              // the current buffer position is 0. This means that a new block must have just been
+              // allocated to hold any potential transferred bytes, but no bytes were transferred to
+              // it because the src had no remaining bytes. So we need to de-allocate that block.
+              // It's possible that it would be preferable to always transfer to a temporary block
+              // first and then copy that block to a newly allocated block when it's full or src
+              // doesn't have any further bytes. Then if we hadn't read anything into the temporary
+              // block, we could simply discard it. But I think this scenario is likely rare enough
+              // that it's fine to temporarily allocate a block that _might_ not get used.
+              disk.free(this.regularFile, 1);
+            }
+            break outer;
+          }
+
+          currentPos += read;
+          remaining -= read;
+        }
+
+        // Current write block is full
+        blockIndex++;
+        off = 0;
+      }
+
+      if (currentPos > size) {
+        size = currentPos;
+      }
+
+      return currentPos - startPos;
+    }
+
+    public int read(long pos) {
+      if (pos >= size) {
+        return -1;
+      }
+
+      byte[] block = blocks[blockIndex(pos)];
+      int off = offsetInBlock(pos);
+      return UnsignedBytes.toInt(block[off]);
+    }
+
+    public int read(long pos, byte[] b, int off, int len) {
+      // since max is len (an int), result is guaranteed to be an int
+      int bytesToRead = (int) bytesToRead(pos, len);
+
+      if (bytesToRead > 0) {
+        int remaining = bytesToRead;
+
+        int blockIndex = blockIndex(pos);
+        byte[] block = blocks[blockIndex];
+        int offsetInBlock = offsetInBlock(pos);
+
+        int read = get(block, offsetInBlock, b, off, length(offsetInBlock, remaining));
+        remaining -= read;
+        off += read;
+
+        while (remaining > 0) {
+          int index = ++blockIndex;
+          block = blocks[index];
+
+          read = get(block, 0, b, off, length(remaining));
+          remaining -= read;
+          off += read;
+        }
+      }
+
+      return bytesToRead;
+    }
+
+    public int read(long pos, ByteBuffer buf) {
+      // since max is buf.remaining() (an int), result is guaranteed to be an int
+      int bytesToRead = (int) bytesToRead(pos, buf.remaining());
+
+      if (bytesToRead > 0) {
+        int remaining = bytesToRead;
+
+        int blockIndex = blockIndex(pos);
+        byte[] block = blocks[blockIndex];
+        int off = offsetInBlock(pos);
+
+        remaining -= get(block, off, buf, length(off, remaining));
+
+        while (remaining > 0) {
+          int index = ++blockIndex;
+          block = blocks[index];
+          remaining -= get(block, 0, buf, length(remaining));
+        }
+      }
+
+      return bytesToRead;
+    }
+    public long read(long pos, Iterable<ByteBuffer> bufs) {
+      if (pos >= size()) {
+        return -1;
+      }
+
+      long start = pos;
+      for (ByteBuffer buf : bufs) {
+        int read = read(pos, buf);
+        if (read == -1) {
+          break;
+        } else {
+          pos += read;
+        }
+      }
+
+      return pos - start;
+    }
+
+    public long transferTo(long pos, long count, WritableByteChannel dest) throws IOException {
+      long bytesToRead = bytesToRead(pos, count);
+
+      if (bytesToRead > 0) {
+        long remaining = bytesToRead;
+
+        int blockIndex = blockIndex(pos);
+        byte[] block = blocks[blockIndex];
+        int off = offsetInBlock(pos);
+
+        ByteBuffer buf = ByteBuffer.wrap(block, off, length(off, remaining));
+        while (buf.hasRemaining()) {
+          remaining -= dest.write(buf);
+        }
+        Java8Compatibility.clear(buf);
+
+        while (remaining > 0) {
+          int index = ++blockIndex;
+          block = blocks[index];
+
+          buf = ByteBuffer.wrap(block, 0, length(remaining));
+          while (buf.hasRemaining()) {
+            remaining -= dest.write(buf);
+          }
+          Java8Compatibility.clear(buf);
+        }
+      }
+
+      return Math.max(bytesToRead, 0); // don't return -1 for this method
+    }
+
+  }
+
 }
