@@ -370,9 +370,11 @@ final class AttributeService {
     }
 
     // separator must not be at the start or end of the string or appear more than once
-    if (separatorIndex == 0
-        || separatorIndex == attribute.length() - 1
-        || attribute.indexOf(':', separatorIndex + 1) != -1) {
+    boolean isSeparatorAtStartOrEnd = separatorIndex == 0 || separatorIndex == attribute.length() - 1;
+    boolean hasSeparatorDuplicate = attribute.indexOf(':', separatorIndex + 1) != -1;
+    boolean isSeparatorValid = !isSeparatorAtStartOrEnd && !hasSeparatorDuplicate;
+
+    if (!isSeparatorValid) {
       throw new IllegalArgumentException("illegal attribute format: " + attribute);
     }
 
