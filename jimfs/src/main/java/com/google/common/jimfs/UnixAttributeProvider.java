@@ -117,7 +117,7 @@ final class UnixAttributeProvider extends AttributeProvider {
       case "ino":
         return file.id();
       case "nlink":
-        return file.links();
+        return file.getLinksCount();
       default:
         return null;
     }

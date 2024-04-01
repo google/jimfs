@@ -201,7 +201,7 @@ final class RegularFile extends File {
    */
   @Override
   public synchronized void deleted() {
-    if (links() == 0) {
+    if (getLinksCount() == 0) {
       deleted = true;
       if (openCount == 0) {
         deleteContents();

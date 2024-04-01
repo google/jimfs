@@ -183,7 +183,7 @@ public class DirectoryTest {
     assertThat(newDir.entryInParent()).isNull();
     assertThat(newDir.get(Name.SELF).file()).isEqualTo(newDir);
     assertThat(newDir.get(Name.PARENT)).isNull();
-    assertThat(newDir.links()).isEqualTo(1);
+    assertThat(newDir.getLinksCount()).isEqualTo(1);
 
     dir.link(Name.simple("foo"), newDir);
 
@@ -192,7 +192,7 @@ public class DirectoryTest {
     assertThat(newDir.entryInParent().name()).isEqualTo(Name.simple("foo"));
     assertThat(newDir.get(Name.SELF)).isEqualTo(entry(newDir, ".", newDir));
     assertThat(newDir.get(Name.PARENT)).isEqualTo(entry(newDir, "..", dir));
-    assertThat(newDir.links()).isEqualTo(2);
+    assertThat(newDir.getLinksCount()).isEqualTo(2);
   }
 
   @Test
@@ -201,19 +201,19 @@ public class DirectoryTest {
 
     dir.link(Name.simple("foo"), newDir);
 
-    assertThat(dir.links()).isEqualTo(3);
+    assertThat(dir.getLinksCount()).isEqualTo(3);
 
     assertThat(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
-    assertThat(newDir.links()).isEqualTo(2);
+    assertThat(newDir.getLinksCount()).isEqualTo(2);
 
     dir.unlink(Name.simple("foo"));
 
-    assertThat(dir.links()).isEqualTo(2);
+    assertThat(dir.getLinksCount()).isEqualTo(2);
 
     assertThat(newDir.entryInParent()).isEqualTo(entry(dir, "foo", newDir));
     assertThat(newDir.get(Name.SELF).file()).isEqualTo(newDir);
     assertThat(newDir.get(Name.PARENT)).isEqualTo(entry(newDir, "..", dir));
-    assertThat(newDir.links()).isEqualTo(1);
+    assertThat(newDir.getLinksCount()).isEqualTo(1);
   }
 
   @Test

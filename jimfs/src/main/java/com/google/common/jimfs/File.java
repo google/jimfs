@@ -128,7 +128,7 @@ public abstract class File {
   }
 
   /** Returns the current count of links to this file. */
-  public final synchronized int links() {
+  public final synchronized int getLinksCount() {
     return links;
   }
 
