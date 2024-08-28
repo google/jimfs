@@ -20,9 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.fail;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Ordering;
+import com.google.common.collect.ImmutableSortedSet;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -30,7 +29,6 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.regex.PatternSyntaxException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -93,8 +91,7 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     Path p3 = path("c");
     Path p4 = path("D");
 
-    assertThat(Ordering.natural().immutableSortedCopy(Arrays.asList(p3, p4, p1, p2)))
-        .isEqualTo(ImmutableList.of(p1, p2, p3, p4));
+    assertThat(ImmutableSortedSet.of(p3, p4, p1, p2)).containsExactly(p1, p2, p3, p4).inOrder();
 
     // would be p2, p4, p1, p3 if sorting were case sensitive
   }

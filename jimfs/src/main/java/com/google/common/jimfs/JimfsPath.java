@@ -19,7 +19,6 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.io.File;
@@ -37,6 +36,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -409,10 +409,10 @@ final class JimfsPath implements Path {
   public int compareTo(Path other) {
     // documented to throw CCE if other is associated with a different FileSystemProvider
     JimfsPath otherPath = (JimfsPath) other;
-    return ComparisonChain.start()
-        .compare(getJimfsFileSystem().getUri(), ((JimfsPath) other).getJimfsFileSystem().getUri())
-        .compare(this, otherPath, pathService)
-        .result();
+    Comparator<JimfsPath> comparator =
+        Comparator.comparing((JimfsPath p) -> p.getJimfsFileSystem().getUri())
+            .thenComparing(pathService);
+    return comparator.compare(this, otherPath);
   }
 
   @Override

@@ -20,16 +20,16 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static java.util.Comparator.nullsLast;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Comparators;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Ordering;
 import com.google.common.jimfs.PathType.ParseResult;
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -47,14 +47,15 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 final class PathService implements Comparator<JimfsPath> {
 
-  private static final Ordering<Name> DISPLAY_ROOT_ORDERING = Name.displayOrdering().nullsLast();
-  private static final Ordering<Iterable<Name>> DISPLAY_NAMES_ORDERING =
-      Name.displayOrdering().lexicographical();
+  private static final Comparator<Name> DISPLAY_ROOT_COMPARATOR =
+      nullsLast(Name.displayComparator());
+  private static final Comparator<Iterable<Name>> DISPLAY_NAMES_COMPARATOR =
+      Comparators.lexicographical(Name.displayComparator());
 
-  private static final Ordering<Name> CANONICAL_ROOT_ORDERING =
-      Name.canonicalOrdering().nullsLast();
-  private static final Ordering<Iterable<Name>> CANONICAL_NAMES_ORDERING =
-      Name.canonicalOrdering().lexicographical();
+  private static final Comparator<Name> CANONICAL_ROOT_COMPARATOR =
+      nullsLast(Name.canonicalComparator());
+  private static final Comparator<Iterable<Name>> CANONICAL_NAMES_COMPARATOR =
+      Comparators.lexicographical(Name.canonicalComparator());
 
   private final PathType type;
 
@@ -62,8 +63,8 @@ final class PathService implements Comparator<JimfsPath> {
   private final ImmutableSet<PathNormalization> canonicalNormalizations;
   private final boolean equalityUsesCanonicalForm;
 
-  private final Ordering<Name> rootOrdering;
-  private final Ordering<Iterable<Name>> namesOrdering;
+  private final Comparator<Name> rootComparator;
+  private final Comparator<Iterable<Name>> namesComparator;
 
   private volatile FileSystem fileSystem;
   private volatile JimfsPath emptyPath;
@@ -86,9 +87,10 @@ final class PathService implements Comparator<JimfsPath> {
     this.canonicalNormalizations = ImmutableSet.copyOf(canonicalNormalizations);
     this.equalityUsesCanonicalForm = equalityUsesCanonicalForm;
 
-    this.rootOrdering = equalityUsesCanonicalForm ? CANONICAL_ROOT_ORDERING : DISPLAY_ROOT_ORDERING;
-    this.namesOrdering =
-        equalityUsesCanonicalForm ? CANONICAL_NAMES_ORDERING : DISPLAY_NAMES_ORDERING;
+    this.rootComparator =
+        equalityUsesCanonicalForm ? CANONICAL_ROOT_COMPARATOR : DISPLAY_ROOT_COMPARATOR;
+    this.namesComparator =
+        equalityUsesCanonicalForm ? CANONICAL_NAMES_COMPARATOR : DISPLAY_NAMES_COMPARATOR;
   }
 
   /** Sets the file system to use for created paths. */
@@ -200,7 +202,7 @@ final class PathService implements Comparator<JimfsPath> {
   /** Creates a hash code for the given path. */
   public int hash(JimfsPath path) {
     // Note: JimfsPath.equals() is implemented using the compare() method below;
-    // equalityUsesCanonicalForm is taken into account there via the namesOrdering, which is set
+    // equalityUsesCanonicalForm is taken into account there via the namesComparator, which is set
     // at construction time.
     int hash = 31;
     hash = 31 * hash + getFileSystem().hashCode();
@@ -226,10 +228,10 @@ final class PathService implements Comparator<JimfsPath> {
 
   @Override
   public int compare(JimfsPath a, JimfsPath b) {
-    return ComparisonChain.start()
-        .compare(a.root(), b.root(), rootOrdering)
-        .compare(a.names(), b.names(), namesOrdering)
-        .result();
+    Comparator<JimfsPath> comparator =
+        Comparator.comparing(JimfsPath::root, rootComparator)
+            .thenComparing(JimfsPath::names, namesComparator);
+    return comparator.compare(a, b);
   }
 
   /**

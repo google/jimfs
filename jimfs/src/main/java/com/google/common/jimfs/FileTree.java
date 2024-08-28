@@ -51,7 +51,7 @@ final class FileTree {
 
   /** Creates a new file tree with the given root directories. */
   FileTree(Map<Name, Directory> roots) {
-    this.roots = ImmutableSortedMap.copyOf(roots, Name.canonicalOrdering());
+    this.roots = ImmutableSortedMap.copyOf(roots, Name.canonicalComparator());
   }
 
   /** Returns the names of the root directories in this tree. */

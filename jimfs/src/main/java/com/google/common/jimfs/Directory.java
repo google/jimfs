@@ -148,7 +148,7 @@ final class Directory extends File implements Iterable<DirectoryEntry> {
    */
   public ImmutableSortedSet<Name> snapshot() {
     ImmutableSortedSet.Builder<Name> builder =
-        new ImmutableSortedSet.Builder<>(Name.displayOrdering());
+        new ImmutableSortedSet.Builder<>(Name.displayComparator());
 
     for (DirectoryEntry entry : this) {
       if (!isReserved(entry.name())) {

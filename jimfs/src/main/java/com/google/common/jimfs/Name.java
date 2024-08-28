@@ -19,8 +19,7 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.collect.Ordering;
+import java.util.Comparator;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -95,33 +94,19 @@ final class Name {
     return display;
   }
 
-  /** Returns an ordering that orders names by their display representation. */
-  public static Ordering<Name> displayOrdering() {
-    return DISPLAY_ORDERING;
+  /** Returns a comparator that orders names by their display representation. */
+  static Comparator<Name> displayComparator() {
+    return DISPLAY_COMPARATOR;
   }
 
-  /** Returns an ordering that orders names by their canonical representation. */
-  public static Ordering<Name> canonicalOrdering() {
-    return CANONICAL_ORDERING;
+  /** Returns a comparator that orders names by their canonical representation. */
+  static Comparator<Name> canonicalComparator() {
+    return CANONICAL_COMPARATOR;
   }
 
-  private static final Ordering<Name> DISPLAY_ORDERING =
-      Ordering.natural()
-          .onResultOf(
-              new Function<Name, String>() {
-                @Override
-                public String apply(Name name) {
-                  return name.display;
-                }
-              });
+  private static final Comparator<Name> DISPLAY_COMPARATOR =
+      Comparator.comparing((Name n) -> n.display);
 
-  private static final Ordering<Name> CANONICAL_ORDERING =
-      Ordering.natural()
-          .onResultOf(
-              new Function<Name, String>() {
-                @Override
-                public String apply(Name name) {
-                  return name.canonical;
-                }
-              });
+  private static final Comparator<Name> CANONICAL_COMPARATOR =
+      Comparator.comparing((Name n) -> n.canonical);
 }
