@@ -98,7 +98,7 @@
     <auto-common.version>1.2.2</auto-common.version>
     <java.version>1.8</java.version>
     <guava.version>33.3.1-jre</guava.version>
-    <errorprone.version>2.31.0</errorprone.version>
+    <errorprone.version>2.32.0</errorprone.version>
   </properties>
 
   <dependencyManagement>
@@ -282,11 +282,8 @@
     <profile>
       <id>run-error-prone</id>
       <activation>
-        <!--
-        Error Prone requires 11+: https://errorprone.info/docs/installation
-        We skip 12-15 because of https://github.com/google/error-prone/issues/3540.
-        -->
-        <jdk>[11,12),[16,)</jdk>
+        <!-- Error Prone requires 17+: https://errorprone.info/docs/installation. -->
+        <jdk>[17,)</jdk>
       </activation>
       <build>
         <plugins>
@@ -294,11 +291,12 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
+              <compilerArgument>-Xplugin:ErrorProne -Xep:Java8ApiChecker:ERROR</compilerArgument>
+              <!-- Disable Beta Checker for tests -->
+              <testCompilerArgument>-Xplugin:ErrorProne -Xep:BetaApi:OFF</testCompilerArgument>
               <compilerArgs>
                 <!-- https://errorprone.info/docs/installation#maven -->
                 <arg>-XDcompilePolicy=simple</arg>
-                <arg>-Xplugin:ErrorProne -Xep:Java8ApiChecker:ERROR</arg>
-                <!-- https://github.com/google/error-prone/blob/f8e33bc460be82ab22256a7ef8b979d7a2cacaba/docs/installation.md#jdk-16 -->
                 <!-- TODO(cpovirk): Use .mvn/jvm.config instead (per
                      https://errorprone.info/docs/installation#maven) if it can
                      be made not to interfere with JDK8 or if we stop building
@@ -314,22 +312,8 @@
                 <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
                 <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
               </compilerArgs>
+              <fork>true</fork> <!-- -J options are only passed through if fork is set to true. -->
             </configuration>
-            <executions>
-              <execution>
-                <id>default-testCompile</id>
-                <phase>test-compile</phase>
-                <goals>
-                  <goal>testCompile</goal>
-                </goals>
-                <configuration>
-                  <compilerArgs>
-                    <arg>-XDcompilePolicy=simple</arg>
-                    <arg>-Xplugin:ErrorProne -Xep:BetaApi:OFF</arg> <!-- Disable Beta Checker for tests -->
-                  </compilerArgs>
-                </configuration>
-              </execution>
-            </executions>
           </plugin>
         </plugins>
       </build>
