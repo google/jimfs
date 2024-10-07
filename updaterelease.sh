@@ -104,7 +104,7 @@ mvn \
 echo " Done."
 
 mv $MODULE/target/classes $tempdir/classes
-mv $MODULE/target/site/apidocs $tempdir/docs
+mv $MODULE/target/reports/apidocs $tempdir/docs
 
 # Create classpath string for JDiff to use.
 classpath=$tempdir/classes:$(cat $tempdir/classpath)
