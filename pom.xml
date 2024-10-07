@@ -98,7 +98,7 @@
     <auto-common.version>1.2.2</auto-common.version>
     <java.version>1.8</java.version>
     <guava.version>33.3.1-jre</guava.version>
-    <errorprone.version>2.32.0</errorprone.version>
+    <errorprone.version>2.33.0</errorprone.version>
   </properties>
 
   <dependencyManagement>
@@ -131,7 +131,7 @@
       <dependency>
         <groupId>org.checkerframework</groupId>
         <artifactId>checker-qual</artifactId>
-        <version>3.47.0</version>
+        <version>3.48.0</version>
       </dependency>
 
       <!-- Test dependencies -->
@@ -169,7 +169,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.10.0</version>
+          <version>3.10.1</version>
           <configuration>
             <debug>true</debug>
             <encoding>UTF-8</encoding>
@@ -191,7 +191,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.5.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
