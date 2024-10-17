@@ -315,7 +315,7 @@ final class AttributeService {
       throw new IllegalArgumentException("invalid attributes: " + attributes);
     }
 
-    Map<String, Object> result = new HashMap<>();
+    ImmutableMap.Builder<String, Object> result = ImmutableMap.builder();
     if (attrs.size() == 1 && attrs.contains(ALL_ATTRIBUTES)) {
       // for 'view:*' format, get all keys for all providers for the view
       AttributeProvider provider = providersByName.get(view);
@@ -332,7 +332,7 @@ final class AttributeService {
       }
     }
 
-    return ImmutableMap.copyOf(result);
+    return result.buildKeepingLast();
   }
 
   /**
@@ -350,7 +350,8 @@ final class AttributeService {
     throw new UnsupportedOperationException("unsupported attributes type: " + type);
   }
 
-  private static void readAll(File file, AttributeProvider provider, Map<String, Object> map) {
+  private static void readAll(
+      File file, AttributeProvider provider, ImmutableMap.Builder<String, Object> map) {
     for (String attribute : provider.attributes(file)) {
       Object value = provider.get(file, attribute);
 
