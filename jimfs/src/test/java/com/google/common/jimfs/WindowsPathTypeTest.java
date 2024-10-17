@@ -60,32 +60,12 @@ public class WindowsPathTypeTest {
 
   @Test
   public void testWindows_relativePathsWithDriveRoot_unsupported() {
-    try {
-      windows().parsePath("C:");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
-
-    try {
-      windows().parsePath("C:foo\\bar");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    this.windowsPathTypeTestTestTemplate("C:", "C:foo\\bar");
   }
 
   @Test
   public void testWindows_absolutePathOnCurrentDrive_unsupported() {
-    try {
-      windows().parsePath("\\foo\\bar");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
-
-    try {
-      windows().parsePath("\\");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    this.windowsPathTypeTestTestTemplate("\\foo\\bar", "\\");
   }
 
   @Test
@@ -218,5 +198,18 @@ public class WindowsPathTypeTest {
     assertUriRoundTripsCorrectly(PathType.windows(), "\\\\host\\share\\Users\\foo\\My Documents\\");
     assertUriRoundTripsCorrectly(PathType.windows(), "\\\\host\\share\\foo bar");
     assertUriRoundTripsCorrectly(PathType.windows(), "\\\\host\\share\\foo bar\\baz");
+  }
+
+  public void windowsPathTypeTestTestTemplate(String string1, String string2) {
+    try {
+      windows().parsePath(string1);
+      fail();
+    } catch (InvalidPathException expected) {
+    }
+    try {
+      windows().parsePath(string2);
+      fail();
+    } catch (InvalidPathException expected) {
+    }
   }
 }
