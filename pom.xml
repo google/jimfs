@@ -98,7 +98,7 @@
     <auto-common.version>1.2.2</auto-common.version>
     <java.version>1.8</java.version>
     <guava.version>33.3.1-jre</guava.version>
-    <errorprone.version>2.34.0</errorprone.version>
+    <errorprone.version>2.35.1</errorprone.version>
   </properties>
 
   <dependencyManagement>
@@ -114,7 +114,7 @@
       <dependency>
         <groupId>com.ibm.icu</groupId>
         <artifactId>icu4j</artifactId>
-        <version>75.1</version>
+        <version>76.1</version>
       </dependency>
 
       <!-- Compile-time dependencies -->
