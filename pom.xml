@@ -131,7 +131,7 @@
       <dependency>
         <groupId>org.checkerframework</groupId>
         <artifactId>checker-qual</artifactId>
-        <version>3.48.1</version>
+        <version>3.48.2</version>
       </dependency>
 
       <!-- Test dependencies -->
@@ -169,7 +169,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.10.1</version>
+          <version>3.11.1</version>
           <configuration>
             <debug>true</debug>
             <encoding>UTF-8</encoding>
@@ -191,7 +191,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.5.1</version>
+          <version>3.5.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
