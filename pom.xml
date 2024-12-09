@@ -169,7 +169,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.11.1</version>
+          <version>3.11.2</version>
           <configuration>
             <debug>true</debug>
             <encoding>UTF-8</encoding>
@@ -291,7 +291,7 @@
               <!-- maven-bundle-plugin 6.0.0+ requires JDK 17+ -->
               <groupId>org.apache.felix</groupId>
               <artifactId>maven-bundle-plugin</artifactId>
-              <version>5.1.9</version>
+              <version>6.0.0</version>
             </plugin>
           </plugins>
         </pluginManagement>
