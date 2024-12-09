@@ -19,7 +19,7 @@ package com.google.common.jimfs;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import java.nio.file.InvalidPathException;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Unix-style path type.

@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import com.google.common.collect.ImmutableMap;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Static registry of {@link AttributeProvider} implementations for the standard set of file

@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.List;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Attribute provider that provides the {@link UserDefinedFileAttributeView} ("user"). Unlike most

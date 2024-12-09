@@ -41,7 +41,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Jimfs implementation of {@link Path}. Creation of new {@code Path} objects is delegated to the

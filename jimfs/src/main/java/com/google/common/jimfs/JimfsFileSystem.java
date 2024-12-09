@@ -33,7 +33,7 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link FileSystem} implementation for Jimfs. Most behavior for the file system is implemented by

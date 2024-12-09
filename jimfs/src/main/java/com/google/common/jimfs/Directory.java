@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.nio.file.attribute.FileTime;
 import java.util.Iterator;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A table of {@linkplain DirectoryEntry directory entries}.

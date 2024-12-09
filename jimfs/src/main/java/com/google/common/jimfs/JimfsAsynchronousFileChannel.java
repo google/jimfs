@@ -34,7 +34,7 @@ import java.nio.channels.FileLock;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * {@link AsynchronousFileChannel} implementation that delegates to a {@link JimfsFileChannel}.

@@ -61,8 +61,8 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.checkerframework</groupId>
-      <artifactId>checker-qual</artifactId>
+      <groupId>org.jspecify</groupId>
+      <artifactId>jspecify</artifactId>
       <optional>true</optional>
     </dependency>
 

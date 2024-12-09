@@ -26,7 +26,7 @@ import com.google.common.collect.Table;
 import java.io.IOException;
 import java.nio.file.attribute.FileTime;
 import java.util.concurrent.locks.ReadWriteLock;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A file object, containing both the file's metadata and content.
