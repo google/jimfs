@@ -1,1 +1,1 @@
-/opt/hostedtoolcache/Java_Zulu_jdk/11.0.25-9/x64/bin/javadoc -J-Duser.language= -J-Duser.country= @options @packages
+/opt/hostedtoolcache/Java_Zulu_jdk/11.0.26-4/x64/bin/javadoc -J-Duser.language= -J-Duser.country= @options @packages
