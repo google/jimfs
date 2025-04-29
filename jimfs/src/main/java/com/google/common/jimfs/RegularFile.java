@@ -49,7 +49,8 @@ final class RegularFile extends File {
 
   /** Block list for the file. */
   private byte[][] blocks;
-  /** Block count for the the file, which also acts as the head of the block list. */
+
+  /** Block count for the file, which also acts as the head of the block list. */
   private int blockCount;
 
   private long size;
