@@ -33,6 +33,7 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
@@ -68,7 +69,6 @@ final class PosixAttributeProvider extends AttributeProvider {
     return ATTRIBUTES;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public ImmutableMap<String, ?> defaultValues(Map<String, ?> userProvidedDefaults) {
     Object userProvidedGroup = userProvidedDefaults.get("posix:group");
@@ -262,8 +262,8 @@ final class PosixAttributeProvider extends AttributeProvider {
     }
 
     @Override
-    public ImmutableSet<PosixFilePermission> permissions() {
-      return permissions;
+    public Set<PosixFilePermission> permissions() {
+      return new LinkedHashSet<>(permissions);
     }
   }
 }

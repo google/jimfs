@@ -121,4 +121,11 @@ public class PosixAttributeProviderTest
     assertThat(attrs.group()).isEqualTo(createGroupPrincipal("group"));
     assertThat(attrs.fileKey()).isEqualTo(0);
   }
+
+  @Test
+  public void testAttributes_permissionsAreModifiable() {
+    Set<PosixFilePermission> permissions = provider.readAttributes(file).permissions();
+    permissions.add(PosixFilePermission.OWNER_EXECUTE);
+    assertThat(permissions).isEqualTo(PosixFilePermissions.fromString("rwxr--r--"));
+  }
 }
