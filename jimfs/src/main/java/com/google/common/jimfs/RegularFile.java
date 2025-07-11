@@ -20,6 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.jimfs.Util.clear;
 import static com.google.common.jimfs.Util.nextPowerOf2;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -159,7 +161,7 @@ final class RegularFile extends File {
 
   @Override
   RegularFile copyWithoutContent(int id, FileTime creationTime) {
-    byte[][] copyBlocks = new byte[Math.max(blockCount * 2, 32)][];
+    byte[][] copyBlocks = new byte[max(blockCount * 2, 32)][];
     return new RegularFile(id, creationTime, disk, copyBlocks, 0, size);
   }
 
@@ -593,7 +595,7 @@ final class RegularFile extends File {
       }
     }
 
-    return Math.max(bytesToRead, 0); // don't return -1 for this method
+    return max(bytesToRead, 0); // don't return -1 for this method
   }
 
   /** Gets the block at the given index, expanding to create the block if necessary. */
@@ -615,11 +617,11 @@ final class RegularFile extends File {
   }
 
   private int length(long max) {
-    return (int) Math.min(disk.blockSize(), max);
+    return (int) min(disk.blockSize(), max);
   }
 
   private int length(int off, long max) {
-    return (int) Math.min(disk.blockSize() - off, max);
+    return (int) min(disk.blockSize() - off, max);
   }
 
   /**
@@ -631,7 +633,7 @@ final class RegularFile extends File {
     if (available <= 0) {
       return -1;
     }
-    return Math.min(available, max);
+    return min(available, max);
   }
 
   /** Zeroes len bytes in the given block starting at the given offset. Returns len. */
@@ -648,7 +650,7 @@ final class RegularFile extends File {
 
   /** Puts the contents of the given byte buffer at the given offset in the given block. */
   private static void put(byte[] block, int offset, ByteBuffer buf) {
-    int len = Math.min(block.length - offset, buf.remaining());
+    int len = min(block.length - offset, buf.remaining());
     buf.get(block, offset, len);
   }
 

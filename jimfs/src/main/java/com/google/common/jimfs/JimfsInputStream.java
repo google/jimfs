@@ -18,6 +18,8 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkPositionIndexes;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
@@ -117,7 +119,7 @@ final class JimfsInputStream extends InputStream {
       }
 
       // available() must be an int, so the min must be also
-      int skip = (int) Math.min(Math.max(file.size() - pos, 0), n);
+      int skip = (int) min(max(file.size() - pos, 0), n);
       pos += skip;
       return skip;
     }
@@ -129,7 +131,7 @@ final class JimfsInputStream extends InputStream {
     if (finished) {
       return 0;
     }
-    long available = Math.max(file.size() - pos, 0);
+    long available = max(file.size() - pos, 0);
     return Ints.saturatedCast(available);
   }
 

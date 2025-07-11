@@ -17,6 +17,8 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.math.LongMath;
@@ -88,7 +90,7 @@ final class HeapDisk {
         -1,
         SystemFileTimeSource.INSTANCE.now(),
         this,
-        new byte[Math.min(maxCachedBlockCount, 8192)][],
+        new byte[min(maxCachedBlockCount, 8192)][],
         0,
         0);
   }
@@ -122,7 +124,7 @@ final class HeapDisk {
       throw new IOException("out of disk space");
     }
 
-    int newBlocksNeeded = Math.max(count - blockCache.blockCount(), 0);
+    int newBlocksNeeded = max(count - blockCache.blockCount(), 0);
 
     for (int i = 0; i < newBlocksNeeded; i++) {
       file.addBlock(new byte[blockSize]);
@@ -144,7 +146,7 @@ final class HeapDisk {
   public synchronized void free(RegularFile file, int count) {
     int remainingCacheSpace = maxCachedBlockCount - blockCache.blockCount();
     if (remainingCacheSpace > 0) {
-      file.copyBlocksTo(blockCache, Math.min(count, remainingCacheSpace));
+      file.copyBlocksTo(blockCache, min(count, remainingCacheSpace));
     }
     file.truncateBlocks(file.blockCount() - count);
 

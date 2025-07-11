@@ -18,6 +18,8 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -317,7 +319,7 @@ final class JimfsPath implements Path {
 
     ImmutableList<Name> otherNames = otherPath.names;
     int sharedSubsequenceLength = 0;
-    for (int i = 0; i < Math.min(getNameCount(), otherNames.size()); i++) {
+    for (int i = 0; i < min(getNameCount(), otherNames.size()); i++) {
       if (names.get(i).equals(otherNames.get(i))) {
         sharedSubsequenceLength++;
       } else {
@@ -325,7 +327,7 @@ final class JimfsPath implements Path {
       }
     }
 
-    int extraNamesInThis = Math.max(0, getNameCount() - sharedSubsequenceLength);
+    int extraNamesInThis = max(0, getNameCount() - sharedSubsequenceLength);
 
     ImmutableList<Name> extraNamesInOther =
         (otherNames.size() <= sharedSubsequenceLength)

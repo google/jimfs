@@ -16,6 +16,8 @@
 
 package com.google.common.jimfs;
 
+import static java.lang.Math.min;
+
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -51,7 +53,7 @@ public class ByteBufferChannel implements SeekableByteChannel {
     if (buffer.remaining() == 0) {
       return -1;
     }
-    int length = Math.min(dst.remaining(), buffer.remaining());
+    int length = min(dst.remaining(), buffer.remaining());
     for (int i = 0; i < length; i++) {
       dst.put(buffer.get());
     }
@@ -60,7 +62,7 @@ public class ByteBufferChannel implements SeekableByteChannel {
 
   @Override
   public int write(ByteBuffer src) throws IOException {
-    int length = Math.min(src.remaining(), buffer.remaining());
+    int length = min(src.remaining(), buffer.remaining());
     for (int i = 0; i < length; i++) {
       buffer.put(src.get());
     }
