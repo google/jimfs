@@ -22,7 +22,6 @@ import static com.google.common.jimfs.Util.clear;
 import static com.google.common.jimfs.Util.nextPowerOf2;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.primitives.UnsignedBytes;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -472,7 +471,7 @@ final class RegularFile extends File {
 
     byte[] block = blocks[blockIndex(pos)];
     int off = offsetInBlock(pos);
-    return UnsignedBytes.toInt(block[off]);
+    return Byte.toUnsignedInt(block[off]);
   }
 
   /**
