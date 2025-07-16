@@ -121,7 +121,7 @@ final class JimfsFileSystemProvider extends FileSystemProvider {
   @Override
   public Path getPath(URI uri) {
     throw new UnsupportedOperationException(
-        "This method should not be called directly; " + "use Paths.get(URI) instead.");
+        "This method should not be called directly; use Paths.get(URI) instead.");
   }
 
   private static JimfsPath checkPath(Path path) {
