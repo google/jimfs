@@ -20,7 +20,7 @@ import static com.google.common.jimfs.Name.PARENT;
 import static com.google.common.jimfs.Name.SELF;
 import static com.google.common.jimfs.TestUtils.regularFile;
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
@@ -96,26 +96,17 @@ public class DirectoryTest {
 
   @Test
   public void testLink_existingNameFails() {
-    try {
-      root.link(Name.simple("foo"), createDirectory(2));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class, () -> root.link(Name.simple("foo"), createDirectory(2)));
   }
 
   @Test
   public void testLink_parentAndSelfNameFails() {
-    try {
-      dir.link(Name.simple("."), createDirectory(2));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class, () -> dir.link(Name.simple("."), createDirectory(2)));
 
-    try {
-      dir.link(Name.simple(".."), createDirectory(2));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class, () -> dir.link(Name.simple(".."), createDirectory(2)));
   }
 
   @Test
@@ -143,26 +134,14 @@ public class DirectoryTest {
 
   @Test
   public void testUnlink_nonExistentNameFails() {
-    try {
-      dir.unlink(Name.simple("bar"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> dir.unlink(Name.simple("bar")));
   }
 
   @Test
   public void testUnlink_parentAndSelfNameFails() {
-    try {
-      dir.unlink(Name.simple("."));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> dir.unlink(Name.simple(".")));
 
-    try {
-      dir.unlink(Name.simple(".."));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> dir.unlink(Name.simple("..")));
   }
 
   @Test
@@ -274,11 +253,7 @@ public class DirectoryTest {
   public void testPutEntryForExistingNameIsIllegal() {
     dir.put(entry("foo"));
 
-    try {
-      dir.put(entry("foo"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> dir.put(entry("foo")));
   }
 
   @Test

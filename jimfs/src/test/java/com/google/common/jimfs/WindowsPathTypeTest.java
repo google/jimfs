@@ -21,7 +21,7 @@ import static com.google.common.jimfs.PathTypeTest.assertParseResult;
 import static com.google.common.jimfs.PathTypeTest.assertUriRoundTripsCorrectly;
 import static com.google.common.jimfs.PathTypeTest.fileSystemUri;
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import java.net.URI;
@@ -60,32 +60,16 @@ public class WindowsPathTypeTest {
 
   @Test
   public void testWindows_relativePathsWithDriveRoot_unsupported() {
-    try {
-      windows().parsePath("C:");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    assertThrows(InvalidPathException.class, () -> windows().parsePath("C:"));
 
-    try {
-      windows().parsePath("C:foo\\bar");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    assertThrows(InvalidPathException.class, () -> windows().parsePath("C:foo\\bar"));
   }
 
   @Test
   public void testWindows_absolutePathOnCurrentDrive_unsupported() {
-    try {
-      windows().parsePath("\\foo\\bar");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    assertThrows(InvalidPathException.class, () -> windows().parsePath("\\foo\\bar"));
 
-    try {
-      windows().parsePath("\\");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    assertThrows(InvalidPathException.class, () -> windows().parsePath("\\"));
   }
 
   @Test
@@ -97,64 +81,33 @@ public class WindowsPathTypeTest {
     path = windows.parsePath("\\\\HOST\\share\\foo\\bar");
     assertParseResult(path, "\\\\HOST\\share\\", "foo", "bar");
 
-    try {
-      windows.parsePath("\\\\");
-      fail();
-    } catch (InvalidPathException expected) {
-      assertThat(expected.getInput()).isEqualTo("\\\\");
-      assertThat(expected.getReason()).isEqualTo("UNC path is missing hostname");
-    }
+    InvalidPathException expected =
+        assertThrows(InvalidPathException.class, () -> windows.parsePath("\\\\"));
+    assertThat(expected.getInput()).isEqualTo("\\\\");
+    assertThat(expected.getReason()).isEqualTo("UNC path is missing hostname");
 
-    try {
-      windows.parsePath("\\\\host");
-      fail();
-    } catch (InvalidPathException expected) {
-      assertThat(expected.getInput()).isEqualTo("\\\\host");
-      assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
-    }
+    expected = assertThrows(InvalidPathException.class, () -> windows.parsePath("\\\\host"));
+    assertThat(expected.getInput()).isEqualTo("\\\\host");
+    assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
 
-    try {
-      windows.parsePath("\\\\host\\");
-      fail();
-    } catch (InvalidPathException expected) {
-      assertThat(expected.getInput()).isEqualTo("\\\\host\\");
-      assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
-    }
+    expected = assertThrows(InvalidPathException.class, () -> windows.parsePath("\\\\host\\"));
+    assertThat(expected.getInput()).isEqualTo("\\\\host\\");
+    assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
 
-    try {
-      windows.parsePath("//host");
-      fail();
-    } catch (InvalidPathException expected) {
-      assertThat(expected.getInput()).isEqualTo("//host");
-      assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
-    }
+    expected = assertThrows(InvalidPathException.class, () -> windows.parsePath("//host"));
+    assertThat(expected.getInput()).isEqualTo("//host");
+    assertThat(expected.getReason()).isEqualTo("UNC path is missing sharename");
   }
 
   @Test
   public void testWindows_illegalNames() {
-    try {
-      windows().parsePath("foo<bar");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    assertThrows(InvalidPathException.class, () -> windows().parsePath("foo<bar"));
 
-    try {
-      windows().parsePath("foo?");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    assertThrows(InvalidPathException.class, () -> windows().parsePath("foo?"));
 
-    try {
-      windows().parsePath("foo ");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    assertThrows(InvalidPathException.class, () -> windows().parsePath("foo "));
 
-    try {
-      windows().parsePath("foo \\bar");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    assertThrows(InvalidPathException.class, () -> windows().parsePath("foo \\bar"));
   }
 
   @Test

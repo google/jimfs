@@ -21,7 +21,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.AbstractWatchService.Event;
@@ -91,22 +91,17 @@ public class PollingWatchServiceTest {
 
   @Test
   public void testRegister_fileDoesNotExist() throws IOException {
-    try {
-      watcher.register(fs.getPath("/a/b/c"), ImmutableList.of(ENTRY_CREATE));
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(
+        NoSuchFileException.class,
+        () -> watcher.register(fs.getPath("/a/b/c"), ImmutableList.of(ENTRY_CREATE)));
   }
 
   @Test
   public void testRegister_fileIsNotDirectory() throws IOException {
     Path path = fs.getPath("/a.txt");
     Files.createFile(path);
-    try {
-      watcher.register(path, ImmutableList.of(ENTRY_CREATE));
-      fail();
-    } catch (NotDirectoryException expected) {
-    }
+    assertThrows(
+        NotDirectoryException.class, () -> watcher.register(path, ImmutableList.of(ENTRY_CREATE)));
   }
 
   @Test

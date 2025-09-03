@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -206,11 +206,7 @@ public class HeapDiskTest {
     HeapDisk disk = new HeapDisk(4, 10, 4);
     disk.allocate(blocks, 10);
 
-    try {
-      disk.allocate(blocks, 1);
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> disk.allocate(blocks, 1));
   }
 
   @Test
@@ -220,11 +216,7 @@ public class HeapDiskTest {
 
     RegularFile blocks2 = RegularFile.create(-2, fileTimeSource.now(), disk);
 
-    try {
-      disk.allocate(blocks2, 5);
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> disk.allocate(blocks2, 5));
 
     assertThat(blocks2.blockCount()).isEqualTo(0);
   }

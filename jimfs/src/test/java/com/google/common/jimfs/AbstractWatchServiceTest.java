@@ -24,7 +24,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -207,29 +207,15 @@ public class AbstractWatchServiceTest {
     assertThat(key1.reset()).isFalse();
     assertThat(key2.reset()).isFalse();
 
-    try {
-      watcher.poll();
-      fail();
-    } catch (ClosedWatchServiceException expected) {
-    }
+    assertThrows(ClosedWatchServiceException.class, () -> watcher.poll());
 
-    try {
-      watcher.poll(10, SECONDS);
-      fail();
-    } catch (ClosedWatchServiceException expected) {
-    }
+    assertThrows(ClosedWatchServiceException.class, () -> watcher.poll(10, SECONDS));
 
-    try {
-      watcher.take();
-      fail();
-    } catch (ClosedWatchServiceException expected) {
-    }
+    assertThrows(ClosedWatchServiceException.class, () -> watcher.take());
 
-    try {
-      watcher.register(new StubWatchable(), ImmutableList.<WatchEvent.Kind<?>>of());
-      fail();
-    } catch (ClosedWatchServiceException expected) {
-    }
+    assertThrows(
+        ClosedWatchServiceException.class,
+        () -> watcher.register(new StubWatchable(), ImmutableList.of()));
   }
 
   // TODO(cgdecker): Test concurrent use of Watcher

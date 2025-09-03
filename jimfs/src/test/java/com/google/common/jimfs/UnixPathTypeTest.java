@@ -21,7 +21,7 @@ import static com.google.common.jimfs.PathTypeTest.assertUriRoundTripsCorrectly;
 import static com.google.common.jimfs.PathTypeTest.fileSystemUri;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import java.net.URI;
@@ -91,18 +91,12 @@ public class UnixPathTypeTest {
 
   @Test
   public void testUnix_illegalCharacters() {
-    try {
-      PathType.unix().parsePath("/foo/bar\0");
-      fail();
-    } catch (InvalidPathException expected) {
-      assertEquals(8, expected.getIndex());
-    }
+    InvalidPathException expected =
+        assertThrows(InvalidPathException.class, () -> PathType.unix().parsePath("/foo/bar\0"));
+    assertEquals(8, expected.getIndex());
 
-    try {
-      PathType.unix().parsePath("/\u00001/foo");
-      fail();
-    } catch (InvalidPathException expected) {
-      assertEquals(1, expected.getIndex());
-    }
+    expected =
+        assertThrows(InvalidPathException.class, () -> PathType.unix().parsePath("/\u00001/foo"));
+    assertEquals(1, expected.getIndex());
   }
 }

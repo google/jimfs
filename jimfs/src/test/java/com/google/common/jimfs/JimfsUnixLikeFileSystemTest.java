@@ -39,6 +39,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -253,17 +254,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
         .and()
         .hasNameComponents("bar");
 
-    try {
-      Path unused = path("/foo/bar").relativize(path("bar"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> path("/foo/bar").relativize(path("bar")));
 
-    try {
-      Path unused = path("bar").relativize(path("/foo/bar"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> path("bar").relativize(path("/foo/bar")));
   }
 
   @Test
@@ -361,27 +354,16 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     assertThatPath("/foo/bar/baz/Stuff.class").matches("glob:**/*.{java,class}");
     assertThatPath("/foo/bar/baz/Stuff.java").matches("glob:**/*.*");
 
-    try {
-      fs.getPathMatcher("glob:**/*.{java,class");
-      fail();
-    } catch (PatternSyntaxException expected) {
-    }
+    assertThrows(PatternSyntaxException.class, () -> fs.getPathMatcher("glob:**/*.{java,class"));
   }
 
   @Test
   public void testPathMatchers_invalid() {
-    try {
-      fs.getPathMatcher("glob");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> fs.getPathMatcher("glob"));
 
-    try {
-      fs.getPathMatcher("foo:foo");
-      fail();
-    } catch (UnsupportedOperationException expected) {
-      assertThat(expected.getMessage()).contains("syntax");
-    }
+    UnsupportedOperationException expected =
+        assertThrows(UnsupportedOperationException.class, () -> fs.getPathMatcher("foo:foo"));
+    assertThat(expected).hasMessageThat().contains("syntax");
   }
 
   @Test
@@ -526,66 +508,48 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   @Test
   public void testCreateFile_existing() throws IOException {
     Files.createFile(path("/test"));
-    try {
-      Files.createFile(path("/test"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/test", expected.getMessage());
-    }
+    FileAlreadyExistsException expected =
+        assertThrows(FileAlreadyExistsException.class, () -> Files.createFile(path("/test")));
+    assertThat(expected).hasMessageThat().isEqualTo("/test");
 
-    try {
-      Files.createDirectory(path("/test"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/test", expected.getMessage());
-    }
+    expected =
+        assertThrows(FileAlreadyExistsException.class, () -> Files.createDirectory(path("/test")));
+    assertThat(expected).hasMessageThat().isEqualTo("/test");
 
-    try {
-      Files.createSymbolicLink(path("/test"), path("/foo"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/test", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            FileAlreadyExistsException.class,
+            () -> Files.createSymbolicLink(path("/test"), path("/foo")));
+    assertThat(expected).hasMessageThat().isEqualTo("/test");
 
     Files.createFile(path("/foo"));
-    try {
-      Files.createLink(path("/test"), path("/foo"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/test", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            FileAlreadyExistsException.class, () -> Files.createLink(path("/test"), path("/foo")));
+    assertThat(expected).hasMessageThat().isEqualTo("/test");
   }
 
   @Test
   public void testCreateFile_parentDoesNotExist() throws IOException {
-    try {
-      Files.createFile(path("/foo/test"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/foo/test", expected.getMessage());
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.createFile(path("/foo/test")));
+    assertThat(expected).hasMessageThat().isEqualTo("/foo/test");
 
-    try {
-      Files.createDirectory(path("/foo/test"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/foo/test", expected.getMessage());
-    }
+    expected =
+        assertThrows(NoSuchFileException.class, () -> Files.createDirectory(path("/foo/test")));
+    assertThat(expected).hasMessageThat().isEqualTo("/foo/test");
 
-    try {
-      Files.createSymbolicLink(path("/foo/test"), path("/bar"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/foo/test", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            NoSuchFileException.class,
+            () -> Files.createSymbolicLink(path("/foo/test"), path("/bar")));
+    assertThat(expected).hasMessageThat().isEqualTo("/foo/test");
 
     Files.createFile(path("/bar"));
-    try {
-      Files.createLink(path("/foo/test"), path("/bar"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/foo/test", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            NoSuchFileException.class, () -> Files.createLink(path("/foo/test"), path("/bar")));
+    assertThat(expected).hasMessageThat().isEqualTo("/foo/test");
   }
 
   @Test
@@ -593,12 +557,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectory(path("/foo"));
     Files.createFile(path("/foo/bar"));
 
-    try {
-      Files.createFile(path("/foo/bar/baz"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo/bar/baz");
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.createFile(path("/foo/bar/baz")));
+    assertThat(expected.getFile()).isEqualTo("/foo/bar/baz");
   }
 
   @Test
@@ -606,12 +567,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectory(path("/foo"));
     Files.createFile(path("/foo/bar"));
 
-    try {
-      Files.createFile(path("/foo/bar/baz/stuff"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.createFile(path("/foo/bar/baz/stuff")));
+    assertThat(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
   }
 
   @Test
@@ -619,12 +577,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectory(path("/foo"));
     Files.createSymbolicLink(path("/foo/bar"), path("/foo/nope"));
 
-    try {
-      Files.createFile(path("/foo/bar/baz"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo/bar/baz");
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.createFile(path("/foo/bar/baz")));
+    assertThat(expected.getFile()).isEqualTo("/foo/bar/baz");
   }
 
   @Test
@@ -632,12 +587,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectory(path("/foo"));
     Files.createSymbolicLink(path("/foo/bar"), path("nope"));
 
-    try {
-      Files.createFile(path("/foo/bar/baz/stuff"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.createFile(path("/foo/bar/baz/stuff")));
+    assertThat(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
   }
 
   @Test
@@ -646,12 +598,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createFile(path("/foo/file"));
     Files.createSymbolicLink(path("/foo/bar"), path("/foo/file"));
 
-    try {
-      Files.createFile(path("/foo/bar/baz"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo/bar/baz");
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.createFile(path("/foo/bar/baz")));
+    assertThat(expected.getFile()).isEqualTo("/foo/bar/baz");
   }
 
   @Test
@@ -660,12 +609,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createFile(path("/foo/file"));
     Files.createSymbolicLink(path("/foo/bar"), path("file"));
 
-    try {
-      Files.createFile(path("/foo/bar/baz/stuff"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.createFile(path("/foo/bar/baz/stuff")));
+    assertThat(expected.getFile()).isEqualTo("/foo/bar/baz/stuff");
   }
 
   @Test
@@ -682,21 +628,20 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testCreateFile_withInitialAttributes_illegalInitialAttribute() throws IOException {
-    try {
-      Files.createFile(
-          path("/foo"),
-          new BasicFileAttribute<>("basic:lastModifiedTime", FileTime.fromMillis(0L)));
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class,
+        () ->
+            Files.createFile(
+                path("/foo"),
+                new BasicFileAttribute<>("basic:lastModifiedTime", FileTime.fromMillis(0L))));
 
     assertThatPath("/foo").doesNotExist();
 
-    try {
-      Files.createFile(path("/foo"), new BasicFileAttribute<>("basic:noSuchAttribute", "foo"));
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class,
+        () ->
+            Files.createFile(
+                path("/foo"), new BasicFileAttribute<>("basic:noSuchAttribute", "foo")));
 
     assertThatPath("/foo").doesNotExist();
   }
@@ -866,23 +811,18 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Path test = path("/test");
     byte[] bytes = {0, 1, 2, 3};
 
-    try {
-      // CREATE and CREATE_NEW not specified
-      Files.write(test, bytes, WRITE);
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals(test.toString(), expected.getMessage());
-    }
+    // CREATE and CREATE_NEW not specified
+    NoSuchFileException nsfeExpected =
+        assertThrows(NoSuchFileException.class, () -> Files.write(test, bytes, WRITE));
+    assertThat(nsfeExpected).hasMessageThat().isEqualTo(test.toString());
 
     Files.write(test, bytes, CREATE_NEW); // succeeds, file does not exist
     assertThatPath("/test").containsBytes(bytes);
 
-    try {
-      Files.write(test, bytes, CREATE_NEW); // CREATE_NEW requires file not exist
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals(test.toString(), expected.getMessage());
-    }
+    // CREATE_NEW requires file not exist
+    FileAlreadyExistsException faeeExpected =
+        assertThrows(FileAlreadyExistsException.class, () -> Files.write(test, bytes, CREATE_NEW));
+    assertThat(faeeExpected).hasMessageThat().isEqualTo(test.toString());
 
     Files.write(test, new byte[] {4, 5}, CREATE); // succeeds, ok for file to already exist
     assertThatPath("/test").containsBytes(4, 5, 2, 3); // did not truncate or append, so overwrote
@@ -896,11 +836,8 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.write(test, bytes, WRITE, CREATE, TRUNCATE_EXISTING, APPEND, SPARSE, DSYNC, SYNC);
     assertThatPath("/test").containsBytes(bytes);
 
-    try {
-      Files.write(test, bytes, READ, WRITE); // READ not allowed
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    // READ not allowed
+    assertThrows(UnsupportedOperationException.class, () -> Files.write(test, bytes, READ, WRITE));
   }
 
   @Test
@@ -934,22 +871,17 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Path test = path("/test.txt");
     ImmutableList<String> lines = ImmutableList.of("hello", "world");
 
-    try {
-      // CREATE and CREATE_NEW not specified
-      Files.write(test, lines, UTF_8, WRITE);
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals(test.toString(), expected.getMessage());
-    }
+    // CREATE and CREATE_NEW not specified
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.write(test, lines, UTF_8, WRITE));
+    assertThat(expected).hasMessageThat().isEqualTo(test.toString());
 
     Files.write(test, lines, UTF_8, CREATE_NEW); // succeeds, file does not exist
     assertThatPath(test).containsLines(lines);
 
-    try {
-      Files.write(test, lines, UTF_8, CREATE_NEW); // CREATE_NEW requires file not exist
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-    }
+    // CREATE_NEW requires file not exist
+    assertThrows(
+        FileAlreadyExistsException.class, () -> Files.write(test, lines, UTF_8, CREATE_NEW));
 
     // succeeds, ok for file to already exist
     Files.write(test, ImmutableList.of("foo"), UTF_8, CREATE);
@@ -970,51 +902,38 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.write(test, lines, UTF_8, WRITE, CREATE, TRUNCATE_EXISTING, APPEND, SPARSE, DSYNC, SYNC);
     assertThatPath(test).containsLines(lines);
 
-    try {
-      Files.write(test, lines, UTF_8, READ, WRITE); // READ not allowed
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    // READ not allowed
+    assertThrows(
+        UnsupportedOperationException.class, () -> Files.write(test, lines, UTF_8, READ, WRITE));
   }
 
   @Test
   public void testWrite_fileExistsButIsNotRegularFile() throws IOException {
     Files.createDirectory(path("/foo"));
 
-    try {
-      // non-CREATE mode
-      Files.write(path("/foo"), preFilledBytes(10), WRITE);
-      fail();
-    } catch (FileSystemException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo");
-      assertThat(expected.getMessage()).contains("regular file");
-    }
+    // non-CREATE mode
+    FileSystemException expected =
+        assertThrows(
+            FileSystemException.class, () -> Files.write(path("/foo"), preFilledBytes(10), WRITE));
+    assertThat(expected.getFile()).isEqualTo("/foo");
+    assertThat(expected).hasMessageThat().contains("regular file");
 
-    try {
-      // CREATE mode
-      Files.write(path("/foo"), preFilledBytes(10));
-      fail();
-    } catch (FileSystemException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo");
-      assertThat(expected.getMessage()).contains("regular file");
-    }
+    // CREATE mode
+    expected =
+        assertThrows(
+            FileSystemException.class, () -> Files.write(path("/foo"), preFilledBytes(10)));
+    assertThat(expected.getFile()).isEqualTo("/foo");
+    assertThat(expected).hasMessageThat().contains("regular file");
   }
 
   @Test
   public void testDelete_file() throws IOException {
-    try {
-      Files.delete(path("/test"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/test", expected.getMessage());
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.delete(path("/test")));
+    assertThat(expected).hasMessageThat().isEqualTo("/test");
 
-    try {
-      Files.delete(path("/foo/bar"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/foo/bar", expected.getMessage());
-    }
+    expected = assertThrows(NoSuchFileException.class, () -> Files.delete(path("/foo/bar")));
+    assertThat(expected).hasMessageThat().isEqualTo("/foo/bar");
 
     assertFalse(Files.deleteIfExists(path("/test")));
     assertFalse(Files.deleteIfExists(path("/foo/bar")));
@@ -1123,19 +1042,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   public void testDelete_directory_cantDeleteNonEmptyDirectory() throws IOException {
     Files.createDirectories(path("/foo/bar"));
 
-    try {
-      Files.delete(path("/foo"));
-      fail();
-    } catch (DirectoryNotEmptyException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo");
-    }
+    DirectoryNotEmptyException expected =
+        assertThrows(DirectoryNotEmptyException.class, () -> Files.delete(path("/foo")));
+    assertThat(expected.getFile()).isEqualTo("/foo");
 
-    try {
-      Files.deleteIfExists(path("/foo"));
-      fail();
-    } catch (DirectoryNotEmptyException expected) {
-      assertThat(expected.getFile()).isEqualTo("/foo");
-    }
+    expected =
+        assertThrows(DirectoryNotEmptyException.class, () -> Files.deleteIfExists(path("/foo")));
+    assertThat(expected.getFile()).isEqualTo("/foo");
   }
 
   @Test
@@ -1153,33 +1066,20 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testDelete_directory_cantDeleteWorkingDirectoryByRelativePath() throws IOException {
-    try {
-      Files.delete(path(""));
-      fail();
-    } catch (FileSystemException expected) {
-      assertThat(expected.getFile()).isEqualTo("");
-    }
+    FileSystemException expected =
+        assertThrows(FileSystemException.class, () -> Files.delete(path("")));
+    assertThat(expected.getFile()).isEmpty();
 
-    try {
-      Files.delete(path("."));
-      fail();
-    } catch (FileSystemException expected) {
-      assertThat(expected.getFile()).isEqualTo(".");
-    }
+    expected = assertThrows(FileSystemException.class, () -> Files.delete(path(".")));
+    assertThat(expected.getFile()).isEqualTo(".");
 
-    try {
-      Files.delete(path("../../work"));
-      fail();
-    } catch (FileSystemException expected) {
-      assertThat(expected.getFile()).isEqualTo("../../work");
-    }
+    expected = assertThrows(FileSystemException.class, () -> Files.delete(path("../../work")));
+    assertThat(expected.getFile()).isEqualTo("../../work");
 
-    try {
-      Files.delete(path("./../work/.././../work/."));
-      fail();
-    } catch (FileSystemException expected) {
-      assertThat(expected.getFile()).isEqualTo("./../work/.././../work/.");
-    }
+    expected =
+        assertThrows(
+            FileSystemException.class, () -> Files.delete(path("./../work/.././../work/.")));
+    assertThat(expected.getFile()).isEqualTo("./../work/.././../work/.");
   }
 
   @Test
@@ -1188,28 +1088,19 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     // don't want to just be testing the "can't delete when not empty" logic
     Files.delete(path("/work"));
 
-    try {
-      Files.delete(path("/"));
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).contains("root");
-    }
+    IOException expected = assertThrows(IOException.class, () -> Files.delete(path("/")));
+    assertThat(expected).hasMessageThat().contains("root");
 
     Files.createDirectories(path("/foo/bar"));
 
-    try {
-      Files.delete(path("/foo/bar/../.."));
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).contains("root");
-    }
+    expected = assertThrows(IOException.class, () -> Files.delete(path("/foo/bar/../..")));
+    assertThat(expected).hasMessageThat().contains("root");
 
-    try {
-      Files.delete(path("/foo/./../foo/bar/./../bar/.././../../.."));
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).contains("root");
-    }
+    expected =
+        assertThrows(
+            IOException.class,
+            () -> Files.delete(path("/foo/./../foo/bar/./../bar/.././../../..")));
+    assertThat(expected).hasMessageThat().contains("root");
   }
 
   @Test
@@ -1218,17 +1109,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     assertThatPath("/link.txt", NOFOLLOW_LINKS).isSymbolicLink().withTarget("/file.txt");
     assertThatPath("/link.txt").doesNotExist(); // following the link; target doesn't exist
 
-    try {
-      Files.createFile(path("/link.txt"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-    }
+    assertThrows(FileAlreadyExistsException.class, () -> Files.createFile(path("/link.txt")));
 
-    try {
-      Files.readAllBytes(path("/link.txt"));
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> Files.readAllBytes(path("/link.txt")));
 
     Files.createFile(path("/file.txt"));
     assertThatPath("/link.txt").isRegularFile(); // following the link; target does exist
@@ -1244,19 +1127,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createFile(path("/bar/baz/test.txt"));
     assertThatPath("/foo/test.txt", NOFOLLOW_LINKS).isRegularFile(); // follow intermediate link
 
-    try {
-      Files.readSymbolicLink(path("/none"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/none", expected.getMessage());
-    }
+    NoSuchFileException nsfeExpected =
+        assertThrows(NoSuchFileException.class, () -> Files.readSymbolicLink(path("/none")));
+    assertThat(nsfeExpected).hasMessageThat().isEqualTo("/none");
 
-    try {
-      Files.readSymbolicLink(path("/file.txt"));
-      fail();
-    } catch (NotLinkException expected) {
-      assertEquals("/file.txt", expected.getMessage());
-    }
+    NotLinkException nleExpected =
+        assertThrows(NotLinkException.class, () -> Files.readSymbolicLink(path("/file.txt")));
+    assertThat(nleExpected).hasMessageThat().isEqualTo("/file.txt");
   }
 
   @Test
@@ -1265,19 +1142,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createSymbolicLink(path("/foo/bar"), path("baz"));
     Files.createSymbolicLink(path("/foo/baz"), path("bar"));
 
-    try {
-      Files.createFile(path("/foo/bar/file"));
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).contains("symbolic link");
-    }
+    IOException expected =
+        assertThrows(IOException.class, () -> Files.createFile(path("/foo/bar/file")));
+    assertThat(expected).hasMessageThat().contains("symbolic link");
 
-    try {
-      Files.write(path("/foo/bar"), preFilledBytes(10));
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).contains("symbolic link");
-    }
+    expected =
+        assertThrows(IOException.class, () -> Files.write(path("/foo/bar"), preFilledBytes(10)));
+    assertThat(expected).hasMessageThat().contains("symbolic link");
   }
 
   @Test
@@ -1346,34 +1217,28 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testLink_failsWhenTargetDoesNotExist() throws IOException {
-    try {
-      Files.createLink(path("/link"), path("/foo"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/foo", expected.getFile());
-    }
+    NoSuchFileException expected =
+        assertThrows(
+            NoSuchFileException.class, () -> Files.createLink(path("/link"), path("/foo")));
+    assertEquals("/foo", expected.getFile());
 
     Files.createSymbolicLink(path("/foo"), path("/bar"));
 
-    try {
-      Files.createLink(path("/link"), path("/foo"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/foo", expected.getFile());
-    }
+    expected =
+        assertThrows(
+            NoSuchFileException.class, () -> Files.createLink(path("/link"), path("/foo")));
+    assertEquals("/foo", expected.getFile());
   }
 
   @Test
   public void testLink_failsForNonRegularFile() throws IOException {
     Files.createDirectory(path("/dir"));
 
-    try {
-      Files.createLink(path("/link"), path("/dir"));
-      fail();
-    } catch (FileSystemException expected) {
-      assertEquals("/link", expected.getFile());
-      assertEquals("/dir", expected.getOtherFile());
-    }
+    FileSystemException expected =
+        assertThrows(
+            FileSystemException.class, () -> Files.createLink(path("/link"), path("/dir")));
+    assertEquals("/link", expected.getFile());
+    assertEquals("/dir", expected.getOtherFile());
 
     assertThatPath("/link").doesNotExist();
   }
@@ -1383,12 +1248,10 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createFile(path("/file"));
     Files.createFile(path("/link"));
 
-    try {
-      Files.createLink(path("/link"), path("/file"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/link", expected.getFile());
-    }
+    FileAlreadyExistsException expected =
+        assertThrows(
+            FileAlreadyExistsException.class, () -> Files.createLink(path("/link"), path("/file")));
+    assertEquals("/link", expected.getFile());
   }
 
   @Test
@@ -1515,12 +1378,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.copy(new ByteArrayInputStream(bytes), path("/test"));
     assertThatPath("/test").containsBytes(bytes);
 
-    try {
-      Files.copy(new ByteArrayInputStream(bytes), path("/test"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/test", expected.getMessage());
-    }
+    FileAlreadyExistsException expected =
+        assertThrows(
+            FileAlreadyExistsException.class,
+            () -> Files.copy(new ByteArrayInputStream(bytes), path("/test")));
+    assertThat(expected).hasMessageThat().isEqualTo("/test");
 
     Files.copy(new ByteArrayInputStream(bytes), path("/test"), REPLACE_EXISTING);
     assertThatPath("/test").containsBytes(bytes);
@@ -1554,12 +1416,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.copy(path("/baz"), path("/bar"), REPLACE_EXISTING);
     assertThatPath("/bar").containsBytes(moreBytes);
 
-    try {
-      Files.copy(path("/none"), path("/bar"));
-      fail();
-    } catch (NoSuchFileException expected) {
-      assertEquals("/none", expected.getMessage());
-    }
+    NoSuchFileException expected =
+        assertThrows(NoSuchFileException.class, () -> Files.copy(path("/none"), path("/bar")));
+    assertThat(expected).hasMessageThat().isEqualTo("/none");
   }
 
   @Test
@@ -1597,11 +1456,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Test
   public void testCopy_doesNotSupportAtomicMove() throws IOException {
-    try {
-      Files.copy(path("/foo"), path("/bar"), ATOMIC_MOVE);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> Files.copy(path("/foo"), path("/bar"), ATOMIC_MOVE));
   }
 
   @Test
@@ -1619,45 +1476,37 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createDirectory(path("/foo"));
 
     // dir -> file
-    try {
-      Files.copy(path("/foo"), path("/bar"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/bar", expected.getMessage());
-    }
+    FileAlreadyExistsException expected =
+        assertThrows(
+            FileAlreadyExistsException.class, () -> Files.copy(path("/foo"), path("/bar")));
+    assertThat(expected).hasMessageThat().isEqualTo("/bar");
 
     Files.delete(path("/foo"));
     Files.createFile(path("/foo"));
 
     // file -> file
-    try {
-      Files.copy(path("/foo"), path("/bar"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/bar", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            FileAlreadyExistsException.class, () -> Files.copy(path("/foo"), path("/bar")));
+    assertThat(expected).hasMessageThat().isEqualTo("/bar");
 
     Files.delete(path("/bar"));
     Files.createDirectory(path("/bar"));
 
     // file -> dir
-    try {
-      Files.copy(path("/foo"), path("/bar"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/bar", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            FileAlreadyExistsException.class, () -> Files.copy(path("/foo"), path("/bar")));
+    assertThat(expected).hasMessageThat().isEqualTo("/bar");
 
     Files.delete(path("/foo"));
     Files.createDirectory(path("/foo"));
 
     // dir -> dir
-    try {
-      Files.copy(path("/foo"), path("/bar"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/bar", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            FileAlreadyExistsException.class, () -> Files.copy(path("/foo"), path("/bar")));
+    assertThat(expected).hasMessageThat().isEqualTo("/bar");
   }
 
   @Test
@@ -1689,22 +1538,20 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Files.createDirectory(path("/test"));
 
-    try {
-      Files.copy(path("/test"), path("/foo"), REPLACE_EXISTING);
-      fail();
-    } catch (DirectoryNotEmptyException expected) {
-      assertEquals("/foo", expected.getMessage());
-    }
+    DirectoryNotEmptyException expected =
+        assertThrows(
+            DirectoryNotEmptyException.class,
+            () -> Files.copy(path("/test"), path("/foo"), REPLACE_EXISTING));
+    assertThat(expected).hasMessageThat().isEqualTo("/foo");
 
     Files.delete(path("/test"));
     Files.createFile(path("/test"));
 
-    try {
-      Files.copy(path("/test"), path("/foo"), REPLACE_EXISTING);
-      fail();
-    } catch (DirectoryNotEmptyException expected) {
-      assertEquals("/foo", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            DirectoryNotEmptyException.class,
+            () -> Files.copy(path("/test"), path("/foo"), REPLACE_EXISTING));
+    assertThat(expected).hasMessageThat().isEqualTo("/foo");
 
     Files.delete(path("/foo/baz"));
     Files.delete(path("/foo/bar"));
@@ -1848,23 +1695,18 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   public void testMove_cannotMoveDirIntoOwnSubtree() throws IOException {
     Files.createDirectories(path("/foo"));
 
-    try {
-      Files.move(path("/foo"), path("/foo/bar"));
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).contains("sub");
-    }
+    IOException expected =
+        assertThrows(IOException.class, () -> Files.move(path("/foo"), path("/foo/bar")));
+    assertThat(expected).hasMessageThat().contains("sub");
 
     Files.createDirectories(path("/foo/bar/baz/stuff"));
     Files.createDirectories(path("/hello/world"));
     Files.createSymbolicLink(path("/hello/world/link"), path("../../foo/bar/baz"));
 
-    try {
-      Files.move(path("/foo/bar"), path("/hello/world/link/bar"));
-      fail();
-    } catch (IOException expected) {
-      assertThat(expected.getMessage()).contains("sub");
-    }
+    expected =
+        assertThrows(
+            IOException.class, () -> Files.move(path("/foo/bar"), path("/hello/world/link/bar")));
+    assertThat(expected).hasMessageThat().contains("sub");
   }
 
   @Test
@@ -1876,24 +1718,22 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     Files.createFile(path("/bar"));
 
-    try {
-      Files.move(path("/test"), path("/bar"), ATOMIC_MOVE);
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/bar", expected.getMessage());
-    }
+    FileAlreadyExistsException expected =
+        assertThrows(
+            FileAlreadyExistsException.class,
+            () -> Files.move(path("/test"), path("/bar"), ATOMIC_MOVE));
+    assertThat(expected).hasMessageThat().isEqualTo("/bar");
 
     assertThatPath("/test").containsBytes(bytes).and().attribute("fileKey").is(testKey);
 
     Files.delete(path("/bar"));
     Files.createDirectory(path("/bar"));
 
-    try {
-      Files.move(path("/test"), path("/bar"), ATOMIC_MOVE);
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-      assertEquals("/bar", expected.getMessage());
-    }
+    expected =
+        assertThrows(
+            FileAlreadyExistsException.class,
+            () -> Files.move(path("/test"), path("/bar"), ATOMIC_MOVE));
+    assertThat(expected).hasMessageThat().isEqualTo("/bar");
 
     assertThatPath("/test").containsBytes(bytes).and().attribute("fileKey").is(testKey);
   }
@@ -2022,19 +1862,13 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
                   .isRegularFile())
           .isTrue();
 
-      try {
-        secureStream.deleteFile(path("bar"));
-        fail();
-      } catch (FileSystemException expected) {
-        assertThat(expected.getFile()).isEqualTo("bar");
-      }
+      FileSystemException expected =
+          assertThrows(FileSystemException.class, () -> secureStream.deleteFile(path("bar")));
+      assertThat(expected.getFile()).isEqualTo("bar");
 
-      try {
-        secureStream.deleteDirectory(path("a"));
-        fail();
-      } catch (FileSystemException expected) {
-        assertThat(expected.getFile()).isEqualTo("a");
-      }
+      expected =
+          assertThrows(FileSystemException.class, () -> secureStream.deleteDirectory(path("a")));
+      assertThat(expected.getFile()).isEqualTo("a");
 
       try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
         barStream.newByteChannel(path("stuff"), ImmutableSet.of(WRITE, CREATE_NEW)).close();
@@ -2070,12 +1904,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
             .isTrue();
       }
 
-      try {
-        secureStream.newDirectoryStream(path("barLink"), NOFOLLOW_LINKS);
-        fail();
-      } catch (NotDirectoryException expected) {
-        assertThat(expected.getFile()).isEqualTo("barLink");
-      }
+      NotDirectoryException ndExpected =
+          assertThrows(
+              NotDirectoryException.class,
+              () -> secureStream.newDirectoryStream(path("barLink"), NOFOLLOW_LINKS));
+      assertThat(ndExpected.getFile()).isEqualTo("barLink");
 
       try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
         secureStream.move(path("a"), barStream, path("moved"));
@@ -2123,53 +1956,31 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     stream.close();
 
-    try {
-      stream.iterator();
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(ClosedDirectoryStreamException.class, () -> stream.iterator());
 
-    try {
-      stream.deleteDirectory(fs.getPath("a"));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(
+        ClosedDirectoryStreamException.class, () -> stream.deleteDirectory(fs.getPath("a")));
 
-    try {
-      stream.deleteFile(fs.getPath("a"));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(ClosedDirectoryStreamException.class, () -> stream.deleteFile(fs.getPath("a")));
 
-    try {
-      stream.newByteChannel(fs.getPath("a"), ImmutableSet.of(CREATE, WRITE));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(
+        ClosedDirectoryStreamException.class,
+        () -> stream.newByteChannel(fs.getPath("a"), ImmutableSet.of(CREATE, WRITE)));
 
-    try {
-      stream.newDirectoryStream(fs.getPath("a"));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(
+        ClosedDirectoryStreamException.class, () -> stream.newDirectoryStream(fs.getPath("a")));
 
-    try {
-      stream.move(fs.getPath("a"), stream, fs.getPath("b"));
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(
+        ClosedDirectoryStreamException.class,
+        () -> stream.move(fs.getPath("a"), stream, fs.getPath("b")));
 
-    try {
-      stream.getFileAttributeView(BasicFileAttributeView.class);
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(
+        ClosedDirectoryStreamException.class,
+        () -> stream.getFileAttributeView(BasicFileAttributeView.class));
 
-    try {
-      stream.getFileAttributeView(fs.getPath("a"), BasicFileAttributeView.class);
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(
+        ClosedDirectoryStreamException.class,
+        () -> stream.getFileAttributeView(fs.getPath("a"), BasicFileAttributeView.class));
   }
 
   @SuppressWarnings("StreamResourceLeak")
@@ -2185,43 +1996,19 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     BasicFileAttributeView view2 =
         stream.getFileAttributeView(path("bar"), BasicFileAttributeView.class);
 
-    try {
-      stream.iterator();
-      fail("expected IllegalStateException");
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> stream.iterator());
 
     stream.close();
 
-    try {
-      iter.next();
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(ClosedDirectoryStreamException.class, () -> iter.next());
 
-    try {
-      view1.readAttributes();
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(ClosedDirectoryStreamException.class, () -> view1.readAttributes());
 
-    try {
-      view2.readAttributes();
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(ClosedDirectoryStreamException.class, () -> view2.readAttributes());
 
-    try {
-      view1.setTimes(null, null, null);
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(ClosedDirectoryStreamException.class, () -> view1.setTimes(null, null, null));
 
-    try {
-      view2.setTimes(null, null, null);
-      fail("expected ClosedDirectoryStreamException");
-    } catch (ClosedDirectoryStreamException expected) {
-    }
+    assertThrows(ClosedDirectoryStreamException.class, () -> view2.setTimes(null, null, null));
   }
 
   @Test
@@ -2355,35 +2142,15 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Path foo = fileSystem.getPath("foo");
     Path bar = foo.resolveSibling("bar");
 
-    try {
-      Files.createLink(foo, bar);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(UnsupportedOperationException.class, () -> Files.createLink(foo, bar));
 
-    try {
-      Files.createSymbolicLink(foo, bar);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(UnsupportedOperationException.class, () -> Files.createSymbolicLink(foo, bar));
 
-    try {
-      Files.readSymbolicLink(foo);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(UnsupportedOperationException.class, () -> Files.readSymbolicLink(foo));
 
-    try {
-      FileChannel.open(foo);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(UnsupportedOperationException.class, () -> FileChannel.open(foo));
 
-    try {
-      AsynchronousFileChannel.open(foo);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(UnsupportedOperationException.class, () -> AsynchronousFileChannel.open(foo));
 
     Files.createDirectory(foo);
     Files.createFile(bar);

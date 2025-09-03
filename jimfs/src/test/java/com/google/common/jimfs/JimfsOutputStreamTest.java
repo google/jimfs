@@ -20,7 +20,7 @@ import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.jimfs.TestUtils.regularFile;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.util.concurrent.Runnables;
 import java.io.BufferedOutputStream;
@@ -65,23 +65,11 @@ public class JimfsOutputStreamTest {
   public void testWrite_partialArray_invalidInput() throws IOException {
     JimfsOutputStream out = newOutputStream(false);
 
-    try {
-      out.write(new byte[3], -1, 1);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> out.write(new byte[3], -1, 1));
 
-    try {
-      out.write(new byte[3], 0, 4);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> out.write(new byte[3], 0, 4));
 
-    try {
-      out.write(new byte[3], 1, 3);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> out.write(new byte[3], 1, 3));
   }
 
   @Test
@@ -141,23 +129,11 @@ public class JimfsOutputStreamTest {
     JimfsOutputStream out = newOutputStream(false);
     out.close();
 
-    try {
-      out.write(1);
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> out.write(1));
 
-    try {
-      out.write(new byte[3]);
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> out.write(new byte[3]));
 
-    try {
-      out.write(new byte[10], 1, 3);
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> out.write(new byte[10], 1, 3));
 
     out.close(); // does nothing
   }

@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
@@ -77,29 +77,17 @@ public class JimfsPathTest {
   public void testParsing_windowsStylePaths_invalidPaths() {
     PathService windowsPathService = PathServiceTest.fakeWindowsPathService();
 
-    try {
-      // The actual windows implementation seems to allow "C:" but treat it as a *name*, not a root
-      // despite the fact that a : is illegal except in a root... a : at any position other than
-      // index 1 in the string will produce an exception.
-      // Here, I choose to be more strict
-      windowsPathService.parsePath("C:");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    // The actual windows implementation seems to allow "C:" but treat it as a *name*, not a root
+    // despite the fact that a : is illegal except in a root... a : at any position other than index
+    // 1 in the string will produce an exception.
+    // Here, I choose to be more strict
+    assertThrows(InvalidPathException.class, () -> windowsPathService.parsePath("C:"));
 
-    try {
-      // "1:\" isn't a root because 1 isn't a letter
-      windowsPathService.parsePath("1:\\foo");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    // "1:\" isn't a root because 1 isn't a letter
+    assertThrows(InvalidPathException.class, () -> windowsPathService.parsePath("1:\\foo"));
 
-    try {
-      // < and > are reserved characters
-      windowsPathService.parsePath("foo<bar>");
-      fail();
-    } catch (InvalidPathException expected) {
-    }
+    // < and > are reserved characters
+    assertThrows(InvalidPathException.class, () -> windowsPathService.parsePath("foo<bar>"));
   }
 
   @Test
@@ -272,17 +260,13 @@ public class JimfsPathTest {
 
   @Test
   public void testRelativize_oneAbsoluteOneRelative() {
-    try {
-      pathService.parsePath("/foo/bar").relativize(pathService.parsePath("foo"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> pathService.parsePath("/foo/bar").relativize(pathService.parsePath("foo")));
 
-    try {
-      pathService.parsePath("foo").relativize(pathService.parsePath("/foo/bar"));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> pathService.parsePath("foo").relativize(pathService.parsePath("/foo/bar")));
   }
 
   @Test

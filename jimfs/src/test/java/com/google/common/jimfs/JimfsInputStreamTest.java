@@ -20,7 +20,7 @@ import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.jimfs.TestUtils.regularFile;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.util.concurrent.Runnables;
 import java.io.IOException;
@@ -107,23 +107,11 @@ public class JimfsInputStreamTest {
   public void testRead_partialArray_invalidInput() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5);
 
-    try {
-      in.read(new byte[3], -1, 1);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> in.read(new byte[3], -1, 1));
 
-    try {
-      in.read(new byte[3], 0, 4);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> in.read(new byte[3], 0, 4));
 
-    try {
-      in.read(new byte[3], 1, 3);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> in.read(new byte[3], 1, 3));
   }
 
   @Test
@@ -174,12 +162,8 @@ public class JimfsInputStreamTest {
     // mark does nothing
     in.mark(1);
 
-    try {
-      // reset throws IOException when unsupported
-      in.reset();
-      fail();
-    } catch (IOException expected) {
-    }
+    // reset throws IOException when unsupported
+    assertThrows(IOException.class, () -> in.reset());
   }
 
   @Test
@@ -187,35 +171,15 @@ public class JimfsInputStreamTest {
     JimfsInputStream in = newInputStream(1, 2, 3);
     in.close();
 
-    try {
-      in.read();
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> in.read());
 
-    try {
-      in.read(new byte[3]);
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> in.read(new byte[3]));
 
-    try {
-      in.read(new byte[10], 0, 2);
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> in.read(new byte[10], 0, 2));
 
-    try {
-      in.skip(10);
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> in.skip(10));
 
-    try {
-      in.available();
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> in.available());
 
     in.close(); // does nothing
   }

@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -112,19 +112,14 @@ public class UserDefinedAttributeProviderTest
     assertThat(view.list()).containsExactly("b1");
     assertThat(file.getAttributeKeys()).containsExactly("user:b1");
 
-    try {
-      view.size("b2");
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).contains("not set");
-    }
+    IllegalArgumentException expected =
+        assertThrows(IllegalArgumentException.class, () -> view.size("b2"));
+    assertThat(expected).hasMessageThat().contains("not set");
 
-    try {
-      view.read("b2", ByteBuffer.allocate(10));
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).contains("not set");
-    }
+    expected =
+        assertThrows(
+            IllegalArgumentException.class, () -> view.read("b2", ByteBuffer.allocate(10)));
+    assertThat(expected).hasMessageThat().contains("not set");
 
     view.write("b1", ByteBuffer.wrap(b2));
     assertThat(view.size("b1")).isEqualTo(5);

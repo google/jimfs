@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.jimfs.TestUtils.regularFile;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 import com.google.common.base.Joiner;
@@ -157,17 +158,9 @@ public class FileTreeTest {
 
   @Test
   public void testLookup_nonExistentRoot() throws IOException {
-    try {
-      lookup("!");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("!"));
 
-    try {
-      lookup("!a");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("!a"));
   }
 
   @Test
@@ -180,29 +173,13 @@ public class FileTreeTest {
 
   @Test
   public void testLookup_absolute_notExists() throws IOException {
-    try {
-      lookup("/a/b");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("/a/b"));
 
-    try {
-      lookup("/work/one/foo/bar");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("/work/one/foo/bar"));
 
-    try {
-      lookup("$c/d");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("$c/d"));
 
-    try {
-      lookup("$a/b/c/d/e");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("$a/b/c/d/e"));
   }
 
   @Test
@@ -215,17 +192,10 @@ public class FileTreeTest {
 
   @Test
   public void testLookup_absolute_nonDirectoryIntermediateFile() throws IOException {
-    try {
-      lookup("/work/one/eleven/twelve");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("/work/one/eleven/twelve"));
 
-    try {
-      lookup("/work/one/eleven/twelve/thirteen/fourteen");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(
+        NoSuchFileException.class, () -> lookup("/work/one/eleven/twelve/thirteen/fourteen"));
   }
 
   @Test
@@ -259,17 +229,9 @@ public class FileTreeTest {
 
   @Test
   public void testLookup_absolute_symlinkLoop() {
-    try {
-      lookup("/work/four/loop");
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> lookup("/work/four/loop"));
 
-    try {
-      lookup("/work/four/loop/whatever");
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> lookup("/work/four/loop/whatever"));
   }
 
   @Test
@@ -308,17 +270,9 @@ public class FileTreeTest {
 
   @Test
   public void testLookup_relative_notExists() throws IOException {
-    try {
-      lookup("a/b");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("a/b"));
 
-    try {
-      lookup("one/foo/bar");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("one/foo/bar"));
   }
 
   @Test
@@ -329,17 +283,9 @@ public class FileTreeTest {
 
   @Test
   public void testLookup_relative_nonDirectoryIntermediateFile() throws IOException {
-    try {
-      lookup("one/eleven/twelve");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("one/eleven/twelve"));
 
-    try {
-      lookup("one/eleven/twelve/thirteen/fourteen");
-      fail();
-    } catch (NoSuchFileException expected) {
-    }
+    assertThrows(NoSuchFileException.class, () -> lookup("one/eleven/twelve/thirteen/fourteen"));
   }
 
   @Test
@@ -373,17 +319,9 @@ public class FileTreeTest {
 
   @Test
   public void testLookup_relative_symlinkLoop() {
-    try {
-      lookup("four/loop");
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> lookup("four/loop"));
 
-    try {
-      lookup("four/loop/whatever");
-      fail();
-    } catch (IOException expected) {
-    }
+    assertThrows(IOException.class, () -> lookup("four/loop/whatever"));
   }
 
   @Test

@@ -19,8 +19,8 @@ package com.google.common.jimfs;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -56,11 +56,7 @@ public class FileSystemStateTest {
   public void testCheckOpen() throws IOException {
     state.checkOpen(); // does not throw
     state.close();
-    try {
-      state.checkOpen();
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> state.checkOpen());
   }
 
   @Test
@@ -135,17 +131,13 @@ public class FileSystemStateTest {
       assertFalse(resource.closed);
     }
 
-    try {
-      state.close();
-      fail();
-    } catch (IOException expected) {
-      Throwable[] suppressed = expected.getSuppressed();
-      assertEquals(2, suppressed.length);
-      ImmutableSet<String> messages =
-          ImmutableSet.of(
-              expected.getMessage(), suppressed[0].getMessage(), suppressed[1].getMessage());
-      assertEquals(ImmutableSet.of("a", "b", "c"), messages);
-    }
+    IOException expected = assertThrows(IOException.class, () -> state.close());
+    Throwable[] suppressed = expected.getSuppressed();
+    assertThat(suppressed).hasLength(2);
+    ImmutableSet<String> messages =
+        ImmutableSet.of(
+            expected.getMessage(), suppressed[0].getMessage(), suppressed[1].getMessage());
+    assertEquals(ImmutableSet.of("a", "b", "c"), messages);
 
     for (TestCloseable resource : resources) {
       assertTrue(resource.closed);

@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -108,18 +108,10 @@ public class AttributeServiceTest {
   @Test
   public void testGetAttribute_failsForAttributesNotDefinedByProvider() {
     File file = createFile();
-    try {
-      service.getAttribute(file, "test:blah");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> service.getAttribute(file, "test:blah"));
 
-    try {
-      // baz is defined by "test", but basic doesn't inherit test
-      service.getAttribute(file, "basic", "baz");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    // baz is defined by "test", but basic doesn't inherit test
+    assertThrows(IllegalArgumentException.class, () -> service.getAttribute(file, "basic", "baz"));
   }
 
   @Test
@@ -163,18 +155,14 @@ public class AttributeServiceTest {
     File file = createFile();
     service.setInitialAttributes(file);
 
-    try {
-      service.setAttribute(file, "test:blah", "blah", false);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> service.setAttribute(file, "test:blah", "blah", false));
 
-    try {
-      // baz is defined by "test", but basic doesn't inherit test
-      service.setAttribute(file, "basic:baz", 5, false);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    // baz is defined by "test", but basic doesn't inherit test
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> service.setAttribute(file, "basic:baz", 5, false));
 
     assertThat(file.getAttribute("test", "baz")).isEqualTo(1);
   }
@@ -183,11 +171,9 @@ public class AttributeServiceTest {
   public void testSetAttribute_failsForArgumentThatIsNotOfCorrectType() {
     File file = createFile();
     service.setInitialAttributes(file);
-    try {
-      service.setAttribute(file, "test:bar", "wrong", false);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> service.setAttribute(file, "test:bar", "wrong", false));
 
     assertThat(file.getAttribute("test", "bar")).isEqualTo(0L);
   }
@@ -196,11 +182,8 @@ public class AttributeServiceTest {
   public void testSetAttribute_failsForNullArgument() {
     File file = createFile();
     service.setInitialAttributes(file);
-    try {
-      service.setAttribute(file, "test:bar", null, false);
-      fail();
-    } catch (NullPointerException expected) {
-    }
+    assertThrows(
+        NullPointerException.class, () -> service.setAttribute(file, "test:bar", null, false));
 
     assertThat(file.getAttribute("test", "bar")).isEqualTo(0L);
   }
@@ -208,11 +191,9 @@ public class AttributeServiceTest {
   @Test
   public void testSetAttribute_failsForAttributeThatIsNotSettable() {
     File file = createFile();
-    try {
-      service.setAttribute(file, "test:foo", "world", false);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> service.setAttribute(file, "test:foo", "world", false));
 
     assertThat(file.getAttribute("test", "foo")).isNull();
   }
@@ -220,19 +201,15 @@ public class AttributeServiceTest {
   @Test
   public void testSetAttribute_onCreate_failsForAttributeThatIsNotSettableOnCreate() {
     File file = createFile();
-    try {
-      service.setInitialAttributes(file, new BasicFileAttribute<>("test:foo", "world"));
-      fail();
-    } catch (UnsupportedOperationException expected) {
-      // it turns out that UOE should be thrown on create even if the attribute isn't settable
-      // under any circumstances
-    }
+    // it turns out that UOE should be thrown on create even if the attribute isn't settable under
+    // any circumstances
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> service.setInitialAttributes(file, new BasicFileAttribute<>("test:foo", "world")));
 
-    try {
-      service.setInitialAttributes(file, new BasicFileAttribute<>("test:bar", 5));
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> service.setInitialAttributes(file, new BasicFileAttribute<>("test:bar", 5)));
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -319,19 +296,17 @@ public class AttributeServiceTest {
   @Test
   public void testReadAttributes_asMap_failsForInvalidAttributes() {
     File file = createFile();
-    try {
-      service.readAttributes(file, "basic:fileKey,isOther,*,creationTime");
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).contains("invalid attributes");
-    }
+    IllegalArgumentException expected =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.readAttributes(file, "basic:fileKey,isOther,*,creationTime"));
+    assertThat(expected).hasMessageThat().contains("invalid attributes");
 
-    try {
-      service.readAttributes(file, "basic:fileKey,isOther,foo");
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).contains("invalid attribute");
-    }
+    expected =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.readAttributes(file, "basic:fileKey,isOther,foo"));
+    assertThat(expected).hasMessageThat().contains("invalid attribute");
   }
 
   @Test
@@ -356,42 +331,31 @@ public class AttributeServiceTest {
   @Test
   public void testReadAttributes_failsForUnsupportedAttributesType() {
     File file = createFile();
-    try {
-      service.readAttributes(file, PosixFileAttributes.class);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> service.readAttributes(file, PosixFileAttributes.class));
   }
 
   @Test
   public void testIllegalAttributeFormats() {
     File file = createFile();
-    try {
-      service.getAttribute(file, ":bar");
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).contains("attribute format");
-    }
+    IllegalArgumentException expected =
+        assertThrows(IllegalArgumentException.class, () -> service.getAttribute(file, ":bar"));
+    assertThat(expected).hasMessageThat().contains("attribute format");
 
-    try {
-      service.getAttribute(file, "test:");
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).contains("attribute format");
-    }
+    expected =
+        assertThrows(IllegalArgumentException.class, () -> service.getAttribute(file, "test:"));
+    assertThat(expected).hasMessageThat().contains("attribute format");
 
-    try {
-      service.getAttribute(file, "basic:test:isDirectory");
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).contains("attribute format");
-    }
+    expected =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> service.getAttribute(file, "basic:test:isDirectory"));
+    assertThat(expected).hasMessageThat().contains("attribute format");
 
-    try {
-      service.getAttribute(file, "basic:fileKey,size");
-      fail();
-    } catch (IllegalArgumentException expected) {
-      assertThat(expected.getMessage()).contains("single attribute");
-    }
+    expected =
+        assertThrows(
+            IllegalArgumentException.class, () -> service.getAttribute(file, "basic:fileKey,size"));
+    assertThat(expected).hasMessageThat().contains("single attribute");
   }
 }

@@ -16,6 +16,7 @@
 
 package com.google.common.jimfs;
 
+import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.READ;
@@ -26,8 +27,8 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -78,11 +79,7 @@ public class JimfsFileSystemCloseTest {
 
     fs.close();
 
-    try {
-      FileSystems.getFileSystem(uri);
-      fail();
-    } catch (FileSystemNotFoundException expected) {
-    }
+    assertThrows(FileSystemNotFoundException.class, () -> FileSystems.getFileSystem(uri));
   }
 
   @Test
@@ -96,19 +93,11 @@ public class JimfsFileSystemCloseTest {
 
     fs.close();
 
-    try {
-      out.write(1);
-      fail();
-    } catch (IOException expected) {
-      assertEquals("stream is closed", expected.getMessage());
-    }
+    IOException expected = assertThrows(IOException.class, () -> out.write(1));
+    assertThat(expected).hasMessageThat().isEqualTo("stream is closed");
 
-    try {
-      in.read();
-      fail();
-    } catch (IOException expected) {
-      assertEquals("stream is closed", expected.getMessage());
-    }
+    expected = assertThrows(IOException.class, () -> in.read());
+    assertThat(expected).hasMessageThat().isEqualTo("stream is closed");
   }
 
   @Test
@@ -128,23 +117,11 @@ public class JimfsFileSystemCloseTest {
     assertFalse(sbc.isOpen());
     assertFalse(afc.isOpen());
 
-    try {
-      fc.size();
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> fc.size());
 
-    try {
-      sbc.size();
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> sbc.size());
 
-    try {
-      afc.size();
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> afc.size());
   }
 
   @Test
@@ -156,11 +133,7 @@ public class JimfsFileSystemCloseTest {
 
       fs.close();
 
-      try {
-        stream.iterator();
-        fail();
-      } catch (ClosedDirectoryStreamException expected) {
-      }
+      assertThrows(ClosedDirectoryStreamException.class, () -> stream.iterator());
     }
   }
 
@@ -174,17 +147,9 @@ public class JimfsFileSystemCloseTest {
 
     fs.close();
 
-    try {
-      ws1.poll();
-      fail();
-    } catch (ClosedWatchServiceException expected) {
-    }
+    assertThrows(ClosedWatchServiceException.class, () -> ws1.poll());
 
-    try {
-      ws2.poll();
-      fail();
-    } catch (ClosedWatchServiceException expected) {
-    }
+    assertThrows(ClosedWatchServiceException.class, () -> ws2.poll());
   }
 
   @Test
@@ -196,17 +161,11 @@ public class JimfsFileSystemCloseTest {
 
     fs.close();
 
-    try {
-      p.register(ws, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
-      fail();
-    } catch (ClosedWatchServiceException expected) {
-    }
+    assertThrows(
+        ClosedWatchServiceException.class,
+        () -> p.register(ws, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY));
 
-    try {
-      p = p.toRealPath();
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> p.toRealPath());
 
     // While technically (according to the FileSystem.close() spec) all methods on Path should
     // probably throw, we only throw for methods that access the file system itself in some way...
@@ -223,64 +182,28 @@ public class JimfsFileSystemCloseTest {
 
     fs.close();
 
-    try {
-      view.readAttributes();
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> view.readAttributes());
 
-    try {
-      view.setTimes(null, null, null);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> view.setTimes(null, null, null));
   }
 
   @Test
   public void testFileSystemMethodsThrow() throws IOException {
     fs.close();
 
-    try {
-      fs.getPath("/foo");
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> fs.getPath("/foo"));
 
-    try {
-      fs.getRootDirectories();
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> fs.getRootDirectories());
 
-    try {
-      fs.getFileStores();
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> fs.getFileStores());
 
-    try {
-      fs.getPathMatcher("glob:*.java");
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> fs.getPathMatcher("glob:*.java"));
 
-    try {
-      fs.getUserPrincipalLookupService();
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> fs.getUserPrincipalLookupService());
 
-    try {
-      fs.newWatchService();
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> fs.newWatchService());
 
-    try {
-      fs.supportedFileAttributeViews();
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> fs.supportedFileAttributeViews());
   }
 
   @Test
@@ -297,142 +220,60 @@ public class JimfsFileSystemCloseTest {
     // not exhaustive, but should cover every major type of functionality accessible through Files
     // TODO(cgdecker): reflectively invoke all methods with default arguments?
 
-    try {
-      Files.delete(file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.delete(file));
 
-    try {
-      Files.createDirectory(nothing);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.createDirectory(nothing));
 
-    try {
-      Files.createFile(nothing);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.createFile(nothing));
 
-    try {
-      Files.write(nothing, ImmutableList.of("hello world"), UTF_8);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(
+        ClosedFileSystemException.class,
+        () -> Files.write(nothing, ImmutableList.of("hello world"), UTF_8));
 
-    try {
-      Files.newInputStream(file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.newInputStream(file));
 
-    try {
-      Files.newOutputStream(file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.newOutputStream(file));
 
-    try {
-      Files.newByteChannel(file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.newByteChannel(file));
 
-    try {
-      Files.newDirectoryStream(dir);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.newDirectoryStream(dir));
 
-    try {
-      Files.copy(file, nothing);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.copy(file, nothing));
 
-    try {
-      Files.move(file, nothing);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.move(file, nothing));
 
-    try {
-      Files.copy(dir, nothing);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.copy(dir, nothing));
 
-    try {
-      Files.move(dir, nothing);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.move(dir, nothing));
 
-    try {
-      Files.createSymbolicLink(nothing, file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.createSymbolicLink(nothing, file));
 
-    try {
-      Files.createLink(nothing, file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.createLink(nothing, file));
 
-    try {
-      Files.exists(file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.exists(file));
 
-    try {
-      Files.getAttribute(file, "size");
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.getAttribute(file, "size"));
 
-    try {
-      Files.setAttribute(file, "lastModifiedTime", FileTime.fromMillis(0));
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(
+        ClosedFileSystemException.class,
+        () -> Files.setAttribute(file, "lastModifiedTime", FileTime.fromMillis(0)));
 
-    try {
-      Files.getFileAttributeView(file, BasicFileAttributeView.class);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(
+        ClosedFileSystemException.class,
+        () -> Files.getFileAttributeView(file, BasicFileAttributeView.class));
 
-    try {
-      Files.readAttributes(file, "basic:size,lastModifiedTime");
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(
+        ClosedFileSystemException.class,
+        () -> Files.readAttributes(file, "basic:size,lastModifiedTime"));
 
-    try {
-      Files.readAttributes(file, BasicFileAttributes.class);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(
+        ClosedFileSystemException.class,
+        () -> Files.readAttributes(file, BasicFileAttributes.class));
 
-    try {
-      Files.isDirectory(dir);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.isDirectory(dir));
 
-    try {
-      Files.readAllBytes(file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.readAllBytes(file));
 
-    try {
-      Files.isReadable(file);
-      fail();
-    } catch (ClosedFileSystemException expected) {
-    }
+    assertThrows(ClosedFileSystemException.class, () -> Files.isReadable(file));
   }
 }

@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.attribute.GroupPrincipal;
@@ -58,11 +58,10 @@ public class UserLookupServiceTest {
   public void testServiceNotSupportingGroups() throws IOException {
     UserPrincipalLookupService service = new UserLookupService(false);
 
-    try {
-      service.lookupPrincipalByGroupName("group");
-      fail();
-    } catch (UserPrincipalNotFoundException expected) {
-      assertThat(expected.getName()).isEqualTo("group");
-    }
+    UserPrincipalNotFoundException expected =
+        assertThrows(
+            UserPrincipalNotFoundException.class,
+            () -> service.lookupPrincipalByGroupName("group"));
+    assertThat(expected.getName()).isEqualTo("group");
   }
 }

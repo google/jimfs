@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assert_;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
@@ -122,11 +123,7 @@ public class ConfigurationTest {
 
     Files.createFile(fs.getPath("/foo"));
 
-    try {
-      Files.createFile(fs.getPath("/FOO"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-    }
+    assertThrows(FileAlreadyExistsException.class, () -> Files.createFile(fs.getPath("/FOO")));
   }
 
   @Test
@@ -162,11 +159,7 @@ public class ConfigurationTest {
 
     Files.createFile(fs.getPath("C:\\foo"));
 
-    try {
-      Files.createFile(fs.getPath("C:\\FOO"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-    }
+    assertThrows(FileAlreadyExistsException.class, () -> Files.createFile(fs.getPath("C:\\FOO")));
   }
 
   @Test
@@ -241,11 +234,7 @@ public class ConfigurationTest {
     assertThat(Files.getAttribute(fs.getPath("/foo"), "creationTime"))
         .isEqualTo(fileTimeSource.now());
 
-    try {
-      Files.createFile(fs.getPath("/FOO"));
-      fail();
-    } catch (FileAlreadyExistsException expected) {
-    }
+    assertThrows(FileAlreadyExistsException.class, () -> Files.createFile(fs.getPath("/FOO")));
   }
 
   @Test
@@ -288,17 +277,13 @@ public class ConfigurationTest {
 
   @Test
   public void testSettingWorkingDirectoryWithRelativePath() {
-    try {
-      Configuration.unix().toBuilder().setWorkingDirectory("foo/bar");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> Configuration.unix().toBuilder().setWorkingDirectory("foo/bar"));
 
-    try {
-      Configuration.windows().toBuilder().setWorkingDirectory("foo\\bar");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> Configuration.windows().toBuilder().setWorkingDirectory("foo\\bar"));
   }
 
   @Test
@@ -326,24 +311,21 @@ public class ConfigurationTest {
 
   @Test
   public void testSetDefaultAttributeValue_illegalAttributeFormat() {
-    try {
-      Configuration.unix().toBuilder().setDefaultAttributeValue("foo", 1);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> Configuration.unix().toBuilder().setDefaultAttributeValue("foo", 1));
   }
 
   @Test // how's that for a name?
   public void testCreateFileSystemFromConfigurationWithWorkingDirectoryNotUnderConfiguredRoot() {
-    try {
-      Jimfs.newFileSystem(
-          Configuration.windows().toBuilder()
-              .setRoots("C:\\", "D:\\")
-              .setWorkingDirectory("E:\\foo")
-              .build());
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () ->
+            Jimfs.newFileSystem(
+                Configuration.windows().toBuilder()
+                    .setRoots("C:\\", "D:\\")
+                    .setWorkingDirectory("E:\\foo")
+                    .build()));
   }
 
   @Test

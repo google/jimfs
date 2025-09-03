@@ -29,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -313,113 +314,53 @@ public class JimfsFileChannelTest {
     channel.close();
     assertFalse(channel.isOpen());
 
-    try {
-      channel.position();
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.position());
 
-    try {
-      channel.position(0);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.position(0));
 
-    try {
-      channel.lock();
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.lock());
 
-    try {
-      channel.lock(0, 10, true);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.lock(0, 10, true));
 
-    try {
-      channel.tryLock();
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.tryLock());
 
-    try {
-      channel.tryLock(0, 10, true);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.tryLock(0, 10, true));
 
-    try {
-      channel.force(true);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.force(true));
 
-    try {
-      channel.write(buffer("111"));
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.write(buffer("111")));
 
-    try {
-      channel.write(buffer("111"), 10);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.write(buffer("111"), 10));
 
-    try {
-      channel.write(new ByteBuffer[] {buffer("111"), buffer("111")});
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(
+        ClosedChannelException.class,
+        () -> channel.write(new ByteBuffer[] {buffer("111"), buffer("111")}));
 
-    try {
-      channel.write(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(
+        ClosedChannelException.class,
+        () -> channel.write(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2));
 
-    try {
-      channel.transferFrom(new ByteBufferChannel(bytes("1111")), 0, 4);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(
+        ClosedChannelException.class,
+        () -> channel.transferFrom(new ByteBufferChannel(bytes("1111")), 0, 4));
 
-    try {
-      channel.truncate(0);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.truncate(0));
 
-    try {
-      channel.read(buffer("111"));
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.read(buffer("111")));
 
-    try {
-      channel.read(buffer("111"), 10);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(ClosedChannelException.class, () -> channel.read(buffer("111"), 10));
 
-    try {
-      channel.read(new ByteBuffer[] {buffer("111"), buffer("111")});
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(
+        ClosedChannelException.class,
+        () -> channel.read(new ByteBuffer[] {buffer("111"), buffer("111")}));
 
-    try {
-      channel.read(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2);
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(
+        ClosedChannelException.class,
+        () -> channel.read(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2));
 
-    try {
-      channel.transferTo(0, 10, new ByteBufferChannel(buffer("111")));
-      fail();
-    } catch (ClosedChannelException expected) {
-    }
+    assertThrows(
+        ClosedChannelException.class,
+        () -> channel.transferTo(0, 10, new ByteBufferChannel(buffer("111"))));
 
     executor.shutdown();
   }
@@ -428,221 +369,123 @@ public class JimfsFileChannelTest {
   public void testWritesInReadOnlyMode() throws IOException {
     FileChannel channel = channel(regularFile(0), READ);
 
-    try {
-      channel.write(buffer("111"));
-      fail();
-    } catch (NonWritableChannelException expected) {
-    }
+    assertThrows(NonWritableChannelException.class, () -> channel.write(buffer("111")));
 
-    try {
-      channel.write(buffer("111"), 10);
-      fail();
-    } catch (NonWritableChannelException expected) {
-    }
+    assertThrows(NonWritableChannelException.class, () -> channel.write(buffer("111"), 10));
 
-    try {
-      channel.write(new ByteBuffer[] {buffer("111"), buffer("111")});
-      fail();
-    } catch (NonWritableChannelException expected) {
-    }
+    assertThrows(
+        NonWritableChannelException.class,
+        () -> channel.write(new ByteBuffer[] {buffer("111"), buffer("111")}));
 
-    try {
-      channel.write(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2);
-      fail();
-    } catch (NonWritableChannelException expected) {
-    }
+    assertThrows(
+        NonWritableChannelException.class,
+        () -> channel.write(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2));
 
-    try {
-      channel.transferFrom(new ByteBufferChannel(bytes("1111")), 0, 4);
-      fail();
-    } catch (NonWritableChannelException expected) {
-    }
+    assertThrows(
+        NonWritableChannelException.class,
+        () -> channel.transferFrom(new ByteBufferChannel(bytes("1111")), 0, 4));
 
-    try {
-      channel.truncate(0);
-      fail();
-    } catch (NonWritableChannelException expected) {
-    }
+    assertThrows(NonWritableChannelException.class, () -> channel.truncate(0));
 
-    try {
-      channel.lock(0, 10, false);
-      fail();
-    } catch (NonWritableChannelException expected) {
-    }
+    assertThrows(NonWritableChannelException.class, () -> channel.lock(0, 10, false));
   }
 
   @Test
   public void testReadsInWriteOnlyMode() throws IOException {
     FileChannel channel = channel(regularFile(0), WRITE);
 
-    try {
-      channel.read(buffer("111"));
-      fail();
-    } catch (NonReadableChannelException expected) {
-    }
+    assertThrows(NonReadableChannelException.class, () -> channel.read(buffer("111")));
 
-    try {
-      channel.read(buffer("111"), 10);
-      fail();
-    } catch (NonReadableChannelException expected) {
-    }
+    assertThrows(NonReadableChannelException.class, () -> channel.read(buffer("111"), 10));
 
-    try {
-      channel.read(new ByteBuffer[] {buffer("111"), buffer("111")});
-      fail();
-    } catch (NonReadableChannelException expected) {
-    }
+    assertThrows(
+        NonReadableChannelException.class,
+        () -> channel.read(new ByteBuffer[] {buffer("111"), buffer("111")}));
 
-    try {
-      channel.read(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2);
-      fail();
-    } catch (NonReadableChannelException expected) {
-    }
+    assertThrows(
+        NonReadableChannelException.class,
+        () -> channel.read(new ByteBuffer[] {buffer("111"), buffer("111")}, 0, 2));
 
-    try {
-      channel.transferTo(0, 10, new ByteBufferChannel(buffer("111")));
-      fail();
-    } catch (NonReadableChannelException expected) {
-    }
+    assertThrows(
+        NonReadableChannelException.class,
+        () -> channel.transferTo(0, 10, new ByteBufferChannel(buffer("111"))));
 
-    try {
-      channel.lock(0, 10, true);
-      fail();
-    } catch (NonReadableChannelException expected) {
-    }
+    assertThrows(NonReadableChannelException.class, () -> channel.lock(0, 10, true));
   }
 
   @Test
   public void testPositionNegative() throws IOException {
     FileChannel channel = channel(regularFile(0), READ, WRITE);
 
-    try {
-      channel.position(-1);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> channel.position(-1));
   }
 
   @Test
   public void testTruncateNegative() throws IOException {
     FileChannel channel = channel(regularFile(0), READ, WRITE);
 
-    try {
-      channel.truncate(-1);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> channel.truncate(-1));
   }
 
   @Test
   public void testWriteNegative() throws IOException {
     FileChannel channel = channel(regularFile(0), READ, WRITE);
 
-    try {
-      channel.write(buffer("111"), -1);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> channel.write(buffer("111"), -1));
 
     ByteBuffer[] bufs = {buffer("111"), buffer("111")};
-    try {
-      channel.write(bufs, -1, 10);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> channel.write(bufs, -1, 10));
 
-    try {
-      channel.write(bufs, 0, -1);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> channel.write(bufs, 0, -1));
   }
 
   @Test
   public void testReadNegative() throws IOException {
     FileChannel channel = channel(regularFile(0), READ, WRITE);
 
-    try {
-      channel.read(buffer("111"), -1);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> channel.read(buffer("111"), -1));
 
     ByteBuffer[] bufs = {buffer("111"), buffer("111")};
-    try {
-      channel.read(bufs, -1, 10);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> channel.read(bufs, -1, 10));
 
-    try {
-      channel.read(bufs, 0, -1);
-      fail();
-    } catch (IndexOutOfBoundsException expected) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> channel.read(bufs, 0, -1));
   }
 
   @Test
   public void testTransferToNegative() throws IOException {
     FileChannel channel = channel(regularFile(0), READ, WRITE);
 
-    try {
-      channel.transferTo(-1, 0, new ByteBufferChannel(10));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class, () -> channel.transferTo(-1, 0, new ByteBufferChannel(10)));
 
-    try {
-      channel.transferTo(0, -1, new ByteBufferChannel(10));
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class, () -> channel.transferTo(0, -1, new ByteBufferChannel(10)));
   }
 
   @Test
   public void testTransferFromNegative() throws IOException {
     FileChannel channel = channel(regularFile(0), READ, WRITE);
 
-    try {
-      channel.transferFrom(new ByteBufferChannel(10), -1, 0);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> channel.transferFrom(new ByteBufferChannel(10), -1, 0));
 
-    try {
-      channel.transferFrom(new ByteBufferChannel(10), 0, -1);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> channel.transferFrom(new ByteBufferChannel(10), 0, -1));
   }
 
   @Test
   public void testLockNegative() throws IOException {
     FileChannel channel = channel(regularFile(0), READ, WRITE);
 
-    try {
-      channel.lock(-1, 10, true);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> channel.lock(-1, 10, true));
 
-    try {
-      channel.lock(0, -1, true);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> channel.lock(0, -1, true));
 
-    try {
-      channel.tryLock(-1, 10, true);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> channel.tryLock(-1, 10, true));
 
-    try {
-      channel.tryLock(0, -1, true);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(IllegalArgumentException.class, () -> channel.tryLock(0, -1, true));
   }
 
   @Test
@@ -694,14 +537,10 @@ public class JimfsFileChannelTest {
     // the blocking operations are running on different threads, so they all get
     // AsynchronousCloseException
     for (Future<?> future : futures) {
-      try {
-        future.get();
-        fail();
-      } catch (ExecutionException expected) {
-        assertWithMessage("blocking thread exception")
-            .that(expected.getCause())
-            .isInstanceOf(AsynchronousCloseException.class);
-      }
+      ExecutionException expected = assertThrows(ExecutionException.class, () -> future.get());
+      assertWithMessage("blocking thread exception")
+          .that(expected.getCause())
+          .isInstanceOf(AsynchronousCloseException.class);
     }
   }
 
@@ -764,14 +603,10 @@ public class JimfsFileChannelTest {
     // check that each other thread got AsynchronousCloseException (since the interrupt, on a
     // different thread, closed the channel)
     for (Future<?> future : futures) {
-      try {
-        future.get();
-        fail();
-      } catch (ExecutionException expected) {
-        assertWithMessage("blocking thread exception")
-            .that(expected.getCause())
-            .isInstanceOf(AsynchronousCloseException.class);
-      }
+      ExecutionException expected = assertThrows(ExecutionException.class, () -> future.get());
+      assertWithMessage("blocking thread exception")
+          .that(expected.getCause())
+          .isInstanceOf(AsynchronousCloseException.class);
     }
   }
 
