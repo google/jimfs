@@ -71,14 +71,14 @@ jobs:
         with:
           java-version: 8
           distribution: 'zulu'
-          server-id: sonatype-nexus-snapshots
+          server-id: central
           server-username: CI_DEPLOY_USERNAME
           server-password: CI_DEPLOY_PASSWORD
       - name: 'Publish'
         env:
           CI_DEPLOY_USERNAME: ${{ secrets.CI_DEPLOY_USERNAME }}
           CI_DEPLOY_PASSWORD: ${{ secrets.CI_DEPLOY_PASSWORD }}
-        run: mvn -B clean source:jar javadoc:jar deploy -DskipTests=true
+        run: mvn -B clean deploy -DskipTests=true
 
   generate_docs:
     permissions:
