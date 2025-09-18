@@ -115,6 +115,25 @@ public class JimfsInputStreamTest {
   }
 
   @Test
+  public void testRead_zeroLength_returnsZero() throws IOException {
+    JimfsInputStream in = newInputStream(1, 2, 3);
+    byte[] bytes = new byte[10];
+    assertThat(in.read(bytes, 0, 0)).isEqualTo(0);
+    assertArrayEquals(new byte[10], bytes); // nothing should be read
+    assertThat(in.read()).isEqualTo(1); // next read should still be the first byte
+  }
+
+  @Test
+  public void testRead_zeroLengthAtEof_returnsZero() throws IOException {
+    JimfsInputStream in = newInputStream(1, 2, 3);
+    assertThat(in.read(new byte[3])).isEqualTo(3);
+    assertEmpty(in); // we're at the end of the stream
+
+    // now try reading 0 bytes at the end of the stream
+    assertThat(in.read(new byte[10], 0, 0)).isEqualTo(0);
+  }
+
+  @Test
   public void testAvailable() throws IOException {
     JimfsInputStream in = newInputStream(1, 2, 3, 4, 5, 6, 7, 8);
     assertThat(in.available()).isEqualTo(8);
