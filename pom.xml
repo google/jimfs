@@ -41,13 +41,13 @@
 
   <organization>
     <name>Google Inc.</name>
-    <url>http://www.google.com/</url>
+    <url>https://www.google.com/</url>
   </organization>
 
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
@@ -68,7 +68,7 @@
   </developers>
 
   <scm>
-    <url>http://github.com/google/jimfs/</url>
+    <url>https://github.com/google/jimfs/</url>
     <connection>scm:git:git://github.com/google/jimfs.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/google/jimfs.git</developerConnection>
     <tag>HEAD</tag>
@@ -76,7 +76,7 @@
 
   <issueManagement>
     <system>GitHub Issues</system>
-    <url>http://github.com/google/jimfs/issues</url>
+    <url>https://github.com/google/jimfs/issues</url>
   </issueManagement>
 
   <properties>
