@@ -1,1 +1,1 @@
-/opt/hostedtoolcache/Java_Zulu_jdk/11.0.28-6/x64/bin/javadoc -J-Duser.language= -J-Duser.country= @options @packages
+/usr/lib/jvm/temurin-11-jdk-amd64/bin/javadoc -J-Duser.language= -J-Duser.country= @options @packages
