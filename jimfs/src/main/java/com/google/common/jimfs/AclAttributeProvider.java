@@ -119,7 +119,7 @@ final class AclAttributeProvider extends AttributeProvider {
 
     private final FileOwnerAttributeView ownerView;
 
-    public View(FileLookup lookup, FileOwnerAttributeView ownerView) {
+    View(FileLookup lookup, FileOwnerAttributeView ownerView) {
       super(lookup);
       this.ownerView = checkNotNull(ownerView);
     }

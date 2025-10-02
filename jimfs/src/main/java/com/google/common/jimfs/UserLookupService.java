@@ -63,7 +63,7 @@ final class UserLookupService extends UserPrincipalLookupService {
   /** Base class for {@link UserPrincipal} and {@link GroupPrincipal} implementations. */
   private abstract static class NamedPrincipal implements UserPrincipal {
 
-    protected final String name;
+    final String name;
 
     private NamedPrincipal(String name) {
       this.name = checkNotNull(name);

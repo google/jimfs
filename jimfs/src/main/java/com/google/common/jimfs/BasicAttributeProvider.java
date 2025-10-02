@@ -132,7 +132,7 @@ final class BasicAttributeProvider extends AttributeProvider {
   /** Implementation of {@link BasicFileAttributeView}. */
   private static final class View extends AbstractAttributeView implements BasicFileAttributeView {
 
-    protected View(FileLookup lookup) {
+    View(FileLookup lookup) {
       super(lookup);
     }
 

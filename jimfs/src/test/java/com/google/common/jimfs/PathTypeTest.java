@@ -110,7 +110,7 @@ public class PathTypeTest {
   /** Arbitrary path type with $ as the root, / as the separator and \ as an alternate separator. */
   private static final class FakePathType extends PathType {
 
-    protected FakePathType() {
+    FakePathType() {
       super(false, '/', '\\');
     }
 

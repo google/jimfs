@@ -100,7 +100,7 @@ final class OwnerAttributeProvider extends AttributeProvider {
   /** Implementation of {@link FileOwnerAttributeView}. */
   private static final class View extends AbstractAttributeView implements FileOwnerAttributeView {
 
-    public View(FileLookup lookup) {
+    View(FileLookup lookup) {
       super(lookup);
     }
 

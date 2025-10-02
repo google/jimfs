@@ -118,7 +118,7 @@ final class DosAttributeProvider extends AttributeProvider {
 
     private final BasicFileAttributeView basicView;
 
-    public View(FileLookup lookup, BasicFileAttributeView basicView) {
+    View(FileLookup lookup, BasicFileAttributeView basicView) {
       super(lookup);
       this.basicView = checkNotNull(basicView);
     }

@@ -113,7 +113,7 @@ final class FileFactory {
 
     private final JimfsPath target;
 
-    protected SymbolicLinkSupplier(JimfsPath target) {
+    SymbolicLinkSupplier(JimfsPath target) {
       this.target = checkNotNull(target);
     }
 

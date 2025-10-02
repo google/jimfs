@@ -191,8 +191,7 @@ final class PosixAttributeProvider extends AttributeProvider {
     private final BasicFileAttributeView basicView;
     private final FileOwnerAttributeView ownerView;
 
-    protected View(
-        FileLookup lookup, BasicFileAttributeView basicView, FileOwnerAttributeView ownerView) {
+    View(FileLookup lookup, BasicFileAttributeView basicView, FileOwnerAttributeView ownerView) {
       super(lookup);
       this.basicView = checkNotNull(basicView);
       this.ownerView = checkNotNull(ownerView);

@@ -113,7 +113,7 @@ final class UserDefinedAttributeProvider extends AttributeProvider {
   /** Implementation of {@link UserDefinedFileAttributeView}. */
   private static class View extends AbstractAttributeView implements UserDefinedFileAttributeView {
 
-    public View(FileLookup lookup) {
+    View(FileLookup lookup) {
       super(lookup);
     }
 
