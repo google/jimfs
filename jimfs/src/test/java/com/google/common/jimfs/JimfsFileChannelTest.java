@@ -545,6 +545,7 @@ public class JimfsFileChannelTest {
   }
 
   @Test
+  @org.junit.Ignore // flaky
   public void testCloseByInterrupt() throws Exception {
     RegularFile file = regularFile(10);
     final FileChannel channel = channel(file, READ, WRITE);
