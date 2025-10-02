@@ -175,7 +175,7 @@ final class PathService implements Comparator<JimfsPath> {
   }
 
   /** Returns a path with the given root (or no root, if null) and the given names. */
-  protected final JimfsPath createPathInternal(@Nullable Name root, Iterable<Name> names) {
+  final JimfsPath createPathInternal(@Nullable Name root, Iterable<Name> names) {
     return new JimfsPath(this, root, names);
   }
 

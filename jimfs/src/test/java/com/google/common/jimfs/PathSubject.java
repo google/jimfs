@@ -55,7 +55,7 @@ public final class PathSubject extends Subject {
   private static final LinkOption[] NOFOLLOW_LINKS = {LinkOption.NOFOLLOW_LINKS};
 
   private final Path actual;
-  protected LinkOption[] linkOptions = FOLLOW_LINKS;
+  LinkOption[] linkOptions = FOLLOW_LINKS;
   private Charset charset = UTF_8;
 
   private PathSubject(FailureMetadata failureMetadata, Path subject) {

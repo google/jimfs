@@ -79,7 +79,7 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
     fileSystemState.unregister(this);
   }
 
-  protected synchronized void checkOpen() {
+  synchronized void checkOpen() {
     if (!open) {
       throw new ClosedDirectoryStreamException();
     }
