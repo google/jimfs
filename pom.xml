@@ -151,8 +151,12 @@
           <version>3.14.1</version>
         </plugin>
         <plugin>
-          <artifactId>maven-source-plugin</artifactId>
-          <version>3.3.1</version>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.2.8</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.1.4</version>
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
@@ -169,11 +173,23 @@
               <link>https://unicode-org.github.io/icu-docs/apidoc/released/icu4j</link>
               <link>https://docs.oracle.com/en/java/javase/11/docs/api/</link>
             </links>
+            <additionalOptions>
+              <additionalOption>-Xdoclint:none</additionalOption>
+            </additionalOptions>
           </configuration>
         </plugin>
         <plugin>
-          <artifactId>maven-gpg-plugin</artifactId>
-          <version>3.2.8</version>
+          <!-- Warning: jimfs uses maven-bundle-plugin, so any configuration for maven-jar-plugin is likely to have no effect. We include this here only to silence warnings that appear when Maven still tries to look up a version number for maven-jar-plugin at then picks an incompatible version (like a beta release of maven-jar-plugin 4.0.0 under Maven 3). -->
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.2</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.3.1</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.3.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
@@ -263,38 +279,6 @@
   </build>
 
   <profiles>
-    <profile>
-      <id>jdk8-plus</id>
-      <activation>
-        <jdk>[1.8,)</jdk>
-      </activation>
-      <!-- Disable HTML checking in doclint under JDK 8 and higher -->
-      <reporting>
-        <plugins>
-          <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <additionalOptions>
-                <additionalOption>-Xdoclint:none</additionalOption>
-              </additionalOptions>
-            </configuration>
-          </plugin>
-        </plugins>
-      </reporting>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <additionalOptions>
-                <additionalOption>-Xdoclint:none</additionalOption>
-              </additionalOptions>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
     <profile>
       <id>before-jdk17</id>
       <activation>

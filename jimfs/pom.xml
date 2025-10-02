@@ -88,15 +88,6 @@
         <configuration>
           <excludePackageNames>com.google.jimfs.internal</excludePackageNames>
         </configuration>
-        <executions>
-          <execution>
-            <id>attach-docs</id>
-            <phase>post-integration-test</phase>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
 
       <plugin>
