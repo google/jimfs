@@ -181,7 +181,7 @@
         <plugin>
           <!-- Warning: jimfs uses maven-bundle-plugin, so any configuration for maven-jar-plugin is likely to have no effect. We include this here only to silence warnings that appear when Maven still tries to look up a version number for maven-jar-plugin at then picks an incompatible version (like a beta release of maven-jar-plugin 4.0.0 under Maven 3). -->
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.4.2</version>
+          <version>3.5.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
