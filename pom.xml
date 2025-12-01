@@ -85,7 +85,7 @@
     <auto-common.version>1.2.2</auto-common.version>
     <java.version>1.8</java.version>
     <guava.version>33.5.0-jre</guava.version>
-    <errorprone.version>2.44.0</errorprone.version>
+    <errorprone.version>2.45.0</errorprone.version>
   </properties>
 
   <dependencyManagement>
@@ -185,11 +185,11 @@
         </plugin>
         <plugin>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.4.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.4.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
