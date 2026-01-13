@@ -151,6 +151,11 @@
           <version>3.14.1</version>
         </plugin>
         <plugin>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.4</version>
+          <!-- Warning: jimfs uses central-publishing-maven-plugin, not maven-deploy-plugin, so any configuration here does not apply to it. This section exists only to quiet warnings when Maven tries to pick a version of the plugin anyway (and it tries one that requires Maven 4). -->
+        </plugin>
+        <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
           <version>3.2.8</version>
         </plugin>
