@@ -299,14 +299,14 @@
     </profile>
 
     <profile>
-      <id>jdk17-plus</id>
+      <id>errorprone-enabled</id>
       <activation>
-        <jdk>[17,)</jdk>
+        <jdk>[21,)</jdk>
       </activation>
       <build>
         <plugins>
           <plugin>
-            <!-- Error Prone requires 17+: https://errorprone.info/docs/installation. -->
+            <!-- Error Prone requires 21+: https://errorprone.info/docs/installation. -->
             <artifactId>maven-compiler-plugin</artifactId>
             <configuration>
               <compilerArgument>-Xplugin:ErrorProne -Xep:Java8ApiChecker:ERROR</compilerArgument>
@@ -330,6 +330,8 @@
                 <arg>-J--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
                 <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
                 <arg>-J--add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED</arg>
+                <!-- necessary only when building with JDK21: https://github.com/google/error-prone/issues/5426 -->
+                <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
               </compilerArgs>
               <fork>true</fork> <!-- -J options are only passed through if fork is set to true. -->
             </configuration>
