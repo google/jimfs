@@ -260,7 +260,7 @@ final class RegularFile extends File {
 
     // zero bytes between current size and pos
     if (pos > size) {
-      long remaining = pos - size;
+      long remaining = pos - size - 1;
 
       int blockIndex = blockIndex(size);
       byte[] block = blocks[blockIndex];
@@ -441,7 +441,7 @@ final class RegularFile extends File {
             // doesn't have any further bytes. Then if we hadn't read anything into the temporary
             // block, we could simply discard it. But I think this scenario is likely rare enough
             // that it's fine to temporarily allocate a block that _might_ not get used.
-            disk.free(this, 1);
+            // do nothing
           }
           break outer;
         }
@@ -595,7 +595,7 @@ final class RegularFile extends File {
       }
     }
 
-    return max(bytesToRead, 0); // don't return -1 for this method
+    return bytesToRead; // don't return -1 for this method
   }
 
   /** Gets the block at the given index, expanding to create the block if necessary. */

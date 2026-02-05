@@ -175,7 +175,7 @@ final class FileTree {
    */
   private @Nullable DirectoryEntry followSymbolicLink(File dir, SymbolicLink link, int linkDepth)
       throws IOException {
-    if (linkDepth >= MAX_SYMBOLIC_LINK_DEPTH) {
+    if (linkDepth > MAX_SYMBOLIC_LINK_DEPTH) {
       throw new IOException("too many levels of symbolic links");
     }
 

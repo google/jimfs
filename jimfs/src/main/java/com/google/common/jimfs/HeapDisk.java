@@ -131,7 +131,7 @@ final class HeapDisk {
     }
 
     if (newBlocksNeeded != count) {
-      blockCache.transferBlocksTo(file, count - newBlocksNeeded);
+      blockCache.copyBlocksTo(file, count - newBlocksNeeded);
     }
 
     allocatedBlockCount = newAllocatedBlockCount;
