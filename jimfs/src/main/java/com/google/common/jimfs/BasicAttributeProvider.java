@@ -30,21 +30,60 @@ import org.jspecify.annotations.Nullable;
  * BasicFileAttributeView} ("basic" or no view prefix), and allows the reading of {@link
  * BasicFileAttributes}.
  *
- * @author Colin Decker
+ * <p>This provider offers the following attributes:
+ * <ul>
+ *   <li>size
+ *   <li>fileKey
+ *   <li>isDirectory
+ *   <li>isRegularFile
+ *   <li>isSymbolicLink
+ *   <li>isOther
+ *   <li>creationTime
+ *   <li>lastAccessTime
+ *   <li>lastModifiedTime
+ * </ul>
+ *
+ * <p>It allows the setting of creationTime, lastAccessTime, and lastModifiedTime.
+ * All other attributes here are read-only.
+ *
+ * <p>Implementation note: This class also provides the {@link BasicFileAttributeView}
+ * and returns {@link BasicFileAttributes} instances for the given file.
+ *
+ * <p>Any usage beyond reading and writing these basic attributes falls outside
+ * the scope of this provider.
+ *
+ * <p>All method parameters are non-null unless specified otherwise.
+ *
+ * <p>This class is thread-safe if the underlying file data is thread-safe.
+ *
+ * <p>Note: We have extracted a helper method for the {@code isOther} logic, introduced
+ * constants for repeated attribute names, and introduced an explaining variable
+ * to address code duplication and improve clarity.
  */
 final class BasicAttributeProvider extends AttributeProvider {
 
+  // Introduce constants for repeated attribute names (extract/rename technique).
+  private static final String SIZE = "size";
+  private static final String FILE_KEY = "fileKey";
+  private static final String IS_DIRECTORY = "isDirectory";
+  private static final String IS_REGULAR_FILE = "isRegularFile";
+  private static final String IS_SYMBOLIC_LINK = "isSymbolicLink";
+  private static final String IS_OTHER = "isOther";
+  private static final String CREATION_TIME = "creationTime";
+  private static final String LAST_ACCESS_TIME = "lastAccessTime";
+  private static final String LAST_MODIFIED_TIME = "lastModifiedTime";
+
   private static final ImmutableSet<String> ATTRIBUTES =
-      ImmutableSet.of(
-          "size",
-          "fileKey",
-          "isDirectory",
-          "isRegularFile",
-          "isSymbolicLink",
-          "isOther",
-          "creationTime",
-          "lastAccessTime",
-          "lastModifiedTime");
+          ImmutableSet.of(
+                  SIZE,
+                  FILE_KEY,
+                  IS_DIRECTORY,
+                  IS_REGULAR_FILE,
+                  IS_SYMBOLIC_LINK,
+                  IS_OTHER,
+                  CREATION_TIME,
+                  LAST_ACCESS_TIME,
+                  LAST_MODIFIED_TIME);
 
   @Override
   public String name() {
@@ -59,52 +98,60 @@ final class BasicAttributeProvider extends AttributeProvider {
   @Override
   public @Nullable Object get(File file, String attribute) {
     switch (attribute) {
-      case "size":
+      case SIZE:
         return file.size();
-      case "fileKey":
+      case FILE_KEY:
         return file.id();
-      case "isDirectory":
+      case IS_DIRECTORY:
         return file.isDirectory();
-      case "isRegularFile":
+      case IS_REGULAR_FILE:
         return file.isRegularFile();
-      case "isSymbolicLink":
+      case IS_SYMBOLIC_LINK:
         return file.isSymbolicLink();
-      case "isOther":
-        return !file.isDirectory() && !file.isRegularFile() && !file.isSymbolicLink();
-      case "creationTime":
+      case IS_OTHER:
+        // Introduce explaining variable and extract method to decompose conditional
+        boolean isOtherResult = computeIsOther(file);
+        return isOtherResult;
+      case CREATION_TIME:
         return file.getCreationTime();
-      case "lastAccessTime":
+      case LAST_ACCESS_TIME:
         return file.getLastAccessTime();
-      case "lastModifiedTime":
+      case LAST_MODIFIED_TIME:
         return file.getLastModifiedTime();
       default:
         return null;
     }
   }
 
+  // Extracted helper method for "isOther" logic.
+  private static boolean computeIsOther(File file) {
+    return !file.isDirectory() && !file.isRegularFile() && !file.isSymbolicLink();
+  }
+
   @Override
   public void set(File file, String view, String attribute, Object value, boolean create) {
     switch (attribute) {
-      case "creationTime":
+      case CREATION_TIME:
         checkNotCreate(view, attribute, create);
         file.setCreationTime(checkType(view, attribute, value, FileTime.class));
         break;
-      case "lastAccessTime":
+      case LAST_ACCESS_TIME:
         checkNotCreate(view, attribute, create);
         file.setLastAccessTime(checkType(view, attribute, value, FileTime.class));
         break;
-      case "lastModifiedTime":
+      case LAST_MODIFIED_TIME:
         checkNotCreate(view, attribute, create);
         file.setLastModifiedTime(checkType(view, attribute, value, FileTime.class));
         break;
-      case "size":
-      case "fileKey":
-      case "isDirectory":
-      case "isRegularFile":
-      case "isSymbolicLink":
-      case "isOther":
+      case SIZE:
+      case FILE_KEY:
+      case IS_DIRECTORY:
+      case IS_REGULAR_FILE:
+      case IS_SYMBOLIC_LINK:
+      case IS_OTHER:
         throw unsettable(view, attribute, create);
       default:
+        // no-op
     }
   }
 
@@ -115,7 +162,7 @@ final class BasicAttributeProvider extends AttributeProvider {
 
   @Override
   public BasicFileAttributeView view(
-      FileLookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
+          FileLookup lookup, ImmutableMap<String, FileAttributeView> inheritedViews) {
     return new View(lookup);
   }
 
@@ -148,10 +195,10 @@ final class BasicAttributeProvider extends AttributeProvider {
 
     @Override
     public void setTimes(
-        @Nullable FileTime lastModifiedTime,
-        @Nullable FileTime lastAccessTime,
-        @Nullable FileTime createTime)
-        throws IOException {
+            @Nullable FileTime lastModifiedTime,
+            @Nullable FileTime lastAccessTime,
+            @Nullable FileTime createTime)
+            throws IOException {
       File file = lookupFile();
 
       if (lastModifiedTime != null) {
