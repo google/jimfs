@@ -26,9 +26,11 @@ import static java.nio.file.StandardOpenOption.WRITE;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.CopyOption;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
@@ -134,8 +136,23 @@ final class Options {
   }
 
   /** Returns an immutable set of the given options for a move. */
-  public static ImmutableSet<CopyOption> getMoveOptions(CopyOption... options) {
-    return ImmutableSet.copyOf(Lists.asList(LinkOption.NOFOLLOW_LINKS, options));
+  public static ImmutableSet<CopyOption> getMoveOptions(
+      Path source, Path target, CopyOption... options) throws AtomicMoveNotSupportedException {
+    ImmutableSet<CopyOption> result =
+        ImmutableSet.copyOf(Lists.asList(LinkOption.NOFOLLOW_LINKS, options));
+    if (result.contains(ATOMIC_MOVE) && !source.getFileSystem().equals(target.getFileSystem())) {
+      throw new AtomicMoveNotSupportedException(
+          source.toString(),
+          target.toString(),
+          "Atomic move between different file systems is not supported");
+    }
+    /*
+     * TODO(cpovirk): If ATOMIC_MOVE is present, remove REPLACE_EXISTING (but keep NOFOLLOW_LINKS!)?
+     * (ATOMIC_MOVE is documented as causing all other options to be ignored.) Or *add*
+     * REPLACE_EXISTING so that we can check for just REPLACE_EXISTING instead of for
+     * REPLACE_EXISTING *or* ATOMIC_MOVE later?
+     */
+    return result;
   }
 
   /** Returns an immutable set of the given options for a copy. */

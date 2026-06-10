@@ -17,6 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.COPY_ATTRIBUTES;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.nio.file.StandardOpenOption.CREATE;
@@ -542,7 +543,7 @@ final class FileSystemView {
       if (destEntry.exists()) {
         if (destEntry.file().equals(sourceFile)) {
           return;
-        } else if (options.contains(REPLACE_EXISTING)) {
+        } else if (options.contains(REPLACE_EXISTING) || options.contains(ATOMIC_MOVE)) {
           destView.delete(destEntry, DeleteMode.ANY, dest);
         } else {
           throw new FileAlreadyExistsException(dest.toString());
