@@ -18,6 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSet;
@@ -118,7 +119,7 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
   public static final Filter<Object> ALWAYS_TRUE_FILTER =
       new Filter<Object>() {
         @Override
-        public boolean accept(Object entry) throws IOException {
+        public boolean accept(Object entry) {
           return true;
         }
       };
@@ -168,21 +169,22 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
       throws IOException {
     checkOpen();
     JimfsPath checkedSrcPath = checkPath(srcPath);
-    JimfsPath checkedTargetPath = checkPath(targetPath);
 
-    if (!(targetDir instanceof JimfsSecureDirectoryStream)) {
-      throw new ProviderMismatchException(
-          "targetDir isn't a secure directory stream associated with this file system");
-    }
+    // We only check that targetDir is a Jimfs stream and that targetPath is from the same file
+    // system as targetDir here.
+    JimfsSecureDirectoryStream checkedTargetDir = checkDirectoryStream(targetDir);
+    JimfsPath checkedTargetPath = checkedTargetDir.checkPath(targetPath);
 
-    JimfsSecureDirectoryStream checkedTargetDir = (JimfsSecureDirectoryStream) targetDir;
-
-    view.copy(
-        checkedSrcPath,
-        checkedTargetDir.view,
-        checkedTargetPath,
-        ImmutableSet.<CopyOption>of(),
-        true);
+    // The case where the target dir and path agree but are for a different file system is handled
+    // here, since getMoveOptions doesn't allow ATOMIC_MOVE when the two paths aren't for the same
+    // FileSystem. Same as for Files.move, this also adds NOFOLLOW_LINKS since move specifies that
+    // it doesn't follow links. (Technically it only seems to specify that if the target file is a
+    // link it will move the link and not what it points to, which doesn't necessarily imply that it
+    // won't follow intermediate directory links, but in practice it does not follow any links for
+    // Unix at least.)
+    ImmutableSet<CopyOption> options =
+        Options.getMoveOptions(checkedSrcPath, checkedTargetPath, ATOMIC_MOVE);
+    view.copy(checkedSrcPath, checkedTargetDir.view, checkedTargetPath, options, true);
   }
 
   @Override
@@ -207,11 +209,41 @@ final class JimfsSecureDirectoryStream implements SecureDirectoryStream<Path> {
         type);
   }
 
-  private static JimfsPath checkPath(Path path) {
-    if (path instanceof JimfsPath) {
-      return (JimfsPath) path;
+  private JimfsPath checkPath(Path path) {
+    if (!(path instanceof JimfsPath)) {
+      throw new ProviderMismatchException(
+          "path " + path + " is not associated with a Jimfs file system");
     }
-    throw new ProviderMismatchException(
-        "path " + path + " is not associated with a Jimfs file system");
+    // SecureDirectoryStream is not clear about what should happen when it's given paths that are
+    // from different FileSystems with the same FileSystemProvider. My thinking is that it doesn't
+    // make sense to try to resolve a Path from one file system against a directory from a totally
+    // different file system and that it's likely a programmer error if that is ever happening, but
+    // it's not totally clear that's true. I can imagine, for example, that when copying something
+    // from file system A to B one might want to resolve a relative path from A against a path from
+    // B to get a new B path. But I tend to think it's better to be clearer about the conversion in
+    // that case, for example by writing `bPath.resolve(aPath.toString())` (admittedly still not all
+    // that clear).
+    //
+    // This behavior does match how our implementation of Path.resolve(Path) works, though that
+    // method _also_ doesn't specify what should happen in that case.
+    if (!path().getFileSystem().equals(path.getFileSystem())) {
+      throw new ProviderMismatchException(
+          "path "
+              + path
+              + " is associated with a different Jimfs file system than this "
+              + "SecureDirectoryStream");
+    }
+    return (JimfsPath) path;
+  }
+
+  private static JimfsSecureDirectoryStream checkDirectoryStream(
+      SecureDirectoryStream<Path> stream) {
+    if (!(stream instanceof JimfsSecureDirectoryStream)) {
+      throw new ProviderMismatchException(
+          stream + " isn't a secure directory stream associated with this file system");
+    }
+    // We don't check that the stream's file system is the same as the calling stream's because we
+    // let that problem be handled by the atomic move requirement of SecureDirectoryStream.move.
+    return (JimfsSecureDirectoryStream) stream;
   }
 }

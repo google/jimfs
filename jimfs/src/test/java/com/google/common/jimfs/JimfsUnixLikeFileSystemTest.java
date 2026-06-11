@@ -41,7 +41,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -81,6 +80,7 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.NotLinkException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.ProviderMismatchException;
 import java.nio.file.SecureDirectoryStream;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -1866,22 +1866,16 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createFile(path("/foo/b"));
     Files.createSymbolicLink(path("/foo/barLink"), path("bar"));
 
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path("/foo"))) {
-      if (!(stream instanceof SecureDirectoryStream)) {
-        fail("should be a secure directory stream");
-      }
-
-      SecureDirectoryStream<Path> secureStream = (SecureDirectoryStream<Path>) stream;
-
-      assertThat(ImmutableList.copyOf(secureStream))
+    try (SecureDirectoryStream<Path> stream = newDirStream(path("/foo"))) {
+      assertThat(ImmutableList.copyOf(stream))
           .isEqualTo(
               ImmutableList.of(
                   path("/foo/a"), path("/foo/b"), path("/foo/bar"), path("/foo/barLink")));
 
-      secureStream.deleteFile(path("b"));
+      stream.deleteFile(path("b"));
       assertThatPath("/foo/b").doesNotExist();
 
-      secureStream.newByteChannel(path("b"), ImmutableSet.of(WRITE, CREATE_NEW)).close();
+      stream.newByteChannel(path("b"), ImmutableSet.of(WRITE, CREATE_NEW)).close();
       assertThatPath("/foo/b").isRegularFile();
 
       assertThatPath("/foo").hasChildren("a", "b", "bar", "barLink");
@@ -1893,34 +1887,33 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
       assertThatPath("/baz/stuff").hasChildren("a", "b", "bar", "barLink");
 
-      secureStream.deleteFile(path("b"));
+      stream.deleteFile(path("b"));
 
       assertThatPath("/baz/stuff/b").doesNotExist();
       assertThatPath("/baz/stuff").hasChildren("a", "bar", "barLink");
 
       assertThat(
-              secureStream
+              stream
                   .getFileAttributeView(BasicFileAttributeView.class)
                   .readAttributes()
                   .isDirectory())
           .isTrue();
 
       assertThat(
-              secureStream
+              stream
                   .getFileAttributeView(path("a"), BasicFileAttributeView.class)
                   .readAttributes()
                   .isRegularFile())
           .isTrue();
 
       FileSystemException expected =
-          assertThrows(FileSystemException.class, () -> secureStream.deleteFile(path("bar")));
+          assertThrows(FileSystemException.class, () -> stream.deleteFile(path("bar")));
       assertThat(expected.getFile()).isEqualTo("bar");
 
-      expected =
-          assertThrows(FileSystemException.class, () -> secureStream.deleteDirectory(path("a")));
+      expected = assertThrows(FileSystemException.class, () -> stream.deleteDirectory(path("a")));
       assertThat(expected.getFile()).isEqualTo("a");
 
-      try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
+      try (SecureDirectoryStream<Path> barStream = stream.newDirectoryStream(path("bar"))) {
         barStream.newByteChannel(path("stuff"), ImmutableSet.of(WRITE, CREATE_NEW)).close();
         assertThat(
                 barStream
@@ -1930,15 +1923,14 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
             .isTrue();
 
         assertThat(
-                secureStream
+                stream
                     .getFileAttributeView(path("bar/stuff"), BasicFileAttributeView.class)
                     .readAttributes()
                     .isRegularFile())
             .isTrue();
       }
 
-      try (SecureDirectoryStream<Path> barLinkStream =
-          secureStream.newDirectoryStream(path("barLink"))) {
+      try (SecureDirectoryStream<Path> barLinkStream = stream.newDirectoryStream(path("barLink"))) {
         assertThat(
                 barLinkStream
                     .getFileAttributeView(path("stuff"), BasicFileAttributeView.class)
@@ -1957,11 +1949,11 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       NotDirectoryException ndExpected =
           assertThrows(
               NotDirectoryException.class,
-              () -> secureStream.newDirectoryStream(path("barLink"), NOFOLLOW_LINKS));
+              () -> stream.newDirectoryStream(path("barLink"), NOFOLLOW_LINKS));
       assertThat(ndExpected.getFile()).isEqualTo("barLink");
 
-      try (SecureDirectoryStream<Path> barStream = secureStream.newDirectoryStream(path("bar"))) {
-        secureStream.move(path("a"), barStream, path("moved"));
+      try (SecureDirectoryStream<Path> barStream = stream.newDirectoryStream(path("bar"))) {
+        stream.move(path("a"), barStream, path("moved"));
 
         assertThatPath(path("/baz/stuff/a")).doesNotExist();
         assertThatPath(path("/baz/stuff/bar/moved")).isRegularFile();
@@ -1985,16 +1977,137 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
     Files.createFile(path("foo/c/d"));
     Files.createFile(path("foo/c/e"));
 
-    try (DirectoryStream<Path> stream = Files.newDirectoryStream(path("foo"))) {
-      SecureDirectoryStream<Path> secureStream = (SecureDirectoryStream<Path>) stream;
-
-      assertThat(ImmutableList.copyOf(secureStream))
+    try (SecureDirectoryStream<Path> stream = newDirStream(path("foo"))) {
+      assertThat(ImmutableList.copyOf(stream))
           .containsExactly(path("foo/a"), path("foo/b"), path("foo/c"));
 
-      try (DirectoryStream<Path> stream2 = secureStream.newDirectoryStream(path("c"))) {
+      try (DirectoryStream<Path> stream2 = stream.newDirectoryStream(path("c"))) {
         assertThat(ImmutableList.copyOf(stream2)).containsExactly(path("foo/c/d"), path("foo/c/e"));
       }
     }
+  }
+
+  @Test
+  public void testSecureDirectoryStream_differentFileSystems() throws IOException {
+    Path fs1DirPath = path("foo");
+    Files.createDirectories(fs1DirPath);
+    Path fs1File = path("a");
+    Files.createFile(fs1DirPath.resolve(fs1File));
+
+    try (FileSystem fs2 = Jimfs.newFileSystem("fs2", UNIX_CONFIGURATION)) {
+      Path fs2DirPath = fs2.getPath("foo");
+      Files.createDirectories(fs2DirPath);
+      Path fs2File = fs2.getPath("a");
+      Files.createFile(fs2DirPath.resolve(fs2File));
+
+      try (SecureDirectoryStream<Path> fs1Dir = newDirStream(fs1DirPath)) {
+        assertThrows(ProviderMismatchException.class, () -> fs1Dir.newDirectoryStream(fs2DirPath));
+        assertThrows(
+            ProviderMismatchException.class,
+            () -> fs1Dir.newByteChannel(fs2File, ImmutableSet.of(READ)));
+        assertThrows(ProviderMismatchException.class, () -> fs1Dir.deleteDirectory(fs2DirPath));
+        assertThrows(ProviderMismatchException.class, () -> fs1Dir.deleteFile(fs2File));
+        assertThrows(
+            ProviderMismatchException.class,
+            () -> fs1Dir.getFileAttributeView(fs2File, BasicFileAttributeView.class));
+        // targetDir and targetPath are both from the same file system as fs1Dir, but the srcPath is
+        // from fs2.
+        Path otherFs1File = path("b");
+        assertThrows(
+            ProviderMismatchException.class, () -> fs1Dir.move(fs2File, fs1Dir, otherFs1File));
+        // ProviderMismatchException is thrown because of mismatch between targetDir (fs1Dir)
+        // and targetPath (fs2File).
+        assertThrows(ProviderMismatchException.class, () -> fs1Dir.move(fs1File, fs1Dir, fs2File));
+
+        try (SecureDirectoryStream<Path> fs2Dir = newDirStream(fs2DirPath)) {
+          // targetDir and targetPath are from the same file system as expected, but the move isn't
+          // atomic and SecureDirectoryStream.move() specifies that it only does atomic moves.
+          assertThrows(
+              AtomicMoveNotSupportedException.class, () -> fs1Dir.move(fs1File, fs2Dir, fs2File));
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testSecureDirectoryStream_differentFileSystemProviders() throws IOException {
+    Path fs1DirPath = path("foo");
+    Files.createDirectories(fs1DirPath);
+    Path fs1File = path("a");
+    Files.createFile(fs1DirPath.resolve(fs1File));
+
+    // This Path uses the default file system's FileSystemProvider and not the Jimfs
+    // FileSystemProvider.
+    Path fs2Path = Paths.get(System.getProperty("java.io.tmpdir"));
+
+    try (SecureDirectoryStream<Path> fs1Dir = newDirStream(fs1DirPath)) {
+      assertThrows(ProviderMismatchException.class, () -> fs1Dir.newDirectoryStream(fs2Path));
+      assertThrows(
+          ProviderMismatchException.class,
+          () -> fs1Dir.newByteChannel(fs2Path, ImmutableSet.of(READ)));
+      assertThrows(ProviderMismatchException.class, () -> fs1Dir.deleteDirectory(fs2Path));
+      assertThrows(ProviderMismatchException.class, () -> fs1Dir.deleteFile(fs2Path));
+      assertThrows(
+          ProviderMismatchException.class,
+          () -> fs1Dir.getFileAttributeView(fs2Path, BasicFileAttributeView.class));
+      // targetDir and targetPath are both from the same file system as fs1Dir, but the srcPath is
+      // from fs2.
+      Path otherFs1File = path("b");
+      assertThrows(
+          ProviderMismatchException.class, () -> fs1Dir.move(fs2Path, fs1Dir, otherFs1File));
+      // ProviderMismatchException is thrown because of mismatch between targetDir (fs1Dir)
+      // and targetPath (fs2File).
+      assertThrows(ProviderMismatchException.class, () -> fs1Dir.move(fs1File, fs1Dir, fs2Path));
+
+      try (DirectoryStream<Path> fs2DirStream = Files.newDirectoryStream(fs2Path)) {
+        // Since we're using the default file system for the other FileSystemProvider here,
+        // SecureDirectoryStream may not be supported depending on what OS the test is running on.
+        if (fs2DirStream instanceof SecureDirectoryStream<?>) {
+          SecureDirectoryStream<Path> fs2Dir = (SecureDirectoryStream<Path>) fs2DirStream;
+          // Since fs2Dir has a different FileSystemProvider, we throw ProviderMismatchException
+          // rather than AtomicMoveNotSupportedException in this case.
+          assertThrows(
+              ProviderMismatchException.class, () -> fs1Dir.move(fs1File, fs2Dir, fs2Path));
+        }
+      }
+    }
+  }
+
+  @Test
+  public void testSecureDirectoryStream_move_doesNotFollowLinks() throws IOException {
+    Path dir = path("dir");
+    Path fileName = path("file");
+    Path file = dir.resolve(fileName);
+    Path linkName = path("link");
+
+    Files.createDirectories(dir);
+    Files.createFile(file);
+    Files.createSymbolicLink(dir.resolve(linkName), fileName);
+
+    try (SecureDirectoryStream<Path> stream = newDirStream(dir)) {
+      Path movedLinkName = path("link2");
+      stream.move(linkName, stream, movedLinkName);
+
+      Path dirRelativeLink = dir.resolve(movedLinkName);
+      assertThatPath(dirRelativeLink).noFollowLinks().isSymbolicLink();
+      assertThatPath(dirRelativeLink).isSameFileAs(file);
+    }
+  }
+
+  @SuppressWarnings("StreamResourceLeak") // stream is closed if assertion fails
+  private static SecureDirectoryStream<Path> newDirStream(Path path) throws IOException {
+    DirectoryStream<Path> stream = Files.newDirectoryStream(path);
+    try {
+      assertThat(stream).isInstanceOf(SecureDirectoryStream.class);
+    } catch (AssertionError e) {
+      try {
+        stream.close();
+      } catch (Throwable t) {
+        e.addSuppressed(t);
+      }
+      throw e;
+    }
+    return (SecureDirectoryStream<Path>) stream;
   }
 
   @SuppressWarnings("StreamResourceLeak")
