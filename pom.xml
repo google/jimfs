@@ -216,11 +216,6 @@
           <target>${java.version}</target>
           <annotationProcessorPaths>
             <path>
-              <groupId>com.google.errorprone</groupId>
-              <artifactId>error_prone_core</artifactId>
-              <version>${errorprone.version}</version>
-            </path>
-            <path>
               <groupId>com.google.guava</groupId>
               <artifactId>guava-beta-checker</artifactId>
               <version>1.0</version>
@@ -317,6 +312,13 @@
               <compilerArgument>-Xplugin:ErrorProne -Xep:Java8ApiChecker:ERROR</compilerArgument>
               <!-- Disable Beta Checker for tests -->
               <testCompilerArgument>-Xplugin:ErrorProne -Xep:BetaApi:OFF</testCompilerArgument>
+              <annotationProcessorPaths>
+                <path>
+                  <groupId>com.google.errorprone</groupId>
+                  <artifactId>error_prone_core</artifactId>
+                  <version>${errorprone.version}</version>
+                </path>
+              </annotationProcessorPaths>
               <compilerArgs>
                 <!-- https://errorprone.info/docs/installation#maven -->
                 <arg>-XDcompilePolicy=simple</arg>
