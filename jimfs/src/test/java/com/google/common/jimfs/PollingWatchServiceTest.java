@@ -21,7 +21,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.AbstractWatchService.Event;
@@ -38,24 +38,23 @@ import java.nio.file.WatchKey;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Tests for {@link PollingWatchService}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class PollingWatchServiceTest {
 
   private JimfsFileSystem fs;
   private PollingWatchService watcher;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     fs = (JimfsFileSystem) Jimfs.newFileSystem(Configuration.unix());
     watcher =
@@ -67,7 +66,7 @@ public class PollingWatchServiceTest {
             MILLISECONDS);
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException {
     watcher.close();
     fs.close();
@@ -142,7 +141,8 @@ public class PollingWatchServiceTest {
     assertThat(watcher.isPolling()).isFalse();
   }
 
-  @Test(timeout = 2000)
+  @Test
+  @Timeout(value = 2000, unit = TimeUnit.MILLISECONDS)
   public void testWatchForOneEventType() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE));
@@ -159,7 +159,8 @@ public class PollingWatchServiceTest {
         new Event<>(ENTRY_CREATE, 1, fs.getPath("baz")));
   }
 
-  @Test(timeout = 2000)
+  @Test
+  @Timeout(value = 2000, unit = TimeUnit.MILLISECONDS)
   public void testWatchForMultipleEventTypes() throws IOException, InterruptedException {
     JimfsPath path = createDirectory();
     watcher.register(path, ImmutableList.of(ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY));

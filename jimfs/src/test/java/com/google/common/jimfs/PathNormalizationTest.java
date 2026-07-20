@@ -21,22 +21,19 @@ import static com.google.common.jimfs.PathNormalization.CASE_FOLD_UNICODE;
 import static com.google.common.jimfs.PathNormalization.NFC;
 import static com.google.common.jimfs.PathNormalization.NFD;
 import static com.google.common.jimfs.TestUtils.assertNotEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.regex.Pattern;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link PathNormalization}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class PathNormalizationTest {
 
   private ImmutableSet<PathNormalization> normalizations;
@@ -324,13 +321,13 @@ public class PathNormalizationTest {
   private void assertNormalizedPatternMatches(String first, String second) {
     Pattern pattern = PathNormalization.compilePattern(first, normalizations);
     assertTrue(
-        "pattern '" + pattern + "' does not match '" + second + "'",
-        pattern.matcher(second).matches());
+        pattern.matcher(second).matches(),
+        "pattern '" + pattern + "' does not match '" + second + "'");
 
     pattern = PathNormalization.compilePattern(second, normalizations);
     assertTrue(
-        "pattern '" + pattern + "' does not match '" + first + "'",
-        pattern.matcher(first).matches());
+        pattern.matcher(first).matches(),
+        "pattern '" + pattern + "' does not match '" + first + "'");
   }
 
   /**
@@ -340,12 +337,12 @@ public class PathNormalizationTest {
   private void assertNormalizedPatternDoesNotMatch(String first, String second) {
     Pattern pattern = PathNormalization.compilePattern(first, normalizations);
     assertFalse(
-        "pattern '" + pattern + "' should not match '" + second + "'",
-        pattern.matcher(second).matches());
+        pattern.matcher(second).matches(),
+        "pattern '" + pattern + "' should not match '" + second + "'");
 
     pattern = PathNormalization.compilePattern(second, normalizations);
     assertFalse(
-        "pattern '" + pattern + "' should not match '" + first + "'",
-        pattern.matcher(first).matches());
+        pattern.matcher(first).matches(),
+        "pattern '" + pattern + "' should not match '" + first + "'");
   }
 }

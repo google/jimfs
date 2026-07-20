@@ -22,7 +22,7 @@ import static java.nio.file.attribute.AclEntryFlag.DIRECTORY_INHERIT;
 import static java.nio.file.attribute.AclEntryPermission.APPEND_DATA;
 import static java.nio.file.attribute.AclEntryPermission.DELETE;
 import static java.nio.file.attribute.AclEntryType.ALLOW;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -34,16 +34,13 @@ import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link AclAttributeProvider}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class AclAttributeProviderTest extends AbstractAttributeProviderTest<AclAttributeProvider> {
 
   private static final UserPrincipal USER = createUserPrincipal("user");

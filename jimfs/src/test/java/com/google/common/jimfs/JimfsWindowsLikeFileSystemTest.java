@@ -18,7 +18,7 @@ package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
@@ -30,16 +30,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.PatternSyntaxException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests a Windows-like file system through the public methods in {@link Files}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   @Override

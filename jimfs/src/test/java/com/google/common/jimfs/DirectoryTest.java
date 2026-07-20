@@ -20,7 +20,7 @@ import static com.google.common.jimfs.Name.PARENT;
 import static com.google.common.jimfs.Name.SELF;
 import static com.google.common.jimfs.TestUtils.regularFile;
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableSet;
@@ -29,17 +29,14 @@ import com.google.common.collect.Iterables;
 import java.util.HashSet;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link Directory}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class DirectoryTest {
 
   private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
@@ -47,7 +44,7 @@ public class DirectoryTest {
   private Directory root;
   private Directory dir;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     root = Directory.createRoot(0, fileTimeSource.now(), Name.simple("/"));
 

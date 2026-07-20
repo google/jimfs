@@ -16,7 +16,7 @@
 
 package com.google.common.jimfs;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** @author Colin Decker */
 public abstract class AbstractGlobMatcherTest extends AbstractPathMatcherTest {

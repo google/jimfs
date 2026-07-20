@@ -36,11 +36,11 @@ import static java.nio.file.StandardOpenOption.SYNC;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -92,9 +92,7 @@ import java.nio.file.attribute.UserPrincipal;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests an in-memory file system through the public APIs in {@link Files}, etc. This also acts as
@@ -106,7 +104,6 @@ import org.junit.runners.JUnit4;
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
   private static final Configuration UNIX_CONFIGURATION =

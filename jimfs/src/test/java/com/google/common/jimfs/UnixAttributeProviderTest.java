@@ -23,16 +23,13 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link UnixAttributeProvider}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 @SuppressWarnings("OctalInteger")
 public class UnixAttributeProviderTest
     extends AbstractAttributeProviderTest<UnixAttributeProvider> {

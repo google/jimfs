@@ -25,13 +25,13 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
@@ -59,9 +59,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 /**
  * Most of the behavior of {@link JimfsFileChannel} is handled by the {@link RegularFile}
@@ -70,7 +69,6 @@ import org.junit.runners.JUnit4;
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class JimfsFileChannelTest {
 
   private static FileChannel channel(RegularFile file, OpenOption... options) throws IOException {
@@ -545,7 +543,7 @@ public class JimfsFileChannelTest {
   }
 
   @Test
-  @org.junit.Ignore // flaky
+  @Disabled // flaky
   public void testCloseByInterrupt() throws Exception {
     RegularFile file = regularFile(10);
     final FileChannel channel = channel(file, READ, WRITE);
@@ -879,8 +877,8 @@ public class JimfsFileChannelTest {
           "expected the method to throw ClosedByInterruptException or "
               + "FileLockInterruptionException");
     } catch (ClosedByInterruptException | FileLockInterruptionException expected) {
-      assertFalse("expected the channel to be closed", channel.isOpen());
-      assertTrue("expected the thread to still be interrupted", Thread.interrupted());
+      assertFalse(channel.isOpen(), "expected the channel to be closed");
+      assertTrue(Thread.interrupted(), "expected the thread to still be interrupted");
     } finally {
       Thread.interrupted(); // ensure the thread isn't interrupted when this method returns
     }

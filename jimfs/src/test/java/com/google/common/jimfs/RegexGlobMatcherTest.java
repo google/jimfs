@@ -16,23 +16,20 @@
 
 package com.google.common.jimfs;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.PathMatcher;
 import java.util.regex.Pattern;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link PathMatcher} instances created by {@link GlobToRegex}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class RegexGlobMatcherTest extends AbstractGlobMatcherTest {
 
   @Override

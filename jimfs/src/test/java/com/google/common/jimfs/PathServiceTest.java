@@ -27,16 +27,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.PathMatcher;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link PathService}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class PathServiceTest {
 
   private static final ImmutableSet<PathNormalization> NO_NORMALIZATIONS = ImmutableSet.of();

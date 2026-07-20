@@ -20,7 +20,7 @@ import static com.google.common.jimfs.TestUtils.buffer;
 import static com.google.common.jimfs.TestUtils.buffers;
 import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.primitives.Bytes.concat;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;

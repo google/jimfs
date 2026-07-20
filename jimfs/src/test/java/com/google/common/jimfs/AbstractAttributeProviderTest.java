@@ -17,14 +17,14 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.attribute.FileAttributeView;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 /**
  * Abstract base class for tests of individual {@link AttributeProvider} implementations.
@@ -56,7 +56,7 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
     };
   }
 
-  @Before
+  @BeforeEach
   public void setUp() {
     this.provider = createProvider();
     this.file = Directory.create(0, fileTimeSource.now());
@@ -115,21 +115,15 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
     assertSetAndGetSucceeds(attribute, value, true);
   }
 
-  @SuppressWarnings("EmptyCatchBlock")
   protected void assertSetFails(String attribute, Object value) {
-    try {
-      provider.set(file, provider.name(), attribute, value, false);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> provider.set(file, provider.name(), attribute, value, false));
   }
 
-  @SuppressWarnings("EmptyCatchBlock")
   protected void assertSetFailsOnCreate(String attribute, Object value) {
-    try {
-      provider.set(file, provider.name(), attribute, value, true);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> provider.set(file, provider.name(), attribute, value, true));
   }
 }

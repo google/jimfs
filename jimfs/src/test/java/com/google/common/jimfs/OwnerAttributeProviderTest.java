@@ -23,16 +23,13 @@ import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.attribute.FileOwnerAttributeView;
 import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link OwnerAttributeProvider}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class OwnerAttributeProviderTest
     extends AbstractAttributeProviderTest<OwnerAttributeProvider> {
 

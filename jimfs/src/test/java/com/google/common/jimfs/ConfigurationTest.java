@@ -26,8 +26,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assert_;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -38,9 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.PosixFilePermissions;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link Configuration}, {@link Configuration.Builder} and file systems created from
@@ -48,7 +45,6 @@ import org.junit.runners.JUnit4;
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class ConfigurationTest {
 
   private static PathSubject assertThatPath(Path path) {
@@ -268,11 +264,9 @@ public class ConfigurationTest {
   }
 
   private static void assertIllegalRoots(PathType type, String first, String... more) {
-    try {
-      Configuration.builder(type).setRoots(first, more); // wrong root
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> Configuration.builder(type).setRoots(first, more)); // wrong root
   }
 
   @Test
@@ -296,17 +290,13 @@ public class ConfigurationTest {
 
   private static void assertIllegalNormalizations(
       PathNormalization first, PathNormalization... more) {
-    try {
-      Configuration.builder(PathType.unix()).setNameCanonicalNormalization(first, more);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> Configuration.builder(PathType.unix()).setNameCanonicalNormalization(first, more));
 
-    try {
-      Configuration.builder(PathType.unix()).setNameDisplayNormalization(first, more);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> Configuration.builder(PathType.unix()).setNameDisplayNormalization(first, more));
   }
 
   @Test
