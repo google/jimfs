@@ -20,8 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.jimfs.TestUtils.regularFile;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -34,17 +33,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import org.jspecify.annotations.Nullable;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link FileTree}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class FileTreeTest {
 
   /*
@@ -117,7 +113,7 @@ public class FileTreeTest {
   private File workingDirectory;
   private final Map<String, File> files = new HashMap<>();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     Directory root = Directory.createRoot(0, fileTimeSource.now(), Name.simple("/"));
     files.put("/", root);
@@ -373,11 +369,7 @@ public class FileTreeTest {
     assertThat(entry.exists()).isFalse();
     assertThat(entry.directory()).isEqualTo(files.get(parent));
 
-    try {
-      entry.file();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> entry.file());
   }
 
   @CanIgnoreReturnValue

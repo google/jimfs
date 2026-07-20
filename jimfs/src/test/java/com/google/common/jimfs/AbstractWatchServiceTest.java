@@ -24,7 +24,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -37,22 +37,19 @@ import java.nio.file.WatchService;
 import java.nio.file.Watchable;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link AbstractWatchService}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class AbstractWatchServiceTest {
 
   private AbstractWatchService watcher;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     watcher = new AbstractWatchService() {};
   }

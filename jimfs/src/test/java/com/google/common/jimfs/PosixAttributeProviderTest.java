@@ -19,7 +19,7 @@ package com.google.common.jimfs;
 import static com.google.common.jimfs.UserLookupService.createGroupPrincipal;
 import static com.google.common.jimfs.UserLookupService.createUserPrincipal;
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -30,16 +30,13 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link PosixAttributeProvider}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class PosixAttributeProviderTest
     extends AbstractAttributeProviderTest<PosixAttributeProvider> {
 

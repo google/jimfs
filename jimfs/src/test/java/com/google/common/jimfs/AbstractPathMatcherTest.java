@@ -16,9 +16,10 @@
 
 package com.google.common.jimfs;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.File;
@@ -54,11 +55,7 @@ public abstract class AbstractPathMatcherTest {
   }
 
   protected void assertSyntaxError(String pattern) {
-    try {
-      matcher(pattern);
-      fail();
-    } catch (PatternSyntaxException expected) {
-    }
+    assertThrows(PatternSyntaxException.class, () -> matcher(pattern));
 
     try {
       PathMatcher real = realMatcher(pattern);
@@ -88,12 +85,13 @@ public abstract class AbstractPathMatcherTest {
     PatternAsserter matches(String... paths) {
       for (String path : paths) {
         assertTrue(
-            "matcher '" + matcher + "' did not match '" + path + "'", matcher.matches(fake(path)));
+            matcher.matches(fake(path)),
+            "matcher '" + matcher + "' did not match '" + path + "'");
         if (realMatcher != null) {
           Path realPath = Paths.get(path);
           assertTrue(
-              "real matcher '" + realMatcher + "' did not match '" + realPath + "'",
-              realMatcher.matches(realPath));
+              realMatcher.matches(realPath),
+              "real matcher '" + realMatcher + "' did not match '" + realPath + "'");
         }
       }
       return this;
@@ -103,13 +101,13 @@ public abstract class AbstractPathMatcherTest {
     PatternAsserter doesNotMatch(String... paths) {
       for (String path : paths) {
         assertFalse(
-            "glob '" + matcher + "' should not have matched '" + path + "'",
-            matcher.matches(fake(path)));
+            matcher.matches(fake(path)),
+            "glob '" + matcher + "' should not have matched '" + path + "'");
         if (realMatcher != null) {
           Path realPath = Paths.get(path);
           assertFalse(
-              "real matcher '" + realMatcher + "' matched '" + realPath + "'",
-              realMatcher.matches(realPath));
+              realMatcher.matches(realPath),
+              "real matcher '" + realMatcher + "' matched '" + realPath + "'");
         }
       }
       return this;

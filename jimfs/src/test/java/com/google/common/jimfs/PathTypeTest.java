@@ -23,16 +23,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.PathType.ParseResult;
 import java.net.URI;
 import org.jspecify.annotations.Nullable;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link PathType}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class PathTypeTest {
 
   private static final FakePathType type = new FakePathType();

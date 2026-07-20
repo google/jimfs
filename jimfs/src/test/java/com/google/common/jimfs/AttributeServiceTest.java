@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -28,24 +28,21 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link AttributeService}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class AttributeServiceTest {
 
   private AttributeService service;
 
   private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     ImmutableSet<AttributeProvider> providers =
         ImmutableSet.of(

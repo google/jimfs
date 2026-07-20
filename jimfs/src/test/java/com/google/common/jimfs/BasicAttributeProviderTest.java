@@ -25,16 +25,13 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Set;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link BasicAttributeProvider}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class BasicAttributeProviderTest
     extends AbstractAttributeProviderTest<BasicAttributeProvider> {
 

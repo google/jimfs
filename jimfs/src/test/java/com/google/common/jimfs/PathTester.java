@@ -17,11 +17,11 @@
 package com.google.common.jimfs;
 
 import static com.google.common.base.Functions.toStringFunction;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -80,12 +80,12 @@ public final class PathTester {
 
   private void testRoot(Path path) {
     if (root != null) {
-      assertTrue(path + ".isAbsolute() should be true", path.isAbsolute());
-      assertNotNull(path + ".getRoot() should not be null", path.getRoot());
+      assertTrue(path.isAbsolute(), path + ".isAbsolute() should be true");
+      assertNotNull(path.getRoot(), path + ".getRoot() should not be null");
       assertEquals(root, path.getRoot().toString());
     } else {
-      assertFalse(path + ".isAbsolute() should be false", path.isAbsolute());
-      assertNull(path + ".getRoot() should be null", path.getRoot());
+      assertFalse(path.isAbsolute(), path + ".isAbsolute() should be false");
+      assertNull(path.getRoot(), path + ".getRoot() should be null");
     }
   }
 
@@ -158,9 +158,10 @@ public final class PathTester {
     if (root != null || !names.isEmpty()) {
       Path other = path;
       while (other != null) {
-        assertTrue(path + ".startsWith(" + other + ") should be true", path.startsWith(other));
+        assertTrue(path.startsWith(other), path + ".startsWith(" + other + ") should be true");
         assertTrue(
-            path + ".startsWith(" + other + ") should be true", path.startsWith(other.toString()));
+            path.startsWith(other.toString()),
+            path + ".startsWith(" + other + ") should be true");
         other = other.getParent();
       }
     }
@@ -171,9 +172,10 @@ public final class PathTester {
     if (root != null || !names.isEmpty()) {
       Path other = path;
       while (other != null) {
-        assertTrue(path + ".endsWith(" + other + ") should be true", path.endsWith(other));
+        assertTrue(path.endsWith(other), path + ".endsWith(" + other + ") should be true");
         assertTrue(
-            path + ".endsWith(" + other + ") should be true", path.endsWith(other.toString()));
+            path.endsWith(other.toString()),
+            path + ".endsWith(" + other + ") should be true");
         if (other.getRoot() != null && other.getNameCount() > 0) {
           other = other.subpath(0, other.getNameCount());
         } else if (other.getNameCount() > 1) {

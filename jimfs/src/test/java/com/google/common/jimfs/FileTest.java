@@ -20,16 +20,13 @@ import static com.google.common.jimfs.FileFactoryTest.fakePath;
 import static com.google.common.jimfs.TestUtils.regularFile;
 import static com.google.common.truth.Truth.assertThat;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link File}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class FileTest {
 
   private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();

@@ -18,24 +18,21 @@ package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link FileFactory}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class FileFactoryTest {
 
   private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
 
   private FileFactory factory;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     factory = new FileFactory(new HeapDisk(2, 2, 0), fileTimeSource);
   }

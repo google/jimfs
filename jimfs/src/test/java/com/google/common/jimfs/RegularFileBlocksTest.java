@@ -22,17 +22,14 @@ import com.google.common.primitives.Bytes;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.channels.Channels;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for the lower-level operations dealing with the blocks of a {@link RegularFile}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class RegularFileBlocksTest {
 
   private static final int BLOCK_SIZE = 2;
@@ -41,7 +38,7 @@ public class RegularFileBlocksTest {
 
   private RegularFile file;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     file = createFile();
   }

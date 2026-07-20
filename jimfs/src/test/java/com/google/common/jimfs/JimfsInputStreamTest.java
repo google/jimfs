@@ -19,21 +19,18 @@ package com.google.common.jimfs;
 import static com.google.common.jimfs.TestUtils.bytes;
 import static com.google.common.jimfs.TestUtils.regularFile;
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.util.concurrent.Runnables;
 import java.io.IOException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link JimfsInputStream}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public class JimfsInputStreamTest {
 

@@ -17,29 +17,26 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link HeapDisk}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class HeapDiskTest {
 
   private final FakeFileTimeSource fileTimeSource = new FakeFileTimeSource();
 
   private RegularFile blocks;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     // the HeapDisk of this file is unused; it's passed to other HeapDisks to test operations
     blocks = RegularFile.create(-1, fileTimeSource.now(), new HeapDisk(2, 2, 2));

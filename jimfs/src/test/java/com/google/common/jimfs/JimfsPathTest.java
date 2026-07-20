@@ -16,8 +16,8 @@
 
 package com.google.common.jimfs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.testing.EqualsTester;
 import com.google.common.testing.NullPointerTester;
@@ -25,16 +25,13 @@ import java.io.IOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link JimfsPath}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class JimfsPathTest {
 
   private final PathService pathService = PathServiceTest.fakeUnixPathService();

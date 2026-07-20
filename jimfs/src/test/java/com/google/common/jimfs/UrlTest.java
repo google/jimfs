@@ -31,16 +31,13 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests that {@link URL} instances can be created and used from jimfs URIs.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class UrlTest {
 
   private final FileSystem fs = Jimfs.newFileSystem(Configuration.unix());

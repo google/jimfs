@@ -20,22 +20,19 @@ import static com.google.common.jimfs.PathTypeTest.assertParseResult;
 import static com.google.common.jimfs.PathTypeTest.assertUriRoundTripsCorrectly;
 import static com.google.common.jimfs.PathTypeTest.fileSystemUri;
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import java.net.URI;
 import java.nio.file.InvalidPathException;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link UnixPathType}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class UnixPathTypeTest {
 
   @Test

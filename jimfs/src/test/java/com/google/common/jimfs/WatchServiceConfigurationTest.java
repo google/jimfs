@@ -22,30 +22,27 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
 import java.nio.file.WatchService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link WatchServiceConfiguration}.
  *
  * @author Colin Decker
  */
-@RunWith(JUnit4.class)
 public class WatchServiceConfigurationTest {
 
   private JimfsFileSystem fs;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     // kind of putting the cart before the horse maybe, but it's the easiest way to get valid
     // instances of both a FileSystemView and a PathService
     fs = (JimfsFileSystem) Jimfs.newFileSystem();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException {
     fs.close();
     fs = null;

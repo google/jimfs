@@ -27,20 +27,20 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 /** @author Colin Decker */
 public abstract class AbstractJimfsIntegrationTest {
 
   protected FileSystem fs;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
     fs = createFileSystem();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException {
     fs.close();
   }
