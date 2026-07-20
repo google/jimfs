@@ -21,7 +21,6 @@ import static com.google.common.jimfs.TestUtils.regularFile;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -373,11 +372,7 @@ public class FileTreeTest {
     assertThat(entry.exists()).isFalse();
     assertThat(entry.directory()).isEqualTo(files.get(parent));
 
-    try {
-      entry.file();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    assertThrows(IllegalStateException.class, () -> entry.file());
   }
 
   @CanIgnoreReturnValue

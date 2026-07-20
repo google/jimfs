@@ -17,7 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -115,21 +115,15 @@ public abstract class AbstractAttributeProviderTest<P extends AttributeProvider>
     assertSetAndGetSucceeds(attribute, value, true);
   }
 
-  @SuppressWarnings("EmptyCatchBlock")
   protected void assertSetFails(String attribute, Object value) {
-    try {
-      provider.set(file, provider.name(), attribute, value, false);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> provider.set(file, provider.name(), attribute, value, false));
   }
 
-  @SuppressWarnings("EmptyCatchBlock")
   protected void assertSetFailsOnCreate(String attribute, Object value) {
-    try {
-      provider.set(file, provider.name(), attribute, value, true);
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
+    assertThrows(
+        UnsupportedOperationException.class,
+        () -> provider.set(file, provider.name(), attribute, value, true));
   }
 }

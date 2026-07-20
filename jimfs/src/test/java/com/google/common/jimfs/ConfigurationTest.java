@@ -27,7 +27,6 @@ import static com.google.common.truth.Truth.assert_;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -268,11 +267,9 @@ public class ConfigurationTest {
   }
 
   private static void assertIllegalRoots(PathType type, String first, String... more) {
-    try {
-      Configuration.builder(type).setRoots(first, more); // wrong root
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    // wrong root
+    assertThrows(
+        IllegalArgumentException.class, () -> Configuration.builder(type).setRoots(first, more));
   }
 
   @Test
@@ -296,17 +293,12 @@ public class ConfigurationTest {
 
   private static void assertIllegalNormalizations(
       PathNormalization first, PathNormalization... more) {
-    try {
-      Configuration.builder(PathType.unix()).setNameCanonicalNormalization(first, more);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-
-    try {
-      Configuration.builder(PathType.unix()).setNameDisplayNormalization(first, more);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> Configuration.builder(PathType.unix()).setNameCanonicalNormalization(first, more));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> Configuration.builder(PathType.unix()).setNameDisplayNormalization(first, more));
   }
 
   @Test

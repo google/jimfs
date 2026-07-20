@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
@@ -234,12 +235,9 @@ public class JimfsAsynchronousFileChannelTest {
 
   /** Assert that the future fails, with the failure caused by {@code ClosedChannelException}. */
   private static void assertClosed(Future<?> future) throws Throwable {
-    try {
-      future.get(10, SECONDS);
-      fail("ChannelClosedException was not thrown");
-    } catch (ExecutionException expected) {
-      assertThat(expected.getCause()).isInstanceOf(ClosedChannelException.class);
-    }
+    ExecutionException expected =
+        assertThrows(ExecutionException.class, () -> future.get(10, SECONDS));
+    assertThat(expected).hasCauseThat().isInstanceOf(ClosedChannelException.class);
   }
 
   /**
@@ -247,16 +245,14 @@ public class JimfsAsynchronousFileChannelTest {
    * AsynchronousCloseException} or (rarely) {@code ClosedChannelException}.
    */
   private static void assertAsynchronousClose(Future<?> future) throws Throwable {
-    try {
-      future.get(10, SECONDS);
-      fail("no exception was thrown");
-    } catch (ExecutionException expected) {
-      Throwable t = expected.getCause();
-      if (!(t instanceof AsynchronousCloseException || t instanceof ClosedChannelException)) {
-        fail(
-            "expected AsynchronousCloseException (or in rare cases ClosedChannelException); got "
-                + t);
-      }
+    ExecutionException expected =
+        assertThrows(ExecutionException.class, () -> future.get(10, SECONDS));
+
+    Throwable t = expected.getCause();
+    if (!(t instanceof AsynchronousCloseException || t instanceof ClosedChannelException)) {
+      fail(
+          "expected AsynchronousCloseException (or in rare cases ClosedChannelException); got "
+              + t);
     }
   }
 }

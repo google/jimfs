@@ -17,6 +17,7 @@
 package com.google.common.jimfs;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -54,11 +55,7 @@ public abstract class AbstractPathMatcherTest {
   }
 
   protected void assertSyntaxError(String pattern) {
-    try {
-      matcher(pattern);
-      fail();
-    } catch (PatternSyntaxException expected) {
-    }
+    assertThrows(PatternSyntaxException.class, () -> matcher(pattern));
 
     try {
       PathMatcher real = realMatcher(pattern);
