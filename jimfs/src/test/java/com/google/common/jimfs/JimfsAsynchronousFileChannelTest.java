@@ -28,7 +28,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Runnables;
@@ -36,7 +35,6 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
@@ -141,8 +139,8 @@ public class JimfsAsynchronousFileChannelTest {
 
       channel.close();
 
-      assertAsynchronousClose(future);
-      assertAsynchronousClose(completionHandlerFuture);
+      assertClosed(future);
+      assertClosed(completionHandlerFuture);
     } finally {
       executor.shutdown();
     }
@@ -175,8 +173,8 @@ public class JimfsAsynchronousFileChannelTest {
 
       channel.close();
 
-      assertAsynchronousClose(future);
-      assertAsynchronousClose(completionHandlerFuture);
+      assertClosed(future);
+      assertClosed(completionHandlerFuture);
     } finally {
       executor.shutdown();
     }
@@ -238,21 +236,5 @@ public class JimfsAsynchronousFileChannelTest {
     ExecutionException expected =
         assertThrows(ExecutionException.class, () -> future.get(10, SECONDS));
     assertThat(expected).hasCauseThat().isInstanceOf(ClosedChannelException.class);
-  }
-
-  /**
-   * Assert that the future fails, with the failure caused by either {@code
-   * AsynchronousCloseException} or (rarely) {@code ClosedChannelException}.
-   */
-  private static void assertAsynchronousClose(Future<?> future) throws Throwable {
-    ExecutionException expected =
-        assertThrows(ExecutionException.class, () -> future.get(10, SECONDS));
-
-    Throwable t = expected.getCause();
-    if (!(t instanceof AsynchronousCloseException || t instanceof ClosedChannelException)) {
-      fail(
-          "expected AsynchronousCloseException (or in rare cases ClosedChannelException); got "
-              + t);
-    }
   }
 }
