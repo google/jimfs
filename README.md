@@ -2,7 +2,7 @@ Jimfs
 =====
 
 Jimfs is an in-memory file system for Java 8 and above, implementing the
-[java.nio.file](http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html)
+[java.nio.file](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/nio/file/package-summary.html)
 abstract file system APIs.
 
 [![Build Status](https://github.com/google/jimfs/workflows/CI/badge.svg?branch=master)](https://github.com/google/jimfs/actions)
@@ -15,7 +15,7 @@ The latest release is
 [1.3.0](https://github.com/google/jimfs/releases/tag/v1.3.0).
 
 It is available in Maven Central as
-[com.google.jimfs:jimfs:1.3.0](http://search.maven.org/#artifactdetails%7Ccom.google.jimfs%7Cjimfs%7C1.3.0%7Cjar):
+[com.google.jimfs:jimfs:1.3.0](https://central.sonatype.com/artifact/com.google.jimfs/jimfs/1.3.0/):
 
 ```xml
 <dependency>
