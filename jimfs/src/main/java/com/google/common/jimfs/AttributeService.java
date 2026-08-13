@@ -308,6 +308,11 @@ final class AttributeService {
   /** Implements {@link Files#readAttributes(Path, String, LinkOption...)}. */
   public ImmutableMap<String, Object> readAttributes(File file, String attributes) {
     String view = getViewName(attributes);
+    AttributeProvider provider = providersByName.get(view);
+    if (provider == null) {
+      throw new UnsupportedOperationException("unsupported attribute view: " + view);
+    }
+
     List<String> attrs = getAttributeNames(attributes);
 
     if (attrs.size() > 1 && attrs.contains(ALL_ATTRIBUTES)) {
@@ -318,7 +323,6 @@ final class AttributeService {
     Map<String, Object> result = new HashMap<>();
     if (attrs.size() == 1 && attrs.contains(ALL_ATTRIBUTES)) {
       // for 'view:*' format, get all keys for all providers for the view
-      AttributeProvider provider = providersByName.get(view);
       readAll(file, provider, result);
 
       for (String inheritedView : provider.inherits()) {
