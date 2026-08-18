@@ -12,16 +12,16 @@ Getting started
 ---------------
 
 The latest release is
-[1.3.0](https://github.com/google/jimfs/releases/tag/v1.3.0).
+[1.3.2](https://github.com/google/jimfs/releases/tag/v1.3.2).
 
 It is available in Maven Central as
-[com.google.jimfs:jimfs:1.3.0](https://central.sonatype.com/artifact/com.google.jimfs/jimfs/1.3.0/):
+[com.google.jimfs:jimfs:1.3.2](https://central.sonatype.com/artifact/com.google.jimfs/jimfs/1.3.2):
 
 ```xml
 <dependency>
   <groupId>com.google.jimfs</groupId>
   <artifactId>jimfs</artifactId>
-  <version>1.3.0</version>
+  <version>1.3.2</version>
 </dependency>
 ```
 
