@@ -176,25 +176,25 @@ final class FileSystemView {
   static final class EntryState {
 
     private final int fileId;
-    private final long modificationCount;
+    private final long modificationVersion;
 
     EntryState(File file) {
       this.fileId = file.id();
-      this.modificationCount = file.getModificationCount();
+      this.modificationVersion = file.getModificationVersion();
     }
 
     @Override
     public boolean equals(@Nullable Object obj) {
       if (obj instanceof EntryState) {
         EntryState other = (EntryState) obj;
-        return fileId == other.fileId && modificationCount == other.modificationCount;
+        return fileId == other.fileId && modificationVersion == other.modificationVersion;
       }
       return false;
     }
 
     @Override
     public int hashCode() {
-      return 31 * fileId + Long.hashCode(modificationCount);
+      return 31 * fileId + Long.hashCode(modificationVersion);
     }
   }
 

@@ -42,7 +42,7 @@ public abstract class File {
   private FileTime creationTime;
   private FileTime lastAccessTime;
   private FileTime lastModifiedTime;
-  private long modificationCount;
+  private long modificationVersion;
 
   // null when only the basic view is used (default)
   private @Nullable Table<String, String, Object> attributes;
@@ -169,9 +169,9 @@ public abstract class File {
     return lastModifiedTime;
   }
 
-  /** Returns the number of times this file has been modified. */
-  final synchronized long getModificationCount() {
-    return modificationCount;
+  /** Returns the current modification version of this file. */
+  final synchronized long getModificationVersion() {
+    return modificationVersion;
   }
 
   /** Sets the creation time of the file. */
@@ -187,7 +187,7 @@ public abstract class File {
   /** Sets the last modified time of the file. */
   final synchronized void setLastModifiedTime(FileTime lastModifiedTime) {
     this.lastModifiedTime = lastModifiedTime;
-    modificationCount++;
+    modificationVersion++;
   }
 
   /**
