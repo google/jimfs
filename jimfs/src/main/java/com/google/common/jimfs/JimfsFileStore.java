@@ -240,13 +240,6 @@ final class JimfsFileStore extends FileStore {
     return disk.getUnallocatedSpace();
   }
 
-  /**
-   * Returns the configured block size for this file store.
-   *
-   * <p>{@code FileStore.getBlockSize()} exists from Java 10 onward. This method is intentionally
-   * not annotated with {@code @Override} so Jimfs still compiles against Java 8; on Java 10+ it
-   * overrides the JDK method at runtime.
-   */
   @SuppressWarnings("MissingOverride") // FileStore.getBlockSize() is Java 10+
   public long getBlockSize() throws IOException {
     state.checkOpen();

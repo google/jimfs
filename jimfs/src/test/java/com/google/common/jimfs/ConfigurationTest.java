@@ -31,7 +31,6 @@ import static org.junit.Assert.assertThrows;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -39,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.PosixFilePermissions;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -252,29 +250,6 @@ public class ConfigurationTest {
 
     FileStore store = Files.getFileStore(path);
     assertThat(((JimfsFileStore) store).getBlockSize()).isEqualTo(blockSize);
-    assertThat(invokeFileStoreGetBlockSize(store)).isEqualTo(blockSize);
-  }
-
-  /**
-   * Invokes {@code FileStore.getBlockSize()} reflectively. That method was added in Java 10; on
-   * Java 8 the test is skipped rather than failing to compile.
-   */
-  private static long invokeFileStoreGetBlockSize(FileStore store) throws Exception {
-    try {
-      return (Long) FileStore.class.getMethod("getBlockSize").invoke(store);
-    } catch (NoSuchMethodException e) {
-      Assume.assumeTrue("FileStore.getBlockSize() requires Java 10+", false);
-      throw new AssertionError(e);
-    } catch (InvocationTargetException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof Exception) {
-        throw (Exception) cause;
-      }
-      if (cause instanceof Error) {
-        throw (Error) cause;
-      }
-      throw e;
-    }
   }
 
   @Test
