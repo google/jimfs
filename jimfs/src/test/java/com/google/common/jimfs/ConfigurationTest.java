@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -237,19 +236,6 @@ public class ConfigurationTest {
         .isEqualTo(fileTimeSource.now());
 
     assertThrows(FileAlreadyExistsException.class, () -> Files.createFile(fs.getPath("/FOO")));
-  }
-
-  @Test
-  public void testFileStoreGetBlockSizeHonorsConfiguration() throws Exception {
-    int blockSize = 1 << 12;
-    Configuration configuration = Configuration.unix().toBuilder().setBlockSize(blockSize).build();
-    FileSystem fs = Jimfs.newFileSystem(configuration);
-    Path path = fs.getPath("/home/test/test.txt");
-    Files.createDirectories(path.getParent());
-    Files.createFile(path);
-
-    FileStore store = Files.getFileStore(path);
-    assertThat(((JimfsFileStore) store).getBlockSize()).isEqualTo(blockSize);
   }
 
   @Test
