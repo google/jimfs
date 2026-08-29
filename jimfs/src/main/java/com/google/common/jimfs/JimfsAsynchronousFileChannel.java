@@ -116,7 +116,7 @@ final class JimfsAsynchronousFileChannel extends AsynchronousFileChannel {
     } else {
       channel.checkWritable();
     }
-    return new JimfsFileChannel.FakeFileLock(this, position, size, shared);
+    return channel.addLock(this, position, size, shared);
   }
 
   @Override
