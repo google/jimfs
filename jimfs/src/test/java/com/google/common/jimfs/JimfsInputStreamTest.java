@@ -22,7 +22,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThrows;
 
-import com.google.common.util.concurrent.Runnables;
 import java.io.IOException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -211,8 +210,7 @@ public class JimfsInputStreamTest {
 
     RegularFile file = regularFile(0);
     file.write(0, b, 0, b.length);
-    return new JimfsInputStream(
-        file, new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()));
+    return new JimfsInputStream(file, new FileSystemState(new FakeFileTimeSource(), () -> {}));
   }
 
   private static void assertEmpty(JimfsInputStream in) throws IOException {

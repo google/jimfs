@@ -26,7 +26,6 @@ import static org.junit.Assert.assertThrows;
 import com.google.common.collect.ImmutableList;
 import com.google.common.jimfs.AbstractWatchService.Event;
 import com.google.common.jimfs.AbstractWatchService.Key;
-import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -62,7 +61,7 @@ public class PollingWatchServiceTest {
         new PollingWatchService(
             fs.getDefaultView(),
             fs.getPathService(),
-            new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()),
+            new FileSystemState(new FakeFileTimeSource(), () -> {}),
             4,
             MILLISECONDS);
   }

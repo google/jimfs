@@ -22,7 +22,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertThrows;
 
-import com.google.common.util.concurrent.Runnables;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -161,7 +160,7 @@ public class JimfsOutputStreamTest {
   private static JimfsOutputStream newOutputStream(boolean append) {
     RegularFile file = regularFile(0);
     return new JimfsOutputStream(
-        file, append, new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()));
+        file, append, new FileSystemState(new FakeFileTimeSource(), () -> {}));
   }
 
   @SuppressWarnings("GuardedByChecker")

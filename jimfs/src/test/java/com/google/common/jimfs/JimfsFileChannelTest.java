@@ -35,7 +35,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.testing.NullPointerTester;
-import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
@@ -77,7 +76,7 @@ public class JimfsFileChannelTest {
     return new JimfsFileChannel(
         file,
         Options.getOptionsForChannel(ImmutableSet.copyOf(options)),
-        new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()));
+        new FileSystemState(new FakeFileTimeSource(), () -> {}));
   }
 
   @Test
@@ -235,7 +234,7 @@ public class JimfsFileChannelTest {
         new JimfsFileChannel(
             file,
             ImmutableSet.<OpenOption>of(READ, WRITE),
-            new FileSystemState(fileTimeSource, Runnables.doNothing()));
+            new FileSystemState(fileTimeSource, () -> {}));
 
     // accessedTime
     FileTime accessTime = file.getLastAccessTime();

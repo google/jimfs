@@ -32,20 +32,13 @@ final class JimfsFileSystems {
 
   private JimfsFileSystems() {}
 
-  private static final Runnable DO_NOTHING =
-      new Runnable() {
-        @Override
-        public void run() {}
-      };
-
   /**
    * Returns a {@code Runnable} that will remove the file system with the given {@code URI} from the
    * system provider's cache when called.
    */
   private static Runnable removeFileSystemRunnable(URI uri) {
     if (Jimfs.systemProvider == null) {
-      // TODO(cgdecker): Use Runnables.doNothing() when it's out of @Beta
-      return DO_NOTHING;
+      return () -> {};
     }
 
     // We have to invoke the SystemJimfsFileSystemProvider.removeFileSystemRunnable(URI)

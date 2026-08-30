@@ -30,7 +30,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Runnables;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
@@ -62,7 +61,7 @@ public class JimfsAsynchronousFileChannelTest {
         new JimfsFileChannel(
             file,
             Options.getOptionsForChannel(ImmutableSet.copyOf(options)),
-            new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()));
+            new FileSystemState(new FakeFileTimeSource(), () -> {}));
     return new JimfsAsynchronousFileChannel(channel, executor);
   }
 
