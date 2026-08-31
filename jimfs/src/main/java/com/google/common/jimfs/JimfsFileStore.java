@@ -240,6 +240,12 @@ final class JimfsFileStore extends FileStore {
     return disk.getUnallocatedSpace();
   }
 
+  @SuppressWarnings("MissingOverride") // FileStore#getBlockSize() was added in JDK 10
+  public long getBlockSize() {
+    state.checkOpen();
+    return disk.blockSize();
+  }
+
   @Override
   public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
     state.checkOpen();

@@ -228,6 +228,9 @@ public class ConfigurationTest {
     assertThat(fs.supportedFileAttributeViews()).containsExactly("basic", "owner", "posix", "unix");
 
     Files.createFile(fs.getPath("/foo"));
+    // cast is required for testing on JDK 8 because FileStore#getBlockSize() was added in JDK 10
+    JimfsFileStore fileStore = (JimfsFileStore) Iterables.getOnlyElement(fs.getFileStores());
+    assertThat(fileStore.getBlockSize()).isEqualTo(10);
     assertThat(Files.getAttribute(fs.getPath("/foo"), "posix:permissions"))
         .isEqualTo(PosixFilePermissions.fromString("---------"));
     assertThat(Files.getAttribute(fs.getPath("/foo"), "creationTime"))

@@ -142,6 +142,9 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
 
     long totalSpace = 1024 * 1024 * 1024; // 1 GB
     assertThat(fileStore.getTotalSpace()).isEqualTo(totalSpace);
+    // cast is required for testing on JDK 8 because FileStore#getBlockSize() was added in JDK 10
+    JimfsFileStore jimfsFileStore = (JimfsFileStore) fileStore;
+    assertThat(jimfsFileStore.getBlockSize()).isEqualTo(8192);
     assertThat(fileStore.getUnallocatedSpace()).isEqualTo(totalSpace);
     assertThat(fileStore.getUsableSpace()).isEqualTo(totalSpace);
 
