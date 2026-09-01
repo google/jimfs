@@ -28,12 +28,14 @@ import com.google.common.jimfs.AbstractWatchService.Event;
 import com.google.common.jimfs.AbstractWatchService.Key;
 import com.google.common.util.concurrent.Uninterruptibles;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
+import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -209,6 +211,38 @@ public class PollingWatchServiceTest {
         ImmutableList.<WatchEvent<?>>of(
             new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
             new Event<>(ENTRY_DELETE, 1, fs.getPath("foo"))));
+  }
+
+  @Test(timeout = 2000)
+  public void testWatchForModificationWhenModifiedTimeDoesNotChange()
+      throws IOException, InterruptedException {
+    watcher.close();
+    fs.close();
+
+    FileTime fixedTime = FileTime.fromMillis(0);
+    fs =
+        (JimfsFileSystem)
+            Jimfs.newFileSystem(
+                Configuration.unix()
+                    .toBuilder()
+                    .setFileTimeSource(() -> fixedTime)
+                    .build());
+    watcher =
+        new PollingWatchService(
+            fs.getDefaultView(),
+            fs.getPathService(),
+            new FileSystemState(new FakeFileTimeSource(), Runnables.doNothing()),
+            4,
+            MILLISECONDS);
+
+    JimfsPath path = createDirectory();
+    Path file = Files.write(path.resolve("foo"), "before".getBytes(StandardCharsets.UTF_8));
+    watcher.register(path, ImmutableList.of(ENTRY_MODIFY));
+
+    Files.write(file, "after".getBytes(StandardCharsets.UTF_8));
+
+    assertThat(Files.getLastModifiedTime(file)).isEqualTo(fixedTime);
+    assertWatcherHasEvents(new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")));
   }
 
   private void assertWatcherHasEvents(WatchEvent<?>... events) throws InterruptedException {
