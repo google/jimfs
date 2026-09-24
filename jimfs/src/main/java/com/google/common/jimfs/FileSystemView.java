@@ -149,12 +149,9 @@ final class FileSystemView {
     }
   }
 
-  /**
-   * Returns a snapshot mapping the names of each file in the directory at the given path to the
-   * last modified time of that file.
-   */
-  public ImmutableMap<Name, FileTime> snapshotModifiedTimes(JimfsPath path) throws IOException {
-    ImmutableMap.Builder<Name, FileTime> modifiedTimes = ImmutableMap.builder();
+  /** Returns a snapshot mapping each entry in the given directory to its current state. */
+  public ImmutableMap<Name, EntryState> snapshotEntryStates(JimfsPath path) throws IOException {
+    ImmutableMap.Builder<Name, EntryState> entryStates = ImmutableMap.builder();
 
     store.readLock().lock();
     try {
@@ -165,13 +162,39 @@ final class FileSystemView {
 
       for (DirectoryEntry entry : dir) {
         if (!entry.name().equals(Name.SELF) && !entry.name().equals(Name.PARENT)) {
-          modifiedTimes.put(entry.name(), entry.file().getLastModifiedTime());
+          entryStates.put(entry.name(), new EntryState(entry.file()));
         }
       }
 
-      return modifiedTimes.build();
+      return entryStates.build();
     } finally {
       store.readLock().unlock();
+    }
+  }
+
+  /** State used to determine whether an entry changed between directory snapshots. */
+  static final class EntryState {
+
+    private final int fileId;
+    private final long modificationVersion;
+
+    EntryState(File file) {
+      this.fileId = file.id();
+      this.modificationVersion = file.getModificationVersion();
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+      if (obj instanceof EntryState) {
+        EntryState other = (EntryState) obj;
+        return fileId == other.fileId && modificationVersion == other.modificationVersion;
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * fileId + Long.hashCode(modificationVersion);
     }
   }
 
