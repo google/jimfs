@@ -385,7 +385,7 @@ final class JimfsPath implements Path {
   @Override
   public File toFile() {
     // documented as unsupported for anything but the default file system
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("You can not do .toFile() on a jimfs Path object");
   }
 
   @Override
