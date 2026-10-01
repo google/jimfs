@@ -32,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchService;
 import java.nio.file.Watchable;
-import java.nio.file.attribute.FileTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -194,17 +193,17 @@ final class PollingWatchService extends AbstractWatchService {
       };
 
   private Snapshot takeSnapshot(JimfsPath path) throws IOException {
-    return new Snapshot(view.snapshotModifiedTimes(path));
+    return new Snapshot(view.snapshotEntryStates(path));
   }
 
   /** Snapshot of the state of a directory at a particular moment. */
   private final class Snapshot {
 
-    /** Maps directory entry names to last modified times. */
-    private final ImmutableMap<Name, FileTime> modifiedTimes;
+    /** Maps directory entry names to their state at the time of the snapshot. */
+    private final ImmutableMap<Name, FileSystemView.EntryState> entryStates;
 
-    Snapshot(Map<Name, FileTime> modifiedTimes) {
-      this.modifiedTimes = ImmutableMap.copyOf(modifiedTimes);
+    Snapshot(Map<Name, FileSystemView.EntryState> entryStates) {
+      this.entryStates = ImmutableMap.copyOf(entryStates);
     }
 
     /**
@@ -216,7 +215,7 @@ final class PollingWatchService extends AbstractWatchService {
 
       if (key.subscribesTo(ENTRY_CREATE)) {
         Set<Name> created =
-            Sets.difference(newState.modifiedTimes.keySet(), modifiedTimes.keySet());
+            Sets.difference(newState.entryStates.keySet(), entryStates.keySet());
 
         for (Name name : created) {
           key.post(new Event<>(ENTRY_CREATE, 1, pathService.createFileName(name)));
@@ -226,7 +225,7 @@ final class PollingWatchService extends AbstractWatchService {
 
       if (key.subscribesTo(ENTRY_DELETE)) {
         Set<Name> deleted =
-            Sets.difference(modifiedTimes.keySet(), newState.modifiedTimes.keySet());
+            Sets.difference(entryStates.keySet(), newState.entryStates.keySet());
 
         for (Name name : deleted) {
           key.post(new Event<>(ENTRY_DELETE, 1, pathService.createFileName(name)));
@@ -235,12 +234,12 @@ final class PollingWatchService extends AbstractWatchService {
       }
 
       if (key.subscribesTo(ENTRY_MODIFY)) {
-        for (Map.Entry<Name, FileTime> entry : modifiedTimes.entrySet()) {
+        for (Map.Entry<Name, FileSystemView.EntryState> entry : entryStates.entrySet()) {
           Name name = entry.getKey();
-          FileTime modifiedTime = entry.getValue();
+          FileSystemView.EntryState state = entry.getValue();
 
-          FileTime newModifiedTime = newState.modifiedTimes.get(name);
-          if (newModifiedTime != null && !modifiedTime.equals(newModifiedTime)) {
+          FileSystemView.EntryState newEntryState = newState.entryStates.get(name);
+          if (newEntryState != null && !state.equals(newEntryState)) {
             key.post(new Event<>(ENTRY_MODIFY, 1, pathService.createFileName(name)));
             changesPosted = true;
           }
