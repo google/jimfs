@@ -21,6 +21,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
@@ -209,6 +210,22 @@ public class PollingWatchServiceTest {
         ImmutableList.<WatchEvent<?>>of(
             new Event<>(ENTRY_MODIFY, 1, fs.getPath("foo")),
             new Event<>(ENTRY_DELETE, 1, fs.getPath("foo"))));
+  }
+
+  @Test
+  public void testDeletingWatchedDirectoryCancelsAndSignalsKey() throws Exception {
+    JimfsPath path = createDirectory();
+    Key key = watcher.register(path, ImmutableList.of(ENTRY_CREATE, ENTRY_DELETE));
+
+    Files.delete(path);
+
+    // the key should be queued once the poller notices the directory is gone, so that a thread
+    // blocked in take() wakes up and can see that the key is no longer valid
+    WatchKey signalled = watcher.poll(1, SECONDS);
+    assertThat(signalled).isSameInstanceAs(key);
+    assertThat(key.isValid()).isFalse();
+    assertThat(key.reset()).isFalse();
+    assertThat(watcher.isPolling()).isFalse();
   }
 
   private void assertWatcherHasEvents(WatchEvent<?>... events) throws InterruptedException {
