@@ -185,8 +185,10 @@ final class PollingWatchService extends AbstractWatchService {
                 }
               } catch (IOException e) {
                 // snapshot failed; assume file does not exist or isn't a directory
-                // and cancel the key
+                // and cancel the key, then signal it so that it's queued and anyone waiting on
+                // the watch service can see that it is no longer valid
                 key.cancel();
+                key.signal();
               }
             }
           }
