@@ -38,6 +38,7 @@ import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.ClosedChannelException;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.OpenOption;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -203,13 +204,42 @@ public class JimfsAsynchronousFileChannelTest {
   }
 
   private static void checkAsyncLock(AsynchronousFileChannel channel) throws Throwable {
-    assertNotNull(channel.lock().get());
-    assertNotNull(channel.lock(0, 10, true).get());
+    try (FileLock lock = channel.lock().get()) {
+      assertNotNull(lock);
+    }
+    try (FileLock lock = channel.lock(0, 10, true).get()) {
+      assertNotNull(lock);
+    }
 
     SettableFuture<FileLock> future = SettableFuture.create();
     channel.lock(0, 10, true, null, setFuture(future));
 
-    assertNotNull(future.get(10, SECONDS));
+    try (FileLock lock = future.get(10, SECONDS)) {
+      assertNotNull(lock);
+    }
+  }
+
+  @Test
+  public void testLock_overlappingLocks() throws Throwable {
+    RegularFile file = regularFile(15);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    try {
+      JimfsAsynchronousFileChannel channel = channel(file, executor, READ, WRITE);
+
+      try (FileLock lock = channel.lock().get()) {
+        ExecutionException expected =
+            assertThrows(ExecutionException.class, () -> channel.lock(0, 10, true).get());
+        assertThat(expected.getCause()).isInstanceOf(OverlappingFileLockException.class);
+      }
+
+      // after releasing, the lock can be acquired again
+      FileLock lock = channel.lock(0, 10, true).get();
+      assertNotNull(lock);
+      lock.close();
+    } finally {
+      executor.shutdown();
+    }
   }
 
   /**

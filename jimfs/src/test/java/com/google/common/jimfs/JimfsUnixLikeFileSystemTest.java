@@ -39,6 +39,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -62,8 +63,10 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.ClosedDirectoryStreamException;
@@ -1372,6 +1375,35 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
       byte[] expected = new byte[20];
       System.arraycopy(preFilledBytes(10), 0, expected, 0, 10);
       assertArrayEquals(expected, buffer.array());
+    }
+  }
+
+  @Test
+  public void testLock_overlappingLocks() throws IOException {
+    try (FileChannel channel = FileChannel.open(path("/test"), CREATE, READ, WRITE)) {
+      // locking the same file twice from this JVM throws OverlappingFileLockException
+      try (FileLock lock = channel.lock()) {
+        assertThrows(OverlappingFileLockException.class, () -> channel.lock());
+        assertThrows(OverlappingFileLockException.class, () -> channel.tryLock());
+      }
+
+      // once released, the file can be locked again
+      assertNotNull(channel.lock(0, 10, false));
+    }
+  }
+
+  @Test
+  public void testLock_overlappingLocksOnOtherChannels() throws IOException {
+    Path file = path("/test");
+    try (FileChannel channel1 = FileChannel.open(file, CREATE, READ, WRITE)) {
+      FileLock lock = channel1.lock();
+      try (FileChannel channel2 = FileChannel.open(file, READ, WRITE)) {
+        assertThrows(OverlappingFileLockException.class, () -> channel2.tryLock());
+      }
+      lock.release();
+      try (FileChannel channel2 = FileChannel.open(file, READ, WRITE)) {
+        assertNotNull(channel2.tryLock());
+      }
     }
   }
 

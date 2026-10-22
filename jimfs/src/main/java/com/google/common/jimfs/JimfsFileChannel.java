@@ -74,6 +74,10 @@ final class JimfsFileChannel extends FileChannel {
   @GuardedBy("this")
   private long position;
 
+  /** Locks acquired through this channel; released when the channel is closed. */
+  @GuardedBy("myLocks")
+  private final Set<FakeFileLock> myLocks = new HashSet<FakeFileLock>();
+
   public JimfsFileChannel(
       RegularFile file, Set<OpenOption> options, FileSystemState fileSystemState) {
     this.file = file;
@@ -607,7 +611,7 @@ final class JimfsFileChannel extends FileChannel {
     try {
       begin();
       completed = true;
-      return new FakeFileLock(this, position, size, shared);
+      return addLock(this, position, size, shared);
     } finally {
       try {
         end(completed);
@@ -622,7 +626,26 @@ final class JimfsFileChannel extends FileChannel {
     checkLockArguments(position, size, shared);
 
     // tryLock is not interruptible
-    return new FakeFileLock(this, position, size, shared);
+    return addLock(this, position, size, shared);
+  }
+
+  /** Creates a lock for this channel and registers it with the underlying file. */
+  private FileLock addLock(FileChannel lockChannel, long position, long size, boolean shared) {
+    return addLock(new FakeFileLock(file, lockChannel, position, size, shared));
+  }
+
+  /** Creates a lock for the given asynchronous channel and registers it with the underlying file. */
+  FileLock addLock(AsynchronousFileChannel lockChannel, long position, long size, boolean shared) {
+    return addLock(new FakeFileLock(file, lockChannel, position, size, shared));
+  }
+
+  private FileLock addLock(FakeFileLock lock) {
+    // throws OverlappingFileLockException if the lock overlaps one already held on the file
+    file.addLock(lock);
+    synchronized (myLocks) {
+      myLocks.add(lock);
+    }
+    return lock;
   }
 
   private void checkLockArguments(long position, long size, boolean shared) throws IOException {
@@ -638,8 +661,17 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   protected void implCloseChannel() {
-    // interrupt the current blocking threads, if any, causing them to throw
-    // ClosedByInterruptException
+    // release any locks acquired through this channel, then interrupt the current blocking
+    // threads, if any, causing them to throw ClosedByInterruptException
+    synchronized (myLocks) {
+      for (FakeFileLock lock : myLocks) {
+        try {
+          lock.close();
+        } catch (IOException e) {
+          // can't happen: release() just invalidates the lock and removes it from the file
+        }
+      }
+    }
     try {
       synchronized (blockingThreads) {
         for (Thread thread : blockingThreads) {
@@ -652,17 +684,29 @@ final class JimfsFileChannel extends FileChannel {
     }
   }
 
-  /** A file lock that does nothing, since only one JVM process has access to this file system. */
+  /**
+   * A file lock. No locks are held with other processes, since only one JVM process has access to
+   * this file system, but overlapping locks from this JVM are rejected to match the behavior
+   * documented for {@link FileChannel}.
+   */
   static final class FakeFileLock extends FileLock {
 
+    private final RegularFile file;
     private final AtomicBoolean valid = new AtomicBoolean(true);
 
-    public FakeFileLock(FileChannel channel, long position, long size, boolean shared) {
+    FakeFileLock(RegularFile file, FileChannel channel, long position, long size, boolean shared) {
       super(channel, position, size, shared);
+      this.file = file;
     }
 
-    public FakeFileLock(AsynchronousFileChannel channel, long position, long size, boolean shared) {
+    FakeFileLock(
+        RegularFile file,
+        AsynchronousFileChannel channel,
+        long position,
+        long size,
+        boolean shared) {
       super(channel, position, size, shared);
+      this.file = file;
     }
 
     @Override
@@ -672,7 +716,9 @@ final class JimfsFileChannel extends FileChannel {
 
     @Override
     public void release() throws IOException {
-      valid.set(false);
+      if (valid.compareAndSet(true, false)) {
+        file.removeLock(this);
+      }
     }
   }
 }
