@@ -47,6 +47,7 @@ import java.nio.channels.FileLock;
 import java.nio.channels.FileLockInterruptionException;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.OpenOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Duration;
@@ -499,18 +500,86 @@ public class JimfsFileChannelTest {
   public void testLock() throws IOException {
     FileChannel channel = channel(regularFile(10), READ, WRITE);
 
-    assertNotNull(channel.lock());
-    assertNotNull(channel.lock(0, 10, false));
-    assertNotNull(channel.lock(0, 10, true));
-
-    assertNotNull(channel.tryLock());
-    assertNotNull(channel.tryLock(0, 10, false));
-    assertNotNull(channel.tryLock(0, 10, true));
-
     FileLock lock = channel.lock();
+    assertNotNull(lock);
     assertTrue(lock.isValid());
     lock.release();
     assertFalse(lock.isValid());
+
+    lock = channel.lock(0, 10, false);
+    assertNotNull(lock);
+    assertTrue(lock.isValid());
+    lock.release();
+
+    lock = channel.lock(0, 10, true);
+    assertNotNull(lock);
+    assertTrue(lock.isValid());
+    lock.release();
+
+    lock = channel.tryLock();
+    assertNotNull(lock);
+    assertTrue(lock.isValid());
+    lock.release();
+
+    lock = channel.tryLock(0, 10, false);
+    assertNotNull(lock);
+    assertTrue(lock.isValid());
+    lock.release();
+
+    lock = channel.tryLock(0, 10, true);
+    assertNotNull(lock);
+    assertTrue(lock.isValid());
+    lock.release();
+  }
+
+  @Test
+  public void testLock_overlappingLocksThrow() throws IOException {
+    FileChannel channel = channel(regularFile(10), READ, WRITE);
+
+    // a whole-file lock overlaps any lock on the same file
+    FileLock wholeFileLock = channel.lock();
+    assertThrows(OverlappingFileLockException.class, () -> channel.lock());
+    assertThrows(OverlappingFileLockException.class, () -> channel.tryLock(0, 10, false));
+    assertThrows(OverlappingFileLockException.class, () -> channel.tryLock(0, 10, true));
+    wholeFileLock.release();
+
+    // a lock on a region overlaps any lock covering part of that region
+    FileLock regionLock = channel.lock(0, 10, false);
+    assertThrows(OverlappingFileLockException.class, () -> channel.tryLock(0, 5, true));
+    assertThrows(OverlappingFileLockException.class, () -> channel.tryLock(5, 5, true));
+    assertThrows(OverlappingFileLockException.class, () -> channel.tryLock(0, 10, false));
+    regionLock.release();
+
+    // adjacent, non-overlapping regions can both be locked
+    try (FileLock lock1 = channel.lock(0, 5, false)) {
+      assertNotNull(channel.tryLock(5, 5, false));
+    }
+  }
+
+  @Test
+  public void testLock_overlappingLocksOnOtherChannels() throws IOException {
+    RegularFile file = regularFile(10);
+    FileChannel channel1 = channel(file, READ, WRITE);
+    FileChannel channel2 = channel(file, READ, WRITE);
+
+    try (FileLock lock = channel1.lock()) {
+      assertThrows(OverlappingFileLockException.class, () -> channel2.tryLock());
+    }
+    assertNotNull(channel2.tryLock());
+  }
+
+  @Test
+  public void testLock_releasedOnChannelClose() throws IOException {
+    RegularFile file = regularFile(10);
+    FileChannel channel1 = channel(file, READ, WRITE);
+
+    FileLock lock = channel1.lock();
+    channel1.close();
+    assertFalse(lock.isValid());
+
+    // the lock is released, so another channel can lock the file
+    FileChannel channel2 = channel(file, READ, WRITE);
+    assertNotNull(channel2.tryLock());
   }
 
   @Test
