@@ -57,7 +57,7 @@ public class RegularFileTest {
     for (ReuseStrategy reuseStrategy : EnumSet.allOf(ReuseStrategy.class)) {
       TestSuite suiteForReuseStrategy = new TestSuite(reuseStrategy.toString());
       Set<List<Integer>> sizeOptions =
-          Sets.cartesianProduct(ImmutableList.of(BLOCK_SIZES, CACHE_SIZES));
+              Sets.cartesianProduct(ImmutableList.of(BLOCK_SIZES, CACHE_SIZES));
       for (List<Integer> options : sizeOptions) {
         int blockSize = options.get(0);
         int cacheSize = options.get(1);
@@ -85,17 +85,17 @@ public class RegularFileTest {
   public static final ImmutableSet<Integer> CACHE_SIZES = ImmutableSet.of(0, 4, 16, 128, -1);
 
   private static final ImmutableList<Method> TEST_METHODS =
-      FluentIterable.from(Arrays.asList(RegularFileTestRunner.class.getDeclaredMethods()))
-          .filter(
-              new Predicate<Method>() {
-                @Override
-                public boolean apply(Method method) {
-                  return method.getName().startsWith("test")
-                      && Modifier.isPublic(method.getModifiers())
-                      && method.getParameterTypes().length == 0;
-                }
-              })
-          .toList();
+          FluentIterable.from(Arrays.asList(RegularFileTestRunner.class.getDeclaredMethods()))
+                  .filter(
+                          new Predicate<Method>() {
+                            @Override
+                            public boolean apply(Method method) {
+                              return method.getName().startsWith("test")
+                                      && Modifier.isPublic(method.getModifiers())
+                                      && method.getParameterTypes().length == 0;
+                            }
+                          })
+                  .toList();
 
   /**
    * Different strategies for handling reuse of disks and/or files between tests, intended to ensure
@@ -178,9 +178,17 @@ public class RegularFileTest {
 
     protected RegularFile file;
 
+    // Constructor used when manually creating tests with a specific configuration.
     public RegularFileTestRunner(String methodName, TestConfiguration configuration) {
       super(methodName);
       this.configuration = configuration;
+    }
+
+    // Added public constructor with a single String parameter to satisfy JUnit's requirements.
+    public RegularFileTestRunner(String name) {
+      super(name);
+      // Default configuration: using blockSize 8192, cacheSize -1, and NEW_DISK strategy.
+      this.configuration = new TestConfiguration(8192, -1, ReuseStrategy.NEW_DISK);
     }
 
     @Override
@@ -344,21 +352,21 @@ public class RegularFileTest {
     }
 
     public void testEmpty_transferFrom_positionGreaterThanSize_countEqualsSrcSize()
-        throws IOException {
+            throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("111111")), 4, 6);
       assertEquals(0, transferred);
       assertContentEquals(bytes(), file);
     }
 
     public void testEmpty_transferFrom_positionGreaterThanSize_countLessThanSrcSize()
-        throws IOException {
+            throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("111111")), 4, 3);
       assertEquals(0, transferred);
       assertContentEquals(bytes(), file);
     }
 
     public void testEmpty_transferFrom_positionGreaterThanSize_countGreaterThanSrcSize()
-        throws IOException {
+            throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("111111")), 4, 12);
       assertEquals(0, transferred);
       assertContentEquals(bytes(), file);
@@ -371,21 +379,21 @@ public class RegularFileTest {
     }
 
     public void testEmpty_transferFrom_fromStart_noBytes_countGreaterThanSrcSize()
-        throws IOException {
+            throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("")), 0, 10);
       assertEquals(0, transferred);
       assertContentEquals(bytes(), file);
     }
 
     public void testEmpty_transferFrom_postionGreaterThanSrcSize_noBytes_countEqualsSrcSize()
-        throws IOException {
+            throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("")), 5, 0);
       assertEquals(0, transferred);
       assertContentEquals(bytes(), file);
     }
 
     public void testEmpty_transferFrom_postionGreaterThanSrcSize_noBytes_countGreaterThanSrcSize()
-        throws IOException {
+            throws IOException {
       long transferred = file.transferFrom(new ByteBufferChannel(buffer("")), 5, 10);
       assertEquals(0, transferred);
       assertContentEquals(bytes(), file);
@@ -790,7 +798,7 @@ public class RegularFileTest {
     }
 
     public void testNonEmpty_transferFrom_toMiddle_transferGoesBeyondContentSize()
-        throws IOException {
+            throws IOException {
       fillContent("222222");
       ByteBufferChannel channel = new ByteBufferChannel(buffer("111111"));
       assertEquals(6, file.transferFrom(channel, 4, 6));
