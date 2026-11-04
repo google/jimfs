@@ -17,6 +17,7 @@
 package com.google.common.jimfs;
 
 import static com.google.common.truth.Truth.assertThat;
+import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static org.junit.Assert.assertThrows;
 
@@ -63,6 +64,18 @@ public class JimfsWindowsLikeFileSystemTest extends AbstractJimfsIntegrationTest
     assertThat(fs.supportedFileAttributeViews())
         .containsExactly("basic", "owner", "dos", "acl", "user");
     assertThat(fs.provider()).isInstanceOf(JimfsFileSystemProvider.class);
+  }
+
+  @Test
+  public void testWrite_danglingSymbolicLinkToAnotherRoot() throws IOException {
+    Files.createDirectory(path("E:\\targets"));
+    Files.createSymbolicLink(path("C:\\link"), path("E:\\targets\\file"));
+
+    Files.write(path("C:\\link"), new byte[] {1, 2, 3});
+
+    assertThatPath("E:\\targets\\file").containsBytes(1, 2, 3);
+    assertThatPath("C:\\link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("E:\\targets\\file");
+    assertThatPath("E:\\targets\\link").doesNotExist();
   }
 
   @Test
