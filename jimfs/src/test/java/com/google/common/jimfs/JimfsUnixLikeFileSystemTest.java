@@ -1169,6 +1169,135 @@ public class JimfsUnixLikeFileSystemTest extends AbstractJimfsIntegrationTest {
   }
 
   @Test
+  public void testOutputStream_danglingSymbolicLinkWithRelativeTarget() throws IOException {
+    Files.createDirectory(path("/links"));
+    Files.createDirectory(path("/targets"));
+    Files.createSymbolicLink(path("/links/link"), path("../targets/file"));
+
+    try (OutputStream out = Files.newOutputStream(path("/links/link"))) {
+      out.write(new byte[] {1, 2, 3});
+    }
+
+    assertThatPath("/targets/file").containsBytes(1, 2, 3);
+    assertThatPath("/links/link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("../targets/file");
+    assertThatPath("/targets/link").doesNotExist();
+  }
+
+  @Test
+  public void testOutputStream_danglingSymbolicLinkWithAbsoluteTarget() throws IOException {
+    Files.createDirectory(path("/targets"));
+    Files.createSymbolicLink(path("link"), path("/targets/file"));
+
+    try (OutputStream out = Files.newOutputStream(path("link"), CREATE, APPEND)) {
+      out.write(new byte[] {1, 2, 3});
+    }
+
+    assertThatPath("/targets/file").containsBytes(1, 2, 3);
+    assertThatPath("link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("/targets/file");
+  }
+
+  @Test
+  public void testOutputStream_danglingSymbolicLinkChain() throws IOException {
+    Files.createDirectory(path("/links"));
+    Files.createDirectory(path("/targets"));
+    Files.createSymbolicLink(path("/alias"), path("/links"));
+    Files.createSymbolicLink(path("/links/first"), path("second"));
+    Files.createSymbolicLink(path("/links/second"), path("../targets/file"));
+
+    Files.write(path("/alias/first"), new byte[] {1, 2, 3});
+
+    assertThatPath("/targets/file").containsBytes(1, 2, 3);
+    assertThatPath("/alias", NOFOLLOW_LINKS).isSymbolicLink().withTarget("/links");
+    assertThatPath("/links/first", NOFOLLOW_LINKS).isSymbolicLink().withTarget("second");
+    assertThatPath("/links/second", NOFOLLOW_LINKS).isSymbolicLink().withTarget("../targets/file");
+  }
+
+  @Test
+  public void testByteChannel_danglingSymbolicLinkWithInitialAttributes() throws IOException {
+    Files.createSymbolicLink(path("link"), path("file"));
+    Set<PosixFilePermission> permissions = PosixFilePermissions.fromString("rw-------");
+    try (SeekableByteChannel channel =
+        Files.newByteChannel(
+            path("link"),
+            ImmutableSet.of(CREATE, WRITE),
+            PosixFilePermissions.asFileAttribute(permissions))) {
+      channel.write(ByteBuffer.wrap(new byte[] {1, 2, 3}));
+    }
+
+    assertThatPath("file").containsBytes(1, 2, 3);
+    assertThat(Files.getPosixFilePermissions(path("file"))).isEqualTo(permissions);
+    assertThatPath("link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("file");
+  }
+
+  @Test
+  public void testFileChannel_danglingSymbolicLink() throws IOException {
+    Files.createSymbolicLink(path("link"), path("file"));
+
+    try (FileChannel channel = FileChannel.open(path("link"), CREATE, WRITE)) {
+      channel.write(ByteBuffer.wrap(new byte[] {1, 2, 3}));
+    }
+
+    assertThatPath("file").containsBytes(1, 2, 3);
+    assertThatPath("link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("file");
+  }
+
+  @Test
+  public void testOutputStream_danglingSymbolicLinkWithCreateNew() throws IOException {
+    Path link = Files.createSymbolicLink(path("link"), path("file"));
+
+    assertThrows(
+        FileAlreadyExistsException.class, () -> Files.newOutputStream(link, CREATE, CREATE_NEW));
+
+    assertThatPath("file").doesNotExist();
+    assertThatPath("link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("file");
+  }
+
+  @Test
+  public void testByteChannel_danglingSymbolicLinkWithNoFollowLinks() throws IOException {
+    Path link = Files.createSymbolicLink(path("link"), path("file"));
+
+    assertThrows(
+        FileSystemException.class, () -> Files.newByteChannel(link, CREATE, WRITE, NOFOLLOW_LINKS));
+
+    assertThatPath("file").doesNotExist();
+    assertThatPath("link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("file");
+  }
+
+  @Test
+  public void testOutputStream_danglingSymbolicLinkWithoutCreate() throws IOException {
+    Path link = Files.createSymbolicLink(path("link"), path("file"));
+
+    assertThrows(NoSuchFileException.class, () -> Files.newOutputStream(link, WRITE));
+
+    assertThatPath("file").doesNotExist();
+    assertThatPath("link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("file");
+  }
+
+  @Test
+  public void testOutputStream_danglingSymbolicLinkWithMissingParent() throws IOException {
+    Path link = Files.createSymbolicLink(path("link"), path("missing/file"));
+
+    assertThrows(NoSuchFileException.class, () -> Files.newOutputStream(link));
+
+    assertThatPath("missing").doesNotExist();
+    assertThatPath("link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("missing/file");
+  }
+
+  @Test
+  public void testCreateDirectory_danglingSymbolicLink() throws IOException {
+    Files.createSymbolicLink(path("link"), path("file"));
+
+    assertThrows(FileAlreadyExistsException.class, () -> Files.createDirectory(path("link")));
+    assertThrows(
+        FileAlreadyExistsException.class,
+        () -> Files.createSymbolicLink(path("link"), path("other")));
+
+    assertThatPath("file").doesNotExist();
+    assertThatPath("other").doesNotExist();
+    assertThatPath("link", NOFOLLOW_LINKS).isSymbolicLink().withTarget("file");
+  }
+
+  @Test
   public void testLink() throws IOException {
     Files.createFile(path("/file.txt"));
     // checking link count requires "unix" attribute support, which we're using here
