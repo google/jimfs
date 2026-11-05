@@ -85,7 +85,7 @@
     <auto-common.version>1.2.2</auto-common.version>
     <java.version>1.8</java.version>
     <guava.version>33.8.0-jre</guava.version>
-    <errorprone.version>2.50.0</errorprone.version>
+    <errorprone.version>2.51.0</errorprone.version>
   </properties>
 
   <dependencyManagement>
@@ -101,7 +101,7 @@
       <dependency>
         <groupId>com.ibm.icu</groupId>
         <artifactId>icu4j</artifactId>
-        <version>77.1</version>
+        <version>79.1</version>
       </dependency>
 
       <!-- Compile-time dependencies -->
@@ -198,7 +198,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.6.0</version>
+          <version>3.6.1</version>
         </plugin>
         <plugin>
           <groupId>org.apache.felix</groupId>
