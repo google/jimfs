@@ -584,6 +584,25 @@ public class JimfsFileChannelTest {
   }
 
   @Test
+  public void testLock_releasedLocksAreRemovedFromChannel() throws IOException {
+    JimfsFileChannel channel = (JimfsFileChannel) channel(regularFile(10), READ, WRITE);
+
+    FileLock lock = channel.lock();
+    assertEquals(1, channel.lockCount());
+
+    lock.release();
+    assertFalse(lock.isValid());
+    assertEquals(0, channel.lockCount());
+
+    // closing the channel also releases any locks still held through it
+    FileLock held = channel.lock();
+    assertEquals(1, channel.lockCount());
+    channel.close();
+    assertFalse(held.isValid());
+    assertEquals(0, channel.lockCount());
+  }
+
+  @Test
   public void testAsynchronousClose() throws Exception {
     RegularFile file = regularFile(10);
     final FileChannel channel = channel(file, READ, WRITE);

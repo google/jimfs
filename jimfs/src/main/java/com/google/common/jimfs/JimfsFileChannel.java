@@ -22,6 +22,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -631,12 +632,12 @@ final class JimfsFileChannel extends FileChannel {
 
   /** Creates a lock for this channel and registers it with the underlying file. */
   private FileLock addLock(FileChannel lockChannel, long position, long size, boolean shared) {
-    return addLock(new FakeFileLock(file, lockChannel, position, size, shared));
+    return addLock(new FakeFileLock(file, this, lockChannel, position, size, shared));
   }
 
   /** Creates a lock for the given asynchronous channel and registers it with the underlying file. */
   FileLock addLock(AsynchronousFileChannel lockChannel, long position, long size, boolean shared) {
-    return addLock(new FakeFileLock(file, lockChannel, position, size, shared));
+    return addLock(new FakeFileLock(file, this, lockChannel, position, size, shared));
   }
 
   private FileLock addLock(FakeFileLock lock) {
@@ -646,6 +647,21 @@ final class JimfsFileChannel extends FileChannel {
       myLocks.add(lock);
     }
     return lock;
+  }
+
+  /** Removes the given lock from this channel's set of locks, called when the lock is released. */
+  void removeLock(FakeFileLock lock) {
+    synchronized (myLocks) {
+      myLocks.remove(lock);
+    }
+  }
+
+  /** Returns the number of locks currently held through this channel. */
+  @VisibleForTesting
+  int lockCount() {
+    synchronized (myLocks) {
+      return myLocks.size();
+    }
   }
 
   private void checkLockArguments(long position, long size, boolean shared) throws IOException {
@@ -662,14 +678,19 @@ final class JimfsFileChannel extends FileChannel {
   @Override
   protected void implCloseChannel() {
     // release any locks acquired through this channel, then interrupt the current blocking
-    // threads, if any, causing them to throw ClosedByInterruptException
+    // threads, if any, causing them to throw ClosedByInterruptException. Copy the locks first so
+    // that closing them (which removes them from `myLocks` and the file's lock set) isn't done
+    // while holding the `myLocks` monitor, which could otherwise deadlock with a concurrent
+    // release.
+    FakeFileLock[] locksToClose;
     synchronized (myLocks) {
-      for (FakeFileLock lock : myLocks) {
-        try {
-          lock.close();
-        } catch (IOException e) {
-          // can't happen: release() just invalidates the lock and removes it from the file
-        }
+      locksToClose = myLocks.toArray(new FakeFileLock[0]);
+    }
+    for (FakeFileLock lock : locksToClose) {
+      try {
+        lock.close();
+      } catch (IOException e) {
+        // can't happen: release() just invalidates the lock and removes it from the registries
       }
     }
     try {
@@ -692,21 +713,31 @@ final class JimfsFileChannel extends FileChannel {
   static final class FakeFileLock extends FileLock {
 
     private final RegularFile file;
+    private final JimfsFileChannel jimfsChannel;
     private final AtomicBoolean valid = new AtomicBoolean(true);
 
-    FakeFileLock(RegularFile file, FileChannel channel, long position, long size, boolean shared) {
+    FakeFileLock(
+        RegularFile file,
+        JimfsFileChannel jimfsChannel,
+        FileChannel channel,
+        long position,
+        long size,
+        boolean shared) {
       super(channel, position, size, shared);
       this.file = file;
+      this.jimfsChannel = jimfsChannel;
     }
 
     FakeFileLock(
         RegularFile file,
+        JimfsFileChannel jimfsChannel,
         AsynchronousFileChannel channel,
         long position,
         long size,
         boolean shared) {
       super(channel, position, size, shared);
       this.file = file;
+      this.jimfsChannel = jimfsChannel;
     }
 
     @Override
@@ -718,6 +749,7 @@ final class JimfsFileChannel extends FileChannel {
     public void release() throws IOException {
       if (valid.compareAndSet(true, false)) {
         file.removeLock(this);
+        jimfsChannel.removeLock(this);
       }
     }
   }

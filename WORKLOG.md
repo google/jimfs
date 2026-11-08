@@ -10,3 +10,9 @@
 - 分支：`fix-overlapping-file-locks`；状态：implemented 待 record。
 - 提交：42552d7（源码修复）、f0ed1fa（测试）。
 - 验证：`mvn -pl jimfs test` 全量 5911 tests / 0 failures / 1 预存 skip；另用临时 scratch 测试经公开 `FileChannel.open` API 端到端确认（已删）。
+
+## 2026-11-08 处理 PR #526 代码评审意见
+- **背景**：PR https://github.com/google/jimfs/pull/526 收到 gemini-code-assist 评审，指出 3 个问题：(1) `implCloseChannel` 在持有 `myLocks` 监视器时逐个 `lock.close()`，与并发 `release()` 存在 `ConcurrentModificationException` / AB-BA 死锁风险；(2) 已释放的锁没有被移出 channel 的 `myLocks` 集合，造成内存泄漏；(3) `FakeFileLock` 因而不持有所属 `JimfsFileChannel` 的引用，无法在 `release()` 时自我注销。
+- **做了什么**：`FakeFileLock` 增加 `JimfsFileChannel jimfsChannel` 字段（两个构造器同步更新）；`release()` 在 CAS 成功后同时从 `RegularFile` 与 channel 的 `myLocks` 注销；`JimfsFileChannel.removeLock(FakeFileLock)` 包级私有；`implCloseChannel` 先在 `synchronized (myLocks)` 内把锁复制成数组，再在监视器外逐个 `close()`，避免边迭代边修改，并保持与 `release()` 一致的加锁顺序（不再嵌套持有 `myLocks` → `RegularFile.locks`）。新增 `@VisibleForTesting int lockCount()` 与回归测试 `testLock_releasedLocksAreRemovedFromChannel`，覆盖 release 与 close 两条注销路径。
+- **解决了什么问题**：消除评审指出的并发修改/死锁与内存泄漏；验证方式 = 目标测试 + `mvn -pl jimfs test` 全量 5913 tests / 0 failures / 1 预存 skip。
+- 提交：见本次 commit（在 `b0542e1` 之上）。
