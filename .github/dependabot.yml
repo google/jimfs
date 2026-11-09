@@ -11,6 +11,11 @@ updates:
         applies-to: version-updates
         patterns:
           - "*"
+    ignore:
+      # ICU4J 78+ requires Java 11+.
+      - dependency-name: "com.ibm.icu:icu4j"
+        versions:
+          - ">= 78"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
