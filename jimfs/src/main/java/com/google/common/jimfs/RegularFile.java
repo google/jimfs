@@ -28,10 +28,14 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -55,6 +59,12 @@ final class RegularFile extends File {
   private int blockCount;
 
   private long size;
+
+  /**
+   * File locks currently held on this file. All channels opened on this file share this set, so it
+   * serves the same purpose as the {@code FileLockTable} of the JDK's file channel implementation.
+   */
+  private final Set<FileLock> locks = new HashSet<FileLock>();
 
   /** Creates a new regular file with the given ID and using the given disk. */
   public static RegularFile create(int id, FileTime creationTime, HeapDisk disk) {
@@ -218,6 +228,45 @@ final class RegularFile extends File {
   private void deleteContents() {
     disk.free(this);
     size = 0;
+  }
+
+  /**
+   * Adds the given lock to the set of locks held on this file, throwing an {@link
+   * OverlappingFileLockException} if it overlaps a lock that is already held.
+   */
+  void addLock(FileLock lock) {
+    synchronized (locks) {
+      for (FileLock held : locks) {
+        if (overlaps(lock.position(), lock.size(), held.position(), held.size())) {
+          throw new OverlappingFileLockException();
+        }
+      }
+      locks.add(lock);
+    }
+  }
+
+  /** Removes the given lock from the set of locks held on this file, if it is present. */
+  void removeLock(FileLock lock) {
+    synchronized (locks) {
+      locks.remove(lock);
+    }
+  }
+
+  /**
+   * Returns whether the regions covered by the two locks overlap. A lock with size 0 covers all
+   * bytes from its position to the end of the file.
+   */
+  private static boolean overlaps(long position1, long size1, long position2, long size2) {
+    if (size1 == 0 && size2 == 0) {
+      return true;
+    }
+    if (size1 == 0) {
+      return position1 < position2 + size2;
+    }
+    if (size2 == 0) {
+      return position2 < position1 + size1;
+    }
+    return position1 < position2 + size2 && position2 < position1 + size1;
   }
 
   /**

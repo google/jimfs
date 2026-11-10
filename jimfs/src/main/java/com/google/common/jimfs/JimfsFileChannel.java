@@ -22,6 +22,7 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -73,6 +74,10 @@ final class JimfsFileChannel extends FileChannel {
 
   @GuardedBy("this")
   private long position;
+
+  /** Locks acquired through this channel; released when the channel is closed. */
+  @GuardedBy("myLocks")
+  private final Set<FakeFileLock> myLocks = new HashSet<FakeFileLock>();
 
   public JimfsFileChannel(
       RegularFile file, Set<OpenOption> options, FileSystemState fileSystemState) {
@@ -607,7 +612,7 @@ final class JimfsFileChannel extends FileChannel {
     try {
       begin();
       completed = true;
-      return new FakeFileLock(this, position, size, shared);
+      return addLock(this, position, size, shared);
     } finally {
       try {
         end(completed);
@@ -622,7 +627,41 @@ final class JimfsFileChannel extends FileChannel {
     checkLockArguments(position, size, shared);
 
     // tryLock is not interruptible
-    return new FakeFileLock(this, position, size, shared);
+    return addLock(this, position, size, shared);
+  }
+
+  /** Creates a lock for this channel and registers it with the underlying file. */
+  private FileLock addLock(FileChannel lockChannel, long position, long size, boolean shared) {
+    return addLock(new FakeFileLock(file, this, lockChannel, position, size, shared));
+  }
+
+  /** Creates a lock for the given asynchronous channel and registers it with the underlying file. */
+  FileLock addLock(AsynchronousFileChannel lockChannel, long position, long size, boolean shared) {
+    return addLock(new FakeFileLock(file, this, lockChannel, position, size, shared));
+  }
+
+  private FileLock addLock(FakeFileLock lock) {
+    // throws OverlappingFileLockException if the lock overlaps one already held on the file
+    file.addLock(lock);
+    synchronized (myLocks) {
+      myLocks.add(lock);
+    }
+    return lock;
+  }
+
+  /** Removes the given lock from this channel's set of locks, called when the lock is released. */
+  void removeLock(FakeFileLock lock) {
+    synchronized (myLocks) {
+      myLocks.remove(lock);
+    }
+  }
+
+  /** Returns the number of locks currently held through this channel. */
+  @VisibleForTesting
+  int lockCount() {
+    synchronized (myLocks) {
+      return myLocks.size();
+    }
   }
 
   private void checkLockArguments(long position, long size, boolean shared) throws IOException {
@@ -638,8 +677,22 @@ final class JimfsFileChannel extends FileChannel {
 
   @Override
   protected void implCloseChannel() {
-    // interrupt the current blocking threads, if any, causing them to throw
-    // ClosedByInterruptException
+    // release any locks acquired through this channel, then interrupt the current blocking
+    // threads, if any, causing them to throw ClosedByInterruptException. Copy the locks first so
+    // that closing them (which removes them from `myLocks` and the file's lock set) isn't done
+    // while holding the `myLocks` monitor, which could otherwise deadlock with a concurrent
+    // release.
+    FakeFileLock[] locksToClose;
+    synchronized (myLocks) {
+      locksToClose = myLocks.toArray(new FakeFileLock[0]);
+    }
+    for (FakeFileLock lock : locksToClose) {
+      try {
+        lock.close();
+      } catch (IOException e) {
+        // can't happen: release() just invalidates the lock and removes it from the registries
+      }
+    }
     try {
       synchronized (blockingThreads) {
         for (Thread thread : blockingThreads) {
@@ -652,17 +705,39 @@ final class JimfsFileChannel extends FileChannel {
     }
   }
 
-  /** A file lock that does nothing, since only one JVM process has access to this file system. */
+  /**
+   * A file lock. No locks are held with other processes, since only one JVM process has access to
+   * this file system, but overlapping locks from this JVM are rejected to match the behavior
+   * documented for {@link FileChannel}.
+   */
   static final class FakeFileLock extends FileLock {
 
+    private final RegularFile file;
+    private final JimfsFileChannel jimfsChannel;
     private final AtomicBoolean valid = new AtomicBoolean(true);
 
-    public FakeFileLock(FileChannel channel, long position, long size, boolean shared) {
+    FakeFileLock(
+        RegularFile file,
+        JimfsFileChannel jimfsChannel,
+        FileChannel channel,
+        long position,
+        long size,
+        boolean shared) {
       super(channel, position, size, shared);
+      this.file = file;
+      this.jimfsChannel = jimfsChannel;
     }
 
-    public FakeFileLock(AsynchronousFileChannel channel, long position, long size, boolean shared) {
+    FakeFileLock(
+        RegularFile file,
+        JimfsFileChannel jimfsChannel,
+        AsynchronousFileChannel channel,
+        long position,
+        long size,
+        boolean shared) {
       super(channel, position, size, shared);
+      this.file = file;
+      this.jimfsChannel = jimfsChannel;
     }
 
     @Override
@@ -672,7 +747,10 @@ final class JimfsFileChannel extends FileChannel {
 
     @Override
     public void release() throws IOException {
-      valid.set(false);
+      if (valid.compareAndSet(true, false)) {
+        file.removeLock(this);
+        jimfsChannel.removeLock(this);
+      }
     }
   }
 }
