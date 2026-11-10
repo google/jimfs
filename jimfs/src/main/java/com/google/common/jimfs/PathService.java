@@ -48,14 +48,14 @@ import org.jspecify.annotations.Nullable;
 final class PathService implements Comparator<JimfsPath> {
 
   private static final Comparator<Name> DISPLAY_ROOT_COMPARATOR =
-      nullsLast(Name.displayComparator());
+          nullsLast(Name.displayComparator());
   private static final Comparator<Iterable<Name>> DISPLAY_NAMES_COMPARATOR =
-      Comparators.lexicographical(Name.displayComparator());
+          Comparators.lexicographical(Name.displayComparator());
 
   private static final Comparator<Name> CANONICAL_ROOT_COMPARATOR =
-      nullsLast(Name.canonicalComparator());
+          nullsLast(Name.canonicalComparator());
   private static final Comparator<Iterable<Name>> CANONICAL_NAMES_COMPARATOR =
-      Comparators.lexicographical(Name.canonicalComparator());
+          Comparators.lexicographical(Name.canonicalComparator());
 
   private final PathType type;
 
@@ -71,26 +71,26 @@ final class PathService implements Comparator<JimfsPath> {
 
   PathService(Configuration config) {
     this(
-        config.pathType,
-        config.nameDisplayNormalization,
-        config.nameCanonicalNormalization,
-        config.pathEqualityUsesCanonicalForm);
+            config.pathType,
+            config.nameDisplayNormalization,
+            config.nameCanonicalNormalization,
+            config.pathEqualityUsesCanonicalForm);
   }
 
   PathService(
-      PathType type,
-      Iterable<PathNormalization> displayNormalizations,
-      Iterable<PathNormalization> canonicalNormalizations,
-      boolean equalityUsesCanonicalForm) {
+          PathType type,
+          Iterable<PathNormalization> displayNormalizations,
+          Iterable<PathNormalization> canonicalNormalizations,
+          boolean equalityUsesCanonicalForm) {
     this.type = checkNotNull(type);
     this.displayNormalizations = ImmutableSet.copyOf(displayNormalizations);
     this.canonicalNormalizations = ImmutableSet.copyOf(canonicalNormalizations);
     this.equalityUsesCanonicalForm = equalityUsesCanonicalForm;
 
     this.rootComparator =
-        equalityUsesCanonicalForm ? CANONICAL_ROOT_COMPARATOR : DISPLAY_ROOT_COMPARATOR;
+            equalityUsesCanonicalForm ? CANONICAL_ROOT_COMPARATOR : DISPLAY_ROOT_COMPARATOR;
     this.namesComparator =
-        equalityUsesCanonicalForm ? CANONICAL_NAMES_COMPARATOR : DISPLAY_NAMES_COMPARATOR;
+            equalityUsesCanonicalForm ? CANONICAL_NAMES_COMPARATOR : DISPLAY_NAMES_COMPARATOR;
   }
 
   /** Sets the file system to use for created paths. */
@@ -199,38 +199,47 @@ final class PathService implements Comparator<JimfsPath> {
     return type.toString(rootString, names);
   }
 
-  /** Creates a hash code for the given path. */
+  /**
+   * Creates a hash code for the given path.
+   *
+   * <p>Note: JimfsPath.equals() is implemented using the compare() method below; equalityUsesCanonicalForm is
+   * taken into account there via the namesComparator, which is set at construction time.
+   */
   public int hash(JimfsPath path) {
-    // Note: JimfsPath.equals() is implemented using the compare() method below;
-    // equalityUsesCanonicalForm is taken into account there via the namesComparator, which is set
-    // at construction time.
-    int hash = 31;
-    hash = 31 * hash + getFileSystem().hashCode();
+    // Introduce an explaining variable for the multiplier (magic number 31)
+    final int multiplier = 31;
+    int result = multiplier;
+    result = combine(result, getFileSystem().hashCode(), multiplier);
 
     final Name root = path.root();
     final ImmutableList<Name> names = path.names();
 
-    if (equalityUsesCanonicalForm) {
-      // use hash codes of names themselves, which are based on the canonical form
-      hash = 31 * hash + (root == null ? 0 : root.hashCode());
-      for (Name name : names) {
-        hash = 31 * hash + name.hashCode();
-      }
-    } else {
-      // use hash codes from toString() form of names
-      hash = 31 * hash + (root == null ? 0 : root.toString().hashCode());
-      for (Name name : names) {
-        hash = 31 * hash + name.toString().hashCode();
-      }
+    // Decompose the conditional: compute the hash for the root based on equalityUsesCanonicalForm
+    int computedRootHash = (root == null)
+            ? 0
+            : (equalityUsesCanonicalForm ? root.hashCode() : root.toString().hashCode());
+    result = combine(result, computedRootHash, multiplier);
+
+    // Process each name with an explaining variable for its hash value.
+    for (Name name : names) {
+      int computedNameHash = equalityUsesCanonicalForm ? name.hashCode() : name.toString().hashCode();
+      result = combine(result, computedNameHash, multiplier);
     }
-    return hash;
+    return result;
+  }
+
+  /**
+   * Extracted helper method that combines the current hash with a new value using the given multiplier.
+   */
+  private int combine(int currentHash, int newHash, int multiplier) {
+    return multiplier * currentHash + newHash;
   }
 
   @Override
   public int compare(JimfsPath a, JimfsPath b) {
     Comparator<JimfsPath> comparator =
-        Comparator.comparing(JimfsPath::root, rootComparator)
-            .thenComparing(JimfsPath::names, namesComparator);
+            Comparator.comparing(JimfsPath::root, rootComparator)
+                    .thenComparing(JimfsPath::names, namesComparator);
     return comparator.compare(a, b);
   }
 
@@ -256,16 +265,16 @@ final class PathService implements Comparator<JimfsPath> {
    */
   public PathMatcher createPathMatcher(String syntaxAndPattern) {
     return PathMatchers.getPathMatcher(
-        syntaxAndPattern,
-        type.getSeparator() + type.getOtherSeparators(),
-        equalityUsesCanonicalForm ? canonicalNormalizations : displayNormalizations);
+            syntaxAndPattern,
+            type.getSeparator() + type.getOtherSeparators(),
+            equalityUsesCanonicalForm ? canonicalNormalizations : displayNormalizations);
   }
 
   private static final Predicate<Object> NOT_EMPTY =
-      new Predicate<Object>() {
-        @Override
-        public boolean apply(Object input) {
-          return !input.toString().isEmpty();
-        }
-      };
+          new Predicate<Object>() {
+            @Override
+            public boolean apply(Object input) {
+              return !input.toString().isEmpty();
+            }
+          };
 }
