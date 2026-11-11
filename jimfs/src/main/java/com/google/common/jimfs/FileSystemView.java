@@ -230,7 +230,8 @@ final class FileSystemView {
    */
   @CanIgnoreReturnValue
   public Directory createDirectory(JimfsPath path, FileAttribute<?>... attrs) throws IOException {
-    return (Directory) createFile(path, store.directoryCreator(), true, attrs);
+    return (Directory)
+        createFile(path, store.directoryCreator(), true, Options.NOFOLLOW_LINKS, attrs);
   }
 
   /**
@@ -243,18 +244,20 @@ final class FileSystemView {
     if (!store.supportsFeature(Feature.SYMBOLIC_LINKS)) {
       throw new UnsupportedOperationException();
     }
-    return (SymbolicLink) createFile(path, store.symbolicLinkCreator(target), true, attrs);
+    return (SymbolicLink)
+        createFile(path, store.symbolicLinkCreator(target), true, Options.NOFOLLOW_LINKS, attrs);
   }
 
   /**
    * Creates a new file at the given path if possible, using the given supplier to create the file.
-   * Returns the new file. If {@code allowExisting} is {@code true} and a file already exists at the
-   * given path, returns that file. Otherwise, throws {@link FileAlreadyExistsException}.
+   * Returns the new file, or the existing file if {@code failIfExists} is {@code false}. Otherwise,
+   * throws {@link FileAlreadyExistsException} if the file already exists.
    */
   private File createFile(
       JimfsPath path,
       Supplier<? extends File> fileCreator,
       boolean failIfExists,
+      Set<? super LinkOption> options,
       FileAttribute<?>... attrs)
       throws IOException {
     checkNotNull(path);
@@ -262,7 +265,7 @@ final class FileSystemView {
 
     store.writeLock().lock();
     try {
-      DirectoryEntry entry = lookUp(path, Options.NOFOLLOW_LINKS);
+      DirectoryEntry entry = lookUp(path, options);
 
       if (entry.exists()) {
         if (failIfExists) {
@@ -279,7 +282,7 @@ final class FileSystemView {
 
       File newFile = fileCreator.get();
       store.setInitialAttributes(newFile, attrs);
-      parent.link(path.name(), newFile);
+      parent.link(entry.name(), newFile);
       parent.setLastModifiedTime(now());
       return newFile;
     } finally {
@@ -338,7 +341,14 @@ final class FileSystemView {
       JimfsPath path, Set<OpenOption> options, FileAttribute<?>[] attrs) throws IOException {
     store.writeLock().lock();
     try {
-      File file = createFile(path, store.regularFileCreator(), options.contains(CREATE_NEW), attrs);
+      boolean createNew = options.contains(CREATE_NEW);
+      File file =
+          createFile(
+              path,
+              store.regularFileCreator(),
+              createNew,
+              createNew ? Options.NOFOLLOW_LINKS : options,
+              attrs);
       // the file already existed but was not a regular file
       if (!file.isRegularFile()) {
         throw new FileSystemException(path.toString(), null, "not a regular file");
